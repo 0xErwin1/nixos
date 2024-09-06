@@ -44,10 +44,7 @@
   };
 
   imports = [
-    ./neovim.nix
-    ./tmux.nix
-    ./zsh.nix
-    ./direnv.nix
-    ./zathura.nix
+    ../global
+    ../global/kitty.nix
   ];
 }
