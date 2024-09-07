@@ -1,5 +1,9 @@
 { pkgs, inputs, ... }:
 {
+  imports = [
+    ../global
+    ../global/kitty.nix
+  ];
   targets.genericLinux.enable = true;
 
   home = {
@@ -44,8 +48,4 @@
     };
   };
 
-  imports = [
-    ../global
-    ../global/kitty.nix
-  ];
 }

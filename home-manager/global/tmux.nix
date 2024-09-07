@@ -1,8 +1,21 @@
 { pkgs, ... }:
+let
+  tmuxAyuTheme = pkgs.fetchFromGitHub {
+    owner = "TechnicalDC";
+    repo = "tmux-ayu-theme";
+    rev = "2ddd8537e2f98cc760c1e2ded4bcbc62a20b8f42";
+    sha256 = "sha256-/MLP0tE5wSQ/Vcnruy34bQ5kes6AoT0zH2urBcetiq0=";
+  };
+in
 {
-  home.packages = with pkgs; [ tmux ];
+
+  home = {
+    packages = with pkgs; [ tmux ];
+    # file.".tmp/tmux-ayu-theme" = 
+  };
   programs.tmux = {
     shortcut = "a";
+    enable = true;
     extraConfig = ''
       set -g default-terminal "tmux-256color"
       set -ga terminal-overrides ",xterm-256color:Tc"
@@ -30,20 +43,24 @@
       bind -n M-h previous-window
       bind -n M-l next-window
 
-      set -g @plugin 'TechnicalDC/tmux-ayu-theme'
       set -g status-position top
 
       TMUX_FZF_OPTIONS="-w 70% -h 70% -m"
       TMUX_FZF_LAUNCH_KEY="f"
     '';
-    plugins = with pkgs.tmuxPlugins; [
-      tpm
-      resurrect
-      continuum
-      sensible
-      vim-tmux-navigator
-      fzf
-      yank
+    plugins = [
+      pkgs.tmuxPlugins.resurrect
+      pkgs.tmuxPlugins.continuum
+      pkgs.tmuxPlugins.sensible
+      pkgs.tmuxPlugins.vim-tmux-navigator
+      pkgs.tmuxPlugins.tmux-fzf
+      pkgs.tmuxPlugins.yank
+      (pkgs.tmuxPlugins.mkTmuxPlugin {
+        pluginName = "ayu-theme";
+        version = "main";
+        rtpFilePath = "tmux-ayu-theme.tmux";
+        src = tmuxAyuTheme;
+      })
     ];
   };
 }

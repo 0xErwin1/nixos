@@ -64,6 +64,7 @@
     libGL
     libGLX
     xorg.libX11
+    xclip
   ];
 
   # Some programs need SUID wrappers, can be configured further or are
