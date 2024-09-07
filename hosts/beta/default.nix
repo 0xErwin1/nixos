@@ -3,6 +3,7 @@
   imports = [
     ./hardware-configuration.nix
     ../globals
+    ./browser.nix
   ];
 
   boot.loader = {

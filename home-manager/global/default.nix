@@ -5,7 +5,6 @@
     ./tmux.nix
     ./direnv.nix
     ./neovim.nix
-    ./firefox.nix
     ./zathura.nix
   ];
 }
