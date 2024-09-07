@@ -8,11 +8,7 @@ let
   };
 in
 {
-
-  home = {
-    packages = with pkgs; [ tmux ];
-    # file.".tmp/tmux-ayu-theme" = 
-  };
+  home.packages = with pkgs; [ tmux ];
   programs.tmux = {
     shortcut = "a";
     enable = true;

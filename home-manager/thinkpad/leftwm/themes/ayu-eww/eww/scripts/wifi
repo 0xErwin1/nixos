@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+
+if [[ $(cat /sys/class/net/eth0/operstate) == "up" || $(cat /sys/class/net/enp*/operstate | grep -w "up") ]];  then
+  DEVICE="ETHERNET"
+elif [[ $(cat /sys/class/net/w*/operstate) == "up" ]]; then 
+  DEVICE="WIFI"
+fi
+
+get_name() {
+  nmcli | grep "^wlp" | sed 's/\ connected\ to\ /Connected to /g' | cut -d ':' -f2
+}
+
+get_icon() {
+  if [[ $DEVICE == "ETHERNET" ]]; then
+    echo "󰈀"
+  elif [[ $DEVICE == "WIFI" ]]; then
+    echo ""
+  else
+    echo "󱚵"
+  fi
+}
+
+
+if [[ "$1" == "--name" ]]; then
+  get_name
+elif [[ "$1" == "--icon" ]]; then
+  get_icon
+fi

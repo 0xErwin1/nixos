@@ -1,8 +1,8 @@
 { pkgs, ... }:
 {
   imports = [
-    ../globals
     ./hardware-configuration.nix
+    ../globals
     ./browser.nix
   ];
 
@@ -59,6 +59,11 @@
     libGLX
     xorg.libX11
     leftwm
+    eww
+    qimgv
+    nitrogen
+    picom
+    feh
   ];
 
   system.stateVersion = "24.05";

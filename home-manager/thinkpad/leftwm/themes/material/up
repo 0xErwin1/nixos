@@ -1,0 +1,30 @@
+#!/bin/bash
+export SCRIPT_PATH="$HOME/.config/leftwm"
+export THEME_CURRENT="$SCRIPT_PATH/themes/current"
+
+# Down the last running theme
+if [ -f "/tmp/leftwm-theme-down" ]; then
+    /tmp/leftwm-theme-down
+    rm /tmp/leftwm-theme-down
+fi
+
+ln -s $SCRIPT_PATH/down /tmp/leftwm-theme-down
+
+# Set the theme.toml config
+leftwm-command "LoadTheme $THEME_CURRENT/themes.toml"
+
+pkill polybar
+
+polybar laptop -c "$THEME_CURRENT/polybar.ini" &
+polybar laptop-left -c "$THEME_CURRENT/polybar.ini" &
+polybar laptop-center -c "$THEME_CURRENT/polybar.ini" &
+polybar laptop-right -c "$THEME_CURRENT/polybar.ini" &
+
+if [[ $HDMI_CONNECTED ]]; then
+  polybar monitor -c "$THEME_CURRENT/polybar.ini" &
+  polybar monitor-left -c "$THEME_CURRENT/polybar.ini" &
+  polybar monitor-center -c "$THEME_CURRENT/polybar.ini" &
+  polybar monitor-right -c "$THEME_CURRENT/polybar.ini" &
+fi
+
+volumeicon &
