@@ -480,11 +480,28 @@
         "type": "github"
       }
     },
+    "rofiAyuDarkTheme": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1626148493,
+        "narHash": "sha256-bk/0riRWHHnrzd9GfE5FP9URLlAOM9B35wf1DTzk/sY=",
+        "owner": "regolith-linux",
+        "repo": "regolith-styles",
+        "rev": "cfc78d00aa3cf29401b57406a46163346581c020",
+        "type": "github"
+      },
+      "original": {
+        "owner": "regolith-linux",
+        "repo": "regolith-styles",
+        "type": "github"
+      }
+    },
     "root": {
       "inputs": {
         "home-manager": "home-manager",
         "nixpkgs": "nixpkgs",
-        "nixvim": "nixvim"
+        "nixvim": "nixvim",
+        "rofiAyuDarkTheme": "rofiAyuDarkTheme"
       }
     },
     "systems": {

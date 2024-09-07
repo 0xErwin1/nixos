@@ -12,6 +12,11 @@
     };
 
     nixvim.url = "github:BasileusErwin/nixvim";
+
+    rofiAyuDarkTheme = {
+      url = "github:regolith-linux/regolith-styles";
+      flake = false;
+    };
   };
 
   outputs =

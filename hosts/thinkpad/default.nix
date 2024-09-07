@@ -1,9 +1,9 @@
-{ pkgs, ... }:
 {
   imports = [
     ./hardware-configuration.nix
     ../globals
     ./browser.nix
+    ./packages.nix
   ];
 
   boot = {
@@ -22,7 +22,6 @@
     ];
   };
 
-  # Enable the X11 windowing system.
   services = {
     xserver = {
       enable = true;
@@ -50,21 +49,6 @@
   hardware.pulseaudio.enable = false;
   security.rtkit.enable = true;
   nixpkgs.config.allowUnfree = true;
-
-  environment.systemPackages = with pkgs; [
-    wget
-    mesa
-    libglvnd
-    libGL
-    libGLX
-    xorg.libX11
-    leftwm
-    eww
-    qimgv
-    nitrogen
-    picom
-    feh
-  ];
 
   system.stateVersion = "24.05";
 }

@@ -1,1 +1,1 @@
-{ home.file.".xsesion".source = ./xsession; }
+{ home.file.".xprofile".source = ./xprofile; }

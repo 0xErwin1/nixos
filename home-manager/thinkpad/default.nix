@@ -2,9 +2,11 @@
 {
   imports = [
     ../global
+    ../global/rofi.nix
     ../global/kitty.nix
-    ./leftwm
     ./browser.nix
+    ./leftwm
+    ./xorg
   ];
 
   home = {
@@ -12,13 +14,17 @@
     username = "iperez";
     homeDirectory = "/home/iperez";
     stateVersion = "24.05";
-    packages = [
-      pkgs.eza
-      pkgs.zsh
-      pkgs.curl
-      pkgs.wget
-      pkgs.btop
-      pkgs.delta
+    packages = with pkgs; [
+      eza
+      bat
+      zsh
+      curl
+      wget
+      btop
+      delta
+      discord
+      slack
+      dbeaver-bin
     ];
     sessionVariables = {
       EDITOR = "nvim";
@@ -27,9 +33,5 @@
 
   programs = {
     home-manager.enable = true;
-    git = {
-      enable = true;
-      userName = "Ignacio Perez";
-    };
   };
 }
