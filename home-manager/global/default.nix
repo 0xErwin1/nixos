@@ -1,6 +1,7 @@
 {
   imports = [
     ./zsh.nix
+    ./git.nix
     ./font.nix
     ./tmux.nix
     ./direnv.nix
