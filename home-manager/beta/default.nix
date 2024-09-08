@@ -3,6 +3,7 @@
   imports = [
     ../global
     ../global/kitty.nix
+    ../global/browser.nix
   ];
   targets.genericLinux.enable = true;
 

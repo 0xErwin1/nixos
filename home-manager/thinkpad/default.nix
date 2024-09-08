@@ -1,10 +1,9 @@
 { pkgs, ... }:
 {
   imports = [
-    ../global
+    ../global/browser.nix
     ../global/rofi.nix
     ../global/kitty.nix
-    ./browser.nix
     ./leftwm
     ./xorg
   ];

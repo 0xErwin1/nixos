@@ -2,10 +2,7 @@
   description = "Your new nix config";
 
   inputs = {
-    # Nixpkgs
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
-
-    # Home manager
     home-manager = {
       url = "github:nix-community/home-manager/release-24.05";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -16,6 +13,11 @@
     rofiAyuDarkTheme = {
       url = "github:regolith-linux/regolith-styles";
       flake = false;
+    };
+
+    firefoxAddons = {
+      url = "gitlab:rycee/nur-expressions?dir=pkgs/firefox-addons";
+      inputs.nixpkgs.follows = "nixpkgs";
     };
   };
 
