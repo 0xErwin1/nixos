@@ -1,0 +1,125 @@
+#!/bin/bash
+
+# ----| Init |----
+sxhkd &
+$HOME/.config/polybar/launch.sh &
+wmname LG3D &
+
+# ----| Display |----
+hdmi=`xrandr | grep ' connected' | grep 'HDMI' | awk '{print $1}'`
+if [[ "$hdmi" == $MONITOR ]]; then
+  bspc monitor $MONITOR -d I II III IV V
+  bspc monitor $LAPTOP -d VI VII VIII IX X
+  bspc monitor $MONITOR -s $LAPTOP
+else
+  bspc $LAPTOP -d I II III IV V VI VII VIII IX X
+fi
+
+# ----| Config |----
+bspc config border_width 2
+bspc config window_gap   8
+
+SPACES=$(bspc query -D)
+for SPACE in $SPACES
+do
+  bspc config -d ${SPACE} window_gap      10
+  bspc config -d ${SPACE} top_padding     10
+  bspc config -d ${SPACE} bottom_padding  10
+  bspc config -d ${SPACE} left_padding    10
+  bspc config -d ${SPACE} right_padding   10
+done
+
+bspc config split_ratio           0.5
+bspc config borderless_monocle    true
+bspc config gapless_monocle       true
+bspc config single_monocle        true
+bspc config focus_follows_pointer true
+
+bspc config normal_border_color   "#00acc1"
+bspc config active_border_color   "#00d8eb"
+bspc config focused_border_color  "#43a047"
+bspc config presel_feedback_color "#ffb300"
+bspc config urgent_border_color   "#e53935"
+
+# ----| Rule |----
+
+# -- remove all rules firts
+bspc rule -r *:*
+
+# ----| Desktops |----
+bspc desktop ^1  -l monocle
+bspc desktop ^2  -l monocle
+bspc desktop ^3  -l monocle
+bspc desktop ^4  -l monocle
+bspc desktop ^5  -l monocle
+bspc desktop ^6  -l monocle
+bspc desktop ^7  -l monocle
+bspc desktop ^8  -l monocle
+bspc desktop ^9  -l monocle
+bspc desktop ^0  -l monocle
+
+# ----| 1 |----
+bspc rule -a Brave-browser desktop='^1'
+bspc rule -a Brave-browser-beta desktop='^1'
+bspc rule -a firefox-aurora desktop='^1'
+# ----| 2 |----
+# bspc rule -a Alacritty desktop='^2' focus=off
+# ----| 3 |----
+# ----| 4 |----
+bspc rule -a firefox desktop='^4'
+bspc rule -a Google-chrome desktop='^4'
+# ----| 5 |----
+bspc rule -a Thunar desktop='^5'
+bspc rule -a pcmanfm desktop='^5'
+# ----| 6 |----
+bspc rule -a stacer desktop='^6'
+bspc rule -a DBeaver desktop='^6'
+# ----| 7 |----
+bspc rule -a Inkscape desktop='^7'
+bspc rule -a zoom desktop='^7' focus=off state=floating
+# ----| 8 |----
+bspc rule -a Thunderbird desktop='^8' focus=off follow=off
+bspc rule -a discord desktop='^8' focus=off follow=off
+bspc rule -a Webex desktop='^8' focus=off follow=off
+bspc rule -a Zoom desktop='^8' focus=off follow=off
+bspc rule -a ClickUp desktop='^8' focus=off follow=off
+# ----| 9 |----
+bspc rule -a spotify desktop='^9'
+bspc rule -a Pavucontrol desktop='^9'
+bspc rule -a Pulseaudio-equalizer-gtk desktop='^9'
+# ----| 10 |----
+bspc rule -a Slack desktop='^10' focus=off follow=off
+
+# ----| Pseudo Titled |----
+
+# ----| Floating |----
+bspc rule -a wpa_gui state=floating center=true
+bspc rule -a SpeedCrunch state=floating center=true
+bspc rule -a Nitrogen state=floating center=true
+bspc rule -a Lxappearance state=floating center=true
+bspc rule -a firefox:Places state=floating follow=on focus=on
+bspc rule -a firefox:Dialog state=floating follow=on focus=on
+bspc rule -a Brave-browser:Places state=floating follow=on focus=on
+bspc rule -a Brave-browser:pop-up state=floating follow=on focus=on
+bspc rule -a Brave-browser-beta:Places state=floating follow=on focus=on
+bspc rule -a Brave-browser-beta:pop-up state=floating follow=on focus=on
+bspc rule -a Google-chrome:Places state=floating follow=on focus=on
+bspc rule -a Google-chrome:pop-up state=floating follow=on focus=on
+bspc rule -a firefox-aurora:Places state=floating follow=on focus=on
+bspc rule -a firefox-aurora:Dialog state=floating follow=on focus=on
+bspc rule -a firefox-aurora:Toolkit state=floating follow=on focus=on
+bspc rule -a Thunar:Dialog state=floating center=true
+bspc rule -a Zathura state=floating follow=on center=true
+bspc rule -a Pavucontrol state=floating follow=on center=true
+bspc rule -a Pulseaudio-equalizer-gtk state=floating follow=on center=true
+bspc rule -a Blueman-manager state=floating follow=on center=true
+bspc rule -a Piper state=floating follow=on center=true
+bspc rule -a NordPass state=floating follow=on center=true
+bspc rule -a Arandr state=floating follow=on center=true
+bspc rule -a Postman state=floating follow=on center=true
+bspc rule -a Java state=floating follow=on center=true
+bspc rule -a TelegramDesktop state=floating follow=on center=true
+bspc rule -a whatsapp-nativefier-d40211 state=floating follow=on center=true
+
+# ----| |----
+bscp rule -a polybar manage=off

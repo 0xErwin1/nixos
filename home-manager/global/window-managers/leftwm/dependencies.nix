@@ -2,9 +2,10 @@
 {
   home = {
     packages = with pkgs; [
-      rofi
       eww
       xclip
+      brightnessctl
+      pamixer
     ];
   };
 

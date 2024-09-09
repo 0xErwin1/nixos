@@ -31,6 +31,10 @@
       };
       autoRepeatDelay = 200;
       autoRepeatInterval = 40;
+
+      windowManager.leftwm = {
+        enable = true;
+      };
     };
     libinput.enable = true;
     pipewire = {

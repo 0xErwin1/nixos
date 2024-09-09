@@ -4,9 +4,11 @@
     ../global/browser.nix
     ../global/rofi.nix
     ../global/kitty.nix
-    ./leftwm
+    ../global
+    ../global/window-managers/leftwm
     ./xorg
   ];
+  nixpkgs.config.allowUnfree = true;
 
   home = {
     enableNixpkgsReleaseCheck = false;
@@ -24,6 +26,8 @@
       discord
       slack
       dbeaver-bin
+      arandr
+      volumeicon
     ];
     sessionVariables = {
       EDITOR = "nvim";
