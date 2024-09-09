@@ -6,6 +6,10 @@
       xclip
       brightnessctl
       pamixer
+      playerctl
+      scrot
+      betterlockscreen
+      flameshot
     ];
   };
 

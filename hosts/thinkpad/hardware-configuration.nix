@@ -1,44 +1,55 @@
 {
+  config,
   lib,
+  modulesPath,
   ...
 }:
 
 {
-  hardware = {
-    pulseaudio.enable = false;
-  };
+  imports = [ (modulesPath + "/installer/scan/not-detected.nix") ];
 
   boot = {
     initrd = {
       availableKernelModules = [
-        "ahci"
+        "nvme"
         "xhci_pci"
-        "virtio_pci"
-        "sr_mod"
-        "virtio_blk"
+        "usbhid"
+        "usb_storage"
+        "sd_mod"
+        "rtsx_pci_sdmmc"
       ];
       kernelModules = [ ];
-      luks.devices."luks-724ff31c-dd3d-448f-a917-1102fbcf8b33".device = "/dev/disk/by-uuid/724ff31c-dd3d-448f-a917-1102fbcf8b33";
+      luks = {
+        devices = {
+          "luks-84bac843-e195-4c4e-81c2-db8d0f02acd2".device = "/dev/disk/by-uuid/84bac843-e195-4c4e-81c2-db8d0f02acd2";
+          "luks-31afe9e5-0c92-4d22-8afe-d874da2c6d0c".device = "/dev/disk/by-uuid/31afe9e5-0c92-4d22-8afe-d874da2c6d0c";
+        };
+      };
     };
     kernelModules = [ "kvm-amd" ];
     extraModulePackages = [ ];
   };
 
   fileSystems."/" = {
-    device = "/dev/disk/by-uuid/ded0d47f-e726-451b-b56f-7c676849169f";
+    device = "/dev/disk/by-uuid/54d4d00a-b8ef-4e67-a65e-a107773569cc";
     fsType = "ext4";
   };
 
   fileSystems."/boot" = {
-    device = "/dev/disk/by-uuid/83F8-4A10";
+    device = "/dev/disk/by-uuid/C666-5D4A";
     fsType = "vfat";
     options = [
-      "fmask=0022"
-      "dmask=0022"
+      "fmask=0077"
+      "dmask=0077"
     ];
   };
 
-  swapDevices = [ ];
+  swapDevices = [ { device = "/dev/disk/by-uuid/85405fdd-64f3-4889-b5e5-ea5fd9ccfa8c"; } ];
+
+  hardware = {
+    pulseaudio.enable = false;
+    cpu.amd.updateMicrocode = lib.mkDefault config.hardware.enableRedistributableFirmware;
+  };
 
   networking.useDHCP = lib.mkDefault true;
 

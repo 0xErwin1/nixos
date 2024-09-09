@@ -95,7 +95,7 @@
 
 (defwidget middle []
   (box :orientation "v" :class "middle"
-    (systray :pack-direction "ttb" :icon-size 20 :class "tray" :refresh "1" )))
+    (systray :orientation "v" :icon-size 20 :class "tray" )))
 
 (defwidget end []
   (box :orientation 'v' :space-evenly false

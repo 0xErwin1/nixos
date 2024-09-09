@@ -6,6 +6,8 @@
     ../global/kitty.nix
     ../global
     ../global/window-managers/leftwm
+    ../global/audio.nix
+    ../global/themes.nix
     ./xorg
   ];
   nixpkgs.config.allowUnfree = true;
@@ -28,13 +30,23 @@
       dbeaver-bin
       arandr
       volumeicon
+      spotify
+      lxappearance
     ];
     sessionVariables = {
       EDITOR = "nvim";
+      LAPTOP = "eDP";
+      HDMI = "HDMI-A-0";
+      DISPLAY_PORT = "DisplayPort-0";
+      DISPLAY_PORT_1 = "DisplayPort-1";
     };
   };
 
   programs = {
     home-manager.enable = true;
+  };
+
+  services.syncthing = {
+    enable = true;
   };
 }
