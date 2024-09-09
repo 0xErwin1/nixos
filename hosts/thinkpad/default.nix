@@ -50,6 +50,14 @@
     };
   };
 
+  virtualisation = {
+    docker.enable = true;
+    libvirtd.enable = true;
+  };
+
+  programs.virt-manager.enable = true;
+  users.users.iperez.extraGroups = [ "libvirtd" ];
+
   security.rtkit.enable = true;
   nixpkgs.config.allowUnfree = true;
 
