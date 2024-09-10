@@ -3,5 +3,15 @@
   home.packages = with pkgs; [
     nchat
     ncdu
+    tokei
+    fastfetch
+    onefetch
+    eza
+    bat
+    zsh
+    curl
+    wget
+    btop
+    delta
   ];
 }

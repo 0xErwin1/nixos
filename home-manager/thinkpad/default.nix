@@ -19,13 +19,6 @@
     homeDirectory = "/home/iperez";
     stateVersion = "24.05";
     packages = with pkgs; [
-      eza
-      bat
-      zsh
-      curl
-      wget
-      btop
-      delta
       discord
       slack
       dbeaver-bin

@@ -29,8 +29,14 @@ in
         };
       };
     };
-    kernelModules = [ "kvm-amd" ];
+    kernelModules = [
+      "kvm-amd"
+      "thinkpad_acpi"
+    ];
     extraModulePackages = [ ];
+    extraModprobeConfig = ''
+      options thinkpad_acpi fan_control=1
+    '';
   };
 
   fileSystems."/" = {
@@ -81,6 +87,12 @@ in
           ];
         };
       };
+    };
+  };
+  services = {
+    thinkfan = {
+      enable = true;
+      smartSupport = true;
     };
   };
 

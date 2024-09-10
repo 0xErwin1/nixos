@@ -15,5 +15,7 @@
     picom
     feh
     xclip
+    thinkfan
+    ripgrep
   ];
 }
