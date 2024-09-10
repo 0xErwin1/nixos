@@ -10,6 +10,7 @@
     ../global/themes.nix
     ../global/notify.nix
     ./xorg
+    ./monitor.nix
   ];
   nixpkgs.config.allowUnfree = true;
 

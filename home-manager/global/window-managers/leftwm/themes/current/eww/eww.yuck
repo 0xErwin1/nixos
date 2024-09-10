@@ -127,7 +127,7 @@
   :geometry (geometry :x "5px" :y "2%" :width "4%" :height "96%")
   :reserve (struts :distance "5%" :side "left")
   :wm-ignore false
-    (bar :monitor 1))
+    (bar :monitor 0))
 
 (defwindow monitor-hdmi :monitor 2
   :geometry (geometry :x "5px" :y "2%" :width "4%" :height "96%")
@@ -141,11 +141,11 @@
   :wm-ignore false
     (bar :monitor 1))
 
-(defwindow laptop-with-monitor :monitor 1
+(defwindow laptop-with-monitor :monitor 0
   :geometry (geometry :x "5px" :y "2%" :width "4%" :height "96%")
   :reserve (struts :distance "5%" :side "left")
   :wm-ignore false
-    (bar :monitor 1))
+    (bar :monitor 0))
 
 (defwindow laptop :monitor 0
   :geometry (geometry :x "5px" :y "2%" :width "4%" :height "96%")

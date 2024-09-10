@@ -13,20 +13,6 @@ ln -s "$THEME_CURRENT/down" /tmp/leftwm-theme-down
 
 leftwm-command "LoadTheme $THEME_CURRENT/themes.toml"
 
-# ----| Display |----
-if [[ ($HDMI_CONNECTED || $DISPLAY_PORT_1_CONNECTED) && $DISPLAY_PORT_CONNECTED ]]; then
-  notify-send "Monitors connected"
-
-  eww -c "$THEME_CURRENT/eww" open monitor
-  eww -c "$THEME_CURRENT/eww" open monitor-hdmi
-  eww -c "$THEME_CURRENT/eww" open laptop-with-dual-monitor
-elif [[ $HDMI_CONNECTED || $DISPLAY_PORT_CONNECTED ]]; then
-  notify-send "Monitor connected"
-
-  eww -c "$THEME_CURRENT/eww" open monitor
-  eww -c "$THEME_CURRENT/eww" open laptop-with-monitor
-else
-  eww -c "$THEME_CURRENT/eww" open laptop
-fi
-
-volumeicon &
+eww -c "$THEME_CURRENT/eww" open monitor
+eww -c "$THEME_CURRENT/eww" open monitor-hdmi
+eww -c "$THEME_CURRENT/eww" open laptop-with-dual-monitor

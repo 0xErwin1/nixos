@@ -13,12 +13,16 @@ ln -s "$THEME_CURRENT/down" /tmp/leftwm-theme-down
 
 leftwm-command "LoadTheme $THEME_CURRENT/themes.toml"
 
+HDMI_CONNECTED=$(xrandr | grep "HDMI-1 connected")
+DISPLAY_PORT_1_CONNECTED=$(xrandr | grep "DP-1 connected")
+DISPLAY_PORT_2_CONNECTED=$(xrandr | grep "DP-2 connected")
+
 # ----| Display |----
-if [[ ($HDMI_CONNECTED || $DISPLAY_PORT_1_CONNECTED) && $DISPLAY_PORT_CONNECTED ]]; then
+if [[ ($HDMI_CONNECTED || $DISPLAY_PORT_1_CONNECTED) && $DISPLAY_PORT_2_CONNECTED ]]; then
   notify-send "Monitors connected"
 
-  eww -c "$THEME_CURRENT/eww" open monitor
-  eww -c "$THEME_CURRENT/eww" open monitor-hdmi
+  # eww -c "$THEME_CURRENT/eww" open monitor
+  # eww -c "$THEME_CURRENT/eww" open monitor-hdmi
   eww -c "$THEME_CURRENT/eww" open laptop-with-dual-monitor
 elif [[ $HDMI_CONNECTED || $DISPLAY_PORT_CONNECTED ]]; then
   notify-send "Monitor connected"

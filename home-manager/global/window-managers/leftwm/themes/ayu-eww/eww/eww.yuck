@@ -51,7 +51,7 @@
       (label :class "volume-percent" :text "${volumePercent}%"))))
 
 (defwidget battery []
-  (box :class 'battery' :orientation 'v' 
+  (box :class 'battery' :orientation 'v'
     (label :class "battery-icon" :text "${batteryIcon}")
     (label :class "battery-percent" :text "${batteryPercent}%")))
 
@@ -108,47 +108,21 @@
     (middle)
     (end)))
 
-; Windows
-(defwindow calendar
-  :geometry (geometry :x "80px" :y "80%" :width "9%" :height "80px")
-  (calendarWidget))
-
-;; (defwindow trayer-monitor
-;;   :monitor 0
-;;   :reserve (struts :distance "2%" :side "top")
-;;   (box ""))
-;;
-;; (defwindow trayer-laptop
-;;   :monitor 1
-;;   :reserve (struts :distance "2%" :side "top")
-;;   (box ""))
-
+;; Definir una reserva más específica para cada monitor
 (defwindow monitor :monitor 0
   :geometry (geometry :x "5px" :y "2%" :width "4%" :height "96%")
-  :reserve (struts :distance "5%" :side "left")
+  :reserve (struts :distance "5%" :side "left")  ;; Laptop monitor
   :wm-ignore false
-    (bar :monitor 1))
+  )
 
-(defwindow monitor-hdmi :monitor 2
+(defwindow monitor-hdmi :monitor 1
   :geometry (geometry :x "5px" :y "2%" :width "4%" :height "96%")
-  :reserve (struts :distance "5%" :side "left")
+  :reserve (struts :distance "5%" :side "left")  ;; HDMI monitor
   :wm-ignore false
-    (bar :monitor 2))
+  )
 
-(defwindow laptop-with-dual-monitor :monitor 1
+(defwindow laptop-with-dual-monitor :monitor 2
   :geometry (geometry :x "5px" :y "2%" :width "4%" :height "96%")
-  :reserve (struts :distance "5%" :side "left")
+  :reserve (struts :distance "5%" :side "left")  ;; DisplayPort monitor
   :wm-ignore false
-    (bar :monitor 1))
-
-(defwindow laptop-with-monitor :monitor 1
-  :geometry (geometry :x "5px" :y "2%" :width "4%" :height "96%")
-  :reserve (struts :distance "5%" :side "left")
-  :wm-ignore false
-    (bar :monitor 1))
-
-(defwindow laptop :monitor 0
-  :geometry (geometry :x "5px" :y "2%" :width "4%" :height "96%")
-  :reserve (struts :distance "5%" :side "left")
-  :wm-ignore false
-    (bar :monitor 0))
+  )
