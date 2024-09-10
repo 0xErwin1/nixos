@@ -122,7 +122,6 @@
     (command: Execute, value: "kitty", modifier: ["modkey"], key: "Return"),
     (command: Execute, value: "librewolf", modifier: ["modkey"], key: "b"),
     (command: Execute, value: "firefox", modifier: ["modkey", "Shift"], key: "b"),
-    (command: Execute, value: "speedcrunch", modifier: ["modkey"], key: "s"),
     (command: Execute, value: "obsidian", modifier: ["modkey"], key: "n"),
     (command: Execute, value: "flameshot gui", modifier: ["modkey"], key: "p"),
     (command: Execute, value: "betterlockscreen -l blur", modifier: ["modkey", "Control"], key: "l"),

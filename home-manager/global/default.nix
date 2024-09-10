@@ -8,5 +8,6 @@
     ./direnv.nix
     ./neovim.nix
     ./zathura.nix
+    ./utilities.nix
   ];
 }

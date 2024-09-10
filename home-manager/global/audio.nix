@@ -1,3 +1,7 @@
-{
-services.easyeffects.enable = true;
+{pkgs, ...}: {
+  services.easyeffects.enable = true;
+  home.packages = with pkgs; [
+    vlc
+    spotify
+  ];
 }

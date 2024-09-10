@@ -5,7 +5,9 @@
   modulesPath,
   ...
 }:
-
+let
+  wireguardConfig = import /etc/wireguard;
+in
 {
   imports = [ (modulesPath + "/installer/scan/not-detected.nix") ];
 
@@ -60,7 +62,27 @@
     };
   };
 
-  networking.useDHCP = lib.mkDefault true;
+  networking = {
+    useDHCP = lib.mkDefault true;
+    firewall.allowedTCPPorts = [ 51820 ];
+    wireguard = {
+      interfaces = {
+        wg0 = {
+          ips = [ "10.100.0.2/24" ];
+          listenPort = 51820;
+          privateKeyFile = wireguardConfig.wireguardPrivateKey;
+          peers = [
+            {
+              publicKey = "wZBcXWnY+1i67PHLBqes/x5U920dJhtJ7i1RFPhiIDQ=";
+              allowedIPs = [ "10.0.0.0/32" ];
+              endpoint = wireguardConfig.wireguardServerIP;
+              persistentKeepalive = 25;
+            }
+          ];
+        };
+      };
+    };
+  };
 
   nixpkgs.hostPlatform = lib.mkDefault "x86_64-linux";
 }
