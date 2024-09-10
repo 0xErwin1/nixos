@@ -8,6 +8,7 @@
     ../global/window-managers/leftwm
     ../global/audio.nix
     ../global/themes.nix
+    ../global/notify.nix
     ./xorg
   ];
   nixpkgs.config.allowUnfree = true;

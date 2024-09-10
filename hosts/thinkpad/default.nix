@@ -2,8 +2,9 @@
   imports = [
     ./hardware-configuration.nix
     ../globals
-    ./browser.nix
+    ../globals/gaming.nix
     ./packages.nix
+    #./monitor.nix
   ];
 
   boot = {

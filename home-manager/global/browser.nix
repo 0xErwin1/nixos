@@ -1,6 +1,9 @@
 { pkgs, inputs, ... }:
 {
   programs = {
+    brave = {
+      enable = true;
+    };
     librewolf = {
       enable = true;
       settings = {
@@ -22,6 +25,7 @@
         "sidebar.revamp" = true;
       };
     };
+
     firefox = {
       enable = true;
       profiles = {

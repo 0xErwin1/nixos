@@ -15,6 +15,5 @@
     picom
     feh
     xclip
-    steam-run
   ];
 }
