@@ -19,7 +19,6 @@
         enable = true;
         plugins = [
           "git"
-          "vi-mode"
           "fzf"
           "gh"
           "colorize"

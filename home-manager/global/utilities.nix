@@ -13,5 +13,6 @@
     wget
     btop
     delta
+    kalker
   ];
 }

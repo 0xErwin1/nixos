@@ -32,11 +32,19 @@ in
     kernelModules = [
       "kvm-amd"
       "thinkpad_acpi"
+      "dw_mmc"
     ];
     extraModulePackages = [ ];
     extraModprobeConfig = ''
       options thinkpad_acpi fan_control=1
     '';
+    supportedFilesystems = [
+      "ext4"
+      "vfat"
+      "fuse"
+      "ntfs"
+      "exfat"
+    ];
   };
 
   fileSystems."/" = {
@@ -74,13 +82,13 @@ in
     wireguard = {
       interfaces = {
         wg0 = {
-          ips = [ "10.100.0.2/24" ];
+          ips = [ "10.0.0.3/24" ];
           listenPort = 51820;
           privateKeyFile = wireguardConfig.wireguardPrivateKey;
           peers = [
             {
               publicKey = "wZBcXWnY+1i67PHLBqes/x5U920dJhtJ7i1RFPhiIDQ=";
-              allowedIPs = [ "10.0.0.0/32" ];
+              allowedIPs = [ "10.0.0.0/24" ];
               endpoint = wireguardConfig.wireguardServerIP;
               persistentKeepalive = 25;
             }

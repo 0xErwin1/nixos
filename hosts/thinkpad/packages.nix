@@ -18,4 +18,18 @@
     thinkfan
     ripgrep
   ];
+
+  programs = {
+    nix-ld = {
+      enable = true;
+      libraries = with pkgs; [
+        fuse
+        libusb
+        libva
+      ];
+    };
+    virt-manager = {
+      enable = true;
+    };
+  };
 }

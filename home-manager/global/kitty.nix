@@ -9,8 +9,7 @@
       size = 13;
     };
     extraConfig = ''
-      font_family JetBrainsMono Nerd Font
-      font_size 13
+      term xterm-256color
       enable_audio_bell no
 
       background_opacity 0.85

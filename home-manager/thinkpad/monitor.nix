@@ -7,7 +7,10 @@ let
   DP-2 = portableMonitorFingerprint;
 in
 {
-  services.autorandr.enable = true;
+  services = {
+    autorandr.enable = true;
+  };
+
   programs.autorandr = {
     enable = true;
     profiles = {

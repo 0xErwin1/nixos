@@ -34,7 +34,7 @@
 
       displayManager.sessionCommands = ''
         xinput set-prop "TPPS/2 Elan TrackPoint" "libinput Accel Speed" -0.6
-        export XCURSOR_SIZE=24
+        export XCURSOR_SIZE=12
         xmodmap -e "remove Lock = Caps_Lock"
         xmodmap -e "keycode 66 = Control_L"
         xmodmap -e "add Control = Control_L"
@@ -59,12 +59,13 @@
     redshift = {
       enable = true;
       temperature = {
-        day = 3000;
-        night = 3000;
+        day = 4000;
+        night = 4000;
       };
     };
     gnome.gnome-keyring.enable = true;
   };
+  systemd.services."NetworkManager-wait-online".enable = false;
 
   location.provider = "geoclue2";
 
@@ -72,8 +73,6 @@
     docker.enable = true;
     libvirtd.enable = true;
   };
-
-  programs.virt-manager.enable = true;
   users.users.iperez.extraGroups = [ "libvirtd" ];
 
   security.rtkit.enable = true;
