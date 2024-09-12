@@ -1,19 +1,23 @@
-{ config, pkgs, ... }:
-
+{ pkgs, ... }:
 {
+  imports = [ ../global ];
   home = {
     enableNixpkgsReleaseCheck = false;
     username = "iperez";
     homeDirectory = "/home/iperez";
     stateVersion = "24.05";
-    packages = [
-      pkgs.eza
-      pkgs.zsh
-      pkgs.curl
-      pkgs.wget
-      pkgs.btop
-      pkgs.firefox
-      pkgs.delta
+    packages = with pkgs; [
+      eza
+      zsh
+      curl
+      wget
+      btop
+      firefox
+      delta
+      chromium
+      mesa
+      libglvnd
+      mesa-demos
     ];
     sessionVariables = {
       EDITOR = "nvim";
@@ -22,19 +26,11 @@
 
   programs = {
     home-manager.enable = true;
-    git = {
+  };
+
+  services = {
+    syncthing = {
       enable = true;
-      userName = "Ignacio Perez";
     };
-    virt-manager.enable = true;
   };
-
-  virtualisation = {
-    docker.enable = true;
-    libvirtd.enable = true;
-  };
-
-  users.users.iperez.extraGroups = [ "libvirtd" ];
-
-  imports = [ ../global ];
 }

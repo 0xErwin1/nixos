@@ -5,5 +5,7 @@
   ...
 }:
 {
-  home.packages = [ inputs.nixvim.packages.${pkgs.system}.default ];
+  home.packages = [
+    inputs.nixvim.packages.${pkgs.system}.personal
+  ];
 }
