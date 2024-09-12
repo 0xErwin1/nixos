@@ -64,6 +64,8 @@
       };
     };
     gnome.gnome-keyring.enable = true;
+    ratbagd.enable = true;
+    blueman.enable = true;
   };
   systemd.services."NetworkManager-wait-online".enable = false;
 

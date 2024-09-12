@@ -1,11 +1,13 @@
 { pkgs, ... }:
 {
-  home.packages = with pkgs; [
-    lxappearance
-  ];
+  home.packages = with pkgs; [ lxappearance ];
 
   gtk = {
     enable = true;
+    font = {
+      name = "LiterationSans Nerd Font";
+      size = 12;
+    };
 
     theme = {
       name = "Nordic-darker";

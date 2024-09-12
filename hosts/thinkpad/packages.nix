@@ -17,6 +17,10 @@
     xclip
     thinkfan
     ripgrep
+    piper
+    fuse
+    fuse3
+    appimage-run
   ];
 
   programs = {

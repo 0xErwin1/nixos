@@ -33,6 +33,7 @@ in
       "kvm-amd"
       "thinkpad_acpi"
       "dw_mmc"
+      "fuse"
     ];
     extraModulePackages = [ ];
     extraModprobeConfig = ''
@@ -65,7 +66,7 @@ in
 
   hardware = {
     pulseaudio.enable = false;
-
+    bluetooth.enable = true;
     cpu.amd.updateMicrocode = lib.mkDefault config.hardware.enableRedistributableFirmware;
 
     graphics = {

@@ -14,5 +14,6 @@
     btop
     delta
     kalker
+    udiskie
   ];
 }
