@@ -59,8 +59,8 @@
     redshift = {
       enable = true;
       temperature = {
-        day = 4000;
-        night = 4000;
+        day = 5000;
+        night = 5000;
       };
     };
     gnome.gnome-keyring.enable = true;
