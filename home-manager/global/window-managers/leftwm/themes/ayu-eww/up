@@ -2,7 +2,12 @@
 
 # ----| Vars | ----
 export SCRIPT_PATH="$HOME/.config/leftwm"
-export THEME_CURRENT="$SCRIPT_PATH/themes/current"
+
+if [[ $DEBUG == 1 ]]; then
+  export THEME_CURRENT="$PWD"
+else
+  export THEME_CURRENT="$SCRIPT_PATH/themes/current"
+fi
 
 if [ -f "/tmp/leftwm-theme-down" ]; then
     /tmp/leftwm-theme-down
@@ -13,6 +18,6 @@ ln -s "$THEME_CURRENT/down" /tmp/leftwm-theme-down
 
 leftwm-command "LoadTheme $THEME_CURRENT/themes.toml"
 
-eww -c "$THEME_CURRENT/eww" open monitor
-eww -c "$THEME_CURRENT/eww" open monitor-hdmi
-eww -c "$THEME_CURRENT/eww" open laptop-with-dual-monitor
+eww -c "$THEME_CURRENT/eww" open laptop
+eww -c "$THEME_CURRENT/eww" open monitor-DP-1
+eww -c "$THEME_CURRENT/eww" open monitor-DP-2

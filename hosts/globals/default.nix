@@ -4,4 +4,5 @@
     ./locale.nix
     ./users.nix
   ];
+  nix.settings.auto-optimise-store = true;
 }

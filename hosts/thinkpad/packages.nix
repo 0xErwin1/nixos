@@ -8,6 +8,8 @@
     libGLX
     xorg.libX11
     xorg.xinput
+    xorg.xinput
+    xorg.xmodmap
     leftwm
     eww
     qimgv

@@ -2,9 +2,8 @@
 (defvar ewwDashboard "eww -c $HOME/.config/leftwm/themes/current/eww/dashboard")
 (defvar dashboardIsOpen false)
 (defvar bright false)
-(defvar volum false)
+(defvar volum false) (deflisten wmstate "leftwm state")
 
-(deflisten wmstate "leftwm state")
 
 (defpoll wifiIcon :interval "1s" "scripts/wifi --icon")
 (defpoll wifiName :interval "1s" "scripts/wifi --name")
@@ -51,7 +50,7 @@
       (label :class "volume-percent" :text "${volumePercent}%"))))
 
 (defwidget battery []
-  (box :class 'battery' :orientation 'v' 
+  (box :class 'battery' :orientation 'v'
     (label :class "battery-icon" :text "${batteryIcon}")
     (label :class "battery-percent" :text "${batteryPercent}%")))
 
@@ -90,65 +89,55 @@
 
 (defwidget top [?number monitor]
   (box :orientation 'v' :valign "start" :space-evenly false
-    ;; (dashboard :monitor monitor)
-    (workspaces :monitor monitor)))
+    (workspaces :monitor monitor)
+  )
+)
 
 (defwidget middle []
-  (box :orientation "v" :class "middle"
-    (systray :orientation "v" :spacing 0 :icon-size 20 :class "tray" )))
+  (box :orientation "v" :class "middle" :valign "center"
+    (systray
+      :spacing 10
+      :orientation "v"
+      :icon-size 20
+      :class "tray"
+      :refresh "1"
+      :space-evenly true
+      :prepend-new true
+    )
+  )
+)
 
 (defwidget end []
-  (box :orientation 'v' :space-evenly false
+  (box :orientation 'v' :space-evenly false :valign "bottom"
     (control)
     (date)))
 
 (defwidget bar [?number monitor]
-  (box :class "bar" :orientation "v" :vexpand false :hexpand false :space-evenly false
+  (box :class "bar" :orientation "v" :vexpand false :hexpand false :space-evenly true
     (top :monitor monitor)
     (middle)
     (end)))
 
-; Windows
-(defwindow calendar
-  :geometry (geometry :x "80px" :y "80%" :width "9%" :height "80px")
-  (calendarWidget))
-
-;; (defwindow trayer-monitor
-;;   :monitor 0
-;;   :reserve (struts :distance "2%" :side "top")
-;;   (box ""))
-;;
-;; (defwindow trayer-laptop
-;;   :monitor 1
-;;   :reserve (struts :distance "2%" :side "top")
-;;   (box ""))
-
-(defwindow monitor :monitor 0
-  :geometry (geometry :x "5px" :y "2%" :width "4%" :height "96%")
-  :reserve (struts :distance "5%" :side "left")
+(defwindow laptop :monitor '["eDP-1"]'
+  :geometry (geometry :x "0" :y "1%" :width "2%" :height "96%")
+  :reserve (struts :distance "3%" :side "left")
   :wm-ignore false
-    (bar :monitor 0))
+  :windowtype "dock"
+  (bar :monitor 0)
+)
 
-(defwindow monitor-hdmi :monitor 2
-  :geometry (geometry :x "5px" :y "2%" :width "4%" :height "96%")
-  :reserve (struts :distance "5%" :side "left")
+(defwindow monitor-DP-1 :monitor '["DP-1", "HDMI-1"]'
+  :geometry (geometry :x "0px" :y "1%" :width "2%" :height "96%")
+  :reserve (struts :distance "3%" :side "left")
   :wm-ignore false
-    (bar :monitor 2))
+  :windowtype "dock"
+  (bar :monitor 1)
+)
 
-(defwindow laptop-with-dual-monitor :monitor 1
-  :geometry (geometry :x "5px" :y "2%" :width "4%" :height "96%")
-  :reserve (struts :distance "5%" :side "left")
+(defwindow monitor-DP-2 :monitor '["DP-2"]'
+  :geometry (geometry :x "0px" :y "1%" :width "2%" :height "96%")
+  :reserve (struts :distance "3%" :side "left")
   :wm-ignore false
-    (bar :monitor 1))
-
-(defwindow laptop-with-monitor :monitor 0
-  :geometry (geometry :x "5px" :y "2%" :width "4%" :height "96%")
-  :reserve (struts :distance "5%" :side "left")
-  :wm-ignore false
-    (bar :monitor 0))
-
-(defwindow laptop :monitor 0
-  :geometry (geometry :x "5px" :y "2%" :width "4%" :height "96%")
-  :reserve (struts :distance "5%" :side "left")
-  :wm-ignore false
-    (bar :monitor 0))
+  :windowtype "dock"
+  (bar :monitor 2)
+)

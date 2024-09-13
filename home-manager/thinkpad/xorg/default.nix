@@ -1,4 +1,4 @@
-{  lib, ... }:
+{ pkgs, lib, ... }:
 {
   home.activation = {
     trackpoint = lib.hm.dag.entryAfter [ "xserver" ] ''

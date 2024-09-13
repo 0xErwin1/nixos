@@ -4,6 +4,8 @@ if [[ $(cat /sys/class/net/eth0/operstate) == "up" || $(cat /sys/class/net/enp*/
   DEVICE="ETHERNET"
 elif [[ $(cat /sys/class/net/w*/operstate) == "up" ]]; then 
   DEVICE="WIFI"
+elif [[ $(nmcli | grep "^tun") || $(cat /sys/class/net/wg*/operstate | grep -w "up") ]]; then
+  DEVICE="VPN"
 fi
 
 get_name() {
@@ -15,6 +17,8 @@ get_icon() {
     echo "󰈀"
   elif [[ $DEVICE == "WIFI" ]]; then
     echo ""
+  elif [[ $DEVICE == "VPN" ]]; then
+    echo "󰈁"
   else
     echo "󱚵"
   fi

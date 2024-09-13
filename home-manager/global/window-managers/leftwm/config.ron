@@ -2,6 +2,7 @@
 (
   modkey: "Mod4",
   mousekey: "Mod4",
+  backend: X11rb,
   disable_current_tag_swap: false,
   disable_tile_drag: false,
   disable_window_snap: true,
@@ -32,7 +33,7 @@
   ],
   window_rules: [
     (window_class: "firefox-nightly", window_title: None, spawn_on_tag: 1, spawn_on_workspace: None, spawn_floating: None, spawn_sticky: None, spawn_fullscreen: None, spawn_as_type: None),
-    (window_class: "firefoxdeveloperedition", window_title: None, spawn_on_tag: 1, spawn_on_workspace: None, spawn_floating: None, spawn_sticky: None, spawn_fullscreen: None, spawn_as_type: None),
+    (window_class: "firefoxdeveloperedition", window_title: None, spawn_on_tag: 4, spawn_on_workspace: None, spawn_floating: None, spawn_sticky: None, spawn_fullscreen: None, spawn_as_type: None),
     (window_class: "floorp", window_title: None, spawn_on_tag: 1, spawn_on_workspace: None, spawn_floating: None, spawn_sticky: None, spawn_fullscreen: None, spawn_as_type: None),
     (window_class: "LibreWolf", window_title: None, spawn_on_tag: 1, spawn_on_workspace: None, spawn_floating: None, spawn_sticky: None, spawn_fullscreen: None, spawn_as_type: None),
     (window_class: "Google-chrome", window_title: None, spawn_on_tag: 4, spawn_on_workspace: None, spawn_floating: None, spawn_sticky: None, spawn_fullscreen: None, spawn_as_type: None),
