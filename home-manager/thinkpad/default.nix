@@ -27,6 +27,7 @@
       volumeicon
       spotify
       lxappearance
+      obsidian
     ];
     sessionVariables = {
       EDITOR = "nvim";

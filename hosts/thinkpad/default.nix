@@ -70,13 +70,6 @@
   systemd.services."NetworkManager-wait-online".enable = false;
 
   location.provider = "geoclue2";
-
-  virtualisation = {
-    docker.enable = true;
-    libvirtd.enable = true;
-  };
-  users.users.iperez.extraGroups = [ "libvirtd" ];
-
   security.rtkit.enable = true;
   nixpkgs.config.allowUnfree = true;
 

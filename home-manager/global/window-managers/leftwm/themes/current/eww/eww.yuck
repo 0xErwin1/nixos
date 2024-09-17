@@ -116,11 +116,13 @@
   (box :class "bar" :orientation "v" :vexpand false :hexpand false :space-evenly true
     (top :monitor monitor)
     (middle)
-    (end)))
+    (end)
+  )
+)
 
 (defwindow laptop :monitor '["eDP-1"]'
   :geometry (geometry :x "0" :y "1%" :width "2%" :height "96%")
-  :reserve (struts :distance "3%" :side "left")
+  :reserve (struts :distance "4%" :side "left")
   :wm-ignore false
   :windowtype "dock"
   (bar :monitor 0)
@@ -128,7 +130,7 @@
 
 (defwindow monitor-DP-1 :monitor '["DP-1", "HDMI-1"]'
   :geometry (geometry :x "0px" :y "1%" :width "2%" :height "96%")
-  :reserve (struts :distance "3%" :side "left")
+  :reserve (struts :distance "4%" :side "left")
   :wm-ignore false
   :windowtype "dock"
   (bar :monitor 1)
@@ -136,7 +138,7 @@
 
 (defwindow monitor-DP-2 :monitor '["DP-2"]'
   :geometry (geometry :x "0px" :y "1%" :width "2%" :height "96%")
-  :reserve (struts :distance "3%" :side "left")
+  :reserve (struts :distance "4%" :side "left")
   :wm-ignore false
   :windowtype "dock"
   (bar :monitor 2)
