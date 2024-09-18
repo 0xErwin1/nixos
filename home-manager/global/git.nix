@@ -12,6 +12,10 @@
           path = "~/dev/personal/.gitconfig";
           condition = "gitdit:~/dev/personal/";
         }
+        {
+          path = "~/dev/personal/.gitconfig";
+          condition = "gitdit:~/.home-manager/";
+        }
       ];
       delta.enable = true;
     };

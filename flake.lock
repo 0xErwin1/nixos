@@ -328,11 +328,11 @@
         "plugin-treesitter": "plugin-treesitter"
       },
       "locked": {
-        "lastModified": 1725365576,
-        "narHash": "sha256-O9cc2CpALSdGCp5PNQxqjA5k99svphL3M9vtI5bBGsM=",
+        "lastModified": 1726697245,
+        "narHash": "sha256-GWen9YhOgntr4RLVRNJMsKXnYCJCVtfbaEbewInFoIc=",
         "owner": "BasileusErwin",
         "repo": "nixvim",
-        "rev": "59a7d1f09925569b62625951265f51870c30054c",
+        "rev": "d6c9ae4977464b89f0c5305f26124ed0996fd0ea",
         "type": "github"
       },
       "original": {
@@ -354,11 +354,11 @@
         "treefmt-nix": "treefmt-nix"
       },
       "locked": {
-        "lastModified": 1723460395,
-        "narHash": "sha256-KxPw+HVYphxCEnkE/KicgY46WlggCZH0HRSDNJPlpbk=",
+        "lastModified": 1726652037,
+        "narHash": "sha256-CetW5mkNqdH8nuVIwIr/cM017b85yKVyQKwwko6P580=",
         "owner": "nix-community",
         "repo": "nixvim",
-        "rev": "f823d01002acd7e1adab01680e42e31b8edc50f5",
+        "rev": "061d47f7c526946fd2d62202835032d7adaf8b65",
         "type": "github"
       },
       "original": {
@@ -409,11 +409,11 @@
     "plugin-kulala": {
       "flake": false,
       "locked": {
-        "lastModified": 1726406058,
-        "narHash": "sha256-qdiv2eOVHz8jdCWNQvnni01cu/O6GHcMSBRj+WW/MBs=",
+        "lastModified": 1726663785,
+        "narHash": "sha256-hLfnn94MkIR7ZUCjNLtZkuBHOWPHyDvBR6XkalphvX8=",
         "owner": "mistweaverco",
         "repo": "kulala.nvim",
-        "rev": "82bf4d730ce87c4b51997a69f9409e6a0d1b54fa",
+        "rev": "f373b48b62fe0da8a6bff1ed64452d27313d568b",
         "type": "github"
       },
       "original": {
@@ -505,11 +505,11 @@
     "plugin-treesitter": {
       "flake": false,
       "locked": {
-        "lastModified": 1723589432,
-        "narHash": "sha256-VgrXsVUK8aSve8IlKp3hmgwbK3emLCVfcF2kAXXKm/o=",
+        "lastModified": 1726665220,
+        "narHash": "sha256-DYVFF0uce6b0s5rsNTjTemmNT0yIW7ExizLeek4Hl08=",
         "owner": "BasileusErwin",
         "repo": "nvim-treesitter",
-        "rev": "f5b88495504c138404cb7453a0c2f4f7a18e0a52",
+        "rev": "c6ce9f46cd0cf4d48a8a139062fd8903fc9df7c7",
         "type": "github"
       },
       "original": {
