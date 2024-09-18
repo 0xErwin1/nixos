@@ -328,11 +328,11 @@
         "plugin-treesitter": "plugin-treesitter"
       },
       "locked": {
-        "lastModified": 1726620049,
-        "narHash": "sha256-zY+vQlHZkKAF2xUktZlg6k5R4+CAEUQEOIuPwb121ZY=",
+        "lastModified": 1726620434,
+        "narHash": "sha256-VfCeLa6cxWwGPoiPWZBsd93/DV2UfClXMUy1ilVeyss=",
         "owner": "BasileusErwin",
         "repo": "nixvim",
-        "rev": "d048835d724a9bfdc41454c2c2537fbd5a0a256b",
+        "rev": "594e443261122a56cbc6d08bc51b22e4fa71006c",
         "type": "github"
       },
       "original": {
@@ -505,11 +505,11 @@
     "plugin-treesitter": {
       "flake": false,
       "locked": {
-        "lastModified": 1726619945,
-        "narHash": "sha256-eXZwqH9QXquHSJfHcWJWrz7UUKQypN51Ub9V+3KVhCw=",
+        "lastModified": 1726620250,
+        "narHash": "sha256-plT+E6+8ueWRvUnM4cyBvYEWq7rhjMYe1aYD3d1Kt5M=",
         "owner": "BasileusErwin",
         "repo": "nvim-treesitter",
-        "rev": "4122e5c454752428c38b0cf46fe2c9041e27dbae",
+        "rev": "12239786cdb2e76b78917ea4a6aa108fab69b2b9",
         "type": "github"
       },
       "original": {
