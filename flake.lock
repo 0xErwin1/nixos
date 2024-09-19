@@ -328,11 +328,11 @@
         "plugin-treesitter": "plugin-treesitter"
       },
       "locked": {
-        "lastModified": 1726697245,
-        "narHash": "sha256-GWen9YhOgntr4RLVRNJMsKXnYCJCVtfbaEbewInFoIc=",
+        "lastModified": 1726699789,
+        "narHash": "sha256-xbTBuYYaUFNp6Z/EQCCd4z4M/wBah+KDzGzmN+rEvVE=",
         "owner": "BasileusErwin",
         "repo": "nixvim",
-        "rev": "d6c9ae4977464b89f0c5305f26124ed0996fd0ea",
+        "rev": "a8c5d2ca377fc39d0c5231ed5f38a150f65c8aad",
         "type": "github"
       },
       "original": {
