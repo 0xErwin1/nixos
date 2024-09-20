@@ -33,7 +33,8 @@
       autoRepeatInterval = 40;
 
       displayManager.sessionCommands = ''
-        xinput set-prop "TPPS/2 Elan TrackPoint" "libinput Accel Speed" -0.6
+        set -g visual-bell off
+        # xinput set-prop "TPPS/2 Elan TrackPoint" "libinput Accel Speed" -0.6
         export XCURSOR_SIZE=12
         xmodmap -e "remove Lock = Caps_Lock"
         xmodmap -e "keycode 66 = Control_L"

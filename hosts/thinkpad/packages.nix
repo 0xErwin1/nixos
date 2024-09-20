@@ -22,5 +22,6 @@
     thinkfan
     ripgrep
     piper
+    pwvucontrol
   ];
 }

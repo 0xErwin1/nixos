@@ -36,6 +36,7 @@ in
       "fuse"
     ];
     extraModulePackages = [ ];
+    blacklistedKernelModules = [ "pcspkr" ];
     extraModprobeConfig = ''
       options thinkpad_acpi fan_control=1
     '';

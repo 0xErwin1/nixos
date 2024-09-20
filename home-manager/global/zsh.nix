@@ -9,6 +9,12 @@
         add_newline = true;
       };
     };
+    readline = {
+      enable = true;
+      extraConfig = ''
+        set bell-style none # I hate beeps
+      '';
+    };
 
     zsh = {
       enable = true;

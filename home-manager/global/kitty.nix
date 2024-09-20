@@ -4,13 +4,15 @@
   programs.kitty = {
     enable = true;
     shellIntegration.enableZshIntegration = true;
+    settings = {
+      enable_audio_bell = false;
+    };
     font = {
       name = "JetBrains Mono Nerd Font";
       size = 13;
     };
     extraConfig = ''
       term xterm-256color
-      enable_audio_bell no
 
       background_opacity 0.85
 

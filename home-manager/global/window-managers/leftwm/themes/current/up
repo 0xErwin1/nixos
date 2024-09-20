@@ -18,6 +18,6 @@ ln -s "$THEME_CURRENT/down" /tmp/leftwm-theme-down
 
 leftwm-command "LoadTheme $THEME_CURRENT/themes.toml"
 
-#eww -c "$THEME_CURRENT/eww" open laptop
-eww -c "$THEME_CURRENT/eww" open monitor-DP-1
+eww -c "$THEME_CURRENT/eww" open laptop
+#eww -c "$THEME_CURRENT/eww" open monitor-DP-1
 # eww -c "$THEME_CURRENT/eww" open monitor-DP-2
