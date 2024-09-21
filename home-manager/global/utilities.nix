@@ -15,5 +15,7 @@
     delta
     kalker
     udiskie
+    fd
+    ripgrep
   ];
 }
