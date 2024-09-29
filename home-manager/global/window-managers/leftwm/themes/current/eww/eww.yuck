@@ -11,8 +11,7 @@
 (defpoll batteryIcon :interval "1s" "scripts/battery --icon")
 (defpoll batteryPercent :interval "1s" "scripts/battery --percent")
 (defpoll volumeIcon :interval "1s" "scripts/volume --icon")
-(defpoll volumePercent :interval "1s" "scripts/volume --percent")
-(defpoll brightnessPercent :interval "1s" "scripts/brightness --percent")
+(defpoll volumePercent :interval "1s" "scripts/volume --percent") (defpoll brightnessPercent :interval "1s" "scripts/brightness --percent")
 (defpoll brightnessIcon :interval "1s" "scripts/brightness --icon")
 (defpoll hour	:interval "1s"	"date '+%H'")
 (defpoll min	:interval "1s"	"date '+%M'")
@@ -120,7 +119,7 @@
   )
 )
 
-(defwindow laptop :monitor '["eDP-1"]'
+(defwindow laptop :monitor '["eDP"]'
   :geometry (geometry :x "0" :y "1%" :width "2%" :height "96%")
   :reserve (struts :distance "4%" :side "left")
   :wm-ignore false
@@ -128,7 +127,7 @@
   (bar :monitor 0)
 )
 
-(defwindow monitor-DP-1 :monitor '["DP-1", "HDMI-1"]'
+(defwindow monitor-DP-1 :monitor '["DP-1", "HDMI-A-0"]'
   :geometry (geometry :x "0px" :y "1%" :width "2%" :height "96%")
   :reserve (struts :distance "4%" :side "left")
   :wm-ignore false

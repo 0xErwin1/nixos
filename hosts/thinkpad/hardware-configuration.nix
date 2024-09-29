@@ -20,6 +20,7 @@ in
         "usb_storage"
         "sd_mod"
         "rtsx_pci_sdmmc"
+        "amdgpu"
       ];
       kernelModules = [ ];
       luks = {
@@ -34,6 +35,7 @@ in
       "thinkpad_acpi"
       "dw_mmc"
       "fuse"
+      "amdgpu"
     ];
     extraModulePackages = [ ];
     blacklistedKernelModules = [ "pcspkr" ];
@@ -76,6 +78,14 @@ in
       extraPackages = [ pkgs.amdvlk ];
       extraPackages32 = [ pkgs.driversi686Linux.amdvlk ];
     };
+    opengl = {
+      enable = true;
+      extraPackages = with pkgs; [
+        amdvlk
+        rocm-opencl-icd
+        rocm-opencl-runtime
+      ];
+    };
   };
 
   networking = {
@@ -103,6 +113,10 @@ in
     thinkfan = {
       enable = true;
       smartSupport = true;
+    };
+    xserver = {
+      enable = true;
+      videoDrivers = [ "amdgpu" ];
     };
   };
 

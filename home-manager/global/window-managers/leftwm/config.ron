@@ -34,6 +34,7 @@
   window_rules: [
     (window_class: "firefox-nightly", window_title: None, spawn_on_tag: 1, spawn_on_workspace: None, spawn_floating: None, spawn_sticky: None, spawn_fullscreen: None, spawn_as_type: None),
     (window_class: "firefoxdeveloperedition", window_title: None, spawn_on_tag: 4, spawn_on_workspace: None, spawn_floating: None, spawn_sticky: None, spawn_fullscreen: None, spawn_as_type: None),
+    (window_class: "firefox-aurora", window_title: None, spawn_on_tag: 4, spawn_on_workspace: None, spawn_floating: None, spawn_sticky: None, spawn_fullscreen: None, spawn_as_type: None),
     (window_class: "floorp", window_title: None, spawn_on_tag: 1, spawn_on_workspace: None, spawn_floating: None, spawn_sticky: None, spawn_fullscreen: None, spawn_as_type: None),
     (window_class: "LibreWolf", window_title: None, spawn_on_tag: 1, spawn_on_workspace: None, spawn_floating: None, spawn_sticky: None, spawn_fullscreen: None, spawn_as_type: None),
     (window_class: "Google-chrome", window_title: None, spawn_on_tag: 4, spawn_on_workspace: None, spawn_floating: None, spawn_sticky: None, spawn_fullscreen: None, spawn_as_type: None),
@@ -122,7 +123,7 @@
     (command: Execute, value: "rofi -show", modifier: ["modkey", "Shift"], key: "m"),
     (command: Execute, value: "kitty", modifier: ["modkey"], key: "Return"),
     (command: Execute, value: "librewolf", modifier: ["modkey"], key: "b"),
-    (command: Execute, value: "firefox", modifier: ["modkey", "Shift"], key: "b"),
+    (command: Execute, value: "firefox-developer-edition", modifier: ["modkey", "Shift"], key: "b"),
     (command: Execute, value: "obsidian", modifier: ["modkey"], key: "n"),
     (command: Execute, value: "flameshot gui", modifier: ["modkey"], key: "p"),
     (command: Execute, value: "betterlockscreen -l blur", modifier: ["modkey", "Control"], key: "l"),

@@ -23,5 +23,8 @@
     ripgrep
     piper
     pwvucontrol
+    unzip
+    gzip
+    zip
   ];
 }
