@@ -31,11 +31,11 @@
       },
       "locked": {
         "dir": "pkgs/firefox-addons",
-        "lastModified": 1727247223,
-        "narHash": "sha256-Q0K2S5lZpZTLjw7NWXE0b15pxIVh/jBtZeKnXbZoBds=",
+        "lastModified": 1727347763,
+        "narHash": "sha256-UPqm89SvmXiDR9dEQlhtGY0QYerxdAJNWidiWsXTq6s=",
         "owner": "rycee",
         "repo": "nur-expressions",
-        "rev": "139fed712a9e285e3500a047a35753502cf678da",
+        "rev": "b943fa9c8f55528ec579ae112aac95d4c061e160",
         "type": "gitlab"
       },
       "original": {
@@ -255,11 +255,11 @@
     },
     "nixpkgs": {
       "locked": {
-        "lastModified": 1726937504,
-        "narHash": "sha256-bvGoiQBvponpZh8ClUcmJ6QnsNKw0EMrCQJARK3bI1c=",
+        "lastModified": 1727122398,
+        "narHash": "sha256-o8VBeCWHBxGd4kVMceIayf5GApqTavJbTa44Xcg5Rrk=",
         "owner": "nixos",
         "repo": "nixpkgs",
-        "rev": "9357f4f23713673f310988025d9dc261c20e70c6",
+        "rev": "30439d93eb8b19861ccbe3e581abf97bdc91b093",
         "type": "github"
       },
       "original": {
@@ -328,11 +328,11 @@
         "plugin-treesitter": "plugin-treesitter"
       },
       "locked": {
-        "lastModified": 1727262247,
-        "narHash": "sha256-OtgFYiCJU6yltG4N+kMjVbE3oIaHdxcyfyaMLhPodwk=",
+        "lastModified": 1727354677,
+        "narHash": "sha256-7C9S6hcZ9trgHFI2wX3RXtiQ5qxoEVdoQtts+EIuUwI=",
         "owner": "BasileusErwin",
         "repo": "nixvim",
-        "rev": "6c966b6c32863c453164f3f2a8147c284e3a453c",
+        "rev": "5529d901f7c2e1558001448abbcce31e9e44eb6c",
         "type": "github"
       },
       "original": {
