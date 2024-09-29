@@ -34,6 +34,9 @@
           reminder = true;
           report = true;
         };
+        data = {
+          location = "~/.task";
+        };
       };
     };
   };
