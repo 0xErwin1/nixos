@@ -1,9 +1,9 @@
 (defvar eww "eww -c $HOME/.config/leftwm/themes/current/eww")
-(defvar ewwDashboard "eww -c $HOME/.config/leftwm/themes/current/eww/dashboard")
-(defvar dashboardIsOpen false)
 (defvar bright false)
-(defvar volum false) (deflisten wmstate "leftwm state")
+(defvar volum false)
+(deflisten wmstate "leftwm state")
 
+(defpoll notificationsIsPaused :interval "1s" "dunstctl is-paused")
 
 (defpoll wifiIcon :interval "1s" "scripts/wifi --icon")
 (defpoll wifiName :interval "1s" "scripts/wifi --name")
@@ -25,13 +25,6 @@
 (defpoll calendarMonth :interval "10h" "scripts/calendar")
 (defpoll calendarYear :interval "10h" "date '+%Y'")
 
-(defwidget dashboard [?number monitor]
-  (box :orientation "v"
-    (button :orientation "v"
-      :onclick
-        "${ewwDashboard} ${dashboardIsOpen ? "close" : "open"} dashboard-${monitor == 0 ? "laptop" : "monitor"} && ${eww} update dashboardIsOpen=${!dashboardIsOpen}"
-        (label :class "dashboard" :text ""))))
-
 (defwidget workspaces [?number monitor]
   (box :orientation 'v' :class "workspaces" (for tag in '${wmstate.workspaces[monitor].tags}'
          (button
@@ -41,6 +34,14 @@
                   tag.urgent ? "workspace-urgent" :
                   "workspace-empty"}"
          "${tag.name}"))))
+
+(defwidget notifications []
+  (box :class "notifications" :orientation "v" :space-evenly false
+    (box :class "notifications-inner-box" :orientation "v"
+      (label :class "${notificationsIsPaused ? "notifications-icon-pause": "notifications-icon"}" :text "${notificationsIsPaused ? " " : "󰂚 " }")
+    )
+  )
+)
 
 (defwidget volume []
   (box :class "volume" :space-evenly false
@@ -81,6 +82,7 @@
 
 (defwidget control []
   (box :orientation 'v' :class 'control' :space-evenly false
+    (notifications)
     (brightness)
     (battery)
     (volume)

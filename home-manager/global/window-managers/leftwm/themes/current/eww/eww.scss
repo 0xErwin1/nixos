@@ -20,14 +20,6 @@
   border-radius: 20px;
 }
 
-.dashboard {
-  background-color: $grey;
-  margin: .9rem .5rem 0 .5rem;
-  font-size : 20px;
-  border-radius: 10px;
-  color: $cyan;
-}
-
 .workspaces {
 	font-weight : bold;
 	font-size : 20px;
@@ -64,7 +56,7 @@
 
 .control {
   // up right bottom left
-  margin-bottom: 1rem;
+  margin: -1rem 0 1rem 0;
   border-radius: 10px;
   font-size: 1.6em;
 }
@@ -113,6 +105,30 @@
 .battery-percent {
   font-weight: bold;
   font-size: 17px;
+}
+
+.notifications {
+  // up right bottom left
+  margin: 0 0 .2rem .8rem;
+
+  .notifications-inner-box {
+    padding: .2rem .2rem .2rem .4rem;
+    border-radius: 10px;
+    background-color: $background;
+    color: $foreground;
+    font-size: 1.2em;
+    font-weight: bold;
+
+    .notifications-icon {
+      font-size: 20px;
+      color: $cyan;
+    }
+    .notifications-icon-pause {
+      font-size: 20px;
+      margin: 0 0 0 -0.6rem;
+      color: $red;
+    }
+  }
 }
 
 .date {
