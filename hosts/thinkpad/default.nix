@@ -67,6 +67,9 @@
     gnome.gnome-keyring.enable = true;
     ratbagd.enable = true;
     blueman.enable = true;
+    clamav = {
+      scanner.enable = true;
+    };
   };
   systemd.services."NetworkManager-wait-online".enable = false;
 

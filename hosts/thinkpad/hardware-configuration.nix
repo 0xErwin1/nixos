@@ -75,16 +75,12 @@ in
     graphics = {
       enable = true;
       enable32Bit = true;
-      extraPackages = [ pkgs.amdvlk ];
-      extraPackages32 = [ pkgs.driversi686Linux.amdvlk ];
-    };
-    opengl = {
-      enable = true;
       extraPackages = with pkgs; [
-        amdvlk
+        pkgs.amdvlk
         rocm-opencl-icd
         rocm-opencl-runtime
       ];
+      extraPackages32 = [ pkgs.driversi686Linux.amdvlk ];
     };
   };
 
