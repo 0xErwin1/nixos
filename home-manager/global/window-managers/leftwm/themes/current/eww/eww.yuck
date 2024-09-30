@@ -127,7 +127,7 @@
   (bar :monitor 0)
 )
 
-(defwindow monitor-DP-1 :monitor '["DP-1", "HDMI-A-0"]'
+(defwindow monitor-DP-1 :monitor '["DisplayPort-0","DP-0", "HDMI-A-0"]'
   :geometry (geometry :x "0px" :y "1%" :width "2%" :height "96%")
   :reserve (struts :distance "4%" :side "left")
   :wm-ignore false
@@ -135,7 +135,7 @@
   (bar :monitor 1)
 )
 
-(defwindow monitor-DP-2 :monitor '["DP-2"]'
+(defwindow monitor-DP-2 :monitor '["DisplayPort-1", "DP-1"]'
   :geometry (geometry :x "0px" :y "1%" :width "2%" :height "96%")
   :reserve (struts :distance "4%" :side "left")
   :wm-ignore false
