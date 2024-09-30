@@ -127,6 +127,7 @@
     (command: Execute, value: "obsidian", modifier: ["modkey"], key: "n"),
     (command: Execute, value: "flameshot gui", modifier: ["modkey"], key: "p"),
     (command: Execute, value: "betterlockscreen -l blur", modifier: ["modkey", "Control"], key: "l"),
+    (command: Execute, value: "dunstctl set-paused toggle", modifier: [], key: "XF86XK_Messenger"),
     (command: Execute, value: "pamixer --decrease 5", modifier: [], key: "XF86XK_AudioLowerVolume"),
     (command: Execute, value: "pamixer --increase 5", modifier: [], key: "XF86XK_AudioRaiseVolume"),
     (command: Execute, value: "pamixer --toggle-mute", modifier: [], key: "XF86XK_AudioMute"),
