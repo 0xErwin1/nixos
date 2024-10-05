@@ -6,6 +6,8 @@ let
   eDP = laptopFingerprint;
   DP-1 = monitorFingerprint;
   DP-2 = portableMonitorFingerprint;
+  DisplayPort-0 = monitorFingerprint;
+  DisplayPort-1 = portableMonitorFingerprint;
   HDMI-1 = hdmiFingerprint;
   HDMI-A-0 = hdmiFingerprint;
 in
@@ -54,6 +56,30 @@ in
         };
       };
 
+      laptop-displayports = {
+        fingerprint = {
+          inherit eDP DisplayPort-0 DisplayPort-1;
+        };
+        config = {
+          eDP = {
+            rate = "60.00";
+            mode = "1920x1080";
+            position = "0x0"; # Left of DP-1
+          };
+          DisplayPort-0 = {
+            rate = "75.00";
+            mode = "1920x1080";
+            position = "1920x0"; # Right of laptop
+            primary = true;
+          };
+          DisplayPort-1 = {
+            rate = "60.00";
+            mode = "1920x1080";
+            position = "0x1080"; # Below DP-1
+          };
+        };
+      };
+
       laptop-hdmi = {
         fingerprint = {
           inherit eDP HDMI-A-0;
@@ -62,13 +88,13 @@ in
           eDP = {
             rate = "60.00";
             mode = "1920x1080";
-            position = "0x0";
+            position = "0x1080";
             primary = true;
           };
           HDMI-A-0 = {
             rate = "60.00";
             mode = "1920x1080";
-            position = "0x1080"; # Below laptop
+            position = "0x0";
           };
         };
       };

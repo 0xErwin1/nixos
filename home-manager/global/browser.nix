@@ -1,5 +1,9 @@
-{ pkgs, inputs, ... }:
+{ pkgs, ... }:
 {
+  home.packages = with pkgs; [
+    thunderbird
+  ];
+
   programs = {
     brave = {
       enable = true;
@@ -9,7 +13,7 @@
       enable = true;
       settings = {
         "webgl.disabled" = false;
-        "privacy.resistFingerprinting" = false;
+        "privacy.resistFingerprinting" = true;
         "privacy.clearOnShutdown.history" = false;
         "privacy.clearOnShutdown.cookies" = false;
         "privacy.clearHistory.cache" = false;
