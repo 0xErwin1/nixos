@@ -1,7 +1,7 @@
 { pkgs, ... }:
 {
   imports = [ ./virtualisation.nix ];
-
+  programs.hyprland.enable = true;
   environment.systemPackages = with pkgs; [
     wget
     mesa
