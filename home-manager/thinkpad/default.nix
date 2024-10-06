@@ -28,6 +28,8 @@
       spotify
       lxappearance
       obsidian
+      udevil
+      simple-mtpfs
     ];
     sessionVariables = {
       EDITOR = "nvim";

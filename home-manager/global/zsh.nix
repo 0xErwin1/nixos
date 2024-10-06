@@ -12,7 +12,7 @@
     readline = {
       enable = true;
       extraConfig = ''
-        set bell-style none # I hate beeps
+        set bell-style none
       '';
     };
 

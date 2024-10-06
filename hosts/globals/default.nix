@@ -1,3 +1,4 @@
+{ pkgs, ... }:
 {
   nixpkgs.config.allowUnfree = true;
   imports = [
@@ -5,4 +6,8 @@
     ./users.nix
   ];
   nix.settings.auto-optimise-store = true;
+
+  environment.systemPackages = with pkgs; [
+    usbutils
+  ];
 }
