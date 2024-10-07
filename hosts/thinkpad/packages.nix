@@ -1,4 +1,5 @@
 { pkgs, ... }:
+
 {
   imports = [ ./virtualisation.nix ];
   programs.hyprland.enable = true;
@@ -26,5 +27,6 @@
     unzip
     gzip
     zip
+
   ];
 }

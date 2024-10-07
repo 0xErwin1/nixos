@@ -1,10 +1,21 @@
+{ inputs, ... }:
 let
   bind = import ./bind.nix;
+  rules = import ./rules.nix;
 in
 {
+  imports = [
+    ./dependencies.nix
+  ];
+
   wayland.windowManager.hyprland = {
     enable = true;
     xwayland.enable = true;
+
+    plugins = [
+      inputs.pyprland.packages.x86_64-linux.default
+    ];
+
     settings = {
       env = [
         "XCURSOR_SIZE, 24"
@@ -29,8 +40,21 @@ in
         allow_tearing = false;
       };
 
-      animation = {
+      animations = {
         enabled = false;
+      };
+
+      decoration = {
+        rounding = 5;
+        blur = {
+          enabled = false;
+          size = 3;
+          passes = 1;
+        };
+
+        drop_shadow = true;
+        shadow_range = 50;
+        shadow_render_power = 9;
       };
 
       "$mod" = "SUPER";
@@ -39,7 +63,11 @@ in
       "$workBrowser" = "firefox-developer-edition";
 
       inherit (bind) bind;
-      inherit (bind) binde;
+      inherit (bind) bindel;
+      inherit (bind) bindm;
+
+      inherit (rules) windowrulev2;
+      inherit (rules) windowrulev1;
     };
   };
 }

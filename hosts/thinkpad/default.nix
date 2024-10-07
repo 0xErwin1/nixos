@@ -1,4 +1,6 @@
 {
+  nixpkgs.config.allowUnfree = true;
+
   imports = [
     ./hardware-configuration.nix
     ../globals
@@ -40,9 +42,7 @@
         xmodmap -e "keycode 66 = Control_L"
         xmodmap -e "add Control = Control_L"
       '';
-      windowManager.leftwm = {
-        enable = true;
-      };
+      windowManager.leftwm.enable = true;
     };
     libinput.enable = true;
     pipewire = {
@@ -53,9 +53,7 @@
       };
       pulse.enable = true;
     };
-    displayManager = {
-      ly.enable = true;
-    };
+    displayManager.ly.enable = true;
     geoclue2.enable = true;
     redshift = {
       enable = true;
@@ -70,12 +68,14 @@
     clamav = {
       scanner.enable = true;
     };
+    udisks2 = {
+      enable = true;
+    };
   };
   systemd.services."NetworkManager-wait-online".enable = false;
 
   location.provider = "geoclue2";
   security.rtkit.enable = true;
-  nixpkgs.config.allowUnfree = true;
 
   system.stateVersion = "24.05";
 }
