@@ -29,6 +29,7 @@ in
         "ELECTRON_OZONE_PLATFORM_HINT, auto"
         "MOZ_ENABLE_WAYLAND, 1"
       ];
+      monitor = ",preferred,auto,auto";
 
       general = {
         gaps_in = 5;
