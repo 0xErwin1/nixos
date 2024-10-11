@@ -59,7 +59,7 @@
       enable = true;
       temperature = {
         day = 5000;
-        night = 5000;
+        night = 4000;
       };
     };
     gnome.gnome-keyring.enable = true;
