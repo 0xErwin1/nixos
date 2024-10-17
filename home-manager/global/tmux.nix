@@ -12,16 +12,11 @@ in
   programs.tmux = {
     shortcut = "a";
     enable = true;
+    terminal = "screen-256color";
+    keyMode = "vi";
+    mouse = true;
+    prefix = "C-a";
     extraConfig = ''
-      set -g default-terminal "tmux-256color"
-      set -ga terminal-overrides ",xterm-256color:Tc"
-
-      set -g mouse on
-
-      unbind C-b
-      set -g prefix C-a
-      bind C-a send-prefix
-
       set -g base-index 1
       set -g pane-base-index 1
       set-window-option -g pane-base-index 1
