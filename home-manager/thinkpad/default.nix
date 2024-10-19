@@ -10,6 +10,7 @@
     ../global/audio.nix
     ../global/themes.nix
     ../global/notify.nix
+    ../global/database.nix
     ./xorg
     ./monitor.nix
   ];

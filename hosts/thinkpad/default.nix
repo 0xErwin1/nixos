@@ -77,5 +77,5 @@
   location.provider = "geoclue2";
   security.rtkit.enable = true;
 
-  system.stateVersion = "24.05";
+  system.stateVersion = "unstable";
 }
