@@ -1,8 +1,25 @@
+{ lib, ... }:
+let
+  fzfDefaultOptions = [
+    "--height='40%'"
+    "--border='none'"
+    "--color=fg:#d0d0d0,fg+:#d0d0d0,bg:#121212,bg+:#262626"
+    "--color=hl:#5f87af,hl+:#5fd7ff,info:#afaf87,marker:#87ff00"
+    "--color=prompt:#d7005f,spinner:#af5fff,pointer:#af5fff,header:#87afaf"
+    "--color=border:#262626,label:#aeaeae,query:#d9d9d9"
+  ];
+  fzfDefaultCommand = "fd --type f --hidden --follow --exclude .git";
+in
 {
   programs = {
     eza.enable = true;
     bat.enable = true;
-    fzf.enable = true;
+    fzf = {
+      enable = true;
+      enableZshIntegration = true;
+      defaultOptions = fzfDefaultOptions;
+      defaultCommand = fzfDefaultCommand;
+    };
     starship = {
       enable = false;
       settings = {
@@ -22,29 +39,13 @@
       enableCompletion = true;
       syntaxHighlighting.enable = true;
       initExtra = ''
-        DEVELOPMENT="$HOME/dev"
-        WORK_DIR="$HOME/dev/work"
-        HOULAK_DIR="$HOME/dev/work/Houlak"
-        PERSONAL_DIR="$HOME/dev/personal"
-        IGNIS_DIR="$HOME/dev/personal/Ignis"
-        HOME_MANAGER_DIR="$HOME/.home-manager"
-
-        function docker_connect() {
-          if docker ps >/dev/null 2>&1; then
-            container=$(docker ps | awk '{if (NR!=1) {print $NF}}' | fzf)
-
-            if [[ -n $container ]]; then
-              container_id=$(echo "$container" | awk -F ': ' '{print $1}')
-
-              docker exec -it "$container_id" /bin/sh
-            else
-              echo "No container selected"
-            fi
-
-          else
-            echo "Docker is not running"
-          fi
-        }
+        export FZF_DEFAULTS_OPTS="${lib.concatStringsSep " " fzfDefaultOptions}"
+        export DEVELOPMENT="$HOME/dev"
+        export WORK_DIR="$HOME/dev/work"
+        export HOULAK_DIR="$HOME/dev/work/Houlak"
+        export PERSONAL_DIR="$HOME/dev/personal"
+        export IGNIS_DIR="$HOME/dev/personal/Ignis"
+        export HOME_MANAGER_DIR="$HOME/.home-manager"
       '';
       oh-my-zsh = {
         enable = true;
@@ -83,6 +84,9 @@
         upt = "docker compose -f docker-compose.test.yml up --abort-on-container-exit";
         down = "docker compose down";
         downt = "docker compose -f docker-compose.test.yml down";
+
+        ssh_fzf = ''ssh "$(awk "/^Host / {print \$2}" ~/.ssh/config | fzf)"'';
+        docker_connect = ''docker ps >/dev/null 2>&1 && docker exec -it $(docker ps --format "{{.Names}}" | fzf) /bin/sh || echo "Docker is not running"'';
 
         gs = "git status -sb";
       };

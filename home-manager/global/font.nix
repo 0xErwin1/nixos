@@ -16,7 +16,8 @@
       powerline-symbols
       noto-fonts-emoji
       noto-fonts
-      noto-fonts-cjk
+      noto-fonts-cjk-sans
+      noto-fonts-cjk-serif
       liberation_ttf
       fira-code
       fira-code-symbols
