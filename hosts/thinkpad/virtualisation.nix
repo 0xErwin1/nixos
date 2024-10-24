@@ -11,7 +11,7 @@
       enable = true;
       libraries = with pkgs; [
         fuse
-        libusb
+        libusb1
         libva
       ];
     };
