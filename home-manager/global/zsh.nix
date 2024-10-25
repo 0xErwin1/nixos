@@ -1,12 +1,12 @@
 { lib, ... }:
 let
   fzfDefaultOptions = [
-    "--height='40%'"
-    "--border='none'"
-    "--color=fg:#d0d0d0,fg+:#d0d0d0,bg:#121212,bg+:#262626"
-    "--color=hl:#5f87af,hl+:#5fd7ff,info:#afaf87,marker:#87ff00"
-    "--color=prompt:#d7005f,spinner:#af5fff,pointer:#af5fff,header:#87afaf"
-    "--color=border:#262626,label:#aeaeae,query:#d9d9d9"
+    # "--height='40%'"
+    # "--border='none'"
+    # "--color=fg:#d0d0d0,fg+:#d0d0d0,bg:#121212,bg+:#262626"
+    # "--color=hl:#5f87af,hl+:#5fd7ff,info:#afaf87,marker:#87ff00"
+    # "--color=prompt:#d7005f,spinner:#af5fff,pointer:#af5fff,header:#87afaf"
+    # "--color=border:#262626,label:#aeaeae,query:#d9d9d9"
   ];
   fzfDefaultCommand = "fd --type f --hidden --follow --exclude .git";
 in

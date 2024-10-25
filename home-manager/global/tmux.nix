@@ -12,7 +12,7 @@ in
   programs.tmux = {
     shortcut = "a";
     enable = true;
-    terminal = "screen-256color";
+    terminal = "xterm-256color";
     keyMode = "vi";
     mouse = true;
     prefix = "C-a";
