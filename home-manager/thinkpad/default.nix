@@ -13,6 +13,7 @@
     ../global/database.nix
     ./xorg
     ./monitor.nix
+    ./picom.nix
   ];
   nixpkgs.config.allowUnfree = true;
 

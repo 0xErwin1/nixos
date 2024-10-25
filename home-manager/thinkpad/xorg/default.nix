@@ -32,7 +32,6 @@
     udiskie -t &
     nm-applet &
     blueman-adapters &
-    picom &
     battery &
     volumeicon &
   '';
