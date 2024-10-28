@@ -76,9 +76,10 @@ in
       enable = true;
       enable32Bit = true;
       extraPackages = with pkgs; [
-        pkgs.amdvlk
-        rocm-opencl-icd
-        rocm-opencl-runtime
+        amdvlk
+        libva-utils
+        rocmPackages.clr.icd
+        clinfo
       ];
       extraPackages32 = [ pkgs.driversi686Linux.amdvlk ];
     };
@@ -96,7 +97,10 @@ in
           peers = [
             {
               publicKey = "wZBcXWnY+1i67PHLBqes/x5U920dJhtJ7i1RFPhiIDQ=";
-              allowedIPs = [ "10.0.0.0/24" "10.0.1.0/24" ];
+              allowedIPs = [
+                "10.0.0.0/24"
+                "10.0.1.0/24"
+              ];
               endpoint = wireguardConfig.wireguardServerIP;
               persistentKeepalive = 25;
             }
@@ -113,6 +117,15 @@ in
     xserver = {
       enable = true;
       videoDrivers = [ "amdgpu" ];
+    };
+    clamav = {
+      daemon = {
+        enable = true;
+        settings = {
+          MaxThreads = 2;
+        };
+      };
+      updater.enable = true;
     };
   };
 
