@@ -2,7 +2,7 @@
 
 if [[ $(cat /sys/class/net/eth0/operstate) == "up" || $(cat /sys/class/net/enp*/operstate | grep -w "up") ]];  then
   DEVICE="ETHERNET"
-elif [[ $(cat /sys/class/net/w*/operstate) == "up" || $(cat /sys/class/net/enp*/operstate | grep -w "up") ]]; then
+elif [[ $(cat /sys/class/net/w*/operstate) == "up" || $(cat /sys/class/net/w*/operstate | grep -w "up") ]]; then
   DEVICE="WIFI"
 elif [[ $(nmcli | grep "^tun") || $(cat /sys/class/net/wg*/operstate | grep -w "up") ]]; then
   DEVICE="VPN"
