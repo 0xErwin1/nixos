@@ -11,6 +11,7 @@ let
   fzfDefaultCommand = "fd --type f --hidden --follow --exclude .git";
 in
 {
+  imports = [ ./starship.nix ];
   programs = {
     eza.enable = true;
     bat.enable = true;
@@ -19,12 +20,6 @@ in
       enableZshIntegration = true;
       defaultOptions = fzfDefaultOptions;
       defaultCommand = fzfDefaultCommand;
-    };
-    starship = {
-      enable = false;
-      settings = {
-        add_newline = true;
-      };
     };
     readline = {
       enable = true;
@@ -46,6 +41,7 @@ in
         export PERSONAL_DIR="$HOME/dev/personal"
         export IGNIS_DIR="$HOME/dev/personal/Ignis"
         export HOME_MANAGER_DIR="$HOME/.home-manager"
+        export NOTES_DIR="$HOME/.notes"
       '';
       oh-my-zsh = {
         enable = true;
@@ -64,7 +60,6 @@ in
           "sdk"
           "rust"
         ];
-        theme = "af-magic";
       };
       shellAliases = {
         hwork = "cd $HOULAK_DIR";
@@ -73,7 +68,9 @@ in
         wdir = "cd $WORK_DIR";
         dev = "cd $DEVELOPMENT";
         hmanager = "cd $HOME_MANAGER_DIR";
+        notes = "cd $NOTES_DIR";
 
+        fnote = "vi $(mktemp -p $NOTES_DIR)";
         vi = "nvim $1";
         "v." = "nvim .";
         ls = "eza --group-directories-first --icons";
@@ -86,7 +83,7 @@ in
         downt = "docker compose -f docker-compose.test.yml down";
 
         ssh_fzf = ''ssh "$(awk "/^Host / {print \$2}" ~/.ssh/config | fzf)"'';
-        docker_connect = ''docker ps >/dev/null 2>&1 && docker exec -it $(docker ps --format "{{.Names}}" | fzf) /bin/sh || echo "Docker is not running"'';
+        docker_connect = ''docker ps >/dev/null 2>&1 || echo "Docker is not running" && docker exec -it $(docker ps --format "{{.Names}}" | fzf) /bin/sh'';
 
         gs = "git status -sb";
       };

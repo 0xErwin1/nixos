@@ -17,6 +17,17 @@
     udiskie
     fd
     ripgrep
+    (rustPlatform.buildRustPackage rec {
+      pname = "tomlq";
+      version = "0.1.6";
+      src = fetchFromGitHub {
+        owner = "cryptaliagy";
+        repo = "tomlq";
+        rev = "${version}";
+        sha256 = "sha256-g8xjz8qCTiulTwcEbLTHYldw4PI+4ZfCOMJs+J6L1C4=";
+      };
+      cargoHash = "sha256-/cepTVJoBM1LYZkFpH9UCvE74cSszHDaeThsZksQ1P8=";
+    })
   ];
 
   programs = {
