@@ -63,37 +63,37 @@
       c = {
         disabled = false;
         symbol = " ";
-        format = "[$symbol($version(-$name) )]($style) ";
+        format = "[$symbol($version(-$name))]($style) ";
       };
       cmake = {
-        format = "[$symbol($version )]($style) ";
+        format = "[$symbol($version)]($style) ";
         symbol = " ";
       };
       python = {
-        format = "[$symbol$pyenv_prefix($version )(\\($virtualenv\\) )]($style) ";
+        format = "[$symbol$pyenv_prefix($version)(\\($virtualenv\\) )]($style) ";
         symbol = " ";
         pyenv_prefix = " ";
       };
       nodejs = {
-        format = "[$symbol($version )]($style) ";
+        format = "[$symbol($version)]($style) ";
         symbol = "󰎙 ";
       };
       php = {
-        format = "[$symbol($version )]($style) ";
+        format = "[$symbol($version)]($style) ";
         symbol = " ";
       };
       java = {
-        format = "[$symbol($version )]($style) ";
+        format = "[$symbol($version)]($style) ";
         style = "red dimmed bold";
         symbol = " ";
       };
       rust = {
         symbol = "󱘗 ";
-        format = "[$symbol($version )]($style)";
+        format = "[$symbol($version)]($style)";
       };
       golang = {
-        format = "[$symbol($version )]($style) ";
-        symbol = " ";
+        format = "[$symbol($version)]($style) ";
+        symbol = "󰟓 ";
       };
       deno = {
         format = "[$symbol ($version)]($style) ";
@@ -101,7 +101,7 @@
         style = "bold green";
       };
       scala = {
-        format = "[$symbol ($version) ]($style) ";
+        format = "[$symbol($version)]($style) ";
         symbol = " ";
         style = "red bold";
       };
@@ -111,11 +111,11 @@
         style = "bold blue";
       };
       crystal = {
-        format = "[$symbol ($version) ]($style) ";
+        format = "[$symbol ($version)]($style) ";
         symbol = " ";
       };
       nim = {
-        format = "[$symbol ($version) ]($style) ";
+        format = "[$symbol($version)]($style) ";
         symbol = " ";
       };
       ocaml = {

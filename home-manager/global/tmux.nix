@@ -16,7 +16,7 @@ in
     mouse = true;
     prefix = "C-a";
     extraConfig = ''
-      set -g default-terminal "tmux-256color"
+      set -g default-terminal "xterm-256color"
       set -ga terminal-overrides ",xterm-256color:Tc"
       set -g base-index 1
       set -g pane-base-index 1
@@ -28,6 +28,14 @@ in
       bind-key -T copy-mode-vi v send-keys -X begin-selection
       bind-key -T copy-mode-vi C-v send-keys -X rectangle-toggle
       bind-key -T copy-mode-vi y send-keys -X copy-selection-and-cancel
+
+      set -g xterm-keys on
+
+      unbind C-j
+      unbind C-k
+
+      bind-key -n C-j send-keys C-j
+      bind-key -n C-k send-keys C-k
 
       unbind f
       unbind C-w

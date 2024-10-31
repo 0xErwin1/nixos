@@ -1,8 +1,9 @@
 { lib, ... }:
 let
   fzfDefaultOptions = [
-    # "--height='40%'"
-    # "--border='none'"
+    "--bind \"ctrl-j:down,ctrl-k:up,alt-j:preview-down,alt-k:preview-up\""
+    "--height='40%'"
+    "--border='none'"
     # "--color=fg:#d0d0d0,fg+:#d0d0d0,bg:#121212,bg+:#262626"
     # "--color=hl:#5f87af,hl+:#5fd7ff,info:#afaf87,marker:#87ff00"
     # "--color=prompt:#d7005f,spinner:#af5fff,pointer:#af5fff,header:#87afaf"
@@ -70,7 +71,7 @@ in
         hmanager = "cd $HOME_MANAGER_DIR";
         notes = "cd $NOTES_DIR";
 
-        fnote = "vi $(mktemp -p $NOTES_DIR)";
+        fnote = "vi $(mktemp -p $NOTES_DIR --suffix=.md)";
         vi = "nvim $1";
         "v." = "nvim .";
         ls = "eza --group-directories-first --icons";
@@ -82,6 +83,8 @@ in
         down = "docker compose down";
         downt = "docker compose -f docker-compose.test.yml down";
 
+        fp = "cd $(find ~/dev/personal -mindepth 2 -maxdepth 2 -type d | fzf --preview 'eza -T -a --icons -L1 {}')";
+        wp = "cd $(find ~/dev/work -mindepth 2 -maxdepth 2 -type d | fzf --preview 'eza -T -a --icons -L1 {}')";
         ssh_fzf = ''ssh "$(awk "/^Host / {print \$2}" ~/.ssh/config | fzf)"'';
         docker_connect = ''docker ps >/dev/null 2>&1 || echo "Docker is not running" && docker exec -it $(docker ps --format "{{.Names}}" | fzf) /bin/sh'';
 
