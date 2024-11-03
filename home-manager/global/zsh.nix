@@ -4,10 +4,6 @@ let
     "--bind \"ctrl-j:down,ctrl-k:up,alt-j:preview-down,alt-k:preview-up\""
     "--height='40%'"
     "--border='none'"
-    # "--color=fg:#d0d0d0,fg+:#d0d0d0,bg:#121212,bg+:#262626"
-    # "--color=hl:#5f87af,hl+:#5fd7ff,info:#afaf87,marker:#87ff00"
-    # "--color=prompt:#d7005f,spinner:#af5fff,pointer:#af5fff,header:#87afaf"
-    # "--color=border:#262626,label:#aeaeae,query:#d9d9d9"
   ];
   fzfDefaultCommand = "fd --type f --hidden --follow --exclude .git";
 in
@@ -71,7 +67,7 @@ in
         hmanager = "cd $HOME_MANAGER_DIR";
         notes = "cd $NOTES_DIR";
 
-        fnote = "vi $(mktemp -p $NOTES_DIR --suffix=.md)";
+        fnote = "vi $(mktemp -p \"$NOTES_DIR/personal/fast-note\" --suffix=.md -t fast_note_XXXXX)";
         vi = "nvim $1";
         "v." = "nvim .";
         ls = "eza --group-directories-first --icons";
