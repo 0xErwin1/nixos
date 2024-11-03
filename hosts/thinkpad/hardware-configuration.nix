@@ -88,24 +88,23 @@ in
   networking = {
     useDHCP = lib.mkDefault true;
     firewall.allowedTCPPorts = [ 51820 ];
-    wireguard = {
-      interfaces = {
-        wg0 = {
-          ips = [ "10.0.0.3/24" ];
-          listenPort = 51820;
-          privateKeyFile = wireguardConfig.wireguardPrivateKey;
-          peers = [
-            {
-              publicKey = "wZBcXWnY+1i67PHLBqes/x5U920dJhtJ7i1RFPhiIDQ=";
-              allowedIPs = [
-                "10.0.0.0/24"
-                "10.0.1.0/24"
-              ];
-              endpoint = wireguardConfig.wireguardServerIP;
-              persistentKeepalive = 25;
-            }
-          ];
-        };
+    wg-quick.interfaces = {
+      wg0 = {
+        address = [ "10.0.0.3/24" ];
+        dns = [ "10.0.0.1" ];
+        listenPort = 51820;
+        privateKeyFile = wireguardConfig.wireguardPrivateKey;
+        peers = [
+          {
+            publicKey = "wZBcXWnY+1i67PHLBqes/x5U920dJhtJ7i1RFPhiIDQ=";
+            allowedIPs = [
+              "10.0.0.0/24"
+              "10.0.1.0/24"
+            ];
+            endpoint = wireguardConfig.wireguardServerIP;
+            persistentKeepalive = 25;
+          }
+        ];
       };
     };
   };
