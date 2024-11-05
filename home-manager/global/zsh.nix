@@ -73,6 +73,7 @@ in
         ls = "eza --group-directories-first --icons";
         la = "eza --group-directories-first --icons -a";
         ll = "eza --group-directories-first --icons -l";
+        cat = "bat --style=plain --color=always --paging=never";
         tree = "eza -T --icons";
         up = "docker compose up";
         upt = "docker compose -f docker-compose.test.yml up --abort-on-container-exit";
