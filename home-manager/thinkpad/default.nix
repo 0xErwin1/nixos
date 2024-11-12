@@ -6,7 +6,6 @@
     ../global/kitty.nix
     ../global
     ../global/window-managers/leftwm
-    ../global/window-managers/hyperland
     ../global/audio.nix
     ../global/themes.nix
     ../global/notify.nix
