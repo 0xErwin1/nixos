@@ -38,7 +38,7 @@ in
         export PERSONAL_DIR="$HOME/dev/personal"
         export IGNIS_DIR="$HOME/dev/personal/Ignis"
         export HOME_MANAGER_DIR="$HOME/.home-manager"
-        export NOTES_DIR="$HOME/.notes"
+        export NOTES_DIR="$HOME/.tabularium"
       '';
       oh-my-zsh = {
         enable = true;
@@ -67,7 +67,7 @@ in
         hmanager = "cd $HOME_MANAGER_DIR";
         notes = "cd $NOTES_DIR";
 
-        fnote = "vi $(mktemp -p \"$NOTES_DIR/personal/fast-note\" --suffix=.md -t fast_note_XXXXX)";
+        fnote = "vi $(mktemp -p \"$NOTES_DIR/privatum/notae-celeres\" --suffix=.md -t notae_XXXXX)";
         vi = "nvim $1";
         "v." = "nvim .";
         ls = "eza --group-directories-first --icons";
