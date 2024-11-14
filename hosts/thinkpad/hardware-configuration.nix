@@ -134,6 +134,7 @@ in
           LogSyslog = true;
         };
       };
+      fangfrisch.enable = true;
       updater.enable = true;
     };
   };
