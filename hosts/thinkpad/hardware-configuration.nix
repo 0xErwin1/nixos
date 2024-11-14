@@ -126,10 +126,12 @@ in
       videoDrivers = [ "amdgpu" ];
     };
     clamav = {
+      scanner.enable = true;
       daemon = {
         enable = true;
         settings = {
           MaxThreads = 2;
+          LogSyslog = true;
         };
       };
       updater.enable = true;

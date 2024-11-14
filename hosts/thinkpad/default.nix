@@ -67,9 +67,6 @@
     gnome.gnome-keyring.enable = true;
     ratbagd.enable = true;
     blueman.enable = true;
-    clamav = {
-      scanner.enable = true;
-    };
     udisks2 = {
       enable = true;
     };
