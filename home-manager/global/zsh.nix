@@ -86,6 +86,9 @@ in
         docker_connect = ''docker ps >/dev/null 2>&1 || echo "Docker is not running" && docker exec -it $(docker ps --format "{{.Names}}" | fzf) /bin/sh'';
 
         gs = "git status -sb";
+        gps = "git push";
+        gpl = "git pull";
+        gbc = "git checkout -b";
       };
     };
   };
