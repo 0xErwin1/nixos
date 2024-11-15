@@ -17,6 +17,9 @@
     udiskie
     fd
     ripgrep
+    pcmanfm
+    ranger
+    yazi
     (rustPlatform.buildRustPackage rec {
       pname = "tomlq";
       version = "0.1.6";

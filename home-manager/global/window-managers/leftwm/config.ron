@@ -37,6 +37,7 @@
     (window_class: "firefox-aurora", window_title: None, spawn_on_tag: 4, spawn_on_workspace: None, spawn_floating: None, spawn_sticky: None, spawn_fullscreen: None, spawn_as_type: None),
     (window_class: "floorp", window_title: None, spawn_on_tag: 1, spawn_on_workspace: None, spawn_floating: None, spawn_sticky: None, spawn_fullscreen: None, spawn_as_type: None),
     (window_class: "LibreWolf", window_title: None, spawn_on_tag: 1, spawn_on_workspace: None, spawn_floating: None, spawn_sticky: None, spawn_fullscreen: None, spawn_as_type: None),
+    (window_class: "librewolf", window_title: None, spawn_on_tag: 1, spawn_on_workspace: None, spawn_floating: None, spawn_sticky: None, spawn_fullscreen: None, spawn_as_type: None),
     (window_class: "Google-chrome", window_title: None, spawn_on_tag: 4, spawn_on_workspace: None, spawn_floating: None, spawn_sticky: None, spawn_fullscreen: None, spawn_as_type: None),
     (window_class: "firefox", window_title: None, spawn_on_tag: 4, spawn_on_workspace: None, spawn_floating: None, spawn_sticky: None, spawn_fullscreen: None, spawn_as_type: None),
     (window_class: "TelegramDesktop", window_title: None, spawn_on_tag: 7, spawn_on_workspace: None, spawn_floating: None, spawn_sticky: None, spawn_fullscreen: None, spawn_as_type: None),
