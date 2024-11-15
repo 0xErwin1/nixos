@@ -4,7 +4,6 @@
     packages = with pkgs; [
       lxsession
       nitrogen
-      udiskie
       networkmanagerapplet
       blueman
       picom
@@ -29,7 +28,6 @@
   xsession.initExtra = ''
     lxsession &
     nitrogen --restore &
-    udiskie -t &
     nm-applet &
     blueman-adapters &
     battery &

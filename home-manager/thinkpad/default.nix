@@ -46,9 +46,28 @@
     home-manager.enable = true;
   };
 
+  systemd.user.targets.tray = {
+    Unit = {
+      Description = "Tray Icon";
+      After = [ "graphical-session-pre.target" ];
+      PartOf = [ "graphical-session.target" ];
+    };
+  };
+
   services = {
     syncthing = {
       enable = true;
+    };
+    udiskie = {
+      enable = true;
+    };
+    redshift = {
+      enable = true;
+      provider = "geoclue2";
+      temperature = {
+        day = 5000;
+        night = 4000;
+      };
     };
   };
 }
