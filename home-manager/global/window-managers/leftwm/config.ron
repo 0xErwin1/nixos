@@ -17,7 +17,7 @@
   workspaces: [],
   tags: [
     "",
-    "",
+    "",
     "",
     "",
     "",
@@ -29,7 +29,7 @@
   layouts: [
     "Monocle",
     "GridHorizontal",
-    "MainAndHorizontalStack"
+    "MainAndHorizontalStack",
   ],
   window_rules: [
     (window_class: "firefox-nightly", window_title: None, spawn_on_tag: 1, spawn_on_workspace: None, spawn_floating: None, spawn_sticky: None, spawn_fullscreen: None, spawn_as_type: None),
