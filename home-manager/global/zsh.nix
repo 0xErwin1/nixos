@@ -33,7 +33,6 @@ in
       initExtra = ''
         export FZF_DEFAULTS_OPTS="${lib.concatStringsSep " " fzfDefaultOptions}"
         export DEVELOPMENT="$HOME/dev"
-        export WORK_DIR="$HOME/dev/work"
         export HOULAK_DIR="$HOME/dev/work/Houlak"
         export PERSONAL_DIR="$HOME/dev/personal"
         export IGNIS_DIR="$HOME/dev/personal/Ignis"
@@ -62,7 +61,6 @@ in
         hwork = "cd $HOULAK_DIR";
         pdir = "cd $PERSONAL_DIR";
         idir = "cd $IGNIS_DIR";
-        wdir = "cd $WORK_DIR";
         dev = "cd $DEVELOPMENT";
         hmanager = "cd $HOME_MANAGER_DIR";
         notes = "cd $NOTES_DIR";
