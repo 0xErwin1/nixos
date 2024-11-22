@@ -73,7 +73,7 @@
 (defwidget date []
   (box :orientation "h" :class "date" :halign "end"
     (box :orientation "h"
-      (label :class "time" :text "${hour}:${min} | ")
+      (label :class "time" :text "${hour}:${min} │ ")
       (label :class "month" :text "${month} ${day},")
       (label :class "year" :text "${year}")
     )
@@ -83,6 +83,7 @@
 (defwidget control []
   (box :orientation 'h' :class 'control' :space-evenly false
     (notifications)
+    (label :class "separator" :text "│")
     (brightness)
     (battery)
     (volume)
@@ -91,6 +92,7 @@
 (defwidget left [?number monitor]
   (box :orientation 'h' :halign "start" :space-evenly false
     (label :class "os-icon nix" :text "${osIcon}")
+    (label :class "separator" :text "│")
     (workspaces :monitor monitor)
   )
 )
@@ -113,6 +115,7 @@
 (defwidget right []
   (box :orientation 'h' :space-evenly false :halign "end"
     (control)
+    (label :class "separator" :text "│")
     (date)))
 
 (defwidget bar [?number monitor]
