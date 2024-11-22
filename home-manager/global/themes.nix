@@ -31,13 +31,13 @@
     };
 
     iconTheme = {
-      name = "Papirus";
+      name = "Papirus-Dark";
       package = pkgs.papirus-icon-theme;
     };
 
     cursorTheme = {
-      name = "Numix-Cursor";
-      package = pkgs.numix-cursor-theme;
+      name = "capitaine-cursors";
+      package = pkgs.capitaine-cursors;
     };
   };
 }

@@ -42,15 +42,18 @@
 .workspaces {
   font-weight: bold;
   font-size: 20px;
-  // up right bottom left
   margin: 0 1rem 0 0;
 }
 
 .workspace-icon {
-  background-repeat: no-repeat;
   min-height: 30px;
   min-width: 30px;
-  padding: 0;
+  padding: 0 .1rem;
+}
+
+.workspace-visible {
+  color: $cyan;
+  opacity: 0.7;
 }
 
 .workspace-focused {
@@ -59,14 +62,17 @@
 
 .workspace-empty {
   color: $foreground;
+  opacity: 0.7;
 }
 
 .workspace-urgent {
   color: $red;
+  opacity: 0.7;
 }
 
 .workspace-busy {
   color: $blue;
+  opacity: 0.7;
 }
 
 .control {
@@ -166,6 +172,8 @@
   color: $foreground;
   font-weight: bold;
   font-size: 14px;
+  // up right bottom left
+  margin: 0 -2rem 0 1rem;
 }
 
 .time,
@@ -173,4 +181,8 @@
 .year {
   font-size: 15px;
   margin: 0;
+}
+.year {
+  // up right bottom left
+  margin: 0 0 0 -2rem;
 }

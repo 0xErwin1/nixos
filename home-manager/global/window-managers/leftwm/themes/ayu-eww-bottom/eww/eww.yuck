@@ -26,15 +26,20 @@
 (defpoll osColor :interval "0" "scripts/os --id")
 
 (defwidget workspaces [?number monitor]
-  (box :orientation 'h' :class "workspaces"
-    (for tag in '${wmstate.workspaces[monitor].tags}'
-      (button
-        :onclick "leftwm-command 'SendWorkpaceToTag 0 ${tag.index}'"
-        :class "workspace-icon ${tag.focused ? "workspace-focused" :
-                      tag.busy ? "workspace-busy":
-                      tag.urgent ? "workspace-urgent" :
-                      "workspace-empty"}"
-        "${tag.name}"))))
+  (box :orientation "h" :class "workspaces"
+    (for tag in "${wmstate.workspaces[monitor].tags}"
+      (label :text "${tag.name}"
+        :class "workspace-icon ${
+          tag.focused ? "workspace-focused" :
+          tag.visible ? "workspace-visible" :
+          tag.urgent ? "workspace-urgent" :
+          tag.busy ? "workspace-busy" :
+          "workspace-empty"
+        }"
+      )
+    )
+  )
+)
 
 (defwidget notifications []
   (box :class "notifications" :orientation "h" :space-evenly false
@@ -67,11 +72,13 @@
 
 (defwidget date []
   (box :orientation "h" :class "date" :halign "end"
-    (button :onclick "scripts/calendar.sh"
-      (box :orientation "h"
-        (label :class "time" :text "${hour}:${min}")
-        (label :class "month" :text "${month} ${day},")
-        (label :class "year" :text "${year}")))))
+    (box :orientation "h"
+      (label :class "time" :text "${hour}:${min} | ")
+      (label :class "month" :text "${month} ${day},")
+      (label :class "year" :text "${year}")
+    )
+  )
+)
 
 (defwidget control []
   (box :orientation 'h' :class 'control' :space-evenly false
@@ -122,24 +129,24 @@
 )
 
 (defwindow laptop :monitor '["eDP"]'
-  :geometry (geometry :x "0px" :y "95%" :width "100%" :height "2%")
-  :reserve (struts :distance "5%" :side "bottom")
-  :wm-ignore false
-  :windowtype "dock"
-  (bar :monitor 0)
-)
-
-(defwindow monitor-DP-0 :monitor '["DisplayPort-0","DP-0", "HDMI-A-0"]'
-  :geometry (geometry :x "0px" :y "95%" :width "100%" :height "2%")
-  :reserve (struts :distance "5%" :side "bottom")
+  :geometry (geometry :x "0px" :y "96%" :width "100%" :height "2%")
+  :reserve (struts :distance "4%" :side "bottom")
   :wm-ignore false
   :windowtype "dock"
   (bar :monitor 1)
 )
 
+(defwindow monitor-DP-0 :monitor '["DisplayPort-0","DP-0", "HDMI-A-0"]'
+  :geometry (geometry :x "0px" :y "96%" :width "100%" :height "2%")
+  :reserve (struts :distance "4%" :side "bottom")
+  :wm-ignore false
+  :windowtype "dock"
+  (bar :monitor 0)
+)
+
 (defwindow monitor-DP-1 :monitor '["DisplayPort-1", "DP-1"]'
-  :geometry (geometry :x "0px" :y "95%" :width "100%" :height "2%")
-  :reserve (struts :distance "5%" :side "bottom")
+  :geometry (geometry :x "0px" :y "96%" :width "100%" :height "2%")
+  :reserve (struts :distance "4%" :side "bottom")
   :wm-ignore false
   :windowtype "dock"
   (bar :monitor 2)
