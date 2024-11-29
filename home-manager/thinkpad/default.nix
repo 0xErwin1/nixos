@@ -1,4 +1,4 @@
-{ pkgs, inputs, ... }:
+{ pkgs, ... }:
 {
   imports = [
     ../global/browser.nix
@@ -10,12 +10,15 @@
     ../global/themes.nix
     ../global/notify.nix
     ../global/database.nix
+    ../global/spotify.nix
     ./xorg
     ./monitor.nix
     ./picom.nix
-    inputs.spicetify-nix.homeManagerModules.default
   ];
-  nixpkgs.config.allowUnfree = true;
+
+  nixpkgs = {
+    config.allowUnfree = true;
+  };
 
   home = {
     enableNixpkgsReleaseCheck = false;
@@ -46,20 +49,6 @@
 
   programs = {
     home-manager.enable = true;
-    spicetify =
-      let
-        spicePkgs = inputs.spicetify-nix.legacyPackages.${pkgs.system};
-      in
-      {
-        enable = true;
-        enabledExtensions = with spicePkgs.extensions; [
-          hidePodcasts
-          shuffle
-          keyboardShortcut
-        ];
-        theme = spicePkgs.themes.text;
-        colorScheme = "text";
-      };
   };
 
   systemd.user.targets.tray = {
