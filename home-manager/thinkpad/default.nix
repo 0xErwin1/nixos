@@ -1,4 +1,4 @@
-{ pkgs, ... }:
+{ pkgs, inputs, ... }:
 {
   imports = [
     ../global/browser.nix
@@ -13,6 +13,7 @@
     ./xorg
     ./monitor.nix
     ./picom.nix
+    inputs.spicetify-nix.homeManagerModules.default
   ];
   nixpkgs.config.allowUnfree = true;
 
@@ -23,11 +24,12 @@
     stateVersion = "24.05";
     packages = with pkgs; [
       discord
+      vencord
+      vesktop
       slack
       dbeaver-bin
       arandr
       volumeicon
-      spotify
       lxappearance
       obsidian
       udevil
@@ -44,6 +46,20 @@
 
   programs = {
     home-manager.enable = true;
+    spicetify =
+      let
+        spicePkgs = inputs.spicetify-nix.legacyPackages.${pkgs.system};
+      in
+      {
+        enable = true;
+        enabledExtensions = with spicePkgs.extensions; [
+          hidePodcasts
+          shuffle
+          keyboardShortcut
+        ];
+        theme = spicePkgs.themes.text;
+        colorScheme = "text";
+      };
   };
 
   systemd.user.targets.tray = {
