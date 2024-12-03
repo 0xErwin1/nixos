@@ -6,7 +6,7 @@
       defaultFonts = {
         serif = [ "LiterationSerif Nerd Font Regular" ];
         sansSerif = [ "LiterationSans Nerd Font Regular" ];
-        monospace = [ "FiraCode Nerd Font" ];
+        monospace = [ "LiterationMono Nerd Font Mono" ];
       };
     };
   };
@@ -15,6 +15,7 @@
     nerd-fonts.liberation
     nerd-fonts.ubuntu-mono
     nerd-fonts.fira-code
+    nerd-fonts.jetbrains-mono
     powerline-symbols
     noto-fonts-emoji
     noto-fonts
