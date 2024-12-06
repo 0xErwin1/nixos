@@ -12,6 +12,7 @@ in
   imports = [ (modulesPath + "/installer/scan/not-detected.nix") ];
 
   boot = {
+    kernelPackages = pkgs.linuxPackages_zen;
     initrd = {
       availableKernelModules = [
         "nvme"

@@ -21,7 +21,7 @@
     };
 
     font = {
-      name = "LiterationSans Nerd Font";
+      name = "LiterationSans Nerd Font Regular";
       size = 12;
     };
 
