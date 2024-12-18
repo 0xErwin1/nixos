@@ -80,6 +80,25 @@ in
         };
       };
 
+      laptop-displayport = {
+        fingerprint = {
+          inherit eDP DisplayPort-1;
+        };
+        config = {
+          eDP = {
+            rate = "60.00";
+            mode = "1920x1080";
+            position = "0x0"; # Left of DP-1
+            primary = true;
+          };
+          DisplayPort-1 = {
+            rate = "60.00";
+            mode = "1920x1080";
+            position = "0x1080"; # Below DP-1
+          };
+        };
+      };
+
       laptop-hdmi = {
         fingerprint = {
           inherit eDP HDMI-A-0;

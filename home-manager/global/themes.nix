@@ -36,8 +36,8 @@
     };
 
     cursorTheme = {
-      name = "capitaine-cursors";
-      package = pkgs.capitaine-cursors;
+      name = "vimix-cursors";
+      package = pkgs.vimix-cursors;
     };
   };
 }

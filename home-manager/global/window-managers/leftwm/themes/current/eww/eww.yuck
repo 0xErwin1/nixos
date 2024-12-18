@@ -152,5 +152,5 @@
   :reserve (struts :distance "4%" :side "bottom")
   :wm-ignore false
   :windowtype "dock"
-  (bar :monitor 2)
+  (bar :monitor 1)
 )
