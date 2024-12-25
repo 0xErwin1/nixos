@@ -3,5 +3,6 @@
   services.easyeffects.enable = true;
   home.packages = with pkgs; [
     vlc
+    pavucontrol
   ];
 }

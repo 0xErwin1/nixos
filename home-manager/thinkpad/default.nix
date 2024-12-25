@@ -65,6 +65,9 @@
     };
     udiskie = {
       enable = true;
+      notify = true;
+      automount = true;
+      tray = "always";
     };
     redshift = {
       enable = true;

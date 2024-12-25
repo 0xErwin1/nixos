@@ -14,7 +14,6 @@
     btop
     delta
     kalker
-    udiskie
     fd
     ripgrep
     pcmanfm
