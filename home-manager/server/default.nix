@@ -5,7 +5,7 @@
     enableNixpkgsReleaseCheck = false;
     username = "iperez";
     homeDirectory = "/home/iperez";
-    stateVersion = "24.05";
+    stateVersion = "24.11";
     packages = with pkgs; [
       eza
       zsh

@@ -78,7 +78,7 @@ in
       extraPackages = with pkgs; [
         amdvlk
         libva-utils
-        rocmPackages.clr.icd
+        #rocmPackages.clr.icd
         clinfo
       ];
       extraPackages32 = [ pkgs.driversi686Linux.amdvlk ];
