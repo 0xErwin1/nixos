@@ -7,7 +7,6 @@
       brightnessctl
       pamixer
       playerctl
-      scrot
       betterlockscreen
       flameshot
     ];

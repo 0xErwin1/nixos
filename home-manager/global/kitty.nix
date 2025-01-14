@@ -1,6 +1,4 @@
-{ pkgs, ... }:
 {
-  home.packages = with pkgs; [ fastfetch ];
   programs.kitty = {
     enable = true;
     shellIntegration.enableZshIntegration = true;

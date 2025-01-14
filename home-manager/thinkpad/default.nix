@@ -24,11 +24,9 @@
     enableNixpkgsReleaseCheck = false;
     username = "iperez";
     homeDirectory = "/home/iperez";
-    stateVersion = "24.11";
+    stateVersion = "25.05";
     packages = with pkgs; [
       discord
-      vencord
-      vesktop
       slack
       dbeaver-bin
       arandr

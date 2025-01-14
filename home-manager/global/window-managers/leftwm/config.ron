@@ -70,7 +70,6 @@
     (window_class: "Lxapperance", window_title: None, spawn_on_tag: None, spawn_on_workspace: None, spawn_floating: true, spawn_sticky: None, spawn_fullscreen: None, spawn_as_type: None),
     (window_class: "Nitrogen", window_title: None, spawn_on_tag: None, spawn_on_workspace: None, spawn_floating: true, spawn_sticky: None, spawn_fullscreen: None, spawn_as_type: None),
     (window_class: "wpa_gui", window_title: None, spawn_on_tag: None, spawn_on_workspace: None, spawn_floating: true, spawn_sticky: None, spawn_fullscreen: None, spawn_as_type: None),
-    (window_class: "Zathura", window_title: None, spawn_on_tag: None, spawn_on_workspace: None, spawn_floating: true, spawn_sticky: None, spawn_fullscreen: None, spawn_as_type: None),
     (window_class: "Places", window_title: None, spawn_on_tag: None, spawn_on_workspace: None, spawn_floating: true, spawn_sticky: None, spawn_fullscreen: None, spawn_as_type: None),
     (window_class: "Dialog", window_title: None, spawn_on_tag: None, spawn_on_workspace: None, spawn_floating: true, spawn_sticky: None, spawn_fullscreen: None, spawn_as_type: None),
     (window_class: "pop-up", window_title: None, spawn_on_tag: None, spawn_on_workspace: None, spawn_floating: true, spawn_sticky: None, spawn_fullscreen: None, spawn_as_type: None),
