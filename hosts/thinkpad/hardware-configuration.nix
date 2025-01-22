@@ -9,7 +9,10 @@ let
   wireguardConfig = import /etc/wireguard;
 in
 {
-  imports = [ (modulesPath + "/installer/scan/not-detected.nix") ];
+  imports = [
+    ./kernel.nix
+    (modulesPath + "/installer/scan/not-detected.nix") 
+  ];
 
   boot = {
     initrd = {
@@ -112,6 +115,7 @@ in
   };
 
   services = {
+    fwupd.enable = true;
     tlp = {
       enable = true;
       settings = {
@@ -128,6 +132,9 @@ in
 
         START_CHARGE_THRESH_BAT0 = 40;
         STOP_CHARGE_THRESH_BAT0 = 80;
+
+        RADEON_DPM_STATE_ON_AC = "performance";
+        RADEON_DPM_STATE_ON_BAT = "powersave";
       };
     };
     fprintd = {
