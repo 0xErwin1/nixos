@@ -9,7 +9,7 @@
   ];
 
   boot = {
-    tmp.cleanOnBoot = true ;
+    tmp.cleanOnBoot = true;
     loader = {
       systemd-boot.enable = true;
       efi.canTouchEfiVariables = true;
@@ -54,6 +54,16 @@
         support32Bit = true;
       };
       pulse.enable = true;
+      jack.enable = true;
+      extraConfig.pipewire."92-low-latency" = {
+        "context.properties" = {
+          "default.clock.rate" = 48000;
+          "default.clock.quantum" = 1024;
+          "default.clock.min-quantum" = 32;
+          "default.clock.max-quantum" = 2048;
+        };
+      };
+      wireplumber.enable = true;
     };
     displayManager.ly.enable = true;
     geoclue2.enable = true;
