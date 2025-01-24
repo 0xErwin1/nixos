@@ -28,7 +28,6 @@
     packages = with pkgs; [
       discord
       slack
-      dbeaver-bin
       arandr
       volumeicon
       lxappearance

@@ -6,6 +6,7 @@
         env = {
           TERM = "xterm-256color";
           COLORTERM = "24bit";
+          WINIT_X11_SCALE_FACTOR = "1.0";
         };
         font = {
           normal = {
@@ -20,7 +21,7 @@
             family = "JetBrains Mono Nerd Font";
             style = "Italic";
           };
-          size = 8;
+          size = 13;
           offset = {
             x = 0;
             y = 0;
