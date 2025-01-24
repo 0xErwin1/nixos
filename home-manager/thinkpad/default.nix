@@ -3,7 +3,7 @@
   imports = [
     ../global/browser.nix
     ../global/rofi.nix
-    ../global/kitty.nix
+    ../global/terminal.nix
     ../global
     ../global/window-managers/leftwm
     ../global/audio.nix
