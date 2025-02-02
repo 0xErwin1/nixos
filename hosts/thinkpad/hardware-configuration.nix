@@ -153,22 +153,6 @@ in
       enable = true;
       videoDrivers = [ "amdgpu" ];
     };
-    clamav = {
-      scanner = {
-        enable = false;
-      };
-      daemon = {
-        enable = false;
-        settings = {
-          MaxThreads = 1;
-          LogSyslog = true;
-        };
-      };
-      fangfrisch.enable = true;
-      updater = {
-        enable = false;
-      };
-    };
   };
 
   nixpkgs.hostPlatform = lib.mkDefault "x86_64-linux";
