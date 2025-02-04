@@ -9,7 +9,6 @@
     bat
     curl
     wget
-    btop
     delta
     kalker
     fd

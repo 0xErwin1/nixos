@@ -29,6 +29,13 @@
   color: $ubuntuColor;
 }
 
+.separator {
+  color: $foreground;
+  font-size: 20px;
+  // up right bottom left
+  margin: 0 .5rem 0 .2rem;
+}
+
 .tray {
   font-size: 16px;
 }
@@ -93,7 +100,6 @@
   // up right bottom left
 }
 
-
 .brightness-percent {
   // up right bottom left
   margin: 0 0 0 .9rem;
@@ -135,7 +141,6 @@
   margin: 0 0 .1rem 0;
 }
 
-
 .volume-icon {
   // up right bottom left
   margin: 0 0 .1rem 0;
@@ -173,7 +178,7 @@
   font-weight: bold;
   font-size: 14px;
   // up right bottom left
-  margin: 0 -2rem 0 1rem;
+  margin: 0 -2rem 0 .5rem;
 }
 
 .time,

@@ -1,19 +1,20 @@
 { pkgs, ... }:
 {
   imports = [
-    ../global/browser.nix
+    #    ../global/browser.nix
     ../global/rofi.nix
-    ../global/terminal.nix
+    #    ../global/terminal.nix
     ../global
-    ../global/window-managers/leftwm
-    ../global/audio.nix
-    ../global/themes.nix
+    ../global/xdg.nix
+    #   ../global/window-managers/leftwm
+    #   ../global/audio.nix
+    #../global/themes.nix
     ../global/notify.nix
     ../global/database.nix
     ../global/spotify.nix
-    ./xorg
+    #  ./xorg
     ./monitor.nix
-    ./picom.nix
+    #  ./picom.nix
   ];
 
   nixpkgs = {
@@ -25,16 +26,6 @@
     username = "iperez";
     homeDirectory = "/home/iperez";
     stateVersion = "25.05";
-    packages = with pkgs; [
-      discord
-      slack
-      arandr
-      volumeicon
-      lxappearance
-      obsidian
-      udevil
-      simple-mtpfs
-    ];
     sessionVariables = {
       EDITOR = "nvim";
       LAPTOP = "eDP";
@@ -46,33 +37,5 @@
 
   programs = {
     home-manager.enable = true;
-  };
-
-  systemd.user.targets.tray = {
-    Unit = {
-      Description = "Tray Icon";
-      After = [ "graphical-session-pre.target" ];
-      PartOf = [ "graphical-session.target" ];
-    };
-  };
-
-  services = {
-    syncthing = {
-      enable = true;
-    };
-    udiskie = {
-      enable = true;
-      notify = true;
-      automount = true;
-      tray = "always";
-    };
-    redshift = {
-      enable = true;
-      provider = "geoclue2";
-      temperature = {
-        day = 5000;
-        night = 4000;
-      };
-    };
   };
 }
