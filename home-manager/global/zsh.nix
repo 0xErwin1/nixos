@@ -38,6 +38,7 @@ in
         export IGNIS_DIR="$HOME/dev/personal/Ignis"
         export HOME_MANAGER_DIR="$HOME/.home-manager"
         export NOTES_DIR="$HOME/.tabularium"
+        export PATH="/home/iperez/.local/bin:$PATH"
       '';
       oh-my-zsh = {
         enable = true;
