@@ -16,8 +16,8 @@ in
     mouse = true;
     prefix = "C-a";
     extraConfig = ''
-      set -g default-terminal "tmux-256color"
-      set -ga terminal-overrides ",tmux-256color:Tc"
+      set -g default-terminal "xterm-256color"
+      set -ga terminal-overrides ",xterm-256color:Tc"
       set -g base-index 1
       set -g pane-base-index 1
       set-window-option -g pane-base-index 1
