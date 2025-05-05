@@ -14,6 +14,7 @@
     ../global/spotify.nix
     #  ./xorg
     ./monitor.nix
+    ./packages.nix
     #  ./picom.nix
   ];
 

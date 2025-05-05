@@ -7,8 +7,12 @@ in
     inputs.spicetify-nix.homeManagerModules.default
   ];
 
+  home.packages = with pkgs; [
+    spotify
+  ];
+
   programs.spicetify = {
-    enable = true;
+    enable = false;
     enabledExtensions = with spicePkgs.extensions; [
       hidePodcasts
       shuffle

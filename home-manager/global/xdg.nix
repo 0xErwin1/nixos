@@ -2,12 +2,13 @@
   xdg.mimeApps = {
     enable = true;
     defaultApplications = {
-      "default-web-browser" = [ "librewolf.desktop" ];
-      "text/html" = [ "librewolf.desktop" ];
-      "x-scheme-handler/http" = [ "librewolf.desktop" ];
-      "x-scheme-handler/https" = [ "librewolf.desktop" ];
-      "x-scheme-handler/about" = [ "librewolf.desktop" ];
-      "x-scheme-handler/unknown" = [ "librewolf.desktop" ];
+      "default-web-browser" = [ "zen.desktop" ];
+      "text/html" = [ "zen.desktop" ];
+      "x-scheme-handler/http" = [ "zen.desktop" ];
+      "x-scheme-handler/https" = [ "zen.desktop" ];
+      "x-scheme-handler/about" = [ "zen.desktop" ];
+      "x-scheme-handler/unknown" = [ "zen.desktop" ];
+      "x-scheme-handler/chrome" = [ "zen.desktop" ];
       "application/epub" = [ "org.pwmt.zathura.desktop" ];
       "application/pdf" = [ "org.pwmt.zathura.desktop" ];
       "text/calendar" = [ "userapp-Thunderbird-EDTY12.desktop" ];
@@ -26,7 +27,7 @@
         "x-scheme-handler/mailto" = [ "userapp-Thunderbird-4SPX12.desktop" ];
         "x-scheme-handler/mid" = [ "userapp-Thunderbird-4SPX12.desktop" ];
         "x-scheme-handler/webcal" = [ "userapp-Thunderbird-EDTY12.desktop" ];
-        "x-scheme-handler/webcals" = [ "userapp-Thunderbird-EDTY12.desktop" ]; 
+        "x-scheme-handler/webcals" = [ "userapp-Thunderbird-EDTY12.desktop" ];
       };
       removed = {
         "default-web-browser" = [ "brave.desktop" ];
@@ -50,6 +51,7 @@
         "x-scheme-handler/https" = [ "brave.desktop" ];
         "x-scheme-handler/about" = [ "brave.desktop" ];
         "x-scheme-handler/unknown" = [ "brave.desktop" ];
+        "x-scheme-handler/chrome" = [ "brave.desktop" ];
       };
     };
   };
