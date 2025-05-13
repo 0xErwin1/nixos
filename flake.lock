@@ -206,17 +206,17 @@
         "tree-sitter-ion": "tree-sitter-ion"
       },
       "locked": {
-        "lastModified": 1746428179,
-        "narHash": "sha256-wSEsQvJSO5H364Q55P4fj7nHLHfV4+94gJvULmAVbfU=",
-        "owner": "0xErwin1",
+        "lastModified": 1747158724,
+        "narHash": "sha256-7jUHdLGOxC83Bcu5NGUI6d6z9TP+i3Z91puEfgohAYc=",
+        "owner": "0xErwin",
         "repo": "nixvim",
-        "rev": "84d81d44fe94688609e4fbee5c4fc8ebb09bc62f",
-        "type": "github"
+        "rev": "8d9f19281bc556fc32ed5bfadae6cf4e2a44c002",
+        "type": "gitlab"
       },
       "original": {
-        "owner": "0xErwin1",
+        "owner": "0xErwin",
         "repo": "nixvim",
-        "type": "github"
+        "type": "gitlab"
       }
     },
     "nixvim_2": {
@@ -300,15 +300,15 @@
       "locked": {
         "lastModified": 1737210433,
         "narHash": "sha256-2bTSyQc/ubYPxXKjGT6c1//3ewutHQqZfmNjdrrBQYo=",
-        "owner": "BasileusErwin",
+        "owner": "0xErwin",
         "repo": "nvim-treesitter",
         "rev": "9595f8569967a2b2fe58fb7199d50fcd57acd181",
-        "type": "github"
+        "type": "gitlab"
       },
       "original": {
-        "owner": "BasileusErwin",
+        "owner": "0xErwin",
         "repo": "nvim-treesitter",
-        "type": "github"
+        "type": "gitlab"
       }
     },
     "rofiAyuDarkTheme": {
@@ -393,15 +393,15 @@
       "locked": {
         "lastModified": 1733483633,
         "narHash": "sha256-otgeFj63vMGs1DFmPZEEHEqUSmUfPDUL40a1yuYq2O0=",
-        "owner": "Ignis-lang",
+        "owner": "0xErwin",
         "repo": "tree-sitter-ignis",
         "rev": "b071a650ca0dca29723693e7e0be04581c61cd4b",
-        "type": "github"
+        "type": "gitlab"
       },
       "original": {
-        "owner": "Ignis-lang",
+        "owner": "0xErwin",
         "repo": "tree-sitter-ignis",
-        "type": "github"
+        "type": "gitlab"
       }
     },
     "tree-sitter-ion": {
@@ -409,15 +409,15 @@
       "locked": {
         "lastModified": 1712257398,
         "narHash": "sha256-A8ZaZamxtq9m0uuEGsygldzDJo67SvJI+w2JQupNIxg=",
-        "owner": "Ignis-lang",
+        "owner": "0xErwin",
         "repo": "tree-sitter-ion",
         "rev": "3d87d54106c3b71fd90efda2b8bd442d1b4a3314",
-        "type": "github"
+        "type": "gitlab"
       },
       "original": {
-        "owner": "Ignis-lang",
+        "owner": "0xErwin",
         "repo": "tree-sitter-ion",
-        "type": "github"
+        "type": "gitlab"
       }
     }
   },

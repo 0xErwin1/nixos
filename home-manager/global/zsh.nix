@@ -39,6 +39,7 @@ in
         export HOME_MANAGER_DIR="$HOME/.home-manager"
         export NOTES_DIR="$HOME/.tabularium"
         export PATH="/home/iperez/.local/bin:$PATH"
+        export $(grep -v '^#' ~/.env | xargs)
       '';
       oh-my-zsh = {
         enable = true;
