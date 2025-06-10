@@ -5,8 +5,8 @@
       userName = "Ignacio Perez";
       includes = [
         {
-          path = "~/dev/personal/.gitconfig";
-          condition = "gitdit:~/dev/work/";
+          path = "~/dev/work/Houlak/.gitconfig";
+          condition = "gitdit:~/dev/work/Houlak";
         }
         {
           path = "~/dev/personal/.gitconfig";
