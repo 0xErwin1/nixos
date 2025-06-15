@@ -6,7 +6,7 @@
     #    ../global/terminal.nix
     ../global
     ../global/xdg.nix
-    #   ../global/window-managers/leftwm
+    #../global/window-managers/hyprland
     #   ../global/audio.nix
     #../global/themes.nix
     ../global/notify.nix
