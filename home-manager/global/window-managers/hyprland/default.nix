@@ -15,6 +15,10 @@ in
     plugins = [ ];
 
     settings = {
+      xwayland = {
+        force_zero_scaling = true;
+      };
+
       env = [
         "XCURSOR_SIZE, 24"
         "XDG_CURRENT_DESKTOP, Hyprland"

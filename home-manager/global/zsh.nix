@@ -1,4 +1,4 @@
-{ lib, ... }:
+{ lib, pkgs, ... }:
 let
   fzfDefaultOptions = [
     "--bind \"ctrl-j:down,ctrl-k:up,alt-j:preview-down,alt-k:preview-up\""
@@ -9,6 +9,10 @@ let
 in
 {
   imports = [ ./starship.nix ];
+  home.packages = with pkgs; [
+    fnm
+  ];
+
   programs = {
     eza.enable = true;
     bat.enable = true;
