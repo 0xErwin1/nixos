@@ -2,7 +2,7 @@
   description = "Your new nix config";
 
   inputs = {
-     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
+    nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
 
     home-manager = {
       url = "github:nix-community/home-manager/release-25.05";
@@ -19,6 +19,10 @@
     firefoxAddons = {
       url = "gitlab:rycee/nur-expressions?dir=pkgs/firefox-addons";
       inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+    zenBrowserFlake = {
+      url = "github:0xc000022070/zen-browser-flake";
     };
 
     spicetify-nix = {
@@ -85,21 +89,21 @@
       # Available through 'home-manager --flake .#your-username@your-hostname'
       homeConfigurations = {
         "iperez@beta" = home-manager.lib.homeManagerConfiguration {
-          pkgs = nixpkgs.legacyPackages.x86_64-linux; # Home-manager requires 'pkgs' instance
+          pkgs = nixpkgs.legacyPackages.x86_64-linux;
           extraSpecialArgs = {
             inherit inputs outputs;
           };
           modules = [ ./home-manager/beta ];
         };
         "iperez@server" = home-manager.lib.homeManagerConfiguration {
-          pkgs = nixpkgs.legacyPackages.aarch64-linux; # Home-manager requires 'pkgs' instance
+          pkgs = nixpkgs.legacyPackages.aarch64-linux;
           extraSpecialArgs = {
             inherit inputs outputs;
           };
           modules = [ ./home-manager/server ];
         };
         "iperez@thinkpad" = home-manager.lib.homeManagerConfiguration {
-          pkgs = nixpkgs.legacyPackages.x86_64-linux; # Home-manager requires 'pkgs' instance
+          pkgs = nixpkgs.legacyPackages.x86_64-linux;
           extraSpecialArgs = {
             inherit inputs outputs;
           };
