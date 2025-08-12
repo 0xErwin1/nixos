@@ -1,0 +1,13 @@
+show = dmenu
+prompt = Select an option
+width = 800
+height = 600
+location = center
+allow_markup = true
+insensitive = true
+term = alacritty
+columns = 2
+hide_scroll = false
+allow_images = true
+image_size = 32
+no_actions = true

@@ -1,4 +1,3 @@
-{ inputs, ... }:
 let
   bind = import ./bind.nix;
   rules = import ./rules.nix;
@@ -6,6 +5,9 @@ in
 {
   imports = [
     ./dependencies.nix
+    ../../wayland/wofi
+    ./hyprlock.nix
+    ./hyprpaper.nix
   ];
 
   xdg.configFile."hypr/eww" = {
@@ -150,6 +152,7 @@ in
       "$browser" = "zen-browser";
       "$workBrowser" = "firefox";
       "$screenshot" = ''grim -g "$(slurp)" - | swappy -f -'';
+      "$wallpaper" = "/home/iperez/Wallpaper/1udeandomn1e1.jpeg";
 
       inherit (bind) bind;
       inherit (bind) bindel;

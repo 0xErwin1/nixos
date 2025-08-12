@@ -1,0 +1,24 @@
+window {
+  background-color: #0a0e14;
+  border: 2px solid #5277C3;
+  border-radius: 8px;
+}
+
+#input {
+  font-family: "LiterationMono Nerd Font";
+  font-size: 16px;
+  color: #e0def4;
+  background-color: #1e1e2e;
+  border-radius: 6px;
+  padding: 6px;
+}
+
+#entry {
+  padding: 8px;
+  border-radius: 4px;
+}
+
+#entry:selected {
+  background-color: #5277C3;
+  color: white;
+}

@@ -1,0 +1,74 @@
+{
+  program.hyperlock = {
+    enable = true;
+    settings = {
+      general = {
+        no_fade_in = true;
+        no_fade_out = true;
+        hide_cursor = false;
+        grace = 0;
+        disable_loading_bar = true;
+      };
+
+      background = [
+        {
+          monitor = "";
+          path = "$wallpaper";
+          blur_passes = 2;
+          contrast = 1;
+          brightness = 0.9;
+          vibrancy = 0.0;
+          vibrancy_darkness = 0.0;
+        }
+      ];
+
+      input-field = [
+        {
+          monitor = "";
+          size = "250, 60";
+          outline_thickness = 2;
+          dots_size = 0.3;
+          dots_spacing = 0.35;
+          dots_center = true;
+          outer_color = "rgba(0, 0, 0, 0)";
+          inner_color = "rgba(0, 0, 0, 0.2)";
+          font_color = "rgba(191, 186, 176, 1.0)";
+          fade_on_empty = false;
+          rounding = -1;
+          check_color = "rgba(255, 181, 84, 1.0)";
+          placeholder_text = "Input Password...";
+          hide_input = false;
+          position = "0, -200";
+          halign = "center";
+          valign = "center";
+        }
+      ];
+
+      label = [
+        # Time
+        {
+          monitor = "";
+          text = "cmd[update:60] echo \"$(date +\"%-H:%M\")\"";
+          color = "rgba(191, 186, 176, 0.9)";
+          font_size = 95;
+          font_family = "LiterationMono Nerd Font";
+          position = "0, 200";
+          halign = "center";
+          valign = "center";
+        }
+
+        # Date
+        {
+          monitor = "";
+          text = "cmd[update:60] echo \"$(date +\"%A, %d %B %Y\")\"";
+          color = "rgba(191, 186, 176, 0.75)";
+          font_size = 22;
+          font_family = "LiterationMono Nerd Font";
+          position = "0, 300";
+          halign = "center";
+          valign = "center";
+        }
+      ];
+    };
+  };
+}

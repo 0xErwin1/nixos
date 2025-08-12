@@ -11,12 +11,7 @@
       slurp
       swappy
       hyprpaper
+      hyprlock
     ];
-  };
-
-  programs = {
-    wofi = {
-      enable = true;
-    };
   };
 }
