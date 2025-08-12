@@ -1,5 +1,6 @@
 (deflisten workspaces "bash ~/.config/hypr/eww/scripts/get-workspaces")
 (deflisten current_workspace "bash ~/.config/hypr/eww/scripts/get-active-workspace")
+(defpoll current_workspace_info :interval "1s" "bash ~/.config/hypr/eww/scripts/get-current-workpace-info")
 
 (defvar bright false)
 (defvar volum false)
@@ -14,6 +15,8 @@
 (defpoll batteryPercent :interval "1s" "scripts/battery --percent")
 (defpoll volumeIcon :interval "1s" "scripts/volume --icon")
 (defpoll volumePercent :interval "1s" "scripts/volume --percent")
+(defpoll microphoneIcon :interval "1s" "scripts/microphone --icon")
+(defpoll microphoneStatus :interval "1s" "scripts/microphone --status")
 (defpoll brightnessPercent :interval "1s" "scripts/brightness --percent")
 (defpoll brightnessIcon :interval "1s" "scripts/brightness --icon")
 (defpoll hour :interval "1s" "date '+%H'")
@@ -26,6 +29,14 @@
 
 (defpoll osIcon :interval "0" "scripts/os --icon")
 (defpoll osColor :interval "0" "scripts/os --id")
+
+(defwidget ws-state []
+  (box :orientation "h" :class "workspace-state" :space-evenly false
+    (label :class "window-icon" :text " ")
+    (label :class "window-count" :text "${current_workspace_info.windows}")
+    (label :class "fullscreen-state" :text "${current_workspace_info.hasFullScreen ? "󰊔 " : ""}")
+  )
+)
 
 (defwidget workspace-icons [id]
   (label
@@ -72,6 +83,12 @@
     (label :class "volume-icon" :text "${volumeIcon}")
     (label :class "volume-percent" :text "${volumePercent}%")))
 
+(defwidget microphone []
+  (box :class "microphone" :orientation "h" :space-evenly false
+    (label :class "microphone-icon microphone-${microphoneStatus}" :text "${microphoneIcon}")
+  )
+)
+
 (defwidget battery []
   (box :class 'battery' :orientation 'h'
     (label :class "battery-icon" :text "${batteryIcon}")
@@ -105,6 +122,7 @@
     (brightness)
     (battery)
     (volume)
+    (microphone)
     (wifi)))
 
 (defwidget left [?number monitor]
@@ -112,6 +130,8 @@
     (label :class "os-icon nix" :text "${osIcon}")
     (label :class "separator" :text "│")
     (workspaces :monitor monitor)
+    (label :class "separator" :text "│")
+    (ws-state)
   )
 )
 

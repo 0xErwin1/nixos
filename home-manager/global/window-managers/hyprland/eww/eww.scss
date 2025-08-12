@@ -94,6 +94,31 @@
   color: $foreground;
 }
 
+.workspace-state {
+  color: $foreground;
+  font-size: 20px;
+  margin-left: 0.3rem;
+  margin-right: 0.4rem;
+}
+
+.window-icon {
+  font-size: 15px;
+  color: $yellow;
+  margin-top: 1px;
+}
+
+.window-count {
+  font-size: 20px;
+  margin-left: 0.2rem;
+  margin-top: 0.2rem;
+}
+
+.fullscreen-state {
+  font-size: 24px;
+  color: $yellow;
+  margin-left: 0.4rem;
+}
+
 .control {
   margin: 0 1rem;
   font-size: 1.6em;
@@ -127,6 +152,23 @@
 .volume-percent {
   // up right bottom left
   margin: 0 0 0 .5rem;
+}
+
+.microphone {
+  margin: 0 .5rem;
+}
+
+.microphone-icon {
+  font-size: 20px;
+  margin: 0 0 .1rem 0;
+}
+
+.microphone-no {
+  color: $green;
+}
+
+.microphone-yes {
+  color: $red;
 }
 
 .battery-percent {

@@ -122,6 +122,10 @@
         format = "[$symbol$version]($style) ";
         symbol = " ";
       };
+      ruby = {
+        format = "[$symbol($version)]($style) ";
+        symbol = " ";
+      };
     };
   };
 }

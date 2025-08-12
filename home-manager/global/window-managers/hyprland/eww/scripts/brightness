@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 
-((BRIGHTNESS=$(brightnessctl get) * 100 / 255))
+BRIGHTNESS=$(brightnessctl get)
+MAX_BRIGHTNESS=$(brightnessctl m)
+PERCENT=$(( BRIGHTNESS * 100 / MAX_BRIGHTNESS ))
 
 get_icon() {
   case $BRIGHTNESS in
@@ -25,5 +27,5 @@ get_icon() {
 if [[ "$1" == "--icon" ]]; then
   get_icon
 elif [[ "$1" == "--percent" ]]; then
-  echo "$BRIGHTNESS"
+  echo "$PERCENT"
 fi

@@ -44,6 +44,19 @@ in
         export NOTES_DIR="$HOME/.tabularium"
         export PATH="/home/iperez/.local/bin:$PATH"
         export $(grep -v '^#' ~/.env | xargs)
+
+        export XDG_CONFIG_HOME="$HOME/.config"
+        export XDG_DATA_HOME="$HOME/.local/share"
+        export XDG_CACHE_HOME="$HOME/.cache"
+        export XDG_STATE_HOME="$HOME/.local/state"
+        export XDG_SCRATCH_HOME="$HOME/Pictures/scratch"
+
+        export TMUX_TMPDIR="$XDG_RUNTIME_DIR"
+        export CARGO_HOME="$XDG_DATA_HOME/cargo"
+        export GOPATH="$XDG_DATA_HOME/go"
+        export RUSTUP_HOME="$XDG_DATA_HOME/rustup"
+        export NPM_CONFIG_USERCONFIG="$XDG_CONFIG_HOME/npm/npmrc"
+        export _JAVA_OPTIONS=-Djava.util.prefs.userRoot="$XDG_CONFIG_HOME"/java
       '';
       oh-my-zsh = {
         enable = true;
