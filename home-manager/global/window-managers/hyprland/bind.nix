@@ -20,23 +20,37 @@ let
     "$mod SHIFT, 8, movetoworkspace, 8"
     "$mod SHIFT, 9, movetoworkspace, 9"
     "$mod SHIFT, 0, movetoworkspace, 10"
+
+    # Special workspace (scratchpad)
+    "$mod, S, togglespecialworkspace, magic"
+    "$mod SHIFT, S, movetoworkspace, special:magic"
   ];
 
   windowBind = [
-    "$mod, L, moveFocus, l"
-    "$mod, H, moveFocus, r"
-    "$mod, K, moveFocus, u"
-    "$mod, J, moveFocus, d"
+    "$mod, H, movefocus, l"
+    "$mod, L, movefocus, r"
+    "$mod, K, movefocus, u"
+    "$mod, J, movefocus, d"
 
-    "$mod SHIFT, L, moveWindow, l"
-    "$mod SHIFT, H, moveWindow, r"
-    "$mod SHIFT, K, moveWindow, u"
-    "$mod SHIFT, J, moveWindow, d"
+    "$mod SHIFT, H, movewindow, l"
+    "$mod SHIFT, L, movewindow, r"
+    "$mod SHIFT, K, movewindow, u"
+    "$mod SHIFT, J, movewindow, d"
+
+    # Resize active window (ALT+SHIFT+HJKL)
+    "ALT SHIFT, H, resizeactive, -20 0"
+    "ALT SHIFT, L, resizeactive, 20 0"
+    "ALT SHIFT, J, resizeactive, 0 20"
+    "ALT SHIFT, K, resizeactive, 0 -20"
   ];
 
   mouseBind = [
     "$mod, mouse:272, movewindow"
     "$mod, mouse:273, resizewindow"
+
+    # Scroll through workspaces
+    "$mod, mouse_down, workspace, e+1"
+    "$mod, mouse_up, workspace, e-1"
   ];
 
   menuBind = [
@@ -48,45 +62,49 @@ let
     "$mod SHIFT, Q, exit"
     "$mod, W, killactive"
     "$mod, V, togglefloating"
+    "$mod, F, togglefloating"
 
-    "$mod, Z, togglesplit"
+    "$mod, Z, pseudo"
+    "$mod, Tab, togglesplit"
+    "$mod, Space, fullscreen, 1"
   ];
 
   appBind = [
     "$mod, Return, exec, $terminal"
+    "$mod, E, exec, $fileManager"
     "$mod, B, exec, $browser"
     "$mod SHIFT, B, exec, $workBrowser"
-    "$mod, S, exec, slack"
-    "$mod, N, exec, obsidian"
 
     "$mod, P, exec, $screenshot"
-    "$mod Control, L, hyprlock"
+    "$mod Control, L, exec, hyprlock"
   ];
 
   bindm = mouseBind;
 
   bind = hyperBind ++ workspaceBind ++ windowBind ++ menuBind ++ appBind;
 
+  # Volume/brightness/notifications (repeatable)
   bindel = [
-    # Media Keys
-    ", XF86AudioRaiseVolume, exec, pamixer --increase 5"
-    ", XF86AudioLowerVolume, exec, pamixer --decrease 5"
-    ", XF86AudioMicMute , exec, wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle"
-    ", XF86AudioMute, exec, pamixer --toggle-mute"
+    ", XF86AudioRaiseVolume, exec, wpctl set-volume -l 1 @DEFAULT_AUDIO_SINK@ 5%+"
+    ", XF86AudioLowerVolume, exec, wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%-"
+    ", XF86AudioMute, exec, wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle"
+    ", XF86AudioMicMute, exec, wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle"
+    ", XF86MonBrightnessUp, exec, brightnessctl -e4 -n2 set 5%+"
+    ", XF86MonBrightnessDown, exec, brightnessctl -e4 -n2 set 5%-"
+    ", XF86NotificationCenter, exec, dunstctl set-paused toggle"
+  ];
+
+  # Media controls (work on lockscreen)
+  bindl = [
+    ", XF86AudioNext, exec, playerctl next"
+    ", XF86AudioPause, exec, playerctl play-pause"
     ", XF86AudioPlay, exec, playerctl play-pause"
     ", XF86AudioPrev, exec, playerctl previous"
-    ", XF86AudioNext, exec, playerctl next"
-
-    # Brightness Keys
-    ", XF86MonBrightnessUp, exec, brightnessctl set +10%"
-    ", XF86MonBrightnessDown, exec, brightnessctl set 10%-"
-
-    # Messenger Keys
-    ", XF86NotificationCenter, exec, dunstctl set-paused toggle"
   ];
 in
 {
   inherit bind;
   inherit bindel;
   inherit bindm;
+  inherit bindl;
 }

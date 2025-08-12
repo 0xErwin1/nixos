@@ -7,7 +7,7 @@ let
     + "Dialog"
     + "pop-up"
     + "Thunar"
-    + "Pcmanfm"
+    + "pcmanfm"
     + "Piper"
     + "Blueman-manager"
     + "blueman-manager"
@@ -22,28 +22,35 @@ let
     + "Settings"
     + "protonvpn"
     + "cpupower-gui"
-    + "blueman-adapters";
+    + "blueman-adapters"
+    + "SpeedCrunch"
+    + "swing-App"
+    + "Gcr-prompter"
+    + "Steam";
 
-  peronsalBrowser = "firefox-nightly" + "LibreWolf" + "zen-browser";
+  peronsalBrowser = "firefox-nightly" + "floorp" + "LibreWolf" + "librewolf" + "zen-browser";
 
   development = "";
 
   terminal = "";
 
-  workBrowser = "firefoxdeveloperedition" + "firefox-aurora" + "firefox";
+  workBrowser = "firefoxdeveloperedition" + "firefox" + "Google-chrome";
 
   file = "";
 
   db = "DBeaver";
 
-  communication = "discord" + "Thunderbird";
+  communication = "TelegramDesktop" + "Thunderbird" + "zoom" + "Zoom Cloud Meetings" + "fluent-reader" + "discord";
 
   multimedia = "Spotify" + "Pulseaudio-equalizer-gtk" + "Pavucontrol" + "easyeffects";
 
   slack = "Slack";
 in
 {
-  windowrulev1 = [ ];
+  windowrulev1 = [
+    "suppressevent maximize, class:.*"
+    "nofocus,class:^$,title:^$,xwayland:1,floating:1,fullscreen:0,pinned:0"
+  ];
   windowrulev2 = [
     # Float
     "float, class:(${classFloat})"
