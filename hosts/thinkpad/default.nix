@@ -1,3 +1,4 @@
+{ pkgs, ... }:
 {
   nixpkgs.config.allowUnfree = true;
 
@@ -79,6 +80,29 @@
     blueman.enable = true;
   };
   systemd.services."NetworkManager-wait-online".enable = false;
+
+  xdg = {
+    portal = {
+      enable = true;
+      extraPortals = with pkgs; [
+        xdg-desktop-portal-gtk
+        xdg-desktop-portal-hyprland
+      ];
+      config.common.default = [
+        "hyprland"
+        "gtk"
+      ];
+    };
+  };
+
+  environment.sessionVariables = {
+    NIXOS_OZONE_WL = "1";
+    MOZ_ENABLE_WAYLAND = "1";
+    QT_QPA_PLATFORM = "wayland;xcb";
+    SDL_VIDEODRIVER = "wayland";
+    XDG_SESSION_TYPE = "wayland";
+    XDG_CURRENT_DESKTOP = "Hyprland";
+  };
 
   location.provider = "geoclue2";
   security.rtkit.enable = true;
