@@ -6,7 +6,7 @@
     ./font.nix
     ./tmux.nix
     ./direnv.nix
-    ./neovim.nix
+    #./neovim.nix
     ./zathura.nix
     ./utilities.nix
   ];

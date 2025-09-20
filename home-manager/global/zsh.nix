@@ -42,7 +42,7 @@ in
         export IGNIS_DIR="$HOME/dev/personal/Ignis"
         export HOME_MANAGER_DIR="$HOME/.home-manager"
         export NOTES_DIR="$HOME/.tabularium"
-        export PATH="/home/iperez/.local/bin:$PATH"
+        export PATH="$HOME/.local/share/cargo/bin:$HOME/.local/bin:$PATH"
         export $(grep -v '^#' ~/.env | xargs)
 
         export XDG_CONFIG_HOME="$HOME/.config"
@@ -57,6 +57,9 @@ in
         export RUSTUP_HOME="$XDG_DATA_HOME/rustup"
         export NPM_CONFIG_USERCONFIG="$XDG_CONFIG_HOME/npm/npmrc"
         export _JAVA_OPTIONS=-Djava.util.prefs.userRoot="$XDG_CONFIG_HOME"/java
+
+        export GUIX_PROFILE="/home/iperez/.config/guix/current"
+        . "$GUIX_PROFILE/etc/profile"
       '';
       oh-my-zsh = {
         enable = true;
