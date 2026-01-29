@@ -1,7 +1,7 @@
 { pkgs, inputs, ... }:
 {
   imports = [
-    inputs.zenBrowserFlake.homeModules.betas
+    inputs.zenBrowserFlake.homeModules.beta
   ];
 
   home.packages = with pkgs; [
