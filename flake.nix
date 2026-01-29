@@ -41,10 +41,12 @@
     let
       inherit (self) outputs;
       lib = nixpkgs.lib // home-manager.lib;
+
       systems = [
         "x86_64-linux"
         "aarch64-linux"
       ];
+
       pkgsFor = lib.genAttrs systems (
         system:
         import nixpkgs {
@@ -52,63 +54,54 @@
           config.allowUnfree = true;
         }
       );
+
       forEachSystem = f: lib.genAttrs systems (system: f pkgsFor.${system});
+
+      nixosEpsilon = nixpkgs.lib.nixosSystem {
+        specialArgs = {
+          inherit inputs outputs;
+        };
+        modules = [ ./hosts/epsilon ];
+      };
+
+      hmDelta = home-manager.lib.homeManagerConfiguration {
+        pkgs = nixpkgs.legacyPackages.x86_64-linux;
+        extraSpecialArgs = {
+          inherit inputs outputs;
+        };
+        modules = [ ./home-manager/delta ];
+      };
+
+      hmEpsilon = home-manager.lib.homeManagerConfiguration {
+        pkgs = nixpkgs.legacyPackages.x86_64-linux;
+        extraSpecialArgs = {
+          inherit inputs outputs;
+        };
+        modules = [ ./home-manager/epsilon ];
+      };
     in
     {
       inherit lib;
+
       devShells = forEachSystem (pkgs: import ./shell.nix { inherit pkgs; });
       packages = forEachSystem (pkgs: import ./pkgs { inherit pkgs inputs; });
 
-      # NixOS configuration entrypoint
-      # Available through 'nixos-rebuild --flake .#your-hostname'
       nixosConfigurations = {
-        server = nixpkgs.lib.nixosSystem {
-          specialArgs = {
-            inherit inputs outputs;
-          };
-          modules = [ ./hosts/server ];
-        };
-        thinkpad = nixpkgs.lib.nixosSystem {
-          specialArgs = {
-            inherit inputs outputs;
-          };
-          modules = [ ./hosts/thinkpad ];
-        };
-        beta = nixpkgs.lib.nixosSystem {
-          specialArgs = {
-            inherit inputs outputs;
-          };
-          modules = [ ./hosts/beta ];
-        };
+        epsilon = nixosEpsilon;
       };
 
-      services.xserver = {
-        enable = true;
-      };
-      # Standalone home-manager configuration entrypoint
-      # Available through 'home-manager --flake .#your-username@your-hostname'
       homeConfigurations = {
-        "iperez@beta" = home-manager.lib.homeManagerConfiguration {
-          pkgs = nixpkgs.legacyPackages.x86_64-linux;
-          extraSpecialArgs = {
-            inherit inputs outputs;
-          };
-          modules = [ ./home-manager/beta ];
-        };
-        "iperez@server" = home-manager.lib.homeManagerConfiguration {
-          pkgs = nixpkgs.legacyPackages.aarch64-linux;
-          extraSpecialArgs = {
-            inherit inputs outputs;
-          };
-          modules = [ ./home-manager/server ];
-        };
-        "iperez@thinkpad" = home-manager.lib.homeManagerConfiguration {
-          pkgs = nixpkgs.legacyPackages.x86_64-linux;
-          extraSpecialArgs = {
-            inherit inputs outputs;
-          };
-          modules = [ ./home-manager/thinkpad ];
-        };
+        "iperez@delta" = hmDelta;
+        "iperez@epsilon" = hmEpsilon;
       };
+
+      checks = forEachSystem (
+        pkgs:
+        lib.optionalAttrs (pkgs.system == "x86_64-linux") {
+          eval-nixos-epsilon = pkgs.writeText "eval-nixos-epsilon" nixosEpsilon.config.system.build.toplevel.drvPath;
+          eval-home-delta = pkgs.writeText "eval-home-delta" hmDelta.activationPackage.drvPath;
+          eval-home-epsilon = pkgs.writeText "eval-home-epsilon" hmEpsilon.activationPackage.drvPath;
+        }
+      );
     };
 }
