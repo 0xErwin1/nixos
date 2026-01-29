@@ -1,4 +1,4 @@
-{ pkgs, ... }:
+{ pkgs, inputs, ... }:
 {
   nixpkgs.config.allowUnfree = true;
 
@@ -7,7 +7,14 @@
     ../globals
     ../globals/gaming.nix
     ./packages.nix
+    inputs.home-manager.nixosModules.home-manager
   ];
+
+  home-manager = {
+    useGlobalPkgs = true;
+    useUserPackages = true;
+    users.iperez = import ../../home-manager/epsilon;
+  };
 
   boot = {
     tmp.cleanOnBoot = true;
@@ -18,7 +25,7 @@
   };
 
   networking = {
-    hostName = "thinkpad";
+    hostName = "epsilon";
     networkmanager.enable = true;
     nameservers = [
       "10.0.0.1"
