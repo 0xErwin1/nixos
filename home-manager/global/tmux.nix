@@ -36,6 +36,12 @@ in
 
       bind-key -n C-j send-keys C-j
       bind-key -n C-k send-keys C-k
+      unbind c
+      unbind %
+      unbind '"'
+      bind % split-window -h -c "$HOME"
+      bind '"' split-window -v -c "$HOME"
+      bind c new-window -c "$HOME"
 
       unbind f
       unbind C-w

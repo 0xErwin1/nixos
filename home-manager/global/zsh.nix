@@ -11,6 +11,7 @@ in
   imports = [ ./starship.nix ];
   home.packages = with pkgs; [
     fnm
+    grc
   ];
 
   programs = {
@@ -35,6 +36,7 @@ in
       enableCompletion = true;
       syntaxHighlighting.enable = true;
       initExtra = ''
+        [[ -s "/etc/grc.zsh" ]] && source /etc/grc.zsh
         export FZF_DEFAULTS_OPTS="${lib.concatStringsSep " " fzfDefaultOptions}"
         export DEVELOPMENT="$HOME/dev"
         export HOULAK_DIR="$HOME/dev/work/Houlak"
@@ -42,8 +44,7 @@ in
         export IGNIS_DIR="$HOME/dev/personal/Ignis"
         export HOME_MANAGER_DIR="$HOME/.home-manager"
         export NOTES_DIR="$HOME/.tabularium"
-        export PATH="$HOME/.local/share/cargo/bin:$HOME/.local/bin:$PATH"
-        export $(grep -v '^#' ~/.env | xargs)
+        export PATH="$HOME/.local/share/cargo/bin:$HOME/.local/bin:$HOME/.opencode/bin:$HOME/.cache/.bun/bin:$PATH"
 
         export XDG_CONFIG_HOME="$HOME/.config"
         export XDG_DATA_HOME="$HOME/.local/share"
@@ -58,8 +59,11 @@ in
         export NPM_CONFIG_USERCONFIG="$XDG_CONFIG_HOME/npm/npmrc"
         export _JAVA_OPTIONS=-Djava.util.prefs.userRoot="$XDG_CONFIG_HOME"/java
 
-        export GUIX_PROFILE="/home/iperez/.config/guix/current"
-        . "$GUIX_PROFILE/etc/profile"
+        export PNPM_HOME="$HOME/.local/share/pnpm"
+        case ":$PATH:" in
+          *":$PNPM_HOME:"*) ;;
+          *) export PATH="$PNPM_HOME:$PATH" ;;
+        esac
       '';
       oh-my-zsh = {
         enable = true;
@@ -90,6 +94,8 @@ in
         fnote = "vi $(mktemp -p \"$NOTES_DIR/privatum/notae-celeres\" --suffix=.md -t notae_XXXXX)";
         vi = "nvim $1";
         "v." = "nvim .";
+        zed = "zeditor";
+        "z." = "zeditor .";
         ls = "eza --group-directories-first --icons";
         la = "eza --group-directories-first --icons -a";
         ll = "eza --group-directories-first --icons -l";
@@ -101,7 +107,9 @@ in
         downt = "docker compose -f docker-compose.test.yml down";
 
         fp = "cd $(find ~/dev/personal -mindepth 2 -maxdepth 2 -type d | fzf --preview 'eza -T -a --icons -L1 {}')";
+        pl = "cd $(find ~/dev/personal -mindepth 1 -maxdepth 1 -type d | fzf --preview 'eza -T -a --icons -L1 {}')";
         wp = "cd $(find ~/dev/work -mindepth 2 -maxdepth 2 -type d | fzf --preview 'eza -T -a --icons -L1 {}')";
+        wl = "cd $(find ~/dev/work -mindepth 1 -maxdepth 1 -type d | fzf --preview 'eza -T -a --icons -L1 {}')";
         ssh_fzf = ''ssh "$(awk "/^Host / {print \$2}" ~/.ssh/config | fzf)"'';
         docker_connect = ''docker ps >/dev/null 2>&1 || echo "Docker is not running" && docker exec -it $(docker ps --format "{{.Names}}" | fzf) /bin/sh'';
         vz = "fd -H -L -t f -a -e pdf -e epub -e djvu -0 --search-path ~ 2>/dev/null | fzf --read0 --bind 'enter:become(nohup zathura {} > /dev/null 2>&1 &)' --info=inline";

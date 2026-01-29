@@ -18,9 +18,7 @@
         }
       ];
       delta.enable = true;
-    };
-    gh = {
-      enable = true;
+      extraConfig = { push = { autoSetupRemote = true; }; };
     };
   };
 }
