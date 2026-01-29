@@ -7,6 +7,7 @@
     ../globals
     ../globals/gaming.nix
     ./packages.nix
+    ./wireguard.nix
     inputs.home-manager.nixosModules.home-manager
   ];
 
