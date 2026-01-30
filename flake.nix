@@ -9,7 +9,7 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    nixvim.url = "gitlab:0xErwin/nixvim";
+    nixvim.url = "github:0xErwin1/nixvim";
 
     rofiAyuDarkTheme = {
       url = "github:regolith-linux/regolith-styles";

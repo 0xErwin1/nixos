@@ -7,6 +7,7 @@
     ../global/notify.nix
     ../global/database.nix
     ../global/spotify.nix
+    ../global/neovim.nix
     ./monitor.nix
     ./packages.nix
   ];

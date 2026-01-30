@@ -5,6 +5,6 @@
 }:
 {
   home.packages = [
-    inputs.nixvim.packages.${pkgs.system}.personal
+    inputs.nixvim.packages.${pkgs.stdenv.hostPlatform.system}.personal
   ];
 }
