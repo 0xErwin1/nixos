@@ -11,7 +11,6 @@
     ../global/themes.nix
     ../global/notify.nix
     ../global/database.nix
-    ../global/spotify.nix
     ./packages.nix
   ];
 
