@@ -119,6 +119,16 @@
         frame_color = "#f26D78";
         timeout = 0;
       };
+
+      spotify = {
+        summary = "*";
+        script = "~/.scripts/music-art";
+      };
+
+      "spotify-icon" = {
+        appname = "Spotify";
+        icon = "~/.cache/temp.png";
+      };
     };
   };
 }

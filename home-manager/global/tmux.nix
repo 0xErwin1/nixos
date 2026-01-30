@@ -51,7 +51,7 @@ in
       set -g status-position top
 
       TMUX_FZF_OPTIONS="-w 70% -h 70% -m"
-      TMUX_FZF_LAUNCH_KEY="C-f"
+      TMUX_FZF_LAUNCH_KEY="f"
     '';
     plugins = [
       pkgs.tmuxPlugins.resurrect
