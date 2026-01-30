@@ -1,15 +1,15 @@
 let
   workspaceBind = [
-    "$mod, 1, workspace, 1"
-    "$mod, 2, workspace, 2"
-    "$mod, 3, workspace, 3"
-    "$mod, 4, workspace, 4"
-    "$mod, 5, workspace, 5"
-    "$mod, 6, workspace, 6"
-    "$mod, 7, workspace, 7"
-    "$mod, 8, workspace, 8"
-    "$mod, 9, workspace, 9"
-    "$mod, 0, workspace, 10"
+    "$mod, 1, focusworkspaceoncurrentmonitor, 1"
+    "$mod, 2, focusworkspaceoncurrentmonitor, 2"
+    "$mod, 3, focusworkspaceoncurrentmonitor, 3"
+    "$mod, 4, focusworkspaceoncurrentmonitor, 4"
+    "$mod, 5, focusworkspaceoncurrentmonitor, 5"
+    "$mod, 6, focusworkspaceoncurrentmonitor, 6"
+    "$mod, 7, focusworkspaceoncurrentmonitor, 7"
+    "$mod, 8, focusworkspaceoncurrentmonitor, 8"
+    "$mod, 9, focusworkspaceoncurrentmonitor, 9"
+    "$mod, 0, focusworkspaceoncurrentmonitor, 10"
     "$mod SHIFT, 1, movetoworkspace, 1"
     "$mod SHIFT, 2, movetoworkspace, 2"
     "$mod SHIFT, 3, movetoworkspace, 3"
@@ -46,6 +46,14 @@ let
     "ALT SHIFT, L, resizeactive, 20 0"
     "ALT SHIFT, J, resizeactive, 0 20"
     "ALT SHIFT, K, resizeactive, 0 -20"
+
+    # Window cycling
+    "$mod, L, cyclenext"
+    "$mod, K, cyclenext, prev"
+
+    # Monitor focus
+    "$mod, X, focusmonitor, +1"
+    "$mod SHIFT, X, focusmonitor, -1"
   ];
 
   mouseBind = [

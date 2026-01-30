@@ -54,7 +54,10 @@ in
         "/usr/(bin|local/bin)/hyprpm, plugin, allow"
       ];
 
-      monitor = ",preferred,auto,1";
+      monitor = [
+        "eDP-1, 1920x1080@60, 0x0, 1"
+        "DP-2, 1920x1080@60, 0x1080, 1"
+      ];
 
       "exec-once" = [
         "dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP"
@@ -68,6 +71,8 @@ in
         "udiskie -t &"
         "solaar -b regular -w hide &"
         "hyprpaper"
+        "xdg-desktop-portal &"
+        "xdg-desktop-portal-wlr &"
       ];
 
       general = {
@@ -162,7 +167,7 @@ in
       "$menuWindow" = "wofi -show window";
       "$browser" = "zen-browser";
       "$workBrowser" = "firefox";
-      "$screenshot" = ''grim -g "$(slurp)" - | swappy -f -'';
+      "$screenshot" = "hyprshot -m region --raw | satty --filename - --output-filename \$HOME/Pictures/Screenshots/screenshot-\$(date +'%Y-%m-%d_%H-%M-%S').png --early-exit --actions-on-enter save-to-clipboard --save-after-copy --copy-command wl-copy";
       "$wallpaper" = "/home/iperez/Wallpaper/1udeandomn1e1.jpeg";
 
       inherit (bind) bind;
