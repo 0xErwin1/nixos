@@ -18,10 +18,6 @@
     #  ./picom.nix
   ];
 
-  nixpkgs = {
-    config.allowUnfree = true;
-  };
-
   home = {
     enableNixpkgsReleaseCheck = false;
     username = "iperez";

@@ -79,11 +79,10 @@
       enable = true;
       enable32Bit = true;
       extraPackages = with pkgs; [
-        amdvlk
         libva-utils
         clinfo
       ];
-      extraPackages32 = [ pkgs.driversi686Linux.amdvlk ];
+      extraPackages32 = [ ];
     };
   };
 

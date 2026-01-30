@@ -5,6 +5,7 @@
     ../global/terminal.nix
     ../global/browser.nix
   ];
+  nixpkgs.config.allowUnfree = true;
   targets.genericLinux.enable = true;
 
   home = {

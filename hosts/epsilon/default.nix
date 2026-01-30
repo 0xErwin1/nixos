@@ -8,6 +8,7 @@
     ../globals/gaming.nix
     ./packages.nix
     ./wireguard.nix
+    ./wireguard-local.nix
     inputs.home-manager.nixosModules.home-manager
   ];
 
@@ -17,6 +18,7 @@
     extraSpecialArgs = { inherit inputs outputs; };
     users.iperez = import ../../home-manager/epsilon;
   };
+
 
   boot = {
     tmp.cleanOnBoot = true;
