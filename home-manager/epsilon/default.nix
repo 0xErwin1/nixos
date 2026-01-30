@@ -2,7 +2,6 @@
 {
   imports = [
     ../global/browser.nix
-    ../global/rofi.nix
     ../global/terminal.nix
     ../global
     ../global/xdg.nix

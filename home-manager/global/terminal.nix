@@ -1,4 +1,32 @@
+{ pkgs, ... }:
 {
+  home.packages = with pkgs; [
+    ghostty
+  ];
+
+  xdg.configFile."ghostty/config".text = ''
+    # Fonts
+    font-family = "JetBrainsMono NerdFont"
+    font-size = 14
+    font-style = Regular
+
+    # Colors
+    theme = "Ayu"
+
+    # Window
+    window-padding-x = 0
+    window-padding-y = 0
+    background-opacity = 0.9
+
+    # Clipboard
+    copy-on-select = false
+
+    # Shell
+    shell-integration-features = cursor,no-sudo,title,ssh-env
+
+    keybind = shift+enter=text:\x1b\r
+  '';
+
   programs = {
     alacritty = {
       enable = true;

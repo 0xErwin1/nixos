@@ -9,7 +9,7 @@
       location = "center";
       allow_markup = true;
       insensitive = true;
-      term = "alacritty";
+      term = "ghostty";
       columns = 2;
       hide_scroll = false;
       allow_images = true;

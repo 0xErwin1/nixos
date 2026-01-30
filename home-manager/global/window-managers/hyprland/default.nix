@@ -6,6 +6,7 @@ in
   imports = [
     ./dependencies.nix
     ../../wayland/wofi
+    ../../wayland/eww
     ./hyprlock.nix
     ./hyprpaper.nix
   ];
@@ -145,7 +146,7 @@ in
       ];
 
       "$mod" = "SUPER";
-      "$terminal" = "alacritty";
+      "$terminal" = "ghostty";
       "$fileManager" = "pcmanfm";
       "$menu" = "wofi --show drun";
       "$menuWindow" = "wofi -show window";
