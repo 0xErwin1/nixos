@@ -1,9 +1,9 @@
 { config, lib, ... }:
 let
-  cfg = config.homme.wireguard;
+  cfg = config.vault.wireguard;
 in
 {
-  options.homme.wireguard = {
+  options.vault.wireguard = {
     enable = lib.mkEnableOption "WireGuard wg0 tunnel";
 
     privateKeyFile = lib.mkOption {
@@ -30,7 +30,7 @@ in
     assertions = [
       {
         assertion = (!cfg.enable) || (cfg.privateKeyFile != null && cfg.endpoint != null);
-        message = "homme.wireguard.enable is true, but homme.wireguard.privateKeyFile and/or homme.wireguard.endpoint are not set.";
+        message = "vault.wireguard.enable is true, but vault.wireguard.privateKeyFile and/or vault.wireguard.endpoint are not set.";
       }
     ];
 
