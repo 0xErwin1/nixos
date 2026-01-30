@@ -1,4 +1,4 @@
 { pkgs, inputs }:
 {
-  nixvim = inputs.nixvim.packages.${pkgs.system};
+  nixvim = inputs.nixvim.packages.${pkgs.system}.default;
 }
