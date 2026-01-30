@@ -1,6 +1,6 @@
 {
   xdg.configFile."eww/scripts" = {
-    source = ./scripts;
+    source = ../../dotfiles/.config/eww/scripts;
     recursive = true;
   };
 }
