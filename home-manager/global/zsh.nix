@@ -35,7 +35,7 @@ in
       autosuggestion.enable = true;
       enableCompletion = true;
       syntaxHighlighting.enable = true;
-      initExtra = ''
+      initContent = ''
         [[ -s "/etc/grc.zsh" ]] && source /etc/grc.zsh
         export FZF_DEFAULTS_OPTS="${lib.concatStringsSep " " fzfDefaultOptions}"
         export DEVELOPMENT="$HOME/dev"
