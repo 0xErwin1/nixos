@@ -1,5 +1,5 @@
 {
-  program.wofi = {
+  programs.wofi = {
     enable = true;
     settings = {
       show = "dmenu";

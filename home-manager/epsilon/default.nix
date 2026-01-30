@@ -1,22 +1,20 @@
 { pkgs, ... }:
 {
   imports = [
-    #    ../global/browser.nix
+    ../global/browser.nix
     ../global/rofi.nix
-    #    ../global/terminal.nix
+    ../global/terminal.nix
     ../global
     ../global/xdg.nix
     ../global/zed
-    #../global/window-managers/hyprland
-    #   ../global/audio.nix
-    #../global/themes.nix
+    ../global/window-managers/hyprland
+    ../global/audio.nix
+    ../global/themes.nix
     ../global/notify.nix
     ../global/database.nix
     ../global/spotify.nix
-    #  ./xorg
     ./monitor.nix
     ./packages.nix
-    #  ./picom.nix
   ];
 
   home = {
