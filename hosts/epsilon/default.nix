@@ -1,4 +1,4 @@
-{ pkgs, inputs, ... }:
+{ pkgs, inputs, outputs, ... }:
 {
   nixpkgs.config.allowUnfree = true;
 
@@ -14,6 +14,7 @@
   home-manager = {
     useGlobalPkgs = true;
     useUserPackages = true;
+    extraSpecialArgs = { inherit inputs outputs; };
     users.iperez = import ../../home-manager/epsilon;
   };
 
