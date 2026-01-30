@@ -6,6 +6,7 @@
 }
 
 .os-icon {
+  margin-left: 1rem;
   font-size: 1.8rem;
 }
 
@@ -31,30 +32,30 @@
 
 .separator {
   color: $foreground;
-  font-size: 20px;
+  font-size: $separator-font-size;
   // up right bottom left
-  margin: 0 .5rem 0 .2rem;
+  margin: 0 $separator-margin-right 0 $separator-margin-left;
 }
 
 .tray {
-  font-size: 16px;
+  font-size: $tray-font-size;
 }
 
 .bar {
   background-color: $background;
-  border-radius: 20px;
-  padding: 0 1rem;
+  border-radius: $bar-radius;
+  padding: 0 $bar-padding-x;
 }
 
 .workspaces {
   font-weight: bold;
-  font-size: 20px;
-  margin: 0 1rem 0 0;
+  font-size: $workspace-font-size;
+  margin: 0 $workspace-margin-right 0 0;
 }
 
 .workspace-icon {
-  min-height: 30px;
-  min-width: 30px;
+  min-height: $workspace-icon-size;
+  min-width: $workspace-icon-size;
   padding: 0 .1rem;
 }
 
@@ -96,56 +97,58 @@
 
 .workspace-state {
   color: $foreground;
-  font-size: 20px;
+  font-size: $workspace-font-size;
   margin-left: 0.3rem;
   margin-right: 0.4rem;
 }
 
 .window-icon {
-  font-size: 15px;
+  font-size: $time-font-size;
   color: $yellow;
-  margin-top: 1px;
 }
 
 .window-count {
-  font-size: 20px;
+  font-size: $workspace-font-size;
   margin-left: 0.2rem;
-  margin-top: 0.2rem;
 }
 
 .fullscreen-state {
-  font-size: 24px;
+  font-size: $workspace-font-size;
   color: $yellow;
   margin-left: 0.4rem;
 }
 
 .control {
-  margin: 0 1rem;
-  font-size: 1.6em;
+  margin: 0 $control-margin-x;
+  font-size: $control-font-size;
 }
 
 .brightness,
 .volume,
-.battery,
 .wifi {
   margin: 0 .5rem;
 }
 
+.battery {
+  // up right bottom left
+  margin: 0 0 0 1rem;
+}
+
 .brightness {
   color: $yellow;
-  font-size: 20px;
+  font-size: $icon-font-size;
   // up right bottom left
 }
 
 .brightness-percent {
   // up right bottom left
-  margin: 0 0 0 .9rem;
+  margin: 0 -1rem 0 .9rem;
 }
 
 .brightness-percent,
 .volume-percent,
 .battery-percent {
-  font-size: 17px;
+  font-size: $percent-font-size;
   font-weight: bold;
 }
 
@@ -159,8 +162,7 @@
 }
 
 .microphone-icon {
-  font-size: 20px;
-  margin: 0 0 .1rem 0;
+  font-size: $icon-font-size;
 }
 
 .microphone-no {
@@ -173,11 +175,7 @@
 
 .battery-percent {
   // up right bottom left
-  margin: 0 0 0 .2rem;
-}
-
-.volume-percent,
-.battery-percent {
+  margin: 0 0 0 -.4rem;
 }
 
 .brightness-icon,
@@ -186,18 +184,11 @@
 .notifications-icon,
 .notifications-icon-pause,
 .wifi-icon {
-  font-size: 20px;
+  font-size: $icon-font-size;
 }
 
 .wifi-icon {
   color: $orange;
-  // up right bottom left
-  margin: 0 0 .1rem 0;
-}
-
-.volume-icon {
-  // up right bottom left
-  margin: 0 0 .1rem 0;
 }
 
 .volume {
@@ -230,18 +221,18 @@
 .date {
   color: $foreground;
   font-weight: bold;
-  font-size: 14px;
+  font-size: $date-font-size;
   // up right bottom left
-  margin: 0 -2rem 0 .5rem;
+  margin: 0 $date-margin-right 0 $date-margin-left;
 }
 
 .time,
 .month,
 .year {
-  font-size: 15px;
+  font-size: $time-font-size;
   margin: 0;
 }
 .year {
   // up right bottom left
-  margin: 0 0 0 -2rem;
+  margin: 0 0 0 $year-margin-left;
 }

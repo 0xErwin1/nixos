@@ -8,17 +8,17 @@
 
 (defpoll notificationsIsPaused :interval "1s" "dunstctl is-paused")
 
-(defpoll wifiIcon :interval "1s" "scripts/wifi --icon")
-(defpoll wifiName :interval "1s" "scripts/wifi --name")
+(defpoll wifiIcon :interval "1s" "~/.config/eww/scripts/wifi --icon")
+(defpoll wifiName :interval "1s" "~/.config/eww/scripts/wifi --name")
 
-(defpoll batteryIcon :interval "1s" "scripts/battery --icon")
-(defpoll batteryPercent :interval "1s" "scripts/battery --percent")
-(defpoll volumeIcon :interval "1s" "scripts/volume --icon")
-(defpoll volumePercent :interval "1s" "scripts/volume --percent")
-(defpoll microphoneIcon :interval "1s" "scripts/microphone --icon")
-(defpoll microphoneStatus :interval "1s" "scripts/microphone --status")
-(defpoll brightnessPercent :interval "1s" "scripts/brightness --percent")
-(defpoll brightnessIcon :interval "1s" "scripts/brightness --icon")
+(defpoll batteryIcon :interval "1s" "~/.config/eww/scripts/battery --icon")
+(defpoll batteryPercent :interval "1s" "~/.config/eww/scripts/battery --percent")
+(defpoll volumeIcon :interval "1s" "~/.config/eww/scripts/volume --icon")
+(defpoll volumePercent :interval "1s" "~/.config/eww/scripts/volume --percent")
+(defpoll microphoneIcon :interval "1s" "~/.config/eww/scripts/microphone --icon")
+(defpoll microphoneStatus :interval "1s" "~/.config/eww/scripts/microphone --status")
+(defpoll brightnessPercent :interval "1s" "~/.config/eww/scripts/brightness --percent")
+(defpoll brightnessIcon :interval "1s" "~/.config/eww/scripts/brightness --icon")
 (defpoll hour :interval "1s" "date '+%H'")
 (defpoll min :interval "1s" "date '+%M'")
 
@@ -27,14 +27,14 @@
 (defpoll day :interval "10s" "date '+%d'")
 (defpoll year :interval "10s" "date '+%Y'")
 
-(defpoll osIcon :interval "0" "scripts/os --icon")
-(defpoll osColor :interval "0" "scripts/os --id")
+(defpoll osIcon :interval "0" "~/.config/eww/scripts/os --icon")
+(defpoll osColor :interval "0" "~/.config/eww/scripts/os --id")
 
 (defwidget ws-state []
-  (box :orientation "h" :class "workspace-state" :space-evenly false
-    (label :class "window-icon" :text " ")
-    (label :class "window-count" :text "${current_workspace_info.windows}")
-    (label :class "fullscreen-state" :text "${current_workspace_info.hasFullScreen ? "󰊔 " : ""}")
+  (box :orientation "h" :class "workspace-state" :space-evenly false :valign "center"
+    (label :class "window-icon" :text " " :valign "center")
+    (label :class "window-count" :text "${current_workspace_info.windows}" :valign "center")
+    (label :class "fullscreen-state" :text "${current_workspace_info.hasFullScreen ? "󰊔 " : ""}" :valign "center")
   )
 )
 
@@ -54,15 +54,16 @@
       id
     }"
     :class "workspace-icon workspace-entry ${id == current_workspace ? "current" : ""}"
+    :valign "center"
   )
 )
 
 (defwidget workspaces []
-  (box :space-evenly true
+  (box :space-evenly true :valign "center"
     (label :text "${workspaces}${current_workspace}" :visible false)
     (for workspace in workspaces
       (eventbox :onclick "hyprctl dispatch workspace ${workspace.id}"
-        (box :class "workspace-entry ${workspace.windows > 0 ? "occupied" : "empty"}"
+        (box :class "workspace-entry ${workspace.windows > 0 ? "occupied" : "empty"}" :valign "center"
           (workspace-icons :id "${workspace.id}")
         )
       )
@@ -71,54 +72,54 @@
 )
 
 (defwidget notifications []
-  (box :class "notifications" :orientation "h" :space-evenly false
-    (box :class "notifications-inner-box" :orientation "h"
-      (label :class "${notificationsIsPaused ? "notifications-icon-pause": "notifications-icon"}" :text "${notificationsIsPaused ? " " : "󰂚 " }")
+  (box :class "notifications" :orientation "h" :space-evenly false :valign "center"
+    (box :class "notifications-inner-box" :orientation "h" :valign "center"
+      (label :class "${notificationsIsPaused ? "notifications-icon-pause": "notifications-icon"}" :valign "center" :text "${notificationsIsPaused ? " " : "󰂚 " }")
     )
   )
 )
 
 (defwidget volume []
-  (box :class "volume" :orientation "h" :space-evenly false
-    (label :class "volume-icon" :text "${volumeIcon}")
-    (label :class "volume-percent" :text "${volumePercent}%")))
+  (box :class "volume" :orientation "h" :space-evenly false :valign "center"
+    (label :class "volume-icon" :text "${volumeIcon}" :valign "center")
+    (label :class "volume-percent" :text "${volumePercent}%" :valign "center")))
 
 (defwidget microphone []
-  (box :class "microphone" :orientation "h" :space-evenly false
-    (label :class "microphone-icon microphone-${microphoneStatus}" :text "${microphoneIcon}")
+  (box :class "microphone" :orientation "h" :space-evenly false :valign "center"
+    (label :class "microphone-icon microphone-${microphoneStatus}" :text "${microphoneIcon}" :valign "center")
   )
 )
 
 (defwidget battery []
-  (box :class 'battery' :orientation 'h'
-    (label :class "battery-icon" :text "${batteryIcon}")
-    (label :class "battery-percent" :text "${batteryPercent}%")))
+  (box :class 'battery' :orientation 'h' :valign "center"
+    (label :class "battery-icon" :text "${batteryIcon}" :valign "center")
+    (label :class "battery-percent" :text "${batteryPercent}%" :valign "center")))
 
 (defwidget wifi []
-  (box :orientation "h" :tooltip wifiName :class "wifi"
-    (label :class "wifi-icon" :text "${wifiIcon}")))
+  (box :orientation "h" :tooltip wifiName :class "wifi" :valign "center"
+    (label :class "wifi-icon" :text "${wifiIcon}" :valign "center")))
 
 (defwidget brightness []
-  (box :class "brightness" :space-evenly false :orientation 'h'
-    (label :class "brightness-icon" :text "${brightnessIcon}")
-    (label :class "brightness-percent" :text "${brightnessPercent}%")
+  (box :class "brightness" :space-evenly false :orientation 'h' :valign "center"
+    (label :class "brightness-icon" :text "${brightnessIcon}" :valign "center")
+    (label :class "brightness-percent" :text "${brightnessPercent}%" :valign "center")
   )
 )
 
 (defwidget date []
-  (box :orientation "h" :class "date" :halign "end"
-    (box :orientation "h"
-      (label :class "time" :text "${hour}:${min} │ ")
-      (label :class "month" :text "${month} ${day},")
-      (label :class "year" :text "${year}")
+  (box :orientation "h" :class "date" :halign "end" :valign "center"
+    (box :orientation "h" :valign "center"
+      (label :class "time" :text "${hour}:${min} │ " :valign "center")
+      (label :class "month" :text "${month} ${day}," :valign "center")
+      (label :class "year" :text "${year}" :valign "center")
     )
   )
 )
 
 (defwidget control []
-  (box :orientation 'h' :class 'control' :space-evenly false
+  (box :orientation 'h' :class 'control' :space-evenly false :valign "center"
     (notifications)
-    (label :class "separator" :text "│")
+    (label :class "separator" :text "│" :valign "center")
     (brightness)
     (battery)
     (volume)
@@ -126,11 +127,11 @@
     (wifi)))
 
 (defwidget left [?number monitor]
-  (box :orientation 'h' :halign "start" :space-evenly false
-    (label :class "os-icon nix" :text "${osIcon}")
-    (label :class "separator" :text "│")
+  (box :orientation 'h' :halign "start" :valign "center" :space-evenly false
+    (label :class "os-icon arch" :text "${osIcon}" :valign "center")
+    (label :class "separator" :text "│" :valign "center")
     (workspaces :monitor monitor)
-    (label :class "separator" :text "│")
+    (label :class "separator" :text "│" :valign "center")
     (ws-state)
   )
 )
@@ -141,6 +142,7 @@
     :class "middle"
     :space-evenly false
     :halign "center"
+    :valign "center"
     (systray
       :spacing 10
       :orientation "h"
@@ -151,9 +153,9 @@
 )
 
 (defwidget right []
-  (box :orientation 'h' :space-evenly false :halign "end"
+  (box :orientation 'h' :space-evenly false :halign "end" :valign "center"
     (control)
-    (label :class "separator" :text "│")
+    (label :class "separator" :text "│" :valign "center")
     (date)))
 
 (defwidget bar [?number monitor]
@@ -163,24 +165,25 @@
     :vexpand false
     :hexpand false
     :space-evenly true
+    :valign "center"
     (left :monitor monitor)
     (center)
     (right)
   )
 )
 
-(defwindow laptop :monitor 0
-  :geometry (geometry :width "100%" :height "2%" :anchor   "bottom center")
+(defwindow laptop :monitor '[0, "eDP-0"]'
+  :geometry (geometry :width "95%" :height "3%" :anchor "bottom center")
   :wm-ignore false
   :windowtype "dock"
   :layer "bottom"
-	:focusable false
+  :focusable false
   :exclusive true
   (bar :monitor 0)
 )
 
 (defwindow monitor-DP-0 :monitor '["DisplayPort-0","DP-0", "HDMI-A-0"]'
-  :geometry (geometry :width "100%" :height "2%" :anchor   "bottom center")
+  :geometry (geometry :width "95%" :height "2%" :anchor "bottom center")
   :wm-ignore false
   :windowtype "dock"
   :layer "bottom"
@@ -189,8 +192,8 @@
   (bar :monitor 1)
 )
 
-(defwindow monitor-DP-1 :monitor '["DisplayPort-1", "DP-1"]'
-  :geometry (geometry :width "100%" :height "2%" :anchor   "bottom center")
+(defwindow monitor :monitor '[1, "DisplayPort-1", "DP-1", "DP-2"]'
+  :geometry (geometry :width "95%" :height "2%" :anchor "bottom center")
   :wm-ignore false
   :windowtype "dock"
   :layer "bottom"
