@@ -40,22 +40,6 @@
     }@inputs:
     let
       inherit (self) outputs;
-      lib = nixpkgs.lib // home-manager.lib;
-
-      systems = [
-        "x86_64-linux"
-        "aarch64-linux"
-      ];
-
-      pkgsFor = lib.genAttrs systems (
-        system:
-        import nixpkgs {
-          inherit system;
-          config.allowUnfree = true;
-        }
-      );
-
-      forEachSystem = f: lib.genAttrs systems (system: f pkgsFor.${system});
 
       nixosEpsilon = nixpkgs.lib.nixosSystem {
         specialArgs = {
@@ -75,11 +59,6 @@
       hmEpsilonNixos = nixosEpsilon.config."home-manager".users.iperez.home;
     in
     {
-      inherit lib;
-
-      devShells = forEachSystem (pkgs: import ./shell.nix { inherit pkgs; });
-      packages = forEachSystem (pkgs: import ./pkgs { inherit pkgs inputs; });
-
       nixosConfigurations = {
         epsilon = nixosEpsilon;
       };
@@ -88,14 +67,5 @@
         "iperez@delta" = hmDelta;
         "iperez@epsilon" = hmEpsilonNixos;
       };
-
-      checks = forEachSystem (
-        pkgs:
-        lib.optionalAttrs (pkgs.system == "x86_64-linux") {
-          eval-nixos-epsilon = pkgs.writeText "eval-nixos-epsilon" nixosEpsilon.config.system.build.toplevel.drvPath;
-          eval-home-delta = pkgs.writeText "eval-home-delta" hmDelta.activationPackage.drvPath;
-          eval-home-epsilon = pkgs.writeText "eval-home-epsilon" hmEpsilonNixos.activationPackage.drvPath;
-        }
-      );
     };
 }
