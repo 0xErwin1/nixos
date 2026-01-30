@@ -13,7 +13,6 @@
     ../global/notify.nix
     ../global/database.nix
     ../global/spotify.nix
-    ./monitor.nix
     ./packages.nix
   ];
 
