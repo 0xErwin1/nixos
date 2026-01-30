@@ -1,21 +1,14 @@
 { pkgs, ... }:
 {
   imports = [
-    #    ../global/browser.nix
-    ../global/rofi.nix
-    #    ../global/terminal.nix
     ../global
+    ../global/rofi.nix
     ../global/xdg.nix
-    #../global/window-managers/hyprland
-    #   ../global/audio.nix
-    #../global/themes.nix
     ../global/notify.nix
     ../global/database.nix
     ../global/spotify.nix
-    #  ./xorg
     ./monitor.nix
     ./packages.nix
-    #  ./picom.nix
   ];
 
   nixpkgs.config.allowUnfree = true;

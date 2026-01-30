@@ -1,7 +1,5 @@
 { pkgs, inputs, ... }:
 {
-  home.packages = [ pkgs.rofi ];
-
   programs.rofi = {
     enable = true;
     font = "FiraCode Nerd Font 14";

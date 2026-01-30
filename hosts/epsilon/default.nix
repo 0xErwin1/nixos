@@ -56,7 +56,6 @@
         xmodmap -e "keycode 66 = Control_L"
         xmodmap -e "add Control = Control_L"
       '';
-      windowManager.leftwm.enable = true;
     };
     libinput.enable = true;
     pipewire = {

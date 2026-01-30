@@ -5,8 +5,6 @@
     tokei
     fastfetch
     onefetch
-    eza
-    bat
     curl
     wget
     delta

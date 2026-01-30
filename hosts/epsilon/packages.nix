@@ -11,13 +11,8 @@
     xorg.libX11
     xorg.xinput
     xorg.xmodmap
-    xclip
-    leftwm
-    eww
+    wl-clipboard
     qimgv
-    nitrogen
-    picom
-    feh
     thinkfan
     ripgrep
     piper

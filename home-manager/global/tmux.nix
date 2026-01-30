@@ -8,7 +8,6 @@ let
   };
 in
 {
-  home.packages = with pkgs; [ tmux ];
   programs.tmux = {
     shortcut = "a";
     enable = true;
