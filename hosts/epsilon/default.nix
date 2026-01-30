@@ -19,7 +19,6 @@
     users.iperez = import ../../home-manager/epsilon;
   };
 
-
   boot = {
     tmp.cleanOnBoot = true;
     loader = {

@@ -8,43 +8,48 @@
 {
   imports = [
     ./kernel.nix
-    (modulesPath + "/installer/scan/not-detected.nix") 
+    (modulesPath + "/installer/scan/not-detected.nix")
   ];
+
+  environment.etc."throttled.conf".source = ./throttled.conf;
 
   boot = {
     initrd = {
       availableKernelModules = [
-        "nvme"
         "xhci_pci"
+        "nvme"
         "usbhid"
         "usb_storage"
-        "sd_mod"
-        "rtsx_pci_sdmmc"
-        "amdgpu"
+        "sdhci_pci"
+        "thunderbolt"
       ];
       kernelModules = [ ];
-      luks = {
-        devices = {
-          "luks-84bac843-e195-4c4e-81c2-db8d0f02acd2".device =
-            "/dev/disk/by-uuid/84bac843-e195-4c4e-81c2-db8d0f02acd2";
-          "luks-31afe9e5-0c92-4d22-8afe-d874da2c6d0c".device =
-            "/dev/disk/by-uuid/31afe9e5-0c92-4d22-8afe-d874da2c6d0c";
-        };
-      };
+      luks.devices."root".device = "/dev/disk/by-uuid/a960b1d8-aa18-4925-b4dc-76eed2c5ed4d";
     };
+
     kernelModules = [
-      "kvm-amd"
+      "kvm-intel"
       "thinkpad_acpi"
       "fuse"
-      "amdgpu"
+      "acpi_call"
     ];
-    extraModulePackages = [ ];
+    extraModulePackages = with config.boot.kernelPackages; [ acpi_call ];
+
     blacklistedKernelModules = [ "pcspkr" ];
+
     extraModprobeConfig = ''
       options thinkpad_acpi fan_control=1
     '';
+
+    kernel.sysctl = {
+      "vm.swappiness" = 180;
+      "vm.watermark_boost_factor" = 0;
+      "vm.watermark_scale_factor" = 125;
+      "vm.page-cluster" = 0;
+    };
+
     supportedFilesystems = [
-      "ext4"
+      "btrfs"
       "vfat"
       "fuse"
       "ntfs"
@@ -53,81 +58,150 @@
   };
 
   fileSystems."/" = {
-    device = "/dev/disk/by-uuid/54d4d00a-b8ef-4e67-a65e-a107773569cc";
-    fsType = "ext4";
-  };
-
-  fileSystems."/boot" = {
-    device = "/dev/disk/by-uuid/C666-5D4A";
-    fsType = "vfat";
+    device = "/dev/mapper/root";
+    fsType = "btrfs";
     options = [
-      "fmask=0077"
-      "dmask=0077"
+      "subvol=@nixos"
+      "compress=zstd"
+      "noatime"
+      "ssd"
+      "space_cache=v2"
     ];
   };
 
-  swapDevices = [ { device = "/dev/disk/by-uuid/85405fdd-64f3-4889-b5e5-ea5fd9ccfa8c"; } ];
+  fileSystems."/home" = {
+    device = "/dev/mapper/root";
+    fsType = "btrfs";
+    options = [
+      "subvol=@nixos-home"
+      "compress=zstd"
+      "noatime"
+      "ssd"
+      "space_cache=v2"
+    ];
+  };
+
+  fileSystems."/boot" = {
+    device = "/dev/disk/by-uuid/5990-8457";
+    fsType = "vfat";
+    options = [ "fmask=0022" "dmask=0022" ];
+  };
+
+  # zram swap for daily use
+  zramSwap = {
+    enable = true;
+    algorithm = "zstd";
+    memoryPercent = 10;
+  };
+
+  # BTRFS swapfile for hibernation
+  swapDevices = [{
+    device = "/swap/swapfile";
+    priority = 100;
+  }];
 
   hardware = {
+    enableRedistributableFirmware = true;
+    cpu.intel.updateMicrocode = true;
+
     bluetooth = {
       enable = true;
+      powerOnBoot = true;
     };
-
-    cpu.amd.updateMicrocode = lib.mkDefault config.hardware.enableRedistributableFirmware;
 
     graphics = {
       enable = true;
       enable32Bit = true;
       extraPackages = with pkgs; [
-        libva-utils
-        clinfo
+        intel-media-driver
+        intel-vaapi-driver
+        libvdpau-va-gl
+        libva-vdpau-driver
       ];
-      extraPackages32 = [ ];
+    };
+
+    nvidia = {
+      modesetting.enable = true;
+      powerManagement.enable = true;
+      powerManagement.finegrained = true;
+      open = false;
+      nvidiaSettings = true;
+      package = config.boot.kernelPackages.nvidiaPackages.stable;
+
+      prime = {
+        offload = {
+          enable = true;
+          enableOffloadCmd = true;
+        };
+        intelBusId = "PCI:0:2:0";
+        nvidiaBusId = "PCI:1:0:0";
+      };
     };
   };
 
-  networking = {
-    useDHCP = lib.mkDefault true;
-  };
+  networking.useDHCP = lib.mkDefault true;
 
   services = {
     fwupd.enable = true;
+    thermald.enable = true;
+
+    # Throttled for Intel CPU power limits (PL1/PL2)
+    throttled.enable = true;
+
     tlp = {
       enable = true;
       settings = {
         CPU_SCALING_GOVERNOR_ON_AC = "performance";
         CPU_SCALING_GOVERNOR_ON_BAT = "powersave";
 
-        CPU_ENERGY_PERF_POLICY_ON_BAT = "power";
         CPU_ENERGY_PERF_POLICY_ON_AC = "performance";
+        CPU_ENERGY_PERF_POLICY_ON_BAT = "balance_power";
 
         CPU_MIN_PERF_ON_AC = 0;
         CPU_MAX_PERF_ON_AC = 100;
-        CPU_MIN_PERF_ON_BAT = 0;
-        CPU_MAX_PERF_ON_BAT = 20;
+        CPU_MIN_PERF_ON_BAT = 25;
+        CPU_MAX_PERF_ON_BAT = 60;
 
-        START_CHARGE_THRESH_BAT0 = 40;
-        STOP_CHARGE_THRESH_BAT0 = 80;
+        CPU_BOOST_ON_AC = 1;
+        CPU_BOOST_ON_BAT = 0;
 
-        RADEON_DPM_STATE_ON_AC = "performance";
-        RADEON_DPM_STATE_ON_BAT = "powersave";
+        PLATFORM_PROFILE_ON_AC = "performance";
+        PLATFORM_PROFILE_ON_BAT = "balanced";
       };
     };
-    fprintd = {
-      enable = true;
-      tod = {
-        enable = false;
-      };
-    };
+
+    fprintd.enable = true;
 
     thinkfan = {
       enable = true;
       smartSupport = true;
+      sensors = [
+        {
+          type = "hwmon";
+          query = "/sys/devices/platform/thinkpad_hwmon/hwmon";
+          indices = [ 0 ];
+        }
+      ];
+      fans = [
+        {
+          type = "tpacpi";
+          query = "/proc/acpi/ibm/fan";
+        }
+      ];
+      levels = [
+        [ 0 0 55 ]
+        [ 1 53 60 ]
+        [ 2 58 65 ]
+        [ 3 63 70 ]
+        [ 4 68 75 ]
+        [ 5 73 80 ]
+        [ 6 78 85 ]
+        [ 7 83 90 ]
+        [ "level auto" 88 32767 ]
+      ];
     };
-    xserver = {
-      enable = true;
-      videoDrivers = [ "amdgpu" ];
-    };
+
+    xserver.videoDrivers = [ "nvidia" ];
   };
 
   nixpkgs.hostPlatform = lib.mkDefault "x86_64-linux";
