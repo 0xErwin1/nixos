@@ -24,6 +24,10 @@ let
     # Special workspace (scratchpad)
     "$mod, S, togglespecialworkspace, magic"
     "$mod SHIFT, S, movetoworkspace, special:magic"
+
+    # Scroll through workspaces
+    "$mod, mouse_down, workspace, e+1"
+    "$mod, mouse_up, workspace, e-1"
   ];
 
   windowBind = [
@@ -47,10 +51,6 @@ let
   mouseBind = [
     "$mod, mouse:272, movewindow"
     "$mod, mouse:273, resizewindow"
-
-    # Scroll through workspaces
-    "$mod, mouse_down, workspace, e+1"
-    "$mod, mouse_up, workspace, e-1"
   ];
 
   menuBind = [

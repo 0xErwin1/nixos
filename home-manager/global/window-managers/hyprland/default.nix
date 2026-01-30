@@ -1,6 +1,5 @@
 let
   bind = import ./bind.nix;
-  rules = import ./rules.nix;
 in
 {
   imports = [
@@ -147,7 +146,6 @@ in
       };
 
       gestures = {
-        workspace_swipe = false;
       };
 
       device = [
@@ -171,9 +169,6 @@ in
       inherit (bind) bindel;
       inherit (bind) bindm;
       inherit (bind) bindl;
-
-      inherit (rules) windowrulev2;
-      inherit (rules) windowrulev1;
     };
   };
 }
