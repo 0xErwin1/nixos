@@ -195,11 +195,11 @@
         "tree-sitter-ion": "tree-sitter-ion"
       },
       "locked": {
-        "lastModified": 1769796568,
-        "narHash": "sha256-yZaJjjPk/uexqU8vdMItpN6zvs49ARQbnSEvBvWR0kA=",
+        "lastModified": 1769816508,
+        "narHash": "sha256-Q9DoToP6gdGbHQFX3KbMHq4l6AsLsyB2K8vxEHwMLKY=",
         "owner": "0xErwin1",
         "repo": "nixvim",
-        "rev": "dfb17c448b379c70b6a72a6a97a8d99f8ba23793",
+        "rev": "4a2f11ddbf3e52f3e52d3b4d06828bd19c254294",
         "type": "github"
       },
       "original": {
