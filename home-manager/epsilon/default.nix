@@ -11,6 +11,7 @@
     ../global/themes.nix
     ../global/notify.nix
     ../global/database.nix
+    ../global/neovim.nix
     ./packages.nix
   ];
 

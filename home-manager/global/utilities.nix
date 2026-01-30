@@ -11,5 +11,6 @@
     kalker
     fd
     pcmanfm
+    btop
   ];
 }
