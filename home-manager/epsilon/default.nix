@@ -13,6 +13,8 @@
     ../global/notify.nix
     ../global/database.nix
     ../global/neovim.nix
+    ../global/zathura.nix
+    ../global/music.nix
     ./packages.nix
   ];
 
