@@ -17,7 +17,7 @@
     nerd-fonts.fira-code
     nerd-fonts.jetbrains-mono
     powerline-symbols
-    noto-fonts-emoji
+    noto-fonts-color-emoji
     noto-fonts
     noto-fonts-cjk-sans
     noto-fonts-cjk-serif

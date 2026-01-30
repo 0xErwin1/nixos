@@ -6,6 +6,7 @@
     ../global
     ../global/xdg.nix
     ../global/zed
+    ../global/font.nix
     ../global/window-managers/hyprland
     ../global/audio.nix
     ../global/themes.nix

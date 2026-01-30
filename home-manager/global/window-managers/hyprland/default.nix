@@ -33,6 +33,16 @@ in
         "XDG_CURRENT_DESKTOP,Hyprland"
         "XDG_SESSION_DESKTOP,Hyprland"
         "XDG_SESSION_TYPE,wayland"
+        # Scaling
+        "GDK_SCALE,1"
+        "GDK_DPI_SCALE,0.8"
+        "QT_AUTO_SCREEN_SCALE_FACTOR,1"
+        # NVIDIA
+        "WLR_NO_HARDWARE_CURSORS,0"
+        "WLR_DRM_DEVICES,/dev/dri/card0:/dev/dri/card1"
+        "__GLX_VENDOR_LIBRARY_NAME,nvidia"
+        "GBM_BACKEND,nvidia-drm"
+        "LIBVA_DRIVER_NAME,nvidia"
       ];
 
       ecosystem = {
@@ -48,28 +58,30 @@ in
       monitor = ",preferred,auto,1";
 
       "exec-once" = [
+        "dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP"
+        "dbus-update-activation-environment --systemd --all"
+        "systemctl --user import-environment WAYLAND_DISPLAY XDG_CURRENT_DESKTOP"
+        "gammastep -O 4000 &"
+        "tmux setenv -g HYPRLAND_INSTANCE_SIGNATURE \"$HYPRLAND_INSTANCE_SIGNATURE\""
+        "eww -c \"$HOME/.config/hypr/eww\" --force-wayland open-many laptop monitor"
         "nm-applet &"
         "blueman-adapters &"
         "udiskie -t &"
         "solaar -b regular -w hide &"
-        "gammastep -O 4000 &"
-        "tmux setenv -g HYPRLAND_INSTANCE_SIGNATURE \"$HYPRLAND_INSTANCE_SIGNATURE\""
-        "eww -c \"$HOME/.config/hypr/eww\" --force-wayland open laptop"
-        "hyprpaper -n"
-        "dbus-update-activation-environment --systemd --all"
+        "hyprpaper"
       ];
 
       general = {
-        gaps_in = 5;
-        gaps_out = 15;
-        border_size = 2;
-        resize_on_border = false;
+        gaps_in = 0;
+        gaps_out = 5;
+        border_size = 1;
+        resize_on_border = true;
         layout = "dwindle";
 
         "col.active_border" = "rgb(39bae6)";
         "col.inactive_border" = "rgb(c2d94c)";
 
-        allow_tearing = false;
+        allow_tearing = true;
       };
 
       animations = {

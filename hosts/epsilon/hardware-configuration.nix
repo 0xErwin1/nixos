@@ -87,11 +87,11 @@
     options = [ "fmask=0022" "dmask=0022" ];
   };
 
-  fileSystems."/swap" = {
-    device = "/dev/mapper/root";
-    fsType = "btrfs";
-    options = [ "subvol=swap" "noatime" ];
-  };
+  # fileSystems."/swap" = {
+  #   device = "/dev/mapper/root";
+  #   fsType = "btrfs";
+  #   options = [ "subvol=swap" "noatime" ];
+  # };
 
   # zram swap for daily use
   zramSwap = {
@@ -100,11 +100,11 @@
     memoryPercent = 10;
   };
 
-  # BTRFS swapfile for hibernation
-  swapDevices = [{
-    device = "/swap/swapfile";
-    priority = 100;
-  }];
+  # # BTRFS swapfile for hibernation
+  # swapDevices = [{
+  #   device = "/swap/swapfile";
+  #   priority = 100;
+  # }];
 
   hardware = {
     enableRedistributableFirmware = true;
