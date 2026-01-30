@@ -1,0 +1,51 @@
+[rocks]
+
+[plugins]
+# UI
+treesitter = { git = "0xErwin1/nvim-treesitter"}
+"lualine.nvim" = "scm"
+"nvim-colorizer.lua" = "scm"
+"todo-comments.nvim" = "1.4.0"
+#"render-markdown.nvim" = "8.8.0"
+"diffview.nvim" = "scm"
+neovim-ayu = "scm"
+"tokyodark" = { git = "tiagovla/tokyodark.nvim" }
+"bufferline.nvim" = "4.9.1"
+nvim-web-devicons = "0.100"
+"treesitter-playgroud" = { git = "nvim-treesitter/playground"}
+
+# Tools
+neogit = "2.0.0"
+"gitsigns.nvim" = "1.0.2"
+"plenary.nvim" = { git = "nvim-lua/plenary.nvim" }
+"impatient.nvim" = { git = "lewis6991/impatient.nvim"}
+"conform-nvim" = { git = "stevearc/conform.nvim"}
+nvim-autopairs = "scm"
+"indent-blankline.nvim" = "3.9.0"
+nvim-surround = "3.1.4"
+#copilot-lua = { git = "zbirenbaum/copilot.lua" }
+"rocks.nvim" = "2.45.0"
+"rocks-git.nvim" = "2.5.5"
+"hotpot.nvim" = "0.14.8"
+"oil.nvim" = "2.15.0"
+fzf-lua = { git = "ibhagwan/fzf-lua" }
+"which-key.nvim" = "3.17.0"
+"neoscroll.nvim" = "0.2.0"
+"aw-watcher.nvim" = { git = "lowitea/aw-watcher.nvim" }
+
+# LSP
+nvim-lspconfig = "2.4.0"
+"fidget.nvim" = "1.6.0"
+latex-ls  = { git = "vigoux/ltex-ls.nvim" }
+mason = { git = "mason-org/mason.nvim" }
+mason-lspconfig = { git = "mason-org/mason-lspconfig.nvim" }
+lsp-signature = { git = "ray-x/lsp_signature.nvim" }
+
+# CMP - Blink
+"blink.cmp" = { git = "Saghen/blink.cmp", build = "cargo build --release" }
+"colorful-menu.nvim" = { git = "xzbdmw/colorful-menu.nvim" }
+#blink-cmp-copilot = { git = "giuxtaposition/blink-cmp-copilot" }
+nvim-navic = "scm"
+"noice.nvim" = "4.10.0"
+"nui.nvim" = "0.4.0"
+rustaceanvim = "6.9.2"

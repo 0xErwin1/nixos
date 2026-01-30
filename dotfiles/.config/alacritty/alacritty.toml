@@ -1,0 +1,56 @@
+[env]
+COLORTERM = "24bit"
+TERM = "xterm-256color"
+WINIT_X11_SCALE_FACTOR = "1.0"
+
+[font]
+size = 13
+[font.bold]
+family = "JetBrains Mono Nerd Font"
+style = "Bold"
+
+[font.italic]
+family = "JetBrains Mono Nerd Font"
+style = "Italic"
+
+[font.normal]
+family = "JetBrains Mono Nerd Font"
+style = "Regular"
+
+[font.offset]
+x = 0
+y = 0
+
+[window]
+decorations = "none"
+dynamic_padding = true
+opacity = 0.9
+
+[window.padding]
+x = 0
+y = 0
+
+[colors.bright]
+black = "#6E7681"
+blue = "#82AAFF"
+cyan = "#89DDFF"
+green = "#C3E88D"
+magenta = "#C792EA"
+red = "#F07178"
+white = "#FFFFFF"
+yellow = "#FFCB6B"
+
+[colors.normal]
+black = "#0A0E14"
+blue = "#82AAFF"
+cyan = "#89DDFF"
+green = "#C3E88D"
+magenta = "#C792EA"
+red = "#F07178"
+white = "#B3B1AD"
+yellow = "#FFCB6B"
+
+[colors.primary]
+background = "#0A0E14"
+foreground = "#B3B1AD"
+

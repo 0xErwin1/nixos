@@ -1,0 +1,206 @@
+@import "css/variable";
+
+* {
+  all: unset;
+  font-family: $font;
+}
+
+.os-icon {
+  font-size: 1.8rem;
+}
+
+.arch {
+  color: $archColor;
+}
+
+.nix {
+  color: $nixColor;
+}
+
+.debian {
+  color: $debianColor;
+}
+
+.fedora {
+  color: $fedoraColor;
+}
+
+.ubuntu {
+  color: $ubuntuColor;
+}
+
+.separator {
+  color: $foreground;
+  font-size: $separator-font-size;
+  // up right bottom left
+  margin: 0 $separator-margin-right 0 $separator-margin-left;
+}
+
+.tray {
+  font-size: $tray-font-size;
+}
+
+.bar {
+  background-color: $background;
+  border-radius: $bar-radius;
+  padding: 0 $bar-padding-x;
+}
+
+.workspaces {
+  font-weight: bold;
+  font-size: $workspace-font-size;
+  margin: 0 $workspace-margin-right 0 0;
+}
+
+.workspace-icon {
+  min-height: $workspace-icon-size;
+  min-width: $workspace-icon-size;
+  padding: 0 .1rem;
+}
+
+.workspace-visible {
+  color: $cyan;
+  opacity: 0.7;
+}
+
+.workspace-focused {
+  color: $yellow;
+}
+
+.workspace-empty {
+  color: $foreground;
+  opacity: 0.7;
+}
+
+.workspace-urgent {
+  color: $red;
+  opacity: 0.7;
+}
+
+.workspace-busy {
+  color: $blue;
+  opacity: 0.7;
+}
+
+.control {
+  margin: 0 $control-margin-x;
+  font-size: $control-font-size;
+}
+
+.brightness,
+.volume,
+.battery,
+.wifi {
+  margin: 0 .5rem;
+}
+
+.microphone {
+  margin: 0 .5rem;
+}
+
+.microphone-icon {
+  font-size: $icon-font-size;
+  margin: 0 0 .1rem 0;
+}
+
+.microphone-no {
+  color: $green;
+}
+
+.microphone-yes {
+  color: $red;
+}
+
+.brightness {
+  color: $yellow;
+  font-size: $icon-font-size;
+  // up right bottom left
+}
+
+.brightness-percent {
+  // up right bottom left
+  margin: 0 0 0 .9rem;
+}
+
+.brightness-percent,
+.volume-percent,
+.battery-percent {
+  font-size: $percent-font-size;
+  font-weight: bold;
+}
+
+.volume-percent {
+  // up right bottom left
+  margin: 0 0 0 .5rem;
+}
+
+.battery-percent {
+  // up right bottom left
+  margin: 0 0 0 .2rem;
+}
+
+.brightness-icon,
+.volume-icon,
+.battery-icon,
+.notifications-icon,
+.notifications-icon-pause,
+.wifi-icon {
+  font-size: $icon-font-size;
+}
+
+.wifi-icon {
+  color: $orange;
+  // up right bottom left
+  margin: 0 0 .1rem 0;
+}
+
+.volume-icon {
+  // up right bottom left
+  margin: 0 0 .1rem 0;
+}
+
+.volume {
+  color: $blue;
+}
+
+.battery {
+  color: $green;
+}
+
+.notifications {
+  .notifications-inner-box {
+    padding: .2rem .4rem;
+    border-radius: 10px;
+    background-color: $background;
+    color: $foreground;
+    font-size: 1.2em;
+    font-weight: bold;
+  }
+
+  .notifications-icon {
+    color: $cyan;
+  }
+
+  .notifications-icon-pause {
+    color: $red;
+  }
+}
+
+.date {
+  color: $foreground;
+  font-weight: bold;
+  font-size: $date-font-size;
+  // up right bottom left
+  margin: 0 $date-margin-right 0 $date-margin-left;
+}
+
+.time,
+.month,
+.year {
+  font-size: $time-font-size;
+  margin: 0;
+}
+.year {
+  // up right bottom left
+  margin: 0 0 0 $year-margin-left;
+}

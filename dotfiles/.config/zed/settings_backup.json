@@ -1,0 +1,62 @@
+{
+  "autoscroll_on_clicks": true,
+  "telemetry": {
+    "diagnostics": false,
+    "metrics": false
+  },
+  "icon_theme": "Material Icon Theme",
+  "ui_font_size": 16,
+  "buffer_font_size": 16.0,
+  "theme": "Ayu Dark",
+  "ui_font_family": "JetBrainsMono Nerd Font Mono",
+  "buffer_font_family": "JetBrainsMono Nerd Font Mono",
+
+  "vim_mode": true,
+  "vim": {
+    "toggle_relative_line_numbers": true,
+    "use_smartcase_find": true
+  },
+  "relative_line_numbers": "enabled",
+
+  "agent": {
+    "default_model": {
+      "provider": "zed.dev",
+      "model": "claude-opus-4-5"
+    },
+    "model_parameters": []
+  },
+  "context_servers": {
+    "awslabs.aws-documentation-mcp-server": {
+      "source": "custom",
+      "enabled": true,
+      "command": "uvx",
+      "args": ["awslabs.aws-documentation-mcp-server@latest"],
+      "env": {
+        "AWS_DOCUMENTATION_PARTITION": "aws",
+        "FASTMCP_LOG_LEVEL": "ERROR"
+      }
+    },
+    "git": {
+      "source": "custom",
+      "enabled": true,
+      "command": "uvx",
+      "args": ["mcp-server-git"],
+      "env": {}
+    },
+    "memory": {
+      "source": "custom",
+      "enabled": true,
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-memory"],
+      "env": {
+        "MEMORY_FILE_PATH": "~/.local/share/"
+      }
+    },
+    "pdf-reader-mcp": {
+      "source": "custom",
+      "enabled": true,
+      "command": "npx",
+      "args": ["@sylphlab/pdf-reader-mcp"]
+    }
+  }
+}

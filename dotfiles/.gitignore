@@ -1,0 +1,22 @@
+# Ignore everything
+*
+!.gitignore
+!.gitmodules
+
+# Except for the files and folders we want to track
+!README.md
+!.pkgs
+!.screenshots
+!.bashrc
+!.zshrc
+!.tmux.conf.local
+!.xprofile
+!.Xresources
+!.config
+!.local
+!.zshrc
+!.xmonad
+!.screenshots/*
+!.config/tmux
+!.taskrc
+!.task

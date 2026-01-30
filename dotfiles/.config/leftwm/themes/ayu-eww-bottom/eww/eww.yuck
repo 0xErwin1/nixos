@@ -1,0 +1,165 @@
+(defvar eww "eww -c $HOME/.config/leftwm/themes/current/eww")
+(defvar bright false)
+(defvar volum false)
+(deflisten wmstate "leftwm state")
+
+(defpoll notificationsIsPaused :interval "1s" "dunstctl is-paused")
+
+(defpoll wifiIcon :interval "1s" "scripts/wifi --icon")
+(defpoll wifiName :interval "1s" "scripts/wifi --name")
+
+(defpoll batteryIcon :interval "1s" "scripts/battery --icon")
+(defpoll batteryPercent :interval "1s" "scripts/battery --percent")
+(defpoll volumeIcon :interval "1s" "scripts/volume --icon")
+(defpoll volumePercent :interval "1s" "scripts/volume --percent")
+(defpoll microphoneIcon :interval "1s" "scripts/microphone --icon")
+(defpoll microphoneStatus :interval "1s" "scripts/microphone --status")
+(defpoll brightnessPercent :interval "1s" "scripts/brightness --percent")
+(defpoll brightnessIcon :interval "1s" "scripts/brightness --icon")
+(defpoll hour :interval "1s" "date '+%H'")
+(defpoll min :interval "1s" "date '+%M'")
+
+(defpoll dayName :interval "10h" "date '+%A'")
+(defpoll month :interval "10s" "date '+%b'")
+(defpoll day :interval "10s" "date '+%d'")
+(defpoll year :interval "10s" "date '+%Y'")
+
+(defpoll osIcon :interval "0" "scripts/os --icon")
+(defpoll osColor :interval "0" "scripts/os --id")
+
+(defwidget workspaces [?number monitor]
+  (box :orientation "h" :class "workspaces"
+    (for tag in "${wmstate.workspaces[monitor].tags}"
+      (label :text "${tag.name}"
+        :class "workspace-icon ${
+          tag.focused ? "workspace-focused" :
+          tag.visible ? "workspace-visible" :
+          tag.urgent ? "workspace-urgent" :
+          tag.busy ? "workspace-busy" :
+          "workspace-empty"
+        }"
+      )
+    )
+  )
+)
+
+(defwidget notifications []
+  (box :class "notifications" :orientation "h" :space-evenly false
+    (box :class "notifications-inner-box" :orientation "h"
+      (label :class "${notificationsIsPaused ? "notifications-icon-pause": "notifications-icon"}" :text "${notificationsIsPaused ? " " : "󰂚 " }")
+    )
+  )
+)
+
+(defwidget volume []
+  (box :class "volume" :orientation "h" :space-evenly false
+    (label :class "volume-icon" :text "${volumeIcon}")
+    (label :class "volume-percent" :text "${volumePercent}%")))
+
+(defwidget microphone []
+  (box :class "microphone" :orientation "h" :space-evenly false
+    (label :class "microphone-icon microphone-${microphoneStatus}" :text "${microphoneIcon}")
+  )
+)
+
+(defwidget battery []
+  (box :class 'battery' :orientation 'h'
+    (label :class "battery-icon" :text "${batteryIcon}")
+    (label :class "battery-percent" :text "${batteryPercent}%")))
+
+(defwidget wifi []
+  (box :orientation "h" :tooltip wifiName :class "wifi"
+    (label :class "wifi-icon" :text "${wifiIcon}")))
+
+(defwidget brightness []
+  (box :class "brightness" :space-evenly false :orientation 'h'
+    (label :class "brightness-icon" :text "${brightnessIcon}")
+    (label :class "brightness-percent" :text "${brightnessPercent}%")
+  )
+)
+
+(defwidget date []
+  (box :orientation "h" :class "date" :halign "end"
+    (box :orientation "h"
+      (label :class "time" :text "${hour}:${min} │ ")
+      (label :class "month" :text "${month} ${day},")
+      (label :class "year" :text "${year}")
+    )
+  )
+)
+
+(defwidget control []
+  (box :orientation 'h' :class 'control' :space-evenly false
+    (notifications)
+    (label :class "separator" :text "│")
+    (brightness)
+    (battery)
+    (volume)
+    (microphone)
+    (wifi)))
+
+(defwidget left [?number monitor]
+  (box :orientation 'h' :halign "start" :space-evenly false
+    (label :class "os-icon nix" :text "${osIcon}")
+    (label :class "separator" :text "│")
+    (workspaces :monitor monitor)
+  )
+)
+
+(defwidget center []
+  (box
+    :orientation "h"
+    :class "middle"
+    :space-evenly false
+    :halign "center"
+    (systray
+      :spacing 10
+      :orientation "h"
+      :icon-size 20
+      :class "tray"
+    )
+  )
+)
+
+(defwidget right []
+  (box :orientation 'h' :space-evenly false :halign "end"
+    (control)
+    (label :class "separator" :text "│")
+    (date)))
+
+(defwidget bar [?number monitor]
+  (box
+    :class "bar"
+    :orientation "h"
+    :vexpand false
+    :hexpand false
+    :space-evenly true
+    (left :monitor monitor)
+    (center)
+    (right)
+  )
+)
+
+(defwindow laptop :monitor '["eDP"]'
+  :geometry (geometry :x "0px" :y "96%" :width "100%" :height "2%")
+  :reserve (struts :distance "4%" :side "bottom")
+  :wm-ignore false
+  :windowtype "dock"
+  (bar :monitor 0)
+)
+
+(defwindow monitor-DP-0 :monitor '["DisplayPort-0","DP-0", "HDMI-A-0"]'
+  :geometry (geometry :x "0px" :y "96%" :width "100%" :height "2%")
+  :reserve (struts :distance "4%" :side "bottom")
+  :wm-ignore false
+  :windowtype "dock"
+  (bar :monitor 1)
+)
+
+(defwindow monitor-DP-1 :monitor '["DisplayPort-1", "DP-1"]'
+  :geometry (geometry :x "0px" :y "96%" :width "100%" :height "2%")
+  :reserve (struts :distance "4%" :side "bottom")
+  :wm-ignore false
+  :windowtype "dock"
+  (bar :monitor 1)
+)

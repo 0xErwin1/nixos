@@ -1,0 +1,180 @@
+@import "css/variable";
+
+* {
+  all: unset;
+  font-family: $font;
+}
+
+.middle {
+  // up right bottom left
+  margin: 2rem 0 10rem 0;
+  border-radius: 10px;
+}
+
+.tray {
+  font-size: 16px;
+}
+
+.bar {
+  background-color: $background;
+  border-radius: 20px;
+}
+
+.dashboard {
+  background-color: $grey;
+  margin: .9rem .5rem 0 .5rem;
+  font-size : 20px;
+  border-radius: 10px;
+  color: $cyan;
+}
+
+.workspaces {
+	font-weight : bold;
+	font-size : 20px;
+  // up right bottom left
+  margin: 1rem 0 0 -.5rem;
+}
+
+.workspace-icon {
+  background-repeat: no-repeat;
+	min-height: 30px;
+	min-width: 30px;
+  padding: .1rem 0 0 0;
+}
+
+.workspace-focused {
+  color: $yellow;
+}
+
+.workspace-empty {
+  color: $foreground;
+}
+
+.workspace-urgent {
+  color: $red;
+}
+
+.workspace-busy {
+  color: $blue;
+}
+
+.center {
+  background-color: $background;
+}
+
+.control {
+  // up right bottom left
+  margin-bottom: 1rem;
+  border-radius: 10px;
+  font-size: 1.6em;
+}
+
+.brightness {
+  color: $yellow;
+  margin: .2rem 0 .2rem .3rem;
+  font-size: 20px;
+}
+
+.brightness-percent {
+  margin: 0 0 0 .2rem;
+  font-size: 17px;
+  font-weight: bold;
+}
+
+.brightness-icon {
+  margin: 0 .5rem 0 0;
+  font-size: 20px;
+}
+
+.volume {
+  // up right bottom left
+  margin: 0 0 .2rem 1.2rem;
+  color: $blue;
+}
+
+.volume-percent {
+  font-size: 17px;
+  font-weight: bold;
+}
+
+.volume-icon {
+  font-size: 20px;
+}
+
+.battery {
+  margin: 0 0 .3rem .4rem;
+  color: $green;
+}
+
+.battery-icon {
+  font-size: 20px;
+}
+
+.battery-percent {
+  font-weight: bold;
+  font-size: 17px;
+}
+
+.date {
+  color: $foreground;
+  font-weight: bold;
+  font-size: 14px;
+  border-radius: 10px;
+  padding: .7rem 5px 5px 5px;
+}
+
+.date-icon {
+  color: $yellow;
+  margin: 0 .3rem 0 0;
+  font-size: 20px;
+}
+
+.time {
+  margin: 5px;
+}
+
+.wifi {
+  // up right bottom left
+  margin: .2rem .2rem .2rem 0;
+  font-size: 20px;
+  color: $orange;
+}
+
+.calendar-box {
+  background-color: $background;
+  font-size: 1em;
+  font-weight: bold;
+
+  .calendar-inner-box {
+    padding: 1rem 1rem .2rem;
+    .cal {
+        &.highlight {
+            padding: 10rem;
+        }
+        padding: .8rem .25rem 0rem;
+        margin-left: 10px;
+    }
+  }
+}
+
+calendar:selected {
+  color: $blue;
+}
+
+calendar.header {
+  color: $blue;
+  font-weight: bold;
+}
+
+calendar.button {
+  color: $orange;
+}
+
+calendar.highlight {
+  color: $green;
+  font-weight: bold;
+}
+
+calendar:indeterminate {
+  color: $background;
+}

@@ -1,0 +1,56 @@
+(set vim.g.mapleader " ")
+(set vim.g.maplocalleader " ")
+
+(vim.filetype.add {:extension {:ign :ignis :ion :ion :http :http}})
+
+(set vim.g.closetag_filetypes
+     "html,xhtml,phtml,xml,javascript,typescript,javascriptreact,typescriptreact")
+
+(let [opt vim.opt]
+  (set opt.termguicolors true)
+  (set opt.number true)
+  (set opt.relativenumber true)
+  (set opt.signcolumn :yes)
+  (set opt.laststatus 3)
+  (set opt.cmdheight 1)
+  (set opt.showmode false)
+  (set opt.colorcolumn :120)
+  (set opt.cursorline true)
+  (set opt.splitbelow true)
+  (set opt.splitright true)
+  (set opt.mouse :a)
+  (set opt.scrolloff 4)
+  (set opt.sidescrolloff 4)
+  (set opt.splitkeep :screen)
+  (set opt.shortmess :filnxtToOFWIcC)
+  (set opt.hlsearch false)
+  (set opt.incsearch true)
+  (set opt.ignorecase true)
+  (set opt.smartcase true)
+  (set opt.inccommand :nosplit)
+  (set opt.expandtab true)
+  (set opt.tabstop 2)
+  (set opt.softtabstop 2)
+  (set opt.shiftwidth 2)
+  (set opt.smartindent true)
+  (set opt.wrap false)
+  (set opt.list true)
+  (set opt.hidden true)
+  (set opt.autowrite true)
+  (set opt.swapfile false)
+  (set opt.undofile true)
+  (set opt.clipboard :unnamedplus)
+  (set opt.equalalways false)
+  (set opt.shadafile :NONE)
+  (set opt.updatetime 50)
+  (set opt.wildmode [:longest :full])
+  (set opt.wildoptions [:pum :tagfile])
+  (set opt.foldmethod :expr)
+  (set opt.foldexpr "nvim_treesitter#foldexpr()")
+  (set opt.foldenable false))
+
+(let [grp (vim.api.nvim_create_augroup :YankHighlight {:clear true})]
+  (vim.api.nvim_create_autocmd :TextYankPost
+                               {:group grp
+                                :callback (fn [] (vim.highlight.on_yank))}))
+

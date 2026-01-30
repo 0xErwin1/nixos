@@ -1,0 +1,186 @@
+[
+  {
+    "context": "Editor && vim_mode == insert",
+    "bindings": {
+      "j j": "vim::NormalBefore",
+      "k k": "vim::NormalBefore",
+      "k j": "vim::NormalBefore",
+      "j k": "vim::NormalBefore"
+    }
+  },
+  {
+    "context": "vim_mode == normal && !menu",
+    "bindings": {
+      "ctrl-S": "workspace::SaveAll",
+//      "space space": "file_finder::Toggle",
+      "space /": ["pane::DeploySearch", { "replace_enabled": false }],
+      "space c f": "editor::Format"
+    }
+  },
+  {
+    "context": "Editor && vim_mode == normal && !menu",
+    "bindings": {
+      "space e": "project_panel::ToggleFocus"
+    }
+  },
+  {
+    "context": "ProjectPanel || Dock && vim_mode == normal",
+    "bindings": {
+      "space e": "workspace::ToggleLeftDock"
+    }
+  },
+  {
+    "context": "VimControl",
+    "bindings": {
+      "alt-q": "pane::CloseActiveItem"
+    }
+  },
+  {
+    "context": "Editor || Dock || ProjectPanel || GitPanel || DiagnosticsPanel || AgentPanel",
+    "bindings": {
+      "alt-q": "workspace::CloseActiveDock"
+    }
+  },
+  {
+    "context": "VimControl && !menu",
+    "bindings": {
+      "ctrl-h": "workspace::ActivatePaneLeft",
+      "ctrl-j": "workspace::ActivatePaneDown",
+      "ctrl-k": "workspace::ActivatePaneUp",
+      "ctrl-l": "workspace::ActivatePaneRight",
+
+      "ctrl-w s": "pane::SplitHorizontal",
+      "ctrl-w v": "pane::SplitVertical",
+      "ctrl-w q": "pane::CloseActiveItem"
+    }
+  },
+  {
+    "context": "",
+    "bindings": {
+      "ctrl-h": "workspace::ActivatePaneLeft",
+      "ctrl-j": "workspace::ActivatePaneDown",
+      "ctrl-k": "workspace::ActivatePaneUp",
+      "ctrl-l": "workspace::ActivatePaneRight"
+    }
+  },
+
+  {
+    "context": "VimControl && !menu",
+    "bindings": {
+      "tab": "pane::ActivateNextItem",
+      "shift-tab": "pane::ActivatePreviousItem"
+    }
+  },
+  {
+    "context": "vim_mode == visual && Editor && !menu",
+    "bindings": {
+      "J": "editor::MoveLineDown",
+      "K": "editor::MoveLineUp"
+    }
+  },
+
+  {
+    "context": "Editor && vim_mode == normal",
+    "bindings": {
+      "space c a": "editor::ToggleCodeActions",
+      "space c d": "editor::ToggleDiagnostics",
+      "space c r": "editor::Rename",
+
+      "space d D": "editor::GoToDiagnostic",
+      "space d d": "editor::GoToPreviousDiagnostic",
+
+      "space f r": "editor::FindAllReferences",
+      "space f i": "editor::GoToImplementation",
+
+      "space f D": "diagnostics::Deploy",
+      "space f d": "editor::ToggleInlineDiagnostics"
+    }
+  },
+  {
+    "context": "vim_mode != insert && Editor && !menu",
+    "bindings": {
+      "alt-j": "vim::ScrollDown",
+      "alt-k": "vim::ScrollUp"
+    }
+  },
+  {
+    "context": "menu",
+    "bindings": {
+      "tab": "menu::SelectNext",
+      "shift-tab": "menu::SelectPrevious",
+      "ctrl-j": "menu::SelectNext",
+      "ctrl-k": "menu::SelectPrevious"
+    }
+  },
+
+  {
+    "context": "Editor && menu",
+    "bindings": {
+      "tab": "editor::ContextMenuNext",
+      "shift-tab": "editor::ContextMenuPrevious",
+      "ctrl-j": "editor::ContextMenuNext",
+      "ctrl-k": "editor::ContextMenuPrevious"
+    }
+  },
+  {
+    "bindings": {
+      "ctrl-shift-escape": "workspace::ToggleZoom"
+    }
+  },
+  {
+    "bindings": {
+      "shift-escape": null
+    }
+  },
+  {
+    "context": "Editor && vim_mode == normal",
+    "bindings": {
+      "space space": [
+        "task::Spawn",
+        { "task_name": "Television File Finder", "reveal_target": "center" },
+      ]
+    }
+  },
+  {
+    "context": "(vim_mode == normal && !menu && !Terminal)",
+    "bindings": {
+      "ctrl-s": "workspace::Save"
+    }
+  },
+  {
+    "context": "Workspace && !Terminal",
+    "bindings": {
+      "ctrl-s": "workspace::Save"
+    }
+  },
+  {
+    "context": "Workspace",
+    "bindings": {
+      "ctrl-s": null
+    }
+  },
+  {
+    "context": "Workspace && !Terminal",
+    "bindings": {
+      "ctrl-t": "project_symbols::Toggle"
+    }
+  },
+  {
+    "context": "Workspace",
+    "bindings": {
+      "ctrl-t": null
+    }
+  },
+  {
+    "context": "Workspace && (!Terminal)",
+    "bindings": {
+      "ctrl-p": "file_finder::Toggle"
+    }
+  },
+  {
+    "context": "Workspace",
+    "bindings": {
+      "ctrl-p": null
+    }
+  }
+]

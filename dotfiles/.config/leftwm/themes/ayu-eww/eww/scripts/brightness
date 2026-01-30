@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+
+((BRIGHTNESS=$(brightnessctl get) * 100 / 255))
+
+get_icon() {
+  case $BRIGHTNESS in
+    7[0-9]|8[0-9]|9[0-9]|100)
+        echo "󰃠"
+      ;;
+    4[0-9]|5[0-9]|6[0-9])
+        echo "󰃟"
+      ;;
+    1[0-9]|2[0-9]|3[0-9])
+        echo "󰃝"
+      ;;
+    [1-9])
+        echo "󰃞 "
+      ;;
+    *)
+        echo "󰃡"
+      ;;
+  esac
+}
+
+if [[ "$1" == "--icon" ]]; then
+  get_icon
+elif [[ "$1" == "--percent" ]]; then
+  echo "$BRIGHTNESS"
+fi

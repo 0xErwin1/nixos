@@ -1,0 +1,18 @@
+// Project tasks configuration. See https://zed.dev/docs/tasks for documentation.
+[
+  {
+    "label": "Television File Finder",
+    "command": "zed \"$(tv files)\"",
+    "hide": "always",
+    "allow_concurrent_runs": true,
+    "use_new_terminal": true,
+  },
+  {
+    "label": "OpenCode AI (Panel)",
+    "command": "opencode",
+    "use_new_terminal": true,
+    "reveal": "always",
+    "allow_concurrent_runs": false,
+    "tags": ["ai", "opencode"],
+  },
+]

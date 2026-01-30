@@ -1,0 +1,57 @@
+#!/usr/bin/env bash
+
+# ----| Vars | ----
+
+# -- Laptop --
+export LAPTOP='eDP-1'
+
+# -- Monitor --
+export MONITOR='HDMI-1'
+
+export PATH=$HOME/.local/bin:$HOME/.cargo/bin:$HOME/go/bin:/usr/local/bin:$PATH
+export QT_STYLE_OVERRIDE=kvantum
+export DENO_INSTALL="$HOME/.deno"
+export STARSHIP_CONFIG="$HOME/.config/fish/starship.toml"
+export EDITOR="nvim"
+export LIBVA_DRIVER_NAME=iHD
+
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
+
+# ----| Display |----
+if [[ -n "${WAYLAND_DISPLAY:-}" ]]; then
+  if command -v wlr-randr >/dev/null; then
+    wlr-randr --output "$LAPTOP" --mode 1920x1080@60 --pos 0,0 --scale 1
+    wlr-randr --output "DP-2" --mode 1920x1080@60 --pos 0,1080 --scale 1
+  fi
+else
+  hdmi=`xrandr | grep ' connected' | grep 'HDMI' | awk '{print $1}'`
+  [[ "$hdmi" == $MONITOR ]] && export HDMI_CONNECTED=true || export HDMI_CONNECTED=false
+
+  if [[ $HDMI_CONNECTED ]]; then
+    xrandr --newmode "1920x1080R" 138.50 1920 1968 2000 2080 1080 1083 1088 1111 +hsync -vsync 
+    xrandr --addmode $MONITOR 1920x1080R
+    xrandr --output "$MONITOR" -r 75.0 --primary --mode 1920x1080R --rotate normal --right-of "$LAPTOP" \
+       --output "$LAPTOP" --mode 1920x1080 --rotate normal
+  else
+    xrandr --output "$LAPTOP" --primary --mode 1920x1080 --rotate normal
+  fi
+fi
+
+
+systemctl start --user dunst
+nm-applet &
+blueman-adapters &
+if [[ -n "${WAYLAND_DISPLAY:-}" ]]; then
+  eww -c "$HOME/.config/qtile/eww" --force-wayland open laptop &
+else
+  eww -c "$HOME/.config/qtile/eww" open laptop &
+fi
+picom &
+battery &
+volumeicon &
+cpupower-gui &
+redshift -O 5000 &
+nitrogen --restore &
+piper &
+solaar -b regular -w hide &

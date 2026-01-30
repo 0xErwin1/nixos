@@ -1,0 +1,65 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+BROWSER="${BROWSER:-firefox}"
+SLACK_CMD="${SLACK_CMD:-slack}"
+TERMINAL="${TERMINAL:-foot}"
+TMUX_SESSION="${TMUX_SESSION:-work}"
+
+WS_FIREFOX="${WS_FIREFOX:-4}"
+WS_SLACK="${WS_SLACK:-10}"
+WS_TMUX="${WS_TMUX:-2}"
+
+term_exec() {
+  local cmd="$*"
+  case "$TERMINAL" in
+    foot)       echo "$TERMINAL -e bash -lc $(printf %q "$cmd")" ;;
+    kitty)      echo "$TERMINAL bash -lc $(printf %q "$cmd")" ;;
+    alacritty)  echo "$TERMINAL -e bash -lc $(printf %q "$cmd")" ;;
+    wezterm)    echo "$TERMINAL start -- bash -lc $(printf %q "$cmd")" ;;
+    ghostty)    echo "$TERMINAL -e bash -lc $(printf %q "$cmd")" ;;
+    *)          echo "$TERMINAL -e bash -lc $(printf %q "$cmd")" ;;
+  esac
+}
+
+already_running() {
+  local proc="$1"
+  pgrep -xu "$USER" -f -- "$proc" >/dev/null 2>&1
+}
+
+tmux_is_running() {
+  pgrep -xu "$USER" -x tmux >/dev/null 2>&1
+}
+
+run_hyprland() {
+  # Firefox -> ws 4
+  if ! already_running "$BROWSER"; then
+    hyprctl dispatch exec "[workspace ${WS_FIREFOX} silent] ${BROWSER}" >/dev/null
+  fi
+
+  # Slack -> ws 10
+  if ! already_running "$SLACK_CMD"; then
+    hyprctl dispatch exec "[workspace ${WS_SLACK} silent] ${SLACK_CMD}" >/dev/null
+  fi
+
+  if ! tmux_is_running; then
+    tmux_cmd="tmux new-session -A -s ${TMUX_SESSION}"
+    hyprctl dispatch exec "[workspace ${WS_TMUX} silent] $(term_exec "$tmux_cmd")" >/dev/null
+  fi
+}
+
+main() {
+  if [[ "${1:-}" != "--child" ]]; then
+    setsid -f "$0" --child >/dev/null 2>&1 || true
+    exit 0
+  fi
+
+  if command -v hyprctl >/dev/null 2>&1 && [[ -n "${HYPRLAND_INSTANCE_SIGNATURE:-}" ]]; then
+    run_hyprland
+  else
+    echo "Hyprland is not installed or not running."
+    exit 1
+  fi
+}
+
+main "$@"

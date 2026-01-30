@@ -1,0 +1,37 @@
+#!/bin/bash
+
+# ----| Vars | ----
+export SCRIPT_PATH="$HOME/.config/leftwm"
+export THEME_CURRENT="$SCRIPT_PATH/themes/current"
+
+if [ -f "/tmp/leftwm-theme-down" ]; then
+    /tmp/leftwm-theme-down
+    rm /tmp/leftwm-theme-down
+fi
+
+ln -s $THEME_CURRENT/down /tmp/leftwm-theme-down
+
+leftwm-command "LoadTheme $THEME_CURRENT/themes.toml"
+
+pkill polybar
+
+# ----| Display |----
+if [[ $HDMI_CONNECTED ]]; then
+  notify-send "Monitor connected"
+  polybar laptop -c "$THEME_CURRENT/polybar.ini" &
+  polybar laptop-left -c "$THEME_CURRENT/polybar.ini" &
+  polybar laptop-center -c "$THEME_CURRENT/polybar.ini" &
+  polybar laptop-right -c "$THEME_CURRENT/polybar.ini" &
+
+  polybar monitor -c "$THEME_CURRENT/polybar.ini" &
+  polybar monitor-left -c "$THEME_CURRENT/polybar.ini" &
+  polybar monitor-center -c "$THEME_CURRENT/polybar.ini" &
+  polybar monitor-right -c "$THEME_CURRENT/polybar.ini" &
+else
+  polybar laptop-trayer -c "$THEME_CURRENT/polybar.ini" &
+  polybar laptop-trayer-left -c "$THEME_CURRENT/polybar.ini" &
+  polybar laptop-trayer-center -c "$THEME_CURRENT/polybar.ini" &
+  polybar laptop-trayer-right -c "$THEME_CURRENT/polybar.ini" &
+fi
+
+volumeicon &

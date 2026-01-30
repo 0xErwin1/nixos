@@ -1,0 +1,145 @@
+(defvar eww "eww -c $HOME/.config/leftwm/themes/current/eww")
+(defvar ewwDashboard "eww -c $HOME/.config/leftwm/themes/current/eww/dashboard")
+(defvar dashboardIsOpen false)
+(defvar bright false)
+(defvar volum false)
+
+(deflisten wmstate "leftwm state")
+
+
+(defpoll wifiIcon :interval "1s" "scripts/wifi --icon")
+(defpoll wifiName :interval "1s" "scripts/wifi --name")
+
+(defpoll batteryIcon :interval "1s" "scripts/battery --icon")
+(defpoll batteryPercent :interval "1s" "scripts/battery --percent")
+(defpoll volumeIcon :interval "1s" "scripts/volume --icon")
+(defpoll volumePercent :interval "1s" "scripts/volume --percent")
+(defpoll brightnessPercent :interval "1s" "scripts/brightness --percent")
+(defpoll brightnessIcon :interval "1s" "scripts/brightness --icon")
+(defpoll hour	:interval "1s"	"date '+%H'")
+(defpoll min	:interval "1s"	"date '+%M'")
+
+(defpoll dayName :interval "10h" "date '+%A'")
+(defpoll month :interval "10s" "date '+%b'")
+(defpoll day :interval "10s" "date '+%d'")
+(defpoll year :interval "10s" "date '+%Y'")
+
+(defpoll calendarDay :interval "10h" "date '+%d'")
+(defpoll calendarMonth :interval "10h" "scripts/calendar")
+(defpoll calendarYear :interval "10h" "date '+%Y'")
+
+(defwidget dashboard [?number monitor]
+  (box :orientation "v"
+    (button :orientation "v"
+      :onclick
+        "${ewwDashboard} ${dashboardIsOpen ? "close" : "open"} dashboard-${monitor == 0 ? "laptop" : "monitor"} && ${eww} update dashboardIsOpen=${!dashboardIsOpen}"
+        (label :class "dashboard" :text ""))))
+
+(defwidget workspaces [?number monitor]
+  (box :orientation 'v' :class "workspaces" (for tag in '${wmstate.workspaces[monitor].tags}'
+         (button
+                 :onclick "leftwm-command 'SendWorkpaceToTag 0 ${tag.index}'"
+                 :class "workspace-icon ${tag.focused ? "workspace-focused" :
+                  tag.busy ? "workspace-busy":
+                  tag.urgent ? "workspace-urgent" :
+                  "workspace-empty"}"
+         "${tag.name}"))))
+
+(defwidget volume []
+  (box :class "volume" :space-evenly false
+    (box :orientation "v" :space-evenly false
+      (label :class "volume-icon" :text "${volumeIcon}")
+      (label :class "volume-percent" :text "${volumePercent}%"))))
+
+(defwidget battery []
+  (box :class 'battery' :orientation 'v'
+    (label :class "battery-icon" :text "${batteryIcon}")
+    (label :class "battery-percent" :text "${batteryPercent}%")))
+
+(defwidget wifi []
+  (box :orientation "v" :tooltip wifiName :class "wifi"
+    wifiIcon))
+
+(defwidget brightness []
+  (box :class "brightness" :space-evenly false :orientation 'v'
+    (label :class "brightness-icon" :text "${brightnessIcon}")
+    (label :class "brightness-percent" :text "${brightnessPercent}%")))
+
+(defwidget date []
+  (box :orientation "v" :class "date" :valign "end"
+    (button :onclick "scripts/calendar.sh"
+      (box :orientation "v"
+          (label :class "date-icon" :text "")
+          (label :class "time" :text "${hour}:${min}")
+          (label :class "month" :text "${month} ${day},")
+          (label :class "year" :text "${year}")))))
+
+(defwidget calendarWidget []
+  (box :class "calendar-box" :orientation "v"
+    (box :class "clendar-inner-box"
+      (calendar :class "calendar"
+        :day calendarDay
+        :month calendarMonth
+        :year calendarYear))))
+
+(defwidget control []
+  (box :orientation 'v' :class 'control' :space-evenly false
+    (brightness)
+    (battery)
+    (volume)
+    (wifi)))
+
+(defwidget top [?number monitor]
+  (box :orientation 'v' :valign "start" :space-evenly false
+    (workspaces :monitor monitor)
+  )
+)
+
+(defwidget middle []
+  (box :orientation "v" :class "middle" :valign "center"
+    (systray
+      :spacing 10
+      :orientation "v"
+      :icon-size 20
+      :class "tray"
+      :refresh "1"
+      :space-evenly true
+      :prepend-new true
+    )
+  )
+)
+
+(defwidget end []
+  (box :orientation 'v' :space-evenly false :valign "bottom"
+    (control)
+    (date)))
+
+(defwidget bar [?number monitor]
+  (box :class "bar" :orientation "v" :vexpand false :hexpand false :space-evenly true
+    (top :monitor monitor)
+    (middle)
+    (end)))
+
+(defwindow laptop :monitor '["eDP-1"]'
+  :geometry (geometry :x "0" :y "1%" :width "2%" :height "96%")
+  :reserve (struts :distance "3%" :side "left")
+  :wm-ignore false
+  :windowtype "dock"
+  (bar :monitor 0)
+)
+
+(defwindow monitor-DP-1 :monitor '["DP-1", "HDMI-1"]'
+  :geometry (geometry :x "0px" :y "1%" :width "2%" :height "96%")
+  :reserve (struts :distance "3%" :side "left")
+  :wm-ignore false
+  :windowtype "dock"
+  (bar :monitor 1)
+)
+
+(defwindow monitor-DP-2 :monitor '["DP-2"]'
+  :geometry (geometry :x "0px" :y "1%" :width "2%" :height "96%")
+  :reserve (struts :distance "3%" :side "left")
+  :wm-ignore false
+  :windowtype "dock"
+  (bar :monitor 2)
+)

@@ -1,0 +1,192 @@
+'$schema' = 'https://starship.rs/config-schema.json'
+
+scan_timeout = 60
+command_timeout = 10000
+add_newline = true
+
+format = """
+$localip\
+$shlvl\
+$singularity\
+$kubernetes\
+$directory\
+$vcsh\
+$fossil_branch\
+$fossil_metrics\
+$git_branch\
+$git_commit\
+$git_state\
+$git_metrics\
+$git_status\
+$hg_branch\
+$pijul_channel\
+$docker_context\
+$package\
+$c\
+$cmake\
+$cobol\
+$daml\
+$dart\
+$deno\
+$dotnet\
+$elixir\
+$elm\
+$erlang\
+$fennel\
+$golang\
+$guix_shell\
+$haskell\
+$haxe\
+$helm\
+$java\
+$julia\
+$kotlin\
+$gradle\
+$lua\
+$nim\
+$nodejs\
+$ocaml\
+$opa\
+$perl\
+$php\
+$pulumi\
+$purescript\
+$python\
+$quarto\
+$raku\
+$rlang\
+$red\
+$ruby\
+$rust\
+$scala\
+$solidity\
+$swift\
+$terraform\
+$typst\
+$vlang\
+$vagrant\
+$zig\
+$buf\
+$nix_shell\
+$conda\
+$meson\
+$spack\
+$memory_usage\
+$aws\
+$gcloud\
+$openstack\
+$azure\
+$direnv\
+$env_var\
+$crystal\
+$custom\
+$sudo\
+$cmd_duration\
+$line_break\
+$jobs\
+$battery\
+$time\
+$status\
+$os\
+$container\
+$shell\
+$character"""
+
+[character]
+format = " \n$symbol"
+success_symbol = '[➜](bold green) '
+error_symbol = '[X](bold red) '
+vimcmd_symbol = '[V](bold green) '
+
+[line_break]
+disabled = true
+
+[directory]
+format = '[$path]($style) '
+style = 'bold yellow'
+truncation_length = 8
+use_os_path_sep = true
+
+[cmd_duration]
+format = '[$duration]($style) '
+
+[status]
+disabled = false
+format = '[$symbol $status]($style) '
+not_found_symbol = ''
+not_executable_symbol = ''
+sigint_symbol = 'asa'
+map_symbol = true
+
+[git_branch]
+format = '[$symbol$branch ]($style) '
+
+[package]
+format = '[$symbol$version]($style) '
+symbol = '󰏗 '
+
+[python]
+format = '[${symbol}${pyenv_prefix}(${version} )(\($virtualenv\) )]($style)'
+symbol = ' '
+
+[nodejs]
+format = '[$symbol($version )]($style)'
+
+[php]
+format = '[$symbol($version )]($style)'
+symbol = ' '
+
+[java]
+format = '[${symbol}(${version} )]($style)'
+style  = 'red dimmed bold'
+symbol = ' '
+
+[rust]
+symbol = ' '
+format = '[$symbol($version )]($style)'
+
+[golang]
+format = '[$symbol($version )]($style)'
+symbol = ' '
+
+[sudo]
+format = '[$symbol]($style)'
+style = 'bold red'
+symbol = ' '
+
+[deno]
+format = '[🦕$version](green bold) '
+
+[scala]
+symbol = ''
+style = 'red bold'
+format = '[${symbol} (${version}) ]($style)'
+detect_extensions = ['sbt', 'scala']
+detect_folders = ['.metals']
+detect_files = ['.scalaenv', '.sbtenv', 'build.sbt']
+
+[aws]
+format = '[$symbol $profile $region]($style) '
+style = 'bold yellow'
+symbol = ''
+[aws.profile_aliases]
+Enterprise_Naming_Scheme-voidstars = 'void**'
+
+[crystal]
+style = 'cyan bold'
+format = '[${symbol} (${version}) ]($style)'
+symbol = ''
+
+[nim]
+symbol = ' '
+
+[directory.substitutions]
+"Downloads" = "/ "
+"Documents" = "/ "
+"Desktop" = "/ "
+"Music" = "/  "
+"Pictures" = "/ "
+"Videos" = "/  "
+"/dev/" = "/ /"
+".notes" = "/ "
+".config" = " "

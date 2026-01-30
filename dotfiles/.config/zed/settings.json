@@ -1,0 +1,126 @@
+{
+  "language_models": {
+    "ollama": {
+      "api_url": "http://localhost:11434",
+    },
+    "openai_compatible": {
+      "Z.ai": {
+        "api_url": "https://api.z.ai/api/coding/paas/v4",
+        "available_models": [
+          {
+            "name": "glm-4.6",
+            "display_name": "GLM-4.6",
+            "max_tokens": 200000,
+            "max_output_tokens": 128000,
+            "max_completion_tokens": 128000,
+            "capabilities": {
+              "tools": true,
+              "images": false,
+              "parallel_tool_calls": true,
+              "prompt_cache_key": true,
+            },
+          },
+          {
+            "name": "glm-4.7",
+            "display_name": "GLM-4.7",
+            "max_tokens": 200000,
+            "max_output_tokens": 128000,
+            "max_completion_tokens": 128000,
+            "capabilities": {
+              "tools": true,
+              "images": false,
+              "parallel_tool_calls": true,
+              "prompt_cache_key": true,
+            },
+          },
+        ],
+      },
+    },
+  },
+  "agent": {
+    "always_allow_tool_actions": true,
+    "default_profile": "write",
+    "notify_when_agent_waiting": "all_screens",
+    "play_sound_when_agent_done": true,
+    "default_model": {
+      "provider": "Z.ai",
+      "model": "glm-4.7",
+    },
+    "model_parameters": [],
+  },
+  "diagnostics": {
+    "inline": {
+      "update_debounce_ms": 100,
+      "enabled": true,
+    },
+  },
+  "autoscroll_on_clicks": true,
+  "telemetry": {
+    "diagnostics": false,
+    "metrics": false,
+  },
+  "relative_line_numbers": "enabled",
+  "format_on_save": "off",
+  "icon_theme": "Material Icon Theme",
+  "ui_font_size": 16,
+  "buffer_font_size": 16.0,
+  "theme": "Ayu Darker",
+  "ui_font_family": "JetBrainsMono Nerd Font Mono",
+  "buffer_font_family": "JetBrainsMono Nerd Font Mono",
+  "notification_panel": {
+    "dock": "left",
+    "button": false,
+  },
+  "bottom_dock_layout": "right_aligned",
+  "cursor_blink": false,
+  "vim_mode": true,
+  "vim": {
+    "toggle_relative_line_numbers": true,
+    "use_smartcase_find": true,
+    "use_system_clipboard": "always",
+  },
+  "git": {
+    "git_gutter": "tracked_files",
+  },
+  "terminal": {
+    "dock": "right",
+  },
+  "languages": {
+    "Ignis": {
+      "language_servers": ["ignis"],
+      "tab_size": 2,
+      "format_on_save": "off",
+    },
+  },
+  "context_servers": {
+    "mcp-server-github": {
+      "enabled": true,
+      "settings": {
+        "github_personal_access_token": "",
+      },
+    },
+    "awslabs.aws-documentation-mcp-server": {
+      "enabled": true,
+      "command": "uvx",
+      "args": ["awslabs.aws-documentation-mcp-server@latest"],
+      "env": {
+        "AWS_DOCUMENTATION_PARTITION": "aws",
+        "FASTMCP_LOG_LEVEL": "ERROR",
+      },
+    },
+    "git": {
+      "enabled": true,
+      "command": "uvx",
+      "args": ["mcp-server-git"],
+      "env": {},
+    },
+    "memory": {
+      "enabled": true,
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-memory"],
+      "env": {
+        "MEMORY_FILE_PATH": "~/.config/ia-memory.json",
+      },
+    },
+  },
+}

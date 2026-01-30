@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+
+source /etc/os-release
+
+get_icon() {
+  case $ID in
+  arch)
+    echo " "
+    ;;
+  nixos)
+    echo "󱄅 "
+    ;;
+  debian)
+    echo " "
+    ;;
+  fedora)
+    echo " "
+    ;;
+  ubuntu)
+    echo " "
+    ;;
+  *)
+    echo " "
+    ;;
+  esac
+}
+
+if [[ "$1" == "--icon" ]]; then
+  get_icon
+elif [[ "$1" == "--id" ]]; then
+  echo "$ID"
+fi
