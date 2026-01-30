@@ -72,13 +72,7 @@
         modules = [ ./home-manager/delta ];
       };
 
-      hmEpsilon = home-manager.lib.homeManagerConfiguration {
-        pkgs = nixpkgs.legacyPackages.x86_64-linux;
-        extraSpecialArgs = {
-          inherit inputs outputs;
-        };
-        modules = [ ./home-manager/epsilon ];
-      };
+      hmEpsilonNixos = nixosEpsilon.config."home-manager".users.iperez.home;
     in
     {
       inherit lib;
@@ -92,7 +86,7 @@
 
       homeConfigurations = {
         "iperez@delta" = hmDelta;
-        "iperez@epsilon" = hmEpsilon;
+        "iperez@epsilon" = hmEpsilonNixos;
       };
 
       checks = forEachSystem (
@@ -100,7 +94,7 @@
         lib.optionalAttrs (pkgs.system == "x86_64-linux") {
           eval-nixos-epsilon = pkgs.writeText "eval-nixos-epsilon" nixosEpsilon.config.system.build.toplevel.drvPath;
           eval-home-delta = pkgs.writeText "eval-home-delta" hmDelta.activationPackage.drvPath;
-          eval-home-epsilon = pkgs.writeText "eval-home-epsilon" hmEpsilon.activationPackage.drvPath;
+          eval-home-epsilon = pkgs.writeText "eval-home-epsilon" hmEpsilonNixos.activationPackage.drvPath;
         }
       );
     };
