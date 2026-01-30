@@ -56,7 +56,13 @@
         modules = [ ./home-manager/delta ];
       };
 
-      hmEpsilonNixos = nixosEpsilon.config."home-manager".users.iperez.home;
+      hmEpsilonNixos = home-manager.lib.homeManagerConfiguration {
+        pkgs = nixpkgs.legacyPackages.x86_64-linux;
+        extraSpecialArgs = {
+          inherit inputs outputs;
+        };
+        modules = [ ./home-manager/epsilon ];
+      };
     in
     {
       nixosConfigurations = {

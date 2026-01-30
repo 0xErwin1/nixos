@@ -116,5 +116,21 @@
   location.provider = "geoclue2";
   security.rtkit.enable = true;
 
+  programs = {
+    hyprland = {
+      enable = true;
+      xwayland.enable = true;
+    };
+  };
+
+  services.xserver.windowManager = {
+    leftwm.enable = true;
+    bspwm.enable = true;
+    xmonad = {
+      enable = true;
+      enableContribAndExtras = true;
+    };
+  };
+
   system.stateVersion = "25.11";
 }
