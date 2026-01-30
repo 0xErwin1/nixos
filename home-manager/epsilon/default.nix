@@ -6,6 +6,7 @@
     #    ../global/terminal.nix
     ../global
     ../global/xdg.nix
+    ../global/zed
     #../global/window-managers/hyprland
     #   ../global/audio.nix
     #../global/themes.nix
