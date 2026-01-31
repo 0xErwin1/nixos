@@ -11,7 +11,7 @@
     (modulesPath + "/installer/scan/not-detected.nix")
   ];
 
-  environment.etc."throttled.conf".source = ./throttled.conf;
+  environment.etc."throttled.conf".source = lib.mkForce ./throttled.conf;
 
   boot = {
     initrd = {

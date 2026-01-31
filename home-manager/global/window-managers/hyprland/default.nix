@@ -11,7 +11,7 @@ in
   ];
 
   xdg.configFile."hypr/eww" = {
-    source = ../../dotfiles/.config/hypr/eww;
+    source = ../../../../dotfiles/.config/hypr/eww;
     recursive = true;
   };
 
