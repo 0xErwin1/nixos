@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 
-# Get microphone mute status using pactl
-IS_MUTED=$(pactl get-source-mute @DEFAULT_SOURCE@ | grep -o "yes\|no")
+# Get microphone mute status using wpctl (WirePlumber)
+IS_MUTED=$(wpctl get-mute @DEFAULT_AUDIO_SOURCE@ 2>/dev/null || echo "1")
 
 get_icon() {
-  if [[ $IS_MUTED == "yes" ]]; then
+  if [[ $IS_MUTED == "1" ]] || [[ $IS_MUTED == "true" ]]; then
     echo "󰍭"  # Muted microphone icon
   else
     echo "󰍬"  # Unmuted microphone icon
@@ -14,5 +14,9 @@ get_icon() {
 if [[ "$1" == "--icon" ]]; then
   get_icon
 elif [[ "$1" == "--status" ]]; then
-  echo "$IS_MUTED"
+  if [[ $IS_MUTED == "1" ]] || [[ $IS_MUTED == "true" ]]; then
+    echo "yes"
+  else
+    echo "no"
+  fi
 fi

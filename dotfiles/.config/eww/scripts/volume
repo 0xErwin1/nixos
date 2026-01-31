@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 
-VOLUME=$(pamixer --get-volume)
-IS_MUTED=$(pamixer --get-mute)
+# Get volume using wpctl (WirePlumber)
+VOLUME=$(wpctl get-volume @DEFAULT_AUDIO_SINK@ | awk '{print int($2 * 100)}')
+IS_MUTED=$(wpctl get-volume @DEFAULT_AUDIO_SINK@ | grep -q "MUTED" && echo "true" || echo "false")
 
 if [[ "$1" == "--percent" ]]; then
   echo "$VOLUME"
