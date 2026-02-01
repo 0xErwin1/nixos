@@ -1,23 +1,24 @@
 { pkgs, ... }:
 {
   home = {
-    packages = with pkgs; [ lxappearance ];
-    sessionVariables.GTK_THEME = "palenight";
+    packages = with pkgs; [
+      lxappearance
+      dconf
+    ];
+    sessionVariables = {
+      GTK_THEME = "palenight";
+    };
   };
 
   gtk = {
     enable = true;
 
     gtk3.extraConfig = {
-      Settings = ''
-        gtk-application-prefer-dark-theme=1
-      '';
+      gtk-application-prefer-dark-theme = true;
     };
 
     gtk4.extraConfig = {
-      Settings = ''
-        gtk-application-prefer-dark-theme=1
-      '';
+      gtk-application-prefer-dark-theme = true;
     };
 
     font = {
@@ -38,6 +39,15 @@
     cursorTheme = {
       name = "vimix-cursors";
       package = pkgs.vimix-cursors;
+    };
+  };
+
+  dconf.settings = {
+    "org/gnome/desktop/interface" = {
+      color-scheme = "prefer-dark";
+      gtk-theme = "palenight";
+      icon-theme = "Papirus-Dark";
+      cursor-theme = "vimix-cursors";
     };
   };
 }
