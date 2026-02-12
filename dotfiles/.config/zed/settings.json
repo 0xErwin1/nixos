@@ -33,6 +33,19 @@
               "prompt_cache_key": true,
             },
           },
+          {
+            "name": "glm-5",
+            "display_name": "GLM-5",
+            "max_tokens": 200000,
+            "max_output_tokens": 128000,
+            "max_completion_tokens": 128000,
+            "capabilities": {
+              "tools": true,
+              "images": false,
+              "parallel_tool_calls": true,
+              "prompt_cache_key": true,
+            },
+          },
         ],
       },
     },
@@ -44,7 +57,7 @@
     "play_sound_when_agent_done": true,
     "default_model": {
       "provider": "Z.ai",
-      "model": "glm-4.7",
+      "model": "glm-5",
     },
     "model_parameters": [],
   },

@@ -1,0 +1,3 @@
+[submodule "dotfiles/.config/dwl"]
+	path = dotfiles/.config/dwl
+	url = https://github.com/0xErwin1/dwl
