@@ -2,8 +2,11 @@
   services.hyprpaper = {
     enable = true;
     settings = {
-      preload = [ "/home/iperez/Wallpaper/1udeandomn1e1.jpeg" ];
-      wallpaper = [ ", /home/iperez/Wallpaper/1udeandomn1e1.jpeg" ];
+      wallpaper = {
+        monitor = "";
+        path = "~/Wallpaper/1udeandomn1e1.jpeg";
+        fit_mode = "cover";
+      };
     };
   };
 }
