@@ -66,29 +66,27 @@ in
         esac
         tml() {
           local current_dir="$PWD"
-          local editor_pane ai_pane
-          local ai="$1"
 
-          # Get current pane ID (will become editor pane after splits)
-          editor_pane=$(tmux display-message -p '#{pane_id}')
+          export TML_EDITOR_PANE=$(tmux display-message -p '#{pane_id}')
 
-          # Split window vertically - top 85%, bottom 15%
           tmux split-window -v -p 15 -c "$current_dir"
+          export TML_BOTTOM_PANE=$(tmux display-message -p '#{pane_id}')
 
-          # Go back to top pane (editor_pane) and split it horizontally
-          tmux select-pane -t "$editor_pane"
+          tmux select-pane -t "$TML_EDITOR_PANE"
           tmux split-window -h -p 30 -c "$current_dir"
+          export TML_AI_PANE=$(tmux display-message -p '#{pane_id}')
 
-          # After horizontal split, cursor is in the right pane (new pane)
-          # Get its ID and run ai there
-          ai_pane=$(tmux display-message -p '#{pane_id}')
-          tmux send-keys -t "$ai_pane" "$ai" C-m
+          tmux send-keys -t "$TML_AI_PANE" "$1" C-m
+          tmux send-keys -t "$TML_EDITOR_PANE" "$EDITOR ." C-m
 
-          # Run nvim in the left pane
-          tmux send-keys -t "$editor_pane" "$EDITOR ." C-m
-
-          # Select the nvim pane for focus
-          tmux select-pane -t "$editor_pane"
+          tmux select-pane -t "$TML_EDITOR_PANE"
+        }
+        tmla() {
+          tmux kill-pane -a
+        }
+        tml-close() {
+          tmux kill-pane -t "$TML_AI_PANE" 2>/dev/null
+          tmux kill-pane -t "$TML_BOTTOM_PANE" 2>/dev/null
         }
       '';
       oh-my-zsh = {
