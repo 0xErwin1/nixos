@@ -28,7 +28,7 @@ let
     + "Gcr-prompter"
     + "Steam";
 
-  peronsalBrowser = "firefox-nightly" + "floorp" + "LibreWolf" + "librewolf" + "zen-browser";
+  peronsalBrowser = "firefox-nightly" + "floorp" + "LibreWolf" + "librewolf" + "helium";
 
   development = "";
 
@@ -40,7 +40,8 @@ let
 
   db = "DBeaver";
 
-  communication = "TelegramDesktop" + "Thunderbird" + "zoom" + "Zoom Cloud Meetings" + "fluent-reader" + "discord";
+  communication =
+    "TelegramDesktop" + "Thunderbird" + "zoom" + "Zoom Cloud Meetings" + "fluent-reader" + "discord";
 
   multimedia = "Spotify" + "Pulseaudio-equalizer-gtk" + "Pavucontrol" + "easyeffects";
 

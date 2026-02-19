@@ -41,6 +41,14 @@
     let
       inherit (self) outputs;
 
+      overlays = {
+        default = final: prev: {
+          helium = final.callPackage "${self}/pkgs/helium" { };
+        };
+      };
+
+      pkgsWithOverlay = nixpkgs.legacyPackages.x86_64-linux.extend overlays.default;
+
       nixosEpsilon = nixpkgs.lib.nixosSystem {
         specialArgs = {
           inherit inputs outputs;
@@ -49,7 +57,7 @@
       };
 
       hmDelta = home-manager.lib.homeManagerConfiguration {
-        pkgs = nixpkgs.legacyPackages.x86_64-linux;
+        pkgs = pkgsWithOverlay;
         extraSpecialArgs = {
           inherit inputs outputs;
         };
@@ -57,7 +65,7 @@
       };
 
       hmEpsilonNixos = home-manager.lib.homeManagerConfiguration {
-        pkgs = nixpkgs.legacyPackages.x86_64-linux;
+        pkgs = pkgsWithOverlay;
         extraSpecialArgs = {
           inherit inputs outputs;
         };
@@ -65,6 +73,8 @@
       };
     in
     {
+      overlays = overlays;
+
       nixosConfigurations = {
         epsilon = nixosEpsilon;
       };

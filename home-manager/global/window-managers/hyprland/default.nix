@@ -165,9 +165,10 @@ in
       "$fileManager" = "pcmanfm";
       "$menu" = "wofi --show drun";
       "$menuWindow" = "wofi -show window";
-      "$browser" = "zen-browser";
+      "$browser" = "helium";
       "$workBrowser" = "firefox";
-      "$screenshot" = "hyprshot -m region --raw | satty --filename - --output-filename \$HOME/Pictures/Screenshots/screenshot-\$(date +'%Y-%m-%d_%H-%M-%S').png --early-exit --actions-on-enter save-to-clipboard --save-after-copy --copy-command wl-copy";
+      "$screenshot" =
+        "hyprshot -m region --raw | satty --filename - --output-filename \$HOME/Pictures/Screenshots/screenshot-\$(date +'%Y-%m-%d_%H-%M-%S').png --early-exit --actions-on-enter save-to-clipboard --save-after-copy --copy-command wl-copy";
       "$wallpaper" = "/home/iperez/Wallpaper/1udeandomn1e1.jpeg";
 
       inherit (bind) bind;
