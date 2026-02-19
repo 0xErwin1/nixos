@@ -13,7 +13,7 @@ in
     enable = true;
     keyMode = "vi";
     mouse = true;
-    prefix = "C-a";
+    prefix = "C-Space";
     extraConfig = ''
       set -g default-terminal "xterm-256color"
       set -ga terminal-overrides ",xterm-256color:Tc"
@@ -47,6 +47,20 @@ in
 
       bind -n M-h previous-window
       bind -n M-l next-window
+
+      bind h split-window -h -c "#{pane_current_path}"
+      bind v split-window -v -c "#{pane_current_path}"
+      bind x kill-pane
+
+      bind -n C-M-h select-pane -L
+      bind -n C-M-l select-pane -R
+      bind -n C-M-k select-pane -U
+      bind -n C-M-j select-pane -D
+
+      bind -n C-M-S-h resize-pane -L 5
+      bind -n C-M-S-j resize-pane -D 5
+      bind -n C-M-S-k resize-pane -U 5
+      bind -n C-M-S-l resize-pane -R 5
 
       set -g status-position top
 
