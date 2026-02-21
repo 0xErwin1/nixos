@@ -33,8 +33,6 @@ in
       unbind C-j
       unbind C-k
 
-      bind-key -n C-j send-keys C-j
-      bind-key -n C-k send-keys C-k
       unbind c
       unbind %
       unbind '"'
