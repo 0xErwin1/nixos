@@ -18,6 +18,7 @@
       "x-scheme-handler/webcal" = [ "userapp-Thunderbird-EDTY12.desktop" ];
       "application/x-extension-ics" = [ "userapp-Thunderbird-EDTY12.desktop" ];
       "x-scheme-handler/webcals" = [ "userapp-Thunderbird-EDTY12.desktop" ];
+      "inode/directory" = [ "pcmanfm.desktop" ];
     };
 
     associations = {
