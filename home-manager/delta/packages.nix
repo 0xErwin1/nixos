@@ -3,6 +3,6 @@
   home.packages = with pkgs; [
     telegram-desktop
     cartero
-    helium
+    #helium
   ];
 }
