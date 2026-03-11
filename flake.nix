@@ -47,41 +47,46 @@
         };
       };
 
-      pkgsWithOverlay = nixpkgs.legacyPackages.x86_64-linux.extend overlays.default;
+      pkgsEpsilon = nixpkgs.legacyPackages.x86_64-linux.extend overlays.default;
 
-      nixosEpsilon = nixpkgs.lib.nixosSystem {
-        specialArgs = {
-          inherit inputs outputs;
-        };
-        modules = [ ./hosts/epsilon ];
-      };
-
-      hmDelta = home-manager.lib.homeManagerConfiguration {
-        pkgs = pkgsWithOverlay;
-        extraSpecialArgs = {
-          inherit inputs outputs;
-        };
-        modules = [ ./home-manager/delta ];
-      };
-
-      hmEpsilonNixos = home-manager.lib.homeManagerConfiguration {
-        pkgs = pkgsWithOverlay;
-        extraSpecialArgs = {
-          inherit inputs outputs;
-        };
-        modules = [ ./home-manager/epsilon ];
+      pkgsX13 = import nixpkgs {
+        system = "x86_64-linux";
+        config.allowUnfree = true;
+        overlays = [ overlays.default ];
       };
     in
     {
       overlays = overlays;
 
       nixosConfigurations = {
-        epsilon = nixosEpsilon;
+        epsilon = nixpkgs.lib.nixosSystem {
+          specialArgs = { inherit inputs outputs; };
+          modules = [ ./hosts/epsilon ];
+        };
+
+        x13 = nixpkgs.lib.nixosSystem {
+          modules = [ ./hosts/x13 ];
+        };
       };
 
       homeConfigurations = {
-        "iperez@delta" = hmDelta;
-        "iperez@epsilon" = hmEpsilonNixos;
+        "iperez@delta" = home-manager.lib.homeManagerConfiguration {
+          pkgs = pkgsEpsilon;
+          extraSpecialArgs = { inherit inputs outputs; };
+          modules = [ ./home-manager/delta ];
+        };
+
+        "iperez@epsilon" = home-manager.lib.homeManagerConfiguration {
+          pkgs = pkgsEpsilon;
+          extraSpecialArgs = { inherit inputs outputs; };
+          modules = [ ./home-manager/epsilon ];
+        };
+
+        "iperez@x13" = home-manager.lib.homeManagerConfiguration {
+          pkgs = pkgsX13;
+          extraSpecialArgs = { inherit inputs outputs; };
+          modules = [ ./home-manager/x13 ];
+        };
       };
 
       devShells.x86_64-linux.default = nixpkgs.legacyPackages.x86_64-linux.mkShell {

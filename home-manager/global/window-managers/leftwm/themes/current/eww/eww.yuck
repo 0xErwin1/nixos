@@ -12,6 +12,8 @@
 (defpoll batteryPercent :interval "1s" "scripts/battery --percent")
 (defpoll volumeIcon :interval "1s" "scripts/volume --icon")
 (defpoll volumePercent :interval "1s" "scripts/volume --percent")
+(defpoll microphoneIcon :interval "1s" "scripts/microphone --icon")
+(defpoll microphoneStatus :interval "1s" "scripts/microphone --status")
 (defpoll brightnessPercent :interval "1s" "scripts/brightness --percent")
 (defpoll brightnessIcon :interval "1s" "scripts/brightness --icon")
 (defpoll hour :interval "1s" "date '+%H'")
@@ -54,6 +56,12 @@
     (label :class "volume-icon" :text "${volumeIcon}")
     (label :class "volume-percent" :text "${volumePercent}%")))
 
+(defwidget microphone []
+  (box :class "microphone" :orientation "h" :space-evenly false
+    (label :class "microphone-icon microphone-${microphoneStatus}" :text "${microphoneIcon}")
+  )
+)
+
 (defwidget battery []
   (box :class 'battery' :orientation 'h'
     (label :class "battery-icon" :text "${batteryIcon}")
@@ -87,6 +95,7 @@
     (brightness)
     (battery)
     (volume)
+    (microphone)
     (wifi)))
 
 (defwidget left [?number monitor]
@@ -131,26 +140,26 @@
   )
 )
 
-(defwindow laptop :monitor '["eDP"]'
-  :geometry (geometry :x "0px" :y "96%" :width "100%" :height "2%")
-  :reserve (struts :distance "4%" :side "bottom")
-  :wm-ignore false
-  :windowtype "dock"
-  (bar :monitor 1)
-)
-
-(defwindow monitor-DP-0 :monitor '["DisplayPort-0","DP-0", "HDMI-A-0"]'
-  :geometry (geometry :x "0px" :y "96%" :width "100%" :height "2%")
+(defwindow laptop :monitor '[0, "eDP", "eDP-1", "eDP-0"]'
+  :geometry (geometry :x "2.5%" :y "96%" :width "95%" :height "2%")
   :reserve (struts :distance "4%" :side "bottom")
   :wm-ignore false
   :windowtype "dock"
   (bar :monitor 0)
 )
 
-(defwindow monitor-DP-1 :monitor '["DisplayPort-1", "DP-1"]'
-  :geometry (geometry :x "0px" :y "96%" :width "100%" :height "2%")
+(defwindow monitor-DP-0 :monitor '[1, "DisplayPort-0", "DP-0", "HDMI-A-0"]'
+  :geometry (geometry :x "2.5%" :y "96%" :width "95%" :height "2%")
   :reserve (struts :distance "4%" :side "bottom")
   :wm-ignore false
   :windowtype "dock"
   (bar :monitor 1)
+)
+
+(defwindow monitor-DP-1 :monitor '[2, "DisplayPort-1", "DP-1", "DP-2"]'
+  :geometry (geometry :x "2.5%" :y "96%" :width "95%" :height "2%")
+  :reserve (struts :distance "4%" :side "bottom")
+  :wm-ignore false
+  :windowtype "dock"
+  (bar :monitor 2)
 )

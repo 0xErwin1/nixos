@@ -1,4 +1,4 @@
-{ pkgs, inputs, outputs, ... }:
+{ pkgs, ... }:
 {
   nixpkgs.config.allowUnfree = true;
 
@@ -9,15 +9,7 @@
     ./packages.nix
     ./wireguard.nix
     ./wireguard-local.nix
-    inputs.home-manager.nixosModules.home-manager
   ];
-
-  home-manager = {
-    useGlobalPkgs = true;
-    useUserPackages = true;
-    extraSpecialArgs = { inherit inputs outputs; };
-    users.iperez = import ../../home-manager/epsilon;
-  };
 
   boot = {
     tmp.cleanOnBoot = true;
@@ -98,22 +90,15 @@
         xdg-desktop-portal-hyprland
       ];
       config.common.default = [
-        "hyprland"
         "gtk"
+        "hyprland"
       ];
     };
   };
 
-  environment.sessionVariables = {
-    NIXOS_OZONE_WL = "1";
-    MOZ_ENABLE_WAYLAND = "1";
-    QT_QPA_PLATFORM = "wayland;xcb";
-    SDL_VIDEODRIVER = "wayland";
-    XDG_SESSION_TYPE = "wayland";
-    XDG_CURRENT_DESKTOP = "Hyprland";
-  };
-
   location.provider = "geoclue2";
+  hardware.bluetooth.enable = true;
+
   security.rtkit.enable = true;
 
   programs = {

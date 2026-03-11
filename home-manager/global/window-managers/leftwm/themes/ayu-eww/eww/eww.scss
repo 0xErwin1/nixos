@@ -5,41 +5,61 @@
   font-family: $font;
 }
 
-.middle {
-  // up right bottom left
-  margin: 2rem 0 10rem 0;
-  border-radius: 10px;
+.os-icon {
+  font-size: 1.8rem;
+}
+
+.arch {
+  color: $archColor;
+}
+
+.nix {
+  color: $nixColor;
+}
+
+.debian {
+  color: $debianColor;
+}
+
+.fedora {
+  color: $fedoraColor;
+}
+
+.ubuntu {
+  color: $ubuntuColor;
+}
+
+.separator {
+  color: $foreground;
+  font-size: $separator-font-size;
+  margin: 0 $separator-margin-right 0 $separator-margin-left;
 }
 
 .tray {
-  font-size: 16px;
+  font-size: $tray-font-size;
 }
 
 .bar {
   background-color: $background;
-  border-radius: 20px;
-}
-
-.dashboard {
-  background-color: $grey;
-  margin: .9rem .5rem 0 .5rem;
-  font-size : 20px;
-  border-radius: 10px;
-  color: $cyan;
+  border-radius: $bar-radius;
+  padding: 0 $bar-padding-x;
 }
 
 .workspaces {
-	font-weight : bold;
-	font-size : 20px;
-  // up right bottom left
-  margin: 1rem 0 0 -.5rem;
+  font-weight: bold;
+  font-size: $workspace-font-size;
+  margin: 0 $workspace-margin-right 0 0;
 }
 
 .workspace-icon {
-  background-repeat: no-repeat;
-	min-height: 30px;
-	min-width: 30px;
-  padding: .1rem 0 0 0;
+  min-height: $workspace-icon-size;
+  min-width: $workspace-icon-size;
+  padding: 0 .1rem;
+}
+
+.workspace-visible {
+  color: $cyan;
+  opacity: 0.7;
 }
 
 .workspace-focused {
@@ -48,133 +68,131 @@
 
 .workspace-empty {
   color: $foreground;
+  opacity: 0.7;
 }
 
 .workspace-urgent {
   color: $red;
+  opacity: 0.7;
 }
 
 .workspace-busy {
   color: $blue;
-}
-
-.center {
-  background-color: $background;
+  opacity: 0.7;
 }
 
 .control {
-  // up right bottom left
-  margin-bottom: 1rem;
-  border-radius: 10px;
-  font-size: 1.6em;
+  margin: 0 $control-margin-x;
+  font-size: $control-font-size;
+}
+
+.brightness,
+.volume,
+.battery,
+.wifi {
+  margin: 0 .5rem;
+}
+
+.microphone {
+  margin: 0 .5rem;
+}
+
+.microphone-icon {
+  font-size: $icon-font-size;
+  margin: 0 0 .1rem 0;
+}
+
+.microphone-no {
+  color: $green;
+}
+
+.microphone-yes {
+  color: $red;
 }
 
 .brightness {
   color: $yellow;
-  margin: .2rem 0 .2rem .3rem;
-  font-size: 20px;
+  font-size: $icon-font-size;
 }
 
 .brightness-percent {
-  margin: 0 0 0 .2rem;
-  font-size: 17px;
+  margin: 0 0 0 .9rem;
+}
+
+.brightness-percent,
+.volume-percent,
+.battery-percent {
+  font-size: $percent-font-size;
   font-weight: bold;
-}
-
-.brightness-icon {
-  margin: 0 .5rem 0 0;
-  font-size: 20px;
-}
-
-.volume {
-  // up right bottom left
-  margin: 0 0 .2rem 1.2rem;
-  color: $blue;
 }
 
 .volume-percent {
-  font-size: 17px;
-  font-weight: bold;
-}
-
-.volume-icon {
-  font-size: 20px;
-}
-
-.battery {
-  margin: 0 0 .3rem .4rem;
-  color: $green;
-}
-
-.battery-icon {
-  font-size: 20px;
+  margin: 0 0 0 .5rem;
 }
 
 .battery-percent {
-  font-weight: bold;
-  font-size: 17px;
+  margin: 0 0 0 .2rem;
+}
+
+.brightness-icon,
+.volume-icon,
+.battery-icon,
+.notifications-icon,
+.notifications-icon-pause,
+.wifi-icon {
+  font-size: $icon-font-size;
+}
+
+.wifi-icon {
+  color: $orange;
+  margin: 0 0 .1rem 0;
+}
+
+.volume-icon {
+  margin: 0 0 .1rem 0;
+}
+
+.volume {
+  color: $blue;
+}
+
+.battery {
+  color: $green;
+}
+
+.notifications {
+  .notifications-inner-box {
+    padding: .2rem .4rem;
+    border-radius: 10px;
+    background-color: $background;
+    color: $foreground;
+    font-size: 1.2em;
+    font-weight: bold;
+  }
+
+  .notifications-icon {
+    color: $cyan;
+  }
+
+  .notifications-icon-pause {
+    color: $red;
+  }
 }
 
 .date {
   color: $foreground;
   font-weight: bold;
-  font-size: 14px;
-  border-radius: 10px;
-  padding: .7rem 5px 5px 5px;
+  font-size: $date-font-size;
+  margin: 0 $date-margin-right 0 $date-margin-left;
 }
 
-.date-icon {
-  color: $yellow;
-  margin: 0 .3rem 0 0;
-  font-size: 20px;
+.time,
+.month,
+.year {
+  font-size: $time-font-size;
+  margin: 0;
 }
 
-.time {
-  margin: 5px;
-}
-
-.wifi {
-  // up right bottom left
-  margin: .2rem .2rem .2rem 0;
-  font-size: 20px;
-  color: $orange;
-}
-
-.calendar-box {
-  background-color: $background;
-  font-size: 1em;
-  font-weight: bold;
-
-  .calendar-inner-box {
-    padding: 1rem 1rem .2rem;
-    .cal {
-        &.highlight {
-            padding: 10rem;
-        }
-        padding: .8rem .25rem 0rem;
-        margin-left: 10px;
-    }
-  }
-}
-
-calendar:selected {
-  color: $blue;
-}
-
-calendar.header {
-  color: $blue;
-  font-weight: bold;
-}
-
-calendar.button {
-  color: $orange;
-}
-
-calendar.highlight {
-  color: $green;
-  font-weight: bold;
-}
-
-calendar:indeterminate {
-  color: $background;
+.year {
+  margin: 0 0 0 $year-margin-left;
 }

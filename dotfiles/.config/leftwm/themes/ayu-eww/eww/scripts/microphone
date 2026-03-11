@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+status_line="$(wpctl get-volume @DEFAULT_AUDIO_SOURCE@ 2>/dev/null || true)"
+
+if [[ "$status_line" == *"MUTED"* ]]; then
+  is_muted="yes"
+else
+  is_muted="no"
+fi
+
+if [[ "${1:-}" == "--icon" ]]; then
+  if [[ "$is_muted" == "yes" ]]; then
+    echo "󰍭"
+  else
+    echo "󰍬"
+  fi
+elif [[ "${1:-}" == "--status" ]]; then
+  echo "$is_muted"
+fi

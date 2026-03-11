@@ -1,22 +1,17 @@
-{ ... }:
+{ pkgs, ... }:
 {
   imports = [
-    ../global/browser.nix
-    ../global/terminal.nix
     ../global
+    ../global/rofi.nix
     ../global/xdg.nix
-    ../global/zed
+    ../global/notify.nix
+    ../global/neovim.nix
     ../global/font.nix
+    ../global/themes.nix
+    ../global/audio.nix
     ../global/window-managers/hyprland
     ../global/window-managers/leftwm
-    ../global/audio.nix
-    ../global/themes.nix
-    ../global/notify.nix
-    ../global/database.nix
-    ../global/neovim.nix
-    ../global/zathura.nix
-    ../global/music.nix
-    ./packages.nix
+    ./rdp-launchers.nix
   ];
 
   home = {
@@ -24,6 +19,7 @@
     username = "iperez";
     homeDirectory = "/home/iperez";
     stateVersion = "25.05";
+
     sessionVariables = {
       EDITOR = "nvim";
       LAPTOP = "eDP";
@@ -31,9 +27,12 @@
       DISPLAY_PORT = "DisplayPort-0";
       DISPLAY_PORT_1 = "DisplayPort-1";
     };
+
+    packages = with pkgs; [
+      telegram-desktop
+      firefox
+    ];
   };
 
-  programs = {
-    home-manager.enable = true;
-  };
+  programs.home-manager.enable = true;
 }

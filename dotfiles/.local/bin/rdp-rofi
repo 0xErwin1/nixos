@@ -1,0 +1,48 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+HOSTS_FILE="${RDP_HOSTS_FILE:-$HOME/.config/rdp/hosts}"
+
+manual_connect() {
+  local host
+  host="$(rofi -dmenu -p "Manual RDP host" -i)"
+
+  if [[ -z "$host" ]]; then
+    exit 0
+  fi
+
+  exec "$HOME/.local/bin/rdp-connect" "$host"
+}
+
+main() {
+  local -a names=()
+  local -a options=()
+
+  if [[ -f "$HOSTS_FILE" ]]; then
+    mapfile -t names < <(
+      awk -F'|' '!/^[[:space:]]*#/ && NF >= 2 {gsub(/^[[:space:]]+|[[:space:]]+$/, "", $1); if ($1 != "") print $1}' "$HOSTS_FILE"
+    )
+  fi
+
+  options=("${names[@]}" "Manual host" "Cloudflare host")
+
+  local selection
+  selection="$(printf '%s\n' "${options[@]}" | rofi -dmenu -p "RDP profile" -i)"
+
+  case "$selection" in
+    "")
+      exit 0
+      ;;
+    "Manual host")
+      manual_connect
+      ;;
+    "Cloudflare host")
+      exec "$HOME/.local/bin/rdp-cf-connect"
+      ;;
+    *)
+      exec "$HOME/.local/bin/rdp-connect" "$selection"
+      ;;
+  esac
+}
+
+main "$@"

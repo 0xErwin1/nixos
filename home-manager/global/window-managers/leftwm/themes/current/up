@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+set -euo pipefail
+
 # ----| Vars | ----
 export SCRIPT_PATH="$HOME/.config/leftwm"
 
@@ -18,6 +20,34 @@ ln -s "$THEME_CURRENT/down" /tmp/leftwm-theme-down
 
 leftwm-command "LoadTheme $THEME_CURRENT/themes.toml"
 
-eww -c "$THEME_CURRENT/eww" open laptop
-eww -c "$THEME_CURRENT/eww" open monitor-DP-0
-eww -c "$THEME_CURRENT/eww" open monitor-DP-1
+eww -c "$THEME_CURRENT/eww" daemon
+
+open_bar() {
+  eww -c "$THEME_CURRENT/eww" open "$1" >/dev/null 2>&1 || true
+}
+
+run_once() {
+  local proc="$1"
+  shift
+
+  if ! pgrep -x "$proc" >/dev/null 2>&1; then
+    "$@" >/dev/null 2>&1 &
+  fi
+}
+
+open_bar laptop
+
+if xrandr | grep -Eq '(^| )DisplayPort-0 connected|(^| )DP-0 connected|(^| )HDMI-A-0 connected'; then
+  open_bar monitor-DP-0
+fi
+
+if xrandr | grep -Eq '(^| )DisplayPort-1 connected|(^| )DP-1 connected|(^| )DP-2 connected'; then
+  open_bar monitor-DP-1
+fi
+
+run_once nm-applet nm-applet
+run_once blueman-applet blueman-applet
+run_once udiskie udiskie -t
+run_once solaar solaar -b regular -w hide
+
+nitrogen --restore >/dev/null 2>&1 || true

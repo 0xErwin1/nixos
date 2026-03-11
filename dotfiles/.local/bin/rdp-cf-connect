@@ -1,0 +1,47 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+DEFAULT_USER="${RDP_USER:-$USER}"
+DEFAULT_LOCAL_PORT="${RDP_CF_LOCAL_PORT:-33901}"
+
+prompt_cf_host() {
+  rofi -dmenu -p "Cloudflare RDP host" -i
+}
+
+main() {
+  local cf_host="${1:-}"
+  local rdp_user="${2:-$DEFAULT_USER}"
+  local local_port="${3:-$DEFAULT_LOCAL_PORT}"
+  local tunnel_pid=""
+
+  if [[ -z "$cf_host" ]]; then
+    cf_host="$(prompt_cf_host)"
+  fi
+
+  if [[ -z "$cf_host" ]]; then
+    exit 0
+  fi
+
+  cleanup() {
+    if [[ -n "$tunnel_pid" ]] && kill -0 "$tunnel_pid" 2>/dev/null; then
+      kill "$tunnel_pid" >/dev/null 2>&1 || true
+      wait "$tunnel_pid" >/dev/null 2>&1 || true
+    fi
+  }
+
+  trap cleanup EXIT INT TERM
+
+  cloudflared access tcp --hostname "$cf_host" --url "127.0.0.1:${local_port}" >/dev/null 2>&1 &
+  tunnel_pid=$!
+
+  sleep 2
+
+  if ! kill -0 "$tunnel_pid" 2>/dev/null; then
+    echo "cloudflared tunnel failed for ${cf_host}" >&2
+    exit 1
+  fi
+
+  "$HOME/.local/bin/rdp-connect" "127.0.0.1:${local_port}" "$rdp_user"
+}
+
+main "$@"
