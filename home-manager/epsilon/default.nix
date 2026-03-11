@@ -16,6 +16,8 @@
     ../global/neovim.nix
     ../global/zathura.nix
     ../global/music.nix
+    ./xorg
+    ./picom.nix
     ./packages.nix
   ];
 

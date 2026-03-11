@@ -9,6 +9,7 @@
     ./packages.nix
     ./wireguard.nix
     ./wireguard-local.nix
+    ./rdp.nix
   ];
 
   boot = {
@@ -47,6 +48,7 @@
         xmodmap -e "keycode 66 = Control_L"
         xmodmap -e "add Control = Control_L"
       '';
+      windowManager.leftwm.enable = true;
     };
     libinput.enable = true;
     pipewire = {
@@ -105,15 +107,6 @@
     hyprland = {
       enable = true;
       xwayland.enable = true;
-    };
-  };
-
-  services.xserver.windowManager = {
-    leftwm.enable = true;
-    bspwm.enable = true;
-    xmonad = {
-      enable = true;
-      enableContribAndExtras = true;
     };
   };
 
