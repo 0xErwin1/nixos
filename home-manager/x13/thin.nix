@@ -16,9 +16,14 @@
     # XDG dirs
     ../global/xdg.nix
 
+    # LeftWM — same config.ron as every host, x13-thin theme
+    ../global/window-managers/leftwm
+
     # RDP scripts
     ./rdp-launchers.nix
   ];
+
+  leftwm.theme = "x13-thin";
 
   home = {
     enableNixpkgsReleaseCheck = false;
@@ -31,18 +36,13 @@
     };
 
     packages = with pkgs; [
+      eww
+      brightnessctl
+      playerctl
       xclip
       arandr
       networkmanagerapplet
     ];
-
-    file = {
-      ".config/leftwm/config.ron".source = ./leftwm/thin/config.ron;
-      ".config/leftwm/themes/current/up" = {
-        source = ./leftwm/thin/up;
-        executable = true;
-      };
-    };
   };
 
   services.picom = {

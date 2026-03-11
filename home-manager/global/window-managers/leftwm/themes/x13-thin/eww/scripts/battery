@@ -1,0 +1,59 @@
+#!/usr/bin/env bash
+
+BATTERY=/sys/class/power_supply/BAT0
+PERCENTAGE=$(cat "$BATTERY/capacity")
+STATUS="$(cat "$BATTERY/status")"
+
+get_icon() {
+  if [[ $STATUS == "Charging" ]]; then
+    echo ""
+    exit 0
+  fi
+
+  case $PERCENTAGE in
+    9[0-9]|100)
+        echo " "
+      ;;
+    8[0-9])
+        echo " "
+      ;;
+    7[0-9])
+        echo " "
+      ;;
+    6[0-9])
+        echo " "
+      ;;
+    5[0-9])
+        echo " "
+      ;;
+    4[0-9])
+        echo " "
+      ;;
+    3[0-9])
+        echo " "
+      ;;
+    2[0-9])
+        echo " "
+        notify-send -u critical "Battery Low" "Connect Charger"
+      ;;
+    1[0-9])
+        notify-send -u critical "Battery Low" "Connect Charger"
+        echo " "
+      ;;
+    [1-9])
+        echo ""
+        notify-send -u critical "Battery Low" "Connect Charger"
+      ;;
+    *)
+        echo ""
+      ;;
+  esac
+}
+
+if [[ "$1" == "--icon" ]]; then
+  get_icon
+  exit
+elif [[ "$1" == "--percent" ]]; then
+  echo "$PERCENTAGE"
+  exit
+fi

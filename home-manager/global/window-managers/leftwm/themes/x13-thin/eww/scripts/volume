@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+
+status=$(wpctl get-volume @DEFAULT_AUDIO_SINK@ 2>/dev/null || echo "Volume: 0")
+is_muted=false
+[[ "$status" == *"MUTED"* ]] && is_muted=true
+
+# Extract numeric value (e.g. "Volume: 0.72" -> "72")
+raw=$(echo "$status" | grep -oP '[0-9]+\.[0-9]+' | head -1)
+pct=$(echo "$raw * 100" | bc 2>/dev/null | cut -d. -f1)
+pct=${pct:-0}
+
+if [[ "$1" == "--percent" ]]; then
+  echo "$pct"
+elif [[ "$1" == "--icon" ]]; then
+  if $is_muted; then
+    echo "󰖁"
+  elif (( pct >= 70 )); then
+    echo ""
+  elif (( pct >= 40 )); then
+    echo "󰕾"
+  elif (( pct >= 10 )); then
+    echo "󰖀"
+  else
+    echo ""
+  fi
+fi

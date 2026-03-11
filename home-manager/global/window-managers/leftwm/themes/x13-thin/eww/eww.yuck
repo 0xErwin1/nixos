@@ -1,0 +1,69 @@
+(defvar eww "eww -c $HOME/.config/leftwm/themes/current/eww")
+(deflisten wmstate "leftwm state")
+
+(defpoll wifiIcon     :interval "2s"  "scripts/wifi --icon")
+(defpoll wifiName     :interval "2s"  "scripts/wifi --name")
+(defpoll batteryIcon  :interval "5s"  "scripts/battery --icon")
+(defpoll batteryPct   :interval "5s"  "scripts/battery --percent")
+(defpoll volIcon      :interval "1s"  "scripts/volume --icon")
+(defpoll volPct       :interval "1s"  "scripts/volume --percent")
+(defpoll micIcon      :interval "1s"  "scripts/microphone --icon")
+(defpoll micStatus    :interval "1s"  "scripts/microphone --status")
+(defpoll brightIcon   :interval "2s"  "scripts/brightness --icon")
+(defpoll brightPct    :interval "2s"  "scripts/brightness --percent")
+(defpoll hour         :interval "1s"  "date '+%H'")
+(defpoll min          :interval "1s"  "date '+%M'")
+(defpoll month        :interval "30s" "date '+%b'")
+(defpoll day          :interval "30s" "date '+%d'")
+
+(defwidget workspaces [monitor]
+  (box :orientation "h" :class "workspaces" :space-evenly false
+    (for tag in "${wmstate.workspaces[monitor].tags}"
+      (label :text "${tag.name}"
+        :class "ws ${
+          tag.focused  ? "ws-focused"  :
+          tag.visible  ? "ws-visible"  :
+          tag.urgent   ? "ws-urgent"   :
+          tag.busy     ? "ws-busy"     :
+          "ws-empty"
+        }"
+      )
+    )
+  )
+)
+
+(defwidget status []
+  (box :orientation "h" :class "status" :space-evenly false
+    (label :class "bright"   :text "${brightIcon} ${brightPct}%")
+    (label :class "sep"      :text "│")
+    (label :class "bat"      :text "${batteryIcon} ${batteryPct}%")
+    (label :class "sep"      :text "│")
+    (label :class "vol"      :text "${volIcon} ${volPct}%")
+    (label :class "sep"      :text "│")
+    (label :class "mic mic-${micStatus}" :text "${micIcon}")
+    (label :class "sep"      :text "│")
+    (label :class "net"      :text "${wifiIcon}")
+  )
+)
+
+(defwidget clock []
+  (box :orientation "h" :class "clock" :space-evenly false
+    (label :text "${hour}:${min}  ${month} ${day}")
+  )
+)
+
+(defwidget bar [monitor]
+  (box :class "bar" :orientation "h" :space-evenly true
+    (workspaces :monitor monitor)
+    (clock)
+    (status)
+  )
+)
+
+(defwindow bar0 :monitor 0
+  :geometry (geometry :x "2%" :y "97%" :width "96%" :height "2.5%")
+  :reserve (struts :distance "4%" :side "bottom")
+  :wm-ignore false
+  :windowtype "dock"
+  (bar :monitor 0)
+)

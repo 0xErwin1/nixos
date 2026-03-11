@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+THEME_CURRENT="$HOME/.config/leftwm/themes/current"
+EWW="$THEME_CURRENT/eww"
+
+if [ -f "/tmp/leftwm-theme-down" ]; then
+  /tmp/leftwm-theme-down
+  rm /tmp/leftwm-theme-down
+fi
+
+ln -s "$THEME_CURRENT/down" /tmp/leftwm-theme-down
+
+leftwm-command "LoadTheme $THEME_CURRENT/themes.toml"
+
+xsetroot -solid "#0a0e14"
+
+eww -c "$EWW" daemon
+eww -c "$EWW" open bar0 >/dev/null 2>&1 || true
+
+if ! pgrep -x nm-applet >/dev/null 2>&1; then
+  nm-applet >/dev/null 2>&1 &
+fi
+
+alacritty >/dev/null 2>&1 &
