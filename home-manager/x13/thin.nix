@@ -42,6 +42,7 @@
       xclip
       arandr
       networkmanagerapplet
+      firefox
     ];
   };
 

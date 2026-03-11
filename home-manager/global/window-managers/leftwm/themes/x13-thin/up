@@ -16,6 +16,12 @@ leftwm-command "LoadTheme $THEME_CURRENT/themes.toml"
 
 xsetroot -solid "#0a0e14"
 
+# Initialize betterlockscreen cache with a solid color if not done yet.
+# Without this, locking fails silently on first use.
+if [ ! -d "$HOME/.cache/betterlockscreen" ]; then
+  betterlockscreen -u "#0a0e14" >/dev/null 2>&1 &
+fi
+
 eww -c "$EWW" daemon
 eww -c "$EWW" open bar0 >/dev/null 2>&1 || true
 

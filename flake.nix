@@ -54,17 +54,23 @@
         config.allowUnfree = true;
         overlays = [ overlays.default ];
       };
+
+      # Read wireguard local config at flake evaluation time (requires --impure).
+      # Returns {} if the file does not exist, so builds work on machines without it.
+      wireguardLocalPath = "/home/iperez/.ssh/wireguard/default.nix";
+      wireguardLocal = if builtins.pathExists wireguardLocalPath then import wireguardLocalPath else { };
     in
     {
       overlays = overlays;
 
       nixosConfigurations = {
         epsilon = nixpkgs.lib.nixosSystem {
-          specialArgs = { inherit inputs outputs; };
+          specialArgs = { inherit inputs outputs wireguardLocal; };
           modules = [ ./hosts/epsilon ];
         };
 
         x13 = nixpkgs.lib.nixosSystem {
+          specialArgs = { inherit inputs outputs wireguardLocal; };
           modules = [ ./hosts/x13 ];
         };
       };
