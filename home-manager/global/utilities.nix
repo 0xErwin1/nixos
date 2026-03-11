@@ -12,5 +12,9 @@
     fd
     pcmanfm
     btop
+
+    opencode
+    codex
+    claude-code
   ];
 }

@@ -6,6 +6,7 @@
 
   home.packages = with pkgs; [
     thunderbird
+    helium
   ];
 
   programs = {
@@ -14,7 +15,7 @@
     };
 
     librewolf = {
-      enable = true;
+      enable = false;
       settings = {
         "webgl.disabled" = false;
         "privacy.resistFingerprinting" = true;
@@ -37,11 +38,10 @@
 
     firefox = {
       enable = true;
-      package = pkgs.firefox-devedition;
     };
 
     zen-browser = {
-      enable = true;
+      enable = false;
       policies = {
         AutofillAddressEnabled = true;
         AutofillCreditCardEnabled = false;

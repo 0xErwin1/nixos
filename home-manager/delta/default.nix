@@ -8,6 +8,7 @@
     ../global/database.nix
     ../global/neovim.nix
     ../global/music.nix
+    ../global/zed
     ./monitor.nix
     ./packages.nix
   ];
