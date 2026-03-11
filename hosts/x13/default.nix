@@ -17,6 +17,7 @@
     };
   };
 
+  systemd.services."NetworkManager-wait-online".enable = false;
   networking = {
     hostName = "x13";
     networkmanager.enable = true;
@@ -27,6 +28,7 @@
   };
 
   services = {
+    fprintd.enable = true;
     xserver = {
       enable = true;
       xkb = {
@@ -73,12 +75,11 @@
     config.common.default = [ "gtk" ];
   };
 
-  hardware.bluetooth.enable = true;
+  security = {
+    rtkit.enable = true;
+    pam.services.ly.fprintAuth = true;
+  };
 
-  security.rtkit.enable = true;
-  systemd.services."NetworkManager-wait-online".enable = false;
-
-  # full-lite: Hyprland + more packages, activate from boot loader
   specialisation.full-lite.configuration = import ./profiles/full-lite.nix;
 
   system.stateVersion = "25.11";

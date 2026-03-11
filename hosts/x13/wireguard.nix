@@ -40,7 +40,7 @@ in
         address = [ "10.0.0.3/24" ];
         dns = [ "10.0.0.1" ];
         listenPort = 51820;
-        privateKeyFile = cfg.privateKeyFile;
+        inherit (cfg) privateKeyFile;
         peers = [
           {
             publicKey = "wZBcXWnY+1i67PHLBqes/x5U920dJhtJ7i1RFPhiIDQ=";
@@ -48,7 +48,7 @@ in
               "10.0.0.0/24"
               "10.0.1.0/24"
             ];
-            endpoint = cfg.endpoint;
+            inherit (cfg) endpoint;
             persistentKeepalive = 25;
           }
         ];
