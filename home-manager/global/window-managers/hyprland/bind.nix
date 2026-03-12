@@ -62,8 +62,8 @@ let
   ];
 
   menuBind = [
-    "$mod, M, exec, wofi -show drun"
-    "$mod SHIFT, M, exec, wofi -show window"
+    "$mod, M, exec, wofi --show drun"
+    "$mod SHIFT, M, exec, wofi --show window"
   ];
 
   hyperBind = [

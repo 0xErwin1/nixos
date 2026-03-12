@@ -1,11 +1,106 @@
 { pkgs, ... }:
 let
-  tmuxAyuTheme = pkgs.fetchFromGitHub {
-    owner = "TechnicalDC";
-    repo = "tmux-ayu-theme";
-    rev = "2ddd8537e2f98cc760c1e2ded4bcbc62a20b8f42";
-    sha256 = "sha256-/MLP0tE5wSQ/Vcnruy34bQ5kes6AoT0zH2urBcetiq0=";
-  };
+  tmuxAyuThemeScript = pkgs.writeShellScript "tmux-ayu-theme.tmux" ''
+    ayu_black="#101521"
+    ayu_blue="#5CCFE6"
+    ayu_yellow="#E6B450"
+    ayu_red="#F28779"
+    ayu_white="#CBCCC6"
+    ayu_green="#BAE67E"
+    ayu_visual_grey="#607080"
+    ayu_comment_grey="#5C6773"
+
+    get() {
+       local option=$1
+       local default_value=$2
+       local option_value="$(tmux show-option -gqv "$option")"
+
+       if [ -z "$option_value" ]; then
+          echo "$default_value"
+       else
+          echo "$option_value"
+       fi
+    }
+
+    set() {
+       local option=$1
+       local value=$2
+       tmux set-option -gq "$option" "$value"
+    }
+
+    setw() {
+       local option=$1
+       local value=$2
+       tmux set-window-option -gq "$option" "$value"
+    }
+
+    set "status" "on"
+    set "status-justify" "left"
+
+    set "status-left-length" "100"
+    set "status-right-length" "100"
+    set "status-right-attr" "none"
+
+    set "message-fg" "$ayu_white"
+    set "message-bg" "$ayu_black"
+
+    set "message-command-fg" "$ayu_white"
+    set "message-command-bg" "$ayu_black"
+
+    set "status-attr" "none"
+    set "status-left-attr" "none"
+
+    setw "window-status-fg" "$ayu_black"
+    setw "window-status-bg" "$ayu_black"
+    setw "window-status-attr" "none"
+
+    setw "window-status-activity-bg" "$ayu_black"
+    setw "window-status-activity-fg" "$ayu_black"
+    setw "window-status-activity-attr" "none"
+
+    setw "window-status-separator" ""
+
+    set "window-style" "fg=$ayu_comment_grey"
+    set "window-active-style" "fg=$ayu_white"
+
+    set "pane-border-fg" "$ayu_white"
+    set "pane-border-bg" "$ayu_black"
+    set "pane-active-border-fg" "$ayu_green"
+    set "pane-active-border-bg" "$ayu_black"
+
+    set "display-panes-active-colour" "$ayu_yellow"
+    set "display-panes-colour" "$ayu_blue"
+
+    set "status-bg" "$ayu_black"
+    set "status-fg" "$ayu_white"
+
+    set "@prefix_highlight_fg" "$ayu_black"
+    set "@prefix_highlight_bg" "$ayu_green"
+    set "@prefix_highlight_copy_mode_attr" "fg=$ayu_black,bg=$ayu_green"
+    set "@prefix_highlight_output_prefix" "  "
+
+    status_widgets=$(get "@ayu_widgets")
+    time_format=$(get "@ayu_time_format" "%R")
+    date_format=$(get "@ayu_date_format" "%d.%m.%Y")
+
+    set "status-right" "#[fg=$ayu_white,bg=$ayu_black,nounderscore,noitalics]  ''${time_format}    ''${date_format} #[fg=$ayu_visual_grey,bg=$ayu_black]#[fg=$ayu_visual_grey,bg=$ayu_visual_grey]#[fg=$ayu_white, bg=$ayu_visual_grey]''${status_widgets} #[fg=$ayu_green,bg=$ayu_visual_grey,nobold,nounderscore,noitalics]#[fg=$ayu_black,bg=$ayu_green,bold] #h "
+    set "status-left" "#[fg=$ayu_black,bg=$ayu_green,bold]   #S #{prefix_highlight}#[fg=$ayu_green,bg=$ayu_black,nobold,nounderscore,noitalics]"
+
+    set "window-status-format" "#[fg=$ayu_black,bg=$ayu_black,nobold,nounderscore,noitalics]#[fg=$ayu_white,bg=$ayu_black] #I  #W #[fg=$ayu_black,bg=$ayu_black,nobold,nounderscore,noitalics]"
+    set "window-status-current-format" "#[fg=$ayu_black,bg=$ayu_yellow,nobold,nounderscore,noitalics]#[fg=$ayu_black,bg=$ayu_yellow,nobold] #I  #W #[fg=$ayu_yellow,bg=$ayu_black,nobold,nounderscore,noitalics]"
+  '';
+
+  tmuxConfig =
+    builtins.replaceStrings
+      [
+        "run '~/.tmux/plugins/tpm/tpm'"
+        "set -g @plugin 'TechnicalDC/tmux-ayu-theme'"
+      ]
+      [
+        ""
+        ""
+      ]
+      (builtins.readFile ../../dotfiles/.config/tmux/tmux.conf);
 in
 {
   programs.tmux = {
@@ -14,57 +109,7 @@ in
     keyMode = "vi";
     mouse = true;
     prefix = "C-Space";
-    extraConfig = ''
-      set -g default-terminal "xterm-256color"
-      set -ga terminal-overrides ",xterm-256color:Tc"
-      set -g base-index 1
-      set -g pane-base-index 1
-      set-window-option -g pane-base-index 1
-      set-option -g renumber-windows on
 
-      set -g mode-keys vi
-      set-window-option -g mode-keys vi
-      bind-key -T copy-mode-vi v send-keys -X begin-selection
-      bind-key -T copy-mode-vi C-v send-keys -X rectangle-toggle
-      bind-key -T copy-mode-vi y send-keys -X copy-selection-and-cancel
-
-      set -g xterm-keys on
-
-      unbind C-j
-      unbind C-k
-
-      unbind c
-      unbind %
-      unbind '"'
-      bind % split-window -h -c "$HOME"
-      bind '"' split-window -v -c "$HOME"
-      bind c new-window -c "$HOME"
-
-      unbind f
-      unbind C-w
-
-      bind -n M-h previous-window
-      bind -n M-l next-window
-
-      bind h split-window -h -c "#{pane_current_path}"
-      bind v split-window -v -c "#{pane_current_path}"
-      bind x kill-pane
-
-      bind -n C-M-h select-pane -L
-      bind -n C-M-l select-pane -R
-      bind -n C-M-k select-pane -U
-      bind -n C-M-j select-pane -D
-
-      bind -n C-M-S-h resize-pane -L 5
-      bind -n C-M-S-j resize-pane -D 5
-      bind -n C-M-S-k resize-pane -U 5
-      bind -n C-M-S-l resize-pane -R 5
-
-      set -g status-position top
-
-      TMUX_FZF_OPTIONS="-w 70% -h 70% -m"
-      TMUX_FZF_LAUNCH_KEY="f"
-    '';
     plugins = [
       pkgs.tmuxPlugins.resurrect
       pkgs.tmuxPlugins.continuum
@@ -72,12 +117,12 @@ in
       pkgs.tmuxPlugins.vim-tmux-navigator
       pkgs.tmuxPlugins.tmux-fzf
       pkgs.tmuxPlugins.yank
-      (pkgs.tmuxPlugins.mkTmuxPlugin {
-        pluginName = "ayu-theme";
-        version = "main";
-        rtpFilePath = "tmux-ayu-theme.tmux";
-        src = tmuxAyuTheme;
-      })
     ];
+
+    extraConfig = ''
+      ${tmuxConfig}
+
+      run-shell ${tmuxAyuThemeScript}
+    '';
   };
 }

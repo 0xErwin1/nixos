@@ -10,8 +10,9 @@
       volumeicon
       redshift
       solaar
-      xorg.xinput
-      xorg.xmodmap
+      xinput
+      xmodmap
+      xsetroot
     ];
   };
 
@@ -21,6 +22,9 @@
       xmodmap -e "remove Lock = Caps_Lock"
       xmodmap -e "keycode 66 = Control_L"
       xmodmap -e "add Control = Control_L"
+      export XCURSOR_THEME=vimix-cursors
+      export XCURSOR_SIZE=12
+      xsetroot -cursor_name left_ptr
 
       nitrogen --restore
       lxsession &

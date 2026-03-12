@@ -2,8 +2,8 @@
   programs.wofi = {
     enable = true;
     settings = {
-      show = "dmenu";
-      promt = "Select an option";
+      show = "drun";
+      prompt = "Applications";
       width = 800;
       height = 600;
       location = "center";

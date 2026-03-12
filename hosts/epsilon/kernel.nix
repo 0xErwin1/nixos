@@ -2,7 +2,10 @@
 {
   boot = {
     kernelPackages = pkgs.linuxPackages_latest;
+    plymouth.enable = true;
     kernelParams = [
+      "quiet"
+      "splash"
       "i915.enable_psr=0"
       "i915.enable_fbc=0"
       "i915.enable_dc=0"

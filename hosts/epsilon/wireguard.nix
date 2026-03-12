@@ -38,7 +38,6 @@ in
       firewall.allowedUDPPorts = [ 51820 ];
       wg-quick.interfaces.wg0 = {
         address = [ "10.0.0.3/24" ];
-        dns = [ "10.0.0.1" ];
         listenPort = 51820;
         privateKeyFile = cfg.privateKeyFile;
         peers = [

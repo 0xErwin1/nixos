@@ -29,7 +29,7 @@
 
 (defwidget workspaces [?number monitor]
   (box :orientation "h" :class "workspaces"
-    (for tag in "${wmstate.workspaces[monitor].tags}"
+    (for tag in "${wmstate.tags}"
       (label :text "${tag.name}"
         :class "workspace-icon ${
           tag.focused ? "workspace-focused" :

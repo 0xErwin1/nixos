@@ -37,8 +37,10 @@ in
     networking = lib.mkIf (cfg.enable && cfg.privateKeyFile != null && cfg.endpoint != null) {
       firewall.allowedUDPPorts = [ 51820 ];
       wg-quick.interfaces.wg0 = {
-        address = [ "10.0.0.3/24" ];
-        dns = [ "10.0.0.1" ];
+        address = [
+          "10.0.0.7/24"
+          "10.0.1.7/24"
+        ];
         listenPort = 51820;
         inherit (cfg) privateKeyFile;
         peers = [

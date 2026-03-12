@@ -47,7 +47,11 @@
         };
       };
 
-      pkgsEpsilon = nixpkgs.legacyPackages.x86_64-linux.extend overlays.default;
+      pkgsEpsilon = import nixpkgs {
+        system = "x86_64-linux";
+        config.allowUnfree = true;
+        overlays = [ overlays.default ];
+      };
 
       pkgsX13 = import nixpkgs {
         system = "x86_64-linux";

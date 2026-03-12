@@ -25,6 +25,7 @@
       ];
       kernelModules = [ ];
       luks.devices."root".device = "/dev/disk/by-uuid/a960b1d8-aa18-4925-b4dc-76eed2c5ed4d";
+      luks.devices."data".device = "/dev/disk/by-uuid/09c38f69-dd3d-4062-ad99-c751c619cb3a";
     };
 
     kernelModules = [
@@ -88,20 +89,24 @@
         "dmask=0022"
       ];
     };
+    "/swap" = {
+      device = "/dev/mapper/root";
+      fsType = "btrfs";
+      options = [
+       "subvol=@swap"
+       "noatime"
+      ];
+    };
+    "/mnt/data" = {
+#UUID="5ea8021c-0705-46c0-a07e-f899fef0e289"
+      device = "/dev/mapper/data";
+      fsType = "ext4";
+      options = [
+        "defaults"
+        "noatime"
+      ];
+    };
   };
-
-  fileSystems."/swap" = {
-    device = "/dev/mapper/root";
-    fsType = "btrfs";
-    options = [ "subvol=swap" "noatime" ];
-  };
-
-  # zram swap for daily use
-  # zramSwap = {
-  #   enable = true;
-  #   algorithm = "zstd";
-  #   memoryPercent = 10;
-  # };
 
   swapDevices = [{
     device = "/swap/swapfile";
@@ -153,7 +158,6 @@
     fwupd.enable = true;
     thermald.enable = true;
 
-    # Throttled for Intel CPU power limits (PL1/PL2)
     throttled.enable = true;
 
     tlp = {

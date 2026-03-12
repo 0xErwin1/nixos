@@ -5,10 +5,25 @@ in
   imports = [
     ./dependencies.nix
     ../../wayland/wofi
-    ../../wayland/eww
+    ../../eww
     ./hyprlock.nix
     ./hyprpaper.nix
   ];
+
+  services.gammastep = {
+    enable = true;
+    provider = "geoclue2";
+    tray = false;
+    temperature = {
+      day = 5000;
+      night = 4000;
+    };
+    settings = {
+      general = {
+        adjustment-method = "wayland";
+      };
+    };
+  };
 
   xdg.configFile."hypr/eww" = {
     source = ../../../../dotfiles/.config/hypr/eww;
@@ -64,7 +79,6 @@ in
         "dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP"
         "dbus-update-activation-environment --systemd --all"
         "systemctl --user import-environment WAYLAND_DISPLAY XDG_CURRENT_DESKTOP"
-        "gammastep -O 4000 &"
         "tmux setenv -g HYPRLAND_INSTANCE_SIGNATURE \"$HYPRLAND_INSTANCE_SIGNATURE\""
         "eww -c \"$HOME/.config/hypr/eww\" --force-wayland open-many laptop monitor"
         "nm-applet &"
@@ -162,10 +176,10 @@ in
       ];
 
       "$mod" = "SUPER";
-      "$terminal" = "ghostty";
+      "$terminal" = "alacritty";
       "$fileManager" = "pcmanfm";
       "$menu" = "wofi --show drun";
-      "$menuWindow" = "wofi -show window";
+      "$menuWindow" = "wofi --show window";
       "$browser" = "helium";
       "$workBrowser" = "firefox";
       "$screenshot" =

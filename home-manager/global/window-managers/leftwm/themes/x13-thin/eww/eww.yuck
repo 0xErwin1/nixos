@@ -18,7 +18,7 @@
 
 (defwidget workspaces [monitor]
   (box :orientation "h" :class "workspaces" :space-evenly false
-    (for tag in "${wmstate.workspaces[monitor].tags}"
+    (for tag in "${wmstate.tags}"
       (label :text "${tag.name}"
         :class "ws ${
           tag.focused  ? "ws-focused"  :

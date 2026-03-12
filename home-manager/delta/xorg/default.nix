@@ -10,8 +10,8 @@
       volumeicon
       redshift
       solaar
-      xorg.xinput
-      xorg.xmodmap
+      xinput
+      xmodmap
     ];
   };
 

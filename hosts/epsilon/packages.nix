@@ -9,8 +9,8 @@
     libGL
     libGLX
     xorg.libX11
-    xorg.xinput
-    xorg.xmodmap
+    xinput
+    xmodmap
     wl-clipboard
     qimgv
     thinkfan

@@ -7,7 +7,17 @@
     ];
     sessionVariables = {
       GTK_THEME = "palenight";
+      XCURSOR_THEME = "vimix-cursors";
+      XCURSOR_SIZE = "12";
     };
+  };
+
+  home.pointerCursor = {
+    gtk.enable = true;
+    x11.enable = true;
+    package = pkgs.vimix-cursors;
+    name = "vimix-cursors";
+    size = 12;
   };
 
   gtk = {

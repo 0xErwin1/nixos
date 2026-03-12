@@ -22,9 +22,11 @@
 
   networking = {
     hostName = "epsilon";
-    networkmanager.enable = true;
+    networkmanager = {
+      enable = true;
+      dns = "systemd-resolved";
+    };
     nameservers = [
-      "10.0.0.1"
       "1.1.1.1"
       "1.0.0.1"
     ];
@@ -81,6 +83,17 @@
     gnome.gnome-keyring.enable = true;
     ratbagd.enable = true;
     blueman.enable = true;
+    resolved = {
+      enable = true;
+    };
+
+    syncthing = {
+      enable = true;
+      user = "iperez";
+      dataDir = "/home/iperez";
+      configDir = "/home/iperez/.config/syncthing";
+      openDefaultPorts = true;
+    };
   };
   systemd.services."NetworkManager-wait-online".enable = false;
 
