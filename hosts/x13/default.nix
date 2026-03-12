@@ -20,8 +20,12 @@
   systemd.services."NetworkManager-wait-online".enable = false;
   networking = {
     hostName = "x13";
-    networkmanager.enable = true;
+    networkmanager = {
+      enable = true;
+      dns = "systemd-resolved";
+    };
     nameservers = [
+      "10.0.0.1"
       "1.1.1.1"
       "1.0.0.1"
     ];
@@ -65,6 +69,7 @@
     };
 
     blueman.enable = true;
+    resolved.enable = true;
     thermald.enable = true;
     tlp.enable = true;
     fwupd.enable = true;
