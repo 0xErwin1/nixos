@@ -21,6 +21,8 @@
 
     # RDP scripts
     ./rdp-launchers.nix
+
+    ../global/neovim.nix
   ];
 
   leftwm.theme = "x13-thin";
