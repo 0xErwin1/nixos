@@ -57,54 +57,56 @@
     ];
   };
 
-  fileSystems."/" = {
+  fileSystems = {
+    "/" = {
+      device = "/dev/mapper/root";
+      fsType = "btrfs";
+      options = [
+        "subvol=@nixos"
+        "compress=zstd"
+        "noatime"
+        "ssd"
+        "space_cache=v2"
+      ];
+    };
+    "/home" = {
+      device = "/dev/mapper/root";
+      fsType = "btrfs";
+      options = [
+        "subvol=@nixos-home"
+        "compress=zstd"
+        "noatime"
+        "ssd"
+        "space_cache=v2"
+      ];
+    };
+    "/boot" = {
+      device = "/dev/disk/by-uuid/5990-8457";
+      fsType = "vfat";
+      options = [
+        "fmask=0022"
+        "dmask=0022"
+      ];
+    };
+  };
+
+  fileSystems."/swap" = {
     device = "/dev/mapper/root";
     fsType = "btrfs";
-    options = [
-      "subvol=@nixos"
-      "compress=zstd"
-      "noatime"
-      "ssd"
-      "space_cache=v2"
-    ];
+    options = [ "subvol=swap" "noatime" ];
   };
-
-  fileSystems."/home" = {
-    device = "/dev/mapper/root";
-    fsType = "btrfs";
-    options = [
-      "subvol=@nixos-home"
-      "compress=zstd"
-      "noatime"
-      "ssd"
-      "space_cache=v2"
-    ];
-  };
-
-  fileSystems."/boot" = {
-    device = "/dev/disk/by-uuid/5990-8457";
-    fsType = "vfat";
-    options = [ "fmask=0022" "dmask=0022" ];
-  };
-
-  # fileSystems."/swap" = {
-  #   device = "/dev/mapper/root";
-  #   fsType = "btrfs";
-  #   options = [ "subvol=swap" "noatime" ];
-  # };
 
   # zram swap for daily use
-  zramSwap = {
-    enable = true;
-    algorithm = "zstd";
-    memoryPercent = 10;
-  };
+  # zramSwap = {
+  #   enable = true;
+  #   algorithm = "zstd";
+  #   memoryPercent = 10;
+  # };
 
-  # # BTRFS swapfile for hibernation
-  # swapDevices = [{
-  #   device = "/swap/swapfile";
-  #   priority = 100;
-  # }];
+  swapDevices = [{
+    device = "/swap/swapfile";
+    priority = 100;
+  }];
 
   hardware = {
     enableRedistributableFirmware = true;
@@ -195,15 +197,51 @@
         }
       ];
       levels = [
-        [ 0 0 55 ]
-        [ 1 53 60 ]
-        [ 2 58 65 ]
-        [ 3 63 70 ]
-        [ 4 68 75 ]
-        [ 5 73 80 ]
-        [ 6 78 85 ]
-        [ 7 83 90 ]
-        [ "level auto" 88 32767 ]
+        [
+          0
+          0
+          55
+        ]
+        [
+          1
+          53
+          60
+        ]
+        [
+          2
+          58
+          65
+        ]
+        [
+          3
+          63
+          70
+        ]
+        [
+          4
+          68
+          75
+        ]
+        [
+          5
+          73
+          80
+        ]
+        [
+          6
+          78
+          85
+        ]
+        [
+          7
+          83
+          90
+        ]
+        [
+          "level auto"
+          88
+          32767
+        ]
       ];
     };
 
