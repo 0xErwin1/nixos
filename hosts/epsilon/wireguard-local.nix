@@ -11,7 +11,7 @@ in
 {
   config = lib.mkIf hasConfig {
     vault.wireguard = {
-      enable = false;
+      enable = true;
       privateKeyFile = localPrivateKeyFile;
       endpoint = localEndpoint;
     };

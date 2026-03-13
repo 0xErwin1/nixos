@@ -42,7 +42,9 @@ in
       };
 
       env = [
+        "XCURSOR_THEME,vimix-cursors"
         "XCURSOR_SIZE,24"
+        "HYPRCURSOR_THEME,vimix-cursors"
         "HYPRCURSOR_SIZE,24"
         "XDG_CURRENT_DESKTOP,Hyprland"
         "XDG_SESSION_DESKTOP,Hyprland"
@@ -79,6 +81,7 @@ in
         "dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP"
         "dbus-update-activation-environment --systemd --all"
         "systemctl --user import-environment WAYLAND_DISPLAY XDG_CURRENT_DESKTOP"
+        "hyprctl setcursor vimix-cursors 24"
         "tmux setenv -g HYPRLAND_INSTANCE_SIGNATURE \"$HYPRLAND_INSTANCE_SIGNATURE\""
         "eww -c \"$HOME/.config/hypr/eww\" --force-wayland open-many laptop monitor"
         "nm-applet &"

@@ -4,7 +4,7 @@
     settings = {
       wallpaper = {
         monitor = "";
-        path = "~/Wallpaper/1udeandomn1e1.jpeg";
+        path = "$wallpaper";
         fit_mode = "cover";
       };
     };

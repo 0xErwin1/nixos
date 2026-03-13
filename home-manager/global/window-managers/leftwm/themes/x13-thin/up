@@ -1,16 +1,14 @@
 #!/usr/bin/env bash
 
-set -euo pipefail
-
 THEME_CURRENT="$HOME/.config/leftwm/themes/current"
 EWW="$THEME_CURRENT/eww"
 
 if [ -f "/tmp/leftwm-theme-down" ]; then
   /tmp/leftwm-theme-down
-  rm /tmp/leftwm-theme-down
+  rm -f /tmp/leftwm-theme-down
 fi
 
-ln -s "$THEME_CURRENT/down" /tmp/leftwm-theme-down
+ln -sf "$THEME_CURRENT/down" /tmp/leftwm-theme-down
 
 leftwm-command "LoadTheme $THEME_CURRENT/themes.toml"
 

@@ -1,11 +1,9 @@
 #!/usr/bin/env bash
 
-set -euo pipefail
-
 # ----| Vars | ----
 export SCRIPT_PATH="$HOME/.config/leftwm"
 
-if [[ $DEBUG == 1 ]]; then
+if [[ ${DEBUG:-0} == 1 ]]; then
   export THEME_CURRENT="$PWD"
 else
   export THEME_CURRENT="$SCRIPT_PATH/themes/current"
@@ -13,10 +11,10 @@ fi
 
 if [ -f "/tmp/leftwm-theme-down" ]; then
     /tmp/leftwm-theme-down
-    rm /tmp/leftwm-theme-down
+    rm -f /tmp/leftwm-theme-down
 fi
 
-ln -s "$THEME_CURRENT/down" /tmp/leftwm-theme-down
+ln -sf "$THEME_CURRENT/down" /tmp/leftwm-theme-down
 
 leftwm-command "LoadTheme $THEME_CURRENT/themes.toml"
 
@@ -48,6 +46,8 @@ fi
 run_once nm-applet nm-applet
 run_once blueman-applet blueman-applet
 run_once udiskie udiskie -t
-run_once solaar solaar -b regular -w hide
+if command -v solaar >/dev/null 2>&1; then
+  run_once solaar solaar -b regular -w hide
+fi
 
 nitrogen --restore >/dev/null 2>&1 || true
