@@ -6,19 +6,23 @@
       includes = [
         {
           path = "~/dev/work/Houlak/.gitconfig";
-          condition = "gitdit:~/dev/work/Houlak";
+          condition = "gitdir:~/dev/work/Houlak/";
         }
         {
           path = "~/dev/personal/.gitconfig";
-          condition = "gitdit:~/dev/personal/";
+          condition = "gitdir:~/dev/personal/";
         }
         {
           path = "~/dev/personal/.gitconfig";
-          condition = "gitdit:~/.config/home-manager/";
+          condition = "gitdir:~/.config/home-manager/";
         }
       ];
       delta.enable = true;
-      extraConfig = { push = { autoSetupRemote = true; }; };
+      extraConfig = {
+        push = {
+          autoSetupRemote = true;
+        };
+      };
     };
   };
 }

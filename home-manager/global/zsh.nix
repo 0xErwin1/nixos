@@ -58,6 +58,7 @@ in
         export RUSTUP_HOME="$XDG_DATA_HOME/rustup"
         export NPM_CONFIG_USERCONFIG="$XDG_CONFIG_HOME/npm/npmrc"
         export _JAVA_OPTIONS=-Djava.util.prefs.userRoot="$XDG_CONFIG_HOME"/java
+        export GPG_TTY=$(tty)
 
         export PNPM_HOME="$HOME/.local/share/pnpm"
         case ":$PATH:" in

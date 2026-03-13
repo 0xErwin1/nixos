@@ -7,17 +7,17 @@
     ];
     sessionVariables = {
       GTK_THEME = "palenight";
-      XCURSOR_THEME = "vimix-cursors";
-      XCURSOR_SIZE = "12";
+      XCURSOR_THEME = "Bibata-Modern-Classic";
+      XCURSOR_SIZE = "16";
     };
   };
 
   home.pointerCursor = {
     gtk.enable = true;
     x11.enable = true;
-    package = pkgs.vimix-cursors;
-    name = "vimix-cursors";
-    size = 12;
+    package = pkgs.bibata-cursors;
+    name = "Bibata-Modern-Classic";
+    size = 16;
   };
 
   gtk = {
@@ -47,8 +47,8 @@
     };
 
     cursorTheme = {
-      name = "vimix-cursors";
-      package = pkgs.vimix-cursors;
+      name = "Bibata-Modern-Classic";
+      package = pkgs.bibata-cursors;
     };
   };
 
@@ -57,7 +57,7 @@
       color-scheme = "prefer-dark";
       gtk-theme = "palenight";
       icon-theme = "Papirus-Dark";
-      cursor-theme = "vimix-cursors";
+      cursor-theme = "Bibata-Modern-Classic";
     };
   };
 }
