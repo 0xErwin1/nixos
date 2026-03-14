@@ -52,6 +52,10 @@
       '';
       windowManager.leftwm.enable = true;
     };
+    openssh = {
+      enable = true;
+      ports = [22222];
+    };
     libinput.enable = true;
     pipewire = {
       enable = true;

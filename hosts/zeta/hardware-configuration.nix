@@ -8,9 +8,16 @@
 {
   imports = [
     (modulesPath + "/installer/scan/not-detected.nix")
+    ./cpu.nix
   ];
 
   boot = {
+    tmp.cleanOnBoot = true;
+    kernelPackages = pkgs.linuxPackages_latest;
+    loader = {
+      systemd-boot.enable = true;
+      efi.canTouchEfiVariables = true;
+    };
     initrd = {
       availableKernelModules = [
         "xhci_pci"
@@ -137,7 +144,6 @@
   };
 
   environment.systemPackages = with pkgs; [
-    moonlight-qt
     libva-utils
     intel-media-driver
   ];
