@@ -78,12 +78,14 @@
     redshift = {
       enable = true;
       temperature = {
-        day = 5000;
+        day = 4000;
         night = 4000;
       };
     };
     gnome.gnome-keyring.enable = true;
   };
+
+  location.provider = "geoclue2";
 
   xdg.portal = {
     enable = true;
