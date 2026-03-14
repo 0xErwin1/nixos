@@ -20,7 +20,7 @@
     obsidian
 
     pnpm
-    npm
+    nodejs
     uv
   ];
 }
