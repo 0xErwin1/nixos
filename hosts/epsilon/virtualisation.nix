@@ -4,6 +4,9 @@
     fuse
     fuse3
     appimage-run
+    podman-tui
+    dive
+    docker-compose
   ];
 
   programs = {
@@ -22,7 +25,11 @@
   };
 
   virtualisation = {
-    podman.enable = true;
+    podman = {
+      enable = true;
+      dockerCompat = true;
+      defaultNetwork.settings.dns_enabled = true;
+    };
     libvirtd.enable = true;
   };
 

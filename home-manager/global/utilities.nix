@@ -18,5 +18,9 @@
     codex
     claude-code
     obsidian
+
+    pnpm
+    npm
+    uv
   ];
 }
