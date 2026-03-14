@@ -28,10 +28,6 @@
     stateVersion = "25.05";
     sessionVariables = {
       EDITOR = "nvim";
-      LAPTOP = "eDP";
-      HDMI = "HDMI-A-0";
-      DISPLAY_PORT = "DisplayPort-0";
-      DISPLAY_PORT_1 = "DisplayPort-1";
     };
   };
 

@@ -35,7 +35,7 @@ run_once() {
 
 open_bar laptop
 
-if xrandr | grep -Eq '(^| )DisplayPort-0 connected|(^| )DP-0 connected|(^| )HDMI-A-0 connected'; then
+if xrandr | grep -Eq '(^| )DisplayPort-0 connected|(^| )DP-0 connected|(^| )HDMI-A-0 connected|(^| )DP-1-0 connected'; then
   open_bar monitor-DP-0
 fi
 
@@ -46,8 +46,5 @@ fi
 run_once nm-applet nm-applet
 run_once blueman-applet blueman-applet
 run_once udiskie udiskie -t
-if command -v solaar >/dev/null 2>&1; then
-  run_once solaar solaar -b regular -w hide
-fi
 
 nitrogen --restore >/dev/null 2>&1 || true

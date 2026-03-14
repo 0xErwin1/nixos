@@ -61,14 +61,14 @@
       };
       pulse.enable = true;
       jack.enable = true;
-      extraConfig.pipewire."92-low-latency" = {
-        "context.properties" = {
-          "default.clock.rate" = 48000;
-          "default.clock.quantum" = 1024;
-          "default.clock.min-quantum" = 32;
-          "default.clock.max-quantum" = 2048;
-        };
-      };
+      extraLv2Packages = with pkgs; [
+        calf
+        lsp-plugins
+        mda_lv2
+        rnnoise-plugin
+        x42-plugins
+        zam-plugins
+      ];
       wireplumber.enable = true;
     };
     displayManager.ly.enable = true;

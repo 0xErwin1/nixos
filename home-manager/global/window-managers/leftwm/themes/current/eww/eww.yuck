@@ -29,13 +29,13 @@
 
 (defwidget workspaces [?number monitor]
   (box :orientation "h" :class "workspaces"
-    (for tag in "${wmstate.tags}"
+    (for tag in "${wmstate.workspaces[monitor].tags}"
       (label :text "${tag.name}"
         :class "workspace-icon ${
-          tag.focused ? "workspace-focused" :
-          tag.visible ? "workspace-visible" :
-          tag.urgent ? "workspace-urgent" :
-          tag.busy ? "workspace-busy" :
+          tag.focused   ? "workspace-focused"  :
+          tag.visible   ? "workspace-visible"  :
+          tag.urgent    ? "workspace-urgent"   :
+          tag.busy      ? "workspace-busy"     :
           "workspace-empty"
         }"
       )
@@ -103,6 +103,7 @@
     (label :class "os-icon nix" :text "${osIcon}")
     (label :class "separator" :text "│")
     (workspaces :monitor monitor)
+    (label :class "separator" :text "│")
   )
 )
 
@@ -148,7 +149,7 @@
   (bar :monitor 0)
 )
 
-(defwindow monitor-DP-0 :monitor '[1, "DisplayPort-0", "DP-0", "HDMI-A-0"]'
+(defwindow monitor-DP-0 :monitor '[1, "DisplayPort-0", "DP-0", "DP-1-0", "HDMI-A-0"]'
   :geometry (geometry :x "2.5%" :y "96%" :width "95%" :height "2%")
   :reserve (struts :distance "4%" :side "bottom")
   :wm-ignore false

@@ -98,7 +98,6 @@
       ];
     };
     "/mnt/data" = {
-#UUID="5ea8021c-0705-46c0-a07e-f899fef0e289"
       device = "/dev/mapper/data";
       fsType = "ext4";
       options = [

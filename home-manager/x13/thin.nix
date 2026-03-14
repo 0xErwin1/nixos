@@ -3,6 +3,7 @@
   imports = [
     # Shell, git, tmux, direnv, utilities
     ../global
+    ../global/neovim.nix
 
     # Font packages
     ../global/font.nix
@@ -58,6 +59,5 @@
 
   programs = {
     home-manager.enable = true;
-    neovim.enable = true;
   };
 }

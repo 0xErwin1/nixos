@@ -5,6 +5,7 @@
       eww
       xclip
       xrandr
+      arandr
       brightnessctl
       pamixer
       playerctl

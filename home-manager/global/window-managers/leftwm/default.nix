@@ -6,7 +6,7 @@
     description = "LeftWM theme directory name under themes/";
   };
 
-  imports = [ ./dependencies.nix ];
+  imports = [ ../../x11.nix ];
 
   config.home.file = {
     ".config/leftwm/config.ron".source = ./config.ron;

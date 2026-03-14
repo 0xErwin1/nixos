@@ -17,5 +17,6 @@
     opencode
     codex
     claude-code
+    obsidian
   ];
 }
