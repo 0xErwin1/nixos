@@ -114,7 +114,19 @@
   location.provider = "geoclue2";
   hardware.bluetooth.enable = true;
 
-  security.rtkit.enable = true;
+  security = {
+    rtkit.enable = true;
+    pam = {
+      services = {
+        ly.fprintAuth = true;
+        login.fprintAuth = true;
+        i3lock = {
+          fprintAuth = true;
+          enable = true;
+        };
+      };
+    };
+  };
 
   programs = {
     hyprland = {

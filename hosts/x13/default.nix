@@ -84,7 +84,19 @@
 
   security = {
     rtkit.enable = true;
-    pam.services.ly.fprintAuth = true;
+    security = {
+      rtkit.enable = true;
+      pam = {
+        services = {
+          ly.fprintAuth = true;
+          login.fprintAuth = true;
+          i3lock = {
+            fprintAuth = true;
+            enable = true;
+          };
+        };
+      };
+    };
   };
 
   specialisation.full-lite.configuration = import ./profiles/full-lite.nix;
