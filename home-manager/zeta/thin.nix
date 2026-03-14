@@ -17,7 +17,7 @@
     # XDG dirs
     ../global/xdg.nix
 
-    # LeftWM — same config.ron as every host, x13-thin theme
+    # LeftWM — same config.ron as every host, zeta-thin theme
     ../global/window-managers/leftwm
 
     # RDP scripts
@@ -26,7 +26,7 @@
     ../global/neovim.nix
   ];
 
-  leftwm.theme = "x13-thin";
+  leftwm.theme = "zeta-thin";
 
   home = {
     enableNixpkgsReleaseCheck = false;

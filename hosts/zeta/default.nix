@@ -19,7 +19,7 @@
 
   systemd.services."NetworkManager-wait-online".enable = false;
   networking = {
-    hostName = "x13";
+    hostName = "zeta";
     networkmanager = {
       enable = true;
       dns = "systemd-resolved";

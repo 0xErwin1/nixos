@@ -53,7 +53,7 @@
         overlays = [ overlays.default ];
       };
 
-      pkgsX13 = import nixpkgs {
+      pkgszeta = import nixpkgs {
         system = "x86_64-linux";
         config.allowUnfree = true;
         overlays = [ overlays.default ];
@@ -73,9 +73,9 @@
           modules = [ ./hosts/epsilon ];
         };
 
-        x13 = nixpkgs.lib.nixosSystem {
+        zeta = nixpkgs.lib.nixosSystem {
           specialArgs = { inherit inputs outputs wireguardLocal; };
-          modules = [ ./hosts/x13 ];
+          modules = [ ./hosts/zeta ];
         };
       };
 
@@ -92,10 +92,10 @@
           modules = [ ./home-manager/epsilon ];
         };
 
-        "iperez@x13" = home-manager.lib.homeManagerConfiguration {
-          pkgs = pkgsX13;
+        "iperez@zeta" = home-manager.lib.homeManagerConfiguration {
+          pkgs = pkgszeta;
           extraSpecialArgs = { inherit inputs outputs; };
-          modules = [ ./home-manager/x13 ];
+          modules = [ ./home-manager/zeta ];
         };
       };
 

@@ -7,7 +7,7 @@ Personal dotfiles managed with Nix flakes.
 | Host | OS | Description |
 |------|-----|-------------|
 | `epsilon` | NixOS | ThinkPad - Hyprland (Wayland) |
-| `x13` | NixOS | ThinkPad X13 - Full-lite + thin (RDP) |
+| `zeta` | NixOS | ThinkPad x13 - Full-lite + thin (RDP) |
 | `delta` | Arch Linux | Standalone Home Manager |
 
 ## Usage
@@ -17,9 +17,9 @@ Personal dotfiles managed with Nix flakes.
 sudo nixos-rebuild switch --flake .#epsilon
 ```
 
-**NixOS (x13):**
+**NixOS (zeta):**
 ```bash
-sudo nixos-rebuild switch --flake .#x13
+sudo nixos-rebuild switch --flake .#zeta
 ```
 
 **Home Manager standalone (delta):**
@@ -73,15 +73,15 @@ nix flake check --no-build
 ## Flake Outputs
 
 - `nixosConfigurations.epsilon`
-- `nixosConfigurations.x13`
+- `nixosConfigurations.zeta`
 - `homeConfigurations."iperez@delta"`
 - `homeConfigurations."iperez@epsilon"`
-- `homeConfigurations."iperez@x13"`
-- `homeConfigurations."iperez@x13-thin"`
+- `homeConfigurations."iperez@zeta"`
+- `homeConfigurations."iperez@zeta-thin"`
 
 ## Notes
 
 - WireGuard config is read from `~/.ssh/wireguard/default.nix` (not in repo)
-- `hosts/x13/hardware-configuration.nix` comes from the current X13 install and must be regenerated if disk layout changes
+- `hosts/zeta/hardware-configuration.nix` comes from the current zeta install and must be regenerated if disk layout changes
 - X11 window manager configs are kept for future use, just not imported
 - Epsilon uses Hyprland (Wayland) with Ghostty terminal and Wofi launcher
