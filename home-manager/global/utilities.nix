@@ -22,5 +22,6 @@
     pnpm
     nodejs
     uv
+    go
   ];
 }

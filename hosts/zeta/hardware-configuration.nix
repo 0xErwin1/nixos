@@ -136,6 +136,25 @@
     };
   };
 
+  environment.systemPackages = with pkgs; [
+    moonlight-qt
+    libva-utils
+    intel-media-driver
+  ];
+
+  hardware.graphics = {
+    enable = true;
+    extraPackages = with pkgs; [
+      intel-media-driver
+      libva-vdpau-driver
+      libvdpau-va-gl
+    ];
+  };
+
+  environment.sessionVariables = {
+    LIBVA_DRIVER_NAME = "iHD";
+  };
+
   nixpkgs.hostPlatform = lib.mkDefault "x86_64-linux";
   hardware = {
     cpu.intel.updateMicrocode = lib.mkDefault config.hardware.enableRedistributableFirmware;
