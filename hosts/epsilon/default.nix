@@ -7,8 +7,8 @@
     ../globals
     ../globals/gaming.nix
     ./packages.nix
-    ./wireguard.nix
-    ./wireguard-local.nix
+    ../globals/wireguard/local.nix
+    ../globals/wireguard
     ./rdp.nix
   ];
 
@@ -24,12 +24,7 @@
     hostName = "epsilon";
     networkmanager = {
       enable = true;
-      dns = "systemd-resolved";
     };
-    nameservers = [
-      "1.1.1.1"
-      "1.0.0.1"
-    ];
   };
 
   services = {
@@ -55,7 +50,7 @@
     };
     openssh = {
       enable = true;
-      ports = [22222];
+      ports = [ 22222 ];
     };
     libinput.enable = true;
     pipewire = {
@@ -84,14 +79,12 @@
         day = 4000;
         night = 4000;
       };
+      latitude = "0";
+      longitude = "0";
     };
     gnome.gnome-keyring.enable = true;
     ratbagd.enable = true;
     blueman.enable = true;
-    resolved = {
-      enable = true;
-    };
-
     syncthing = {
       enable = true;
       user = "iperez";

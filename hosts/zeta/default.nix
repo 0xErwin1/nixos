@@ -2,8 +2,8 @@
 {
   imports = [
     ./hardware-configuration.nix
-    ./wireguard.nix
-    ./wireguard-local.nix
+    ../globals/wireguard/local.nix
+    ../globals/wireguard
     ../globals
     ./x11.nix
     ./cpu.nix
@@ -14,13 +14,7 @@
     hostName = "zeta";
     networkmanager = {
       enable = true;
-      dns = "systemd-resolved";
     };
-    nameservers = [
-      "10.0.0.1"
-      "1.1.1.1"
-      "1.0.0.1"
-    ];
   };
 
   services = {
