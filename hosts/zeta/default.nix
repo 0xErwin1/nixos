@@ -1,8 +1,7 @@
-{ pkgs, ... }:
+{ ... }:
 {
   imports = [
     ./hardware-configuration.nix
-    ./profiles/thin.nix
     ./wireguard.nix
     ./wireguard-local.nix
     ../globals
