@@ -1,4 +1,4 @@
-{ pkgs, ... }:
+{ pkgs, inputs, ... }:
 {
   home.packages = with pkgs; [
     gnupg
@@ -18,6 +18,8 @@
     codex
     claude-code
     obsidian
+
+    inputs.engramFlake.packages.${pkgs.system}.default
 
     pnpm
     nodejs

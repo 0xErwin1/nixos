@@ -29,6 +29,14 @@
       url = "github:Gerg-L/spicetify-nix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    engramFlake = {
+      url = "github:0xErwin1/engram";
+    };
+
+    dbflux = {
+      url = "github:0xErwin1/dbflux/dev";
+    };
   };
 
   outputs =
@@ -65,7 +73,7 @@
       wireguardLocal = if builtins.pathExists wireguardLocalPath then import wireguardLocalPath else { };
     in
     {
-      overlays = overlays;
+      inherit overlays;
 
       nixosConfigurations = {
         epsilon = nixpkgs.lib.nixosSystem {

@@ -40,6 +40,14 @@
     fwupd.enable = true;
     openssh.enable = true;
     gnome.gnome-keyring.enable = true;
+
+    syncthing = {
+      enable = true;
+      user = "iperez";
+      dataDir = "/home/iperez";
+      configDir = "/home/iperez/.config/syncthing";
+      openDefaultPorts = true;
+    };
   };
 
   location.provider = "geoclue2";

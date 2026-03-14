@@ -1,8 +1,9 @@
 { pkgs, ... }:
 {
   home.packages = with pkgs; [
-    cartero
     code-cursor
-    discord
+    slack
+    teams-for-linux
+    zoom
   ];
 }

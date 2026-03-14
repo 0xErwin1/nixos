@@ -20,6 +20,7 @@
   services = {
     xserver = {
       enable = true;
+      dpi = 96;
       displayManager = {
         sessionCommands = ''
           set -g visual-bell off

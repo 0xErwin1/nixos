@@ -41,6 +41,7 @@
       };
       autoRepeatDelay = 200;
       autoRepeatInterval = 40;
+      dpi = 96;
 
       displayManager.sessionCommands = ''
         set -g visual-bell off
