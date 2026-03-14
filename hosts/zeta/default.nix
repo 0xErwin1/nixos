@@ -6,6 +6,7 @@
     ./wireguard.nix
     ./wireguard-local.nix
     ../globals
+    ./moonlight.nix
   ];
 
   boot = {
