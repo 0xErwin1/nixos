@@ -5,6 +5,8 @@
     ./wireguard.nix
     ./wireguard-local.nix
     ../globals
+    ./x11.nix
+    ./cpu.nix
   ];
 
   systemd.services."NetworkManager-wait-online".enable = false;

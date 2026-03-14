@@ -34,12 +34,4 @@
       ${pkgs.feh}/bin/feh --bg-fill ~/Wallpaper/man\ near\ Torii\ gate\ wallpaper,\ gray\ temple\ wallpaper,\ landscape.jpg
     '';
   };
-
-  services.picom = {
-    enable = true;
-    backend = "xrender";
-    vSync = false;
-    fade = false;
-    shadow = false;
-  };
 }
