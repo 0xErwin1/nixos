@@ -74,6 +74,15 @@
     tlp.enable = true;
     fwupd.enable = true;
     openssh.enable = true;
+    geoclue2.enable = true;
+    redshift = {
+      enable = true;
+      temperature = {
+        day = 5000;
+        night = 4000;
+      };
+    };
+    gnome.gnome-keyring.enable = true;
   };
 
   xdg.portal = {

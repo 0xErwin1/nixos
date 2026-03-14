@@ -15,7 +15,7 @@
       blueman
       udiskie
       solaar
-      nitrogen
+      feh
     ];
   };
 

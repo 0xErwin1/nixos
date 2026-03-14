@@ -93,8 +93,8 @@
       device = "/dev/mapper/root";
       fsType = "btrfs";
       options = [
-       "subvol=@swap"
-       "noatime"
+        "subvol=@swap"
+        "noatime"
       ];
     };
     "/mnt/data" = {
@@ -107,10 +107,12 @@
     };
   };
 
-  swapDevices = [{
-    device = "/swap/swapfile";
-    priority = 100;
-  }];
+  swapDevices = [
+    {
+      device = "/swap/swapfile";
+      priority = 100;
+    }
+  ];
 
   hardware = {
     enableRedistributableFirmware = true;
@@ -185,12 +187,20 @@
 
     thinkfan = {
       enable = true;
-      smartSupport = true;
       sensors = [
         {
           type = "hwmon";
-          query = "/sys/devices/platform/thinkpad_hwmon/hwmon";
-          indices = [ 0 ];
+          query = "/sys/class/hwmon";
+          name = "coretemp";
+          indices = [
+            1
+            2
+            3
+            4
+            5
+            6
+            7
+          ];
         }
       ];
       fans = [
@@ -203,46 +213,46 @@
         [
           0
           0
-          55
+          45
         ]
         [
           1
-          53
-          60
+          43
+          50
         ]
         [
           2
-          58
-          65
+          48
+          55
         ]
         [
           3
-          63
-          70
+          53
+          62
         ]
         [
           4
-          68
-          75
+          60
+          70
         ]
         [
           5
-          73
-          80
+          68
+          78
         ]
         [
           6
-          78
-          85
+          76
+          84
         ]
         [
           7
-          83
-          90
+          82
+          89
         ]
         [
-          "level auto"
-          88
+          "level disengaged"
+          87
           32767
         ]
       ];

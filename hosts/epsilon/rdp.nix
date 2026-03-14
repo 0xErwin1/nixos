@@ -2,7 +2,6 @@
 {
   services.xrdp = {
     enable = true;
-    defaultWindowManager = "${pkgs.leftwm}/bin/leftwm";
 
     # Firewall is managed manually below to restrict access by source.
     openFirewall = false;
@@ -31,10 +30,9 @@
     serviceConfig = {
       Type = "simple";
       EnvironmentFile = "/etc/cloudflared/rdp.env";
-      ExecStart = "${pkgs.cloudflared}/bin/cloudflared tunnel --no-autoupdate run --token \${CLOUDFLARED_TOKEN}";
+      ExecStart = "${pkgs.cloudflared}/bin/cloudflared tunnel --no-autoupdate run --token $${CLOUDFLARED_TOKEN}";
       Restart = "on-failure";
       RestartSec = "5s";
-      DynamicUser = true;
     };
   };
 

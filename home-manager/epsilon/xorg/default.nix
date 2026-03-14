@@ -3,16 +3,15 @@
   home = {
     packages = with pkgs; [
       lxsession
-      nitrogen
       networkmanagerapplet
       blueman
-      picom
       volumeicon
       redshift
       solaar
       xinput
       xmodmap
       xsetroot
+      feh
     ];
   };
 
@@ -26,14 +25,16 @@
       export XCURSOR_SIZE=16
       xsetroot -cursor_name left_ptr
 
-      nitrogen --restore
       lxsession &
       nm-applet &
       blueman-adapters &
       battery &
       volumeicon &
+
+      ${pkgs.feh}/bin/feh --bg-fill "~/Wallpapers/man\ near\ Torii\ gate\ wallpaper,\ gray\ temple\ wallpaper,\ landscape.jpg"
     '';
   };
+
   programs.autorandr = {
     enable = true;
 

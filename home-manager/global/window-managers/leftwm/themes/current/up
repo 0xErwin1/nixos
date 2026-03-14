@@ -43,6 +43,13 @@ if xrandr | grep -Eq '(^| )DisplayPort-1 connected|(^| )DP-1 connected|(^| )DP-2
   open_bar monitor-DP-1
 fi
 
+if [ -n "$XRDP_SESSION" ] || [ -n "$XRDP_USER" ]; then
+  export NO_COMPOSITOR=1
+  pkill picom
+else
+  picom &
+fi
+
 run_once nm-applet nm-applet
 run_once blueman-applet blueman-applet
 run_once udiskie udiskie -t
