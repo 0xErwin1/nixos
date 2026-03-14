@@ -31,7 +31,7 @@
       battery &
       volumeicon &
 
-      ${pkgs.feh}/bin/feh --bg-fill "~/Wallpapers/man\ near\ Torii\ gate\ wallpaper,\ gray\ temple\ wallpaper,\ landscape.jpg"
+      ${pkgs.feh}/bin/feh --bg-fill ~/Wallpaper/man\ near\ Torii\ gate\ wallpaper,\ gray\ temple\ wallpaper,\ landscape.jpg
     '';
   };
 

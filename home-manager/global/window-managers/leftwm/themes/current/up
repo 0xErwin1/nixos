@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+set -euo pipefail
 
 export SCRIPT_PATH="$HOME/.config/leftwm"
 
@@ -12,14 +13,25 @@ SESSION_TAG="${XDG_SESSION_ID:-${DISPLAY//[:.]/_}}"
 RUNTIME_DIR="${XDG_RUNTIME_DIR:-/tmp}/leftwm-${SESSION_TAG}"
 mkdir -p "$RUNTIME_DIR"
 
+is_running() {
+  local pid="$1"
+  kill -0 "$pid" 2>/dev/null
+}
+
+read_pid() {
+  local file="$1"
+  [[ -f "$file" ]] || return 1
+  cat "$file" 2>/dev/null
+}
+
 stop_session_proc() {
   local name="$1"
   local pidfile="$RUNTIME_DIR/${name}.pid"
 
-  if [ -f "$pidfile" ]; then
+  if [[ -f "$pidfile" ]]; then
     local pid
-    pid="$(cat "$pidfile" 2>/dev/null || true)"
-    if [ -n "$pid" ] && kill -0 "$pid" 2>/dev/null; then
+    pid="$(read_pid "$pidfile" || true)"
+    if [[ -n "${pid:-}" ]] && is_running "$pid"; then
       kill "$pid" 2>/dev/null || true
     fi
     rm -f "$pidfile"
@@ -31,20 +43,29 @@ start_session_proc() {
   shift
   local pidfile="$RUNTIME_DIR/${name}.pid"
 
-  if [ -f "$pidfile" ]; then
+  if [[ -f "$pidfile" ]]; then
     local pid
-    pid="$(cat "$pidfile" 2>/dev/null || true)"
-    if [ -n "$pid" ] && kill -0 "$pid" 2>/dev/null; then
+    pid="$(read_pid "$pidfile" || true)"
+    if [[ -n "${pid:-}" ]] && is_running "$pid"; then
       return 0
     fi
+    rm -f "$pidfile"
   fi
 
   "$@" >/dev/null 2>&1 &
   echo $! > "$pidfile"
 }
 
-if [ -f "$RUNTIME_DIR/theme-down" ]; then
-  "$RUNTIME_DIR/theme-down"
+restart_session_proc() {
+  local name="$1"
+  shift
+  stop_session_proc "$name"
+  start_session_proc "$name" "$@"
+}
+
+# Ejecutar down previo de esta misma sesión, no global
+if [[ -f "$RUNTIME_DIR/theme-down" ]]; then
+  "$RUNTIME_DIR/theme-down" || true
   rm -f "$RUNTIME_DIR/theme-down"
 fi
 
@@ -52,7 +73,7 @@ ln -sf "$THEME_CURRENT/down" "$RUNTIME_DIR/theme-down"
 
 leftwm-command "LoadTheme $THEME_CURRENT/themes.toml"
 
-start_session_proc eww eww -c "$THEME_CURRENT/eww" daemon
+restart_session_proc eww eww -c "$THEME_CURRENT/eww" daemon
 
 open_bar() {
   eww -c "$THEME_CURRENT/eww" open "$1" >/dev/null 2>&1 || true
@@ -68,13 +89,24 @@ if xrandr | grep -Eq '(^| )DisplayPort-1 connected|(^| )DP-1 connected|(^| )DP-2
   open_bar monitor-DP-1
 fi
 
-if [ -n "$XRDP_SESSION" ] || [ -n "$XRDP_USER" ]; then
+# Detectar XRDP
+IS_XRDP=0
+if [[ -n "${XRDP_SESSION:-}" || -n "${XRDP_USER:-}" ]]; then
+  IS_XRDP=1
+elif env | grep -qi '^XRDP'; then
+  IS_XRDP=1
+fi
+
+if [[ "$IS_XRDP" -eq 1 ]]; then
   export NO_COMPOSITOR=1
   stop_session_proc picom
 else
-  start_session_proc picom picom
+  restart_session_proc picom picom
 fi
 
-start_session_proc nm-applet nm-applet
-start_session_proc blueman-applet blueman-applet
-start_session_proc udiskie udiskie -t
+# Estos también por sesión.
+# Si alguno no se banca bien múltiples instancias, ahí sí se trata aparte.
+restart_session_proc nm-applet nm-applet
+restart_session_proc blueman-applet blueman-applet
+restart_session_proc udiskie udiskie -t
+restart_session_proc volumeicon volumeicon

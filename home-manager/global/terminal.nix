@@ -31,6 +31,15 @@
     alacritty = {
       enable = true;
       settings = {
+        keyboard = {
+          bindings = [
+            {
+              key = "Return";
+              mods = "Shift";
+              chars = "\\u001b[13;2u";
+            }
+          ];
+        };
         env = {
           TERM = "xterm-256color";
           COLORTERM = "24bit";
@@ -104,6 +113,7 @@
         size = 13;
       };
       extraConfig = ''
+        map shift+enter send_text all \x1b\r
         term xterm-256color
 
         background_opacity 0.85

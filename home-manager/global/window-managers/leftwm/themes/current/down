@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+set -euo pipefail
 
 SESSION_TAG="${XDG_SESSION_ID:-${DISPLAY//[:.]/_}}"
 RUNTIME_DIR="${XDG_RUNTIME_DIR:-/tmp}/leftwm-${SESSION_TAG}"
@@ -7,10 +8,10 @@ stop_session_proc() {
   local name="$1"
   local pidfile="$RUNTIME_DIR/${name}.pid"
 
-  if [ -f "$pidfile" ]; then
+  if [[ -f "$pidfile" ]]; then
     local pid
     pid="$(cat "$pidfile" 2>/dev/null || true)"
-    if [ -n "$pid" ] && kill -0 "$pid" 2>/dev/null; then
+    if [[ -n "${pid:-}" ]] && kill -0 "$pid" 2>/dev/null; then
       kill "$pid" 2>/dev/null || true
     fi
     rm -f "$pidfile"
@@ -20,8 +21,8 @@ stop_session_proc() {
 leftwm-command "UnloadTheme"
 
 stop_session_proc eww
-stop_session_proc volumeicon
+stop_session_proc picom
 stop_session_proc nm-applet
 stop_session_proc blueman-applet
 stop_session_proc udiskie
-stop_session_proc picom
+stop_session_proc volumeicon
