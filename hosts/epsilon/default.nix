@@ -9,7 +9,7 @@
     ./packages.nix
     ./wireguard.nix
     ./wireguard-local.nix
-    ./sunshine.nix
+    ./rdp.nix
   ];
 
   boot = {

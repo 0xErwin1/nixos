@@ -1,83 +1,13 @@
 {
-  config,
   pkgs,
-  lib,
   ...
 }:
-let
-  pipewire-module-xrdp = pkgs.stdenv.mkDerivation rec {
-    pname = "pipewire-module-xrdp";
-    version = "0.1";
-
-    src = pkgs.fetchFromGitHub {
-      owner = "neutrinolabs";
-      repo = "pipewire-module-xrdp";
-      rev = "v0.1";
-      hash = "sha256-ZiKVAMAFBkMpZFqrn4hjZZPxdR+sBtcd4W30z8pkdzk=";
-    };
-
-    nativeBuildInputs = with pkgs; [
-      autoreconfHook
-      pkg-config
-    ];
-
-    buildInputs = with pkgs; [
-      pipewire
-    ];
-
-    configureFlags = [
-      "--prefix=${placeholder "out"}"
-    ];
-
-    installPhase = ''
-      runHook preInstall
-
-      mkdir -p $out/lib/pipewire-0.3
-      mkdir -p $out/share/applications
-      mkdir -p $out/bin
-
-      cp -v src/.libs/libpipewire-module-xrdp-pipewire.so \
-        $out/lib/pipewire-0.3/
-
-      if [ -f instfiles/pipewire-xrdp.desktop ]; then
-        cp -v instfiles/pipewire-xrdp.desktop $out/share/applications/
-      fi
-
-      if [ -f load_pw_modules.sh ]; then
-        cp -v load_pw_modules.sh $out/bin/
-        chmod +x $out/bin/load_pw_modules.sh
-      fi
-
-      runHook postInstall
-    '';
-  };
-in
 {
-  environment.systemPackages = with pkgs; [
-    pipewire-module-xrdp
-  ];
-
-  xdg.configFile."autostart/pipewire-xrdp.desktop".text = ''
-    [Desktop Entry]
-    Type=Application
-    Name=pipewire-xrdp
-    Exec=${pipewire-module-xrdp}/bin/load_pw_modules.sh
-    OnlyShowIn=XFCE;
-    X-GNOME-Autostart-enabled=true
-  '';
 
   services = {
-    xserver = {
-      enable = true;
-      desktopManager.xfce.enable = true;
-    };
     xrdp = {
       enable = true;
       openFirewall = false;
-      defaultWindowManager = "xfce4-session";
-      audio = {
-        enable = true;
-      };
     };
   };
 
