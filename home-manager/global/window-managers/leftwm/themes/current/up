@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
 
-# ----| Vars | ----
 export SCRIPT_PATH="$HOME/.config/leftwm"
 
 if [[ ${DEBUG:-0} == 1 ]]; then
@@ -9,28 +8,54 @@ else
   export THEME_CURRENT="$SCRIPT_PATH/themes/current"
 fi
 
-if [ -f "/tmp/leftwm-theme-down" ]; then
-    /tmp/leftwm-theme-down
-    rm -f /tmp/leftwm-theme-down
+SESSION_TAG="${XDG_SESSION_ID:-${DISPLAY//[:.]/_}}"
+RUNTIME_DIR="${XDG_RUNTIME_DIR:-/tmp}/leftwm-${SESSION_TAG}"
+mkdir -p "$RUNTIME_DIR"
+
+stop_session_proc() {
+  local name="$1"
+  local pidfile="$RUNTIME_DIR/${name}.pid"
+
+  if [ -f "$pidfile" ]; then
+    local pid
+    pid="$(cat "$pidfile" 2>/dev/null || true)"
+    if [ -n "$pid" ] && kill -0 "$pid" 2>/dev/null; then
+      kill "$pid" 2>/dev/null || true
+    fi
+    rm -f "$pidfile"
+  fi
+}
+
+start_session_proc() {
+  local name="$1"
+  shift
+  local pidfile="$RUNTIME_DIR/${name}.pid"
+
+  if [ -f "$pidfile" ]; then
+    local pid
+    pid="$(cat "$pidfile" 2>/dev/null || true)"
+    if [ -n "$pid" ] && kill -0 "$pid" 2>/dev/null; then
+      return 0
+    fi
+  fi
+
+  "$@" >/dev/null 2>&1 &
+  echo $! > "$pidfile"
+}
+
+if [ -f "$RUNTIME_DIR/theme-down" ]; then
+  "$RUNTIME_DIR/theme-down"
+  rm -f "$RUNTIME_DIR/theme-down"
 fi
 
-ln -sf "$THEME_CURRENT/down" /tmp/leftwm-theme-down
+ln -sf "$THEME_CURRENT/down" "$RUNTIME_DIR/theme-down"
 
 leftwm-command "LoadTheme $THEME_CURRENT/themes.toml"
 
-eww -c "$THEME_CURRENT/eww" daemon
+start_session_proc eww eww -c "$THEME_CURRENT/eww" daemon
 
 open_bar() {
   eww -c "$THEME_CURRENT/eww" open "$1" >/dev/null 2>&1 || true
-}
-
-run_once() {
-  local proc="$1"
-  shift
-
-  if ! pgrep -x "$proc" >/dev/null 2>&1; then
-    "$@" >/dev/null 2>&1 &
-  fi
 }
 
 open_bar laptop
@@ -45,13 +70,11 @@ fi
 
 if [ -n "$XRDP_SESSION" ] || [ -n "$XRDP_USER" ]; then
   export NO_COMPOSITOR=1
-  pkill picom
+  stop_session_proc picom
 else
-  picom &
+  start_session_proc picom picom
 fi
 
-run_once nm-applet nm-applet
-run_once blueman-applet blueman-applet
-run_once udiskie udiskie -t
-
-nitrogen --restore >/dev/null 2>&1 || true
+start_session_proc nm-applet nm-applet
+start_session_proc blueman-applet blueman-applet
+start_session_proc udiskie udiskie -t
