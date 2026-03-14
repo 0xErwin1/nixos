@@ -56,10 +56,89 @@
     }
   ];
 
+  services = {
+    fwupd.enable = true;
+    thermald.enable = true;
+    throttled.enable = true;
+    fprintd.enable = true;
+
+    thinkfan = {
+      enable = true;
+      sensors = [
+        {
+          type = "hwmon";
+          query = "/sys/class/hwmon";
+          name = "coretemp";
+          indices = [
+            1
+            2
+            3
+            4
+            5
+            6
+            7
+          ];
+        }
+      ];
+      fans = [
+        {
+          type = "tpacpi";
+          query = "/proc/acpi/ibm/fan";
+        }
+      ];
+      levels = [
+        [
+          0
+          0
+          45
+        ]
+        [
+          1
+          43
+          50
+        ]
+        [
+          2
+          48
+          55
+        ]
+        [
+          3
+          53
+          62
+        ]
+        [
+          4
+          60
+          70
+        ]
+        [
+          5
+          68
+          78
+        ]
+        [
+          6
+          76
+          84
+        ]
+        [
+          7
+          82
+          89
+        ]
+        [
+          "level disengaged"
+          87
+          32767
+        ]
+      ];
+    };
+  };
+
   nixpkgs.hostPlatform = lib.mkDefault "x86_64-linux";
   hardware = {
     cpu.intel.updateMicrocode = lib.mkDefault config.hardware.enableRedistributableFirmware;
     bluetooth.enable = true;
   };
-
 }
