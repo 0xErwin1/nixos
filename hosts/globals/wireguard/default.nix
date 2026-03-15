@@ -51,7 +51,7 @@ in
     services = {
       resolved = {
         enable = lib.mkIf cfg.enable true;
-        fallbackDns = [
+        settings.Resolve.FallbackDNS = [
           "1.1.1.1"
           "1.0.0.1"
         ];

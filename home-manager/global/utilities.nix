@@ -13,6 +13,8 @@
     fd
     pcmanfm
     btop
+    postman
+    cartero
 
     opencode
     codex

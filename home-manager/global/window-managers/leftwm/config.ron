@@ -83,6 +83,7 @@
     (window_class: "Places", window_title: None, spawn_on_tag: None, spawn_on_workspace: None, spawn_floating: true, spawn_sticky: None, spawn_fullscreen: None, spawn_as_type: None),
     (window_class: "Dialog", window_title: None, spawn_on_tag: None, spawn_on_workspace: None, spawn_floating: true, spawn_sticky: None, spawn_fullscreen: None, spawn_as_type: None),
     (window_class: "pop-up", window_title: None, spawn_on_tag: None, spawn_on_workspace: None, spawn_floating: true, spawn_sticky: None, spawn_fullscreen: None, spawn_as_type: None),
+    (window_class: None, window_title: "Bitwarden", spawn_on_tag: None, spawn_on_workspace: None, spawn_floating: true, spawn_sticky: None, spawn_fullscreen: None, spawn_as_type: None),
     (window_class: "Thunar", window_title: None, spawn_on_tag: None, spawn_on_workspace: None, spawn_floating: true, spawn_sticky: None, spawn_fullscreen: None, spawn_as_type: None),
     (window_class: "Pcmanfm", window_title: None, spawn_on_tag: None, spawn_on_workspace: None, spawn_floating: true, spawn_sticky: None, spawn_fullscreen: None, spawn_as_type: None),
     (window_class: "Piper", window_title: None, spawn_on_tag: None, spawn_on_workspace: None, spawn_floating: true, spawn_sticky: None, spawn_fullscreen: None, spawn_as_type: None),

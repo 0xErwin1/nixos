@@ -51,6 +51,7 @@
     openssh = {
       enable = true;
       ports = [ 22222 ];
+      settings.X11Forwarding = true;
     };
     libinput.enable = true;
     pipewire = {
@@ -79,8 +80,6 @@
         day = 4000;
         night = 4000;
       };
-      latitude = "0";
-      longitude = "0";
     };
     gnome.gnome-keyring.enable = true;
     ratbagd.enable = true;
@@ -109,7 +108,11 @@
     };
   };
 
-  location.provider = "geoclue2";
+  location = {
+    provider = "geoclue2";
+    latitude = 0;
+    longitude = 0;
+  };
   hardware.bluetooth.enable = true;
 
   security = {

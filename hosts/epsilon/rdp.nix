@@ -1,42 +1,23 @@
+{ ... }:
 {
-  pkgs,
-  ...
-}:
-{
-
   services = {
     xrdp = {
       enable = true;
       openFirewall = false;
     };
-  };
-
-  # cloudflared tunnel exposes xrdp to Cloudflare Access without opening the
-  # port to the internet. The tunnel token is read from a file outside the Nix
-  # store so it is never committed to the repo.
-  #
-  # Setup (once, on epsilon):
-  #   sudo mkdir -p /etc/cloudflared
-  #   echo "CLOUDFLARED_TOKEN=<your-token>" | sudo tee /etc/cloudflared/rdp.env
-  #   sudo chmod 600 /etc/cloudflared/rdp.env
-  #
-  # The tunnel itself (with the TCP ingress rule pointing to localhost:3389)
-  # must be created in the Cloudflare dashboard first.
-  systemd.services.cloudflared-rdp = {
-    description = "Cloudflare Tunnel — RDP";
-    after = [
-      "network-online.target"
-      "xrdp.service"
-    ];
-    wants = [ "network-online.target" ];
-    wantedBy = [ "multi-user.target" ];
-
-    serviceConfig = {
-      Type = "simple";
-      EnvironmentFile = "/etc/cloudflared/rdp.env";
-      ExecStart = "${pkgs.cloudflared}/bin/cloudflared tunnel --no-autoupdate run --token $${CLOUDFLARED_TOKEN}";
-      Restart = "on-failure";
-      RestartSec = "5s";
+    cloudflared = {
+      enable = true;
+      tunnels = {
+        "d508b1ad-e18e-41d4-a375-1ed9ccc4c6fe" = {
+          credentialsFile = "/etc/cloudflared/d508b1ad-e18e-41d4-a375-1ed9ccc4c6fe.json";
+          "default" = "http_status:404";
+          ingress = {
+            "ssh.iperez.dev" = {
+              service = "ssh://localhost:22222";
+            };
+          };
+        };
+      };
     };
   };
 
