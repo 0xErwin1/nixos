@@ -13,6 +13,7 @@
     ../global/neovim.nix
     ../global/zathura.nix
     ../global/music.nix
+    ../global/communication.nix
     ../global/x11
     ./monitor.nix
     ./xorg.nix

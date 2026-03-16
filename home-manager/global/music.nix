@@ -2,7 +2,7 @@
 {
   services.mpd = {
     enable = true;
-    musicDirectory = "~/.music";
+    musicDirectory = "~/Music";
     extraConfig = ''
       # MPD Configuration
       auto_update "yes"
