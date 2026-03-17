@@ -43,10 +43,7 @@
     '';
 
     kernel.sysctl = {
-      "vm.swappiness" = 180;
-      "vm.watermark_boost_factor" = 0;
-      "vm.watermark_scale_factor" = 125;
-      "vm.page-cluster" = 0;
+      "vm.swappiness" = 10;
     };
 
     supportedFilesystems = [
@@ -110,9 +107,15 @@
   swapDevices = [
     {
       device = "/swap/swapfile";
-      priority = 100;
+      priority = 10;
     }
   ];
+
+  zramSwap = {
+    enable = true;
+    memoryPercent = 20;
+    algorithm = "zstd";
+  };
 
   hardware = {
     enableRedistributableFirmware = true;
@@ -157,7 +160,7 @@
 
   services = {
     fwupd.enable = true;
-    thermald.enable = true;
+    thermald.enable = false;
 
     throttled.enable = true;
 

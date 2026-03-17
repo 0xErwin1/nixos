@@ -27,5 +27,6 @@
     nodejs
     uv
     go
+    awscli2
   ];
 }

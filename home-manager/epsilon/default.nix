@@ -7,7 +7,7 @@
     ../global/xdg.nix
     ../global/zed
     ../global/font.nix
-    ../global/window-managers/hyprland
+    #../global/window-managers/hyprland
     ../global/window-managers/leftwm
     ../global/audio.nix
     ../global/themes.nix
@@ -27,7 +27,7 @@
     enableNixpkgsReleaseCheck = false;
     username = "iperez";
     homeDirectory = "/home/iperez";
-    stateVersion = "25.05";
+    stateVersion = "25.11";
     sessionVariables = {
       EDITOR = "nvim";
     };

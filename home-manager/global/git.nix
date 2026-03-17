@@ -2,7 +2,6 @@
   programs = {
     git = {
       enable = true;
-      userName = "Ignacio Perez";
       includes = [
         {
           path = "~/dev/work/Houlak/.gitconfig";
@@ -17,10 +16,15 @@
           condition = "gitdir:~/.config/home-manager/";
         }
       ];
-      delta.enable = true;
-      extraConfig = {
-        push = {
-          autoSetupRemote = true;
+      settings = {
+        user = {
+          name = "Ignacio Perez";
+        };
+        delta.enable = true;
+        extraConfig = {
+          push = {
+            autoSetupRemote = true;
+          };
         };
       };
     };

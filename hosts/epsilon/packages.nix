@@ -8,10 +8,10 @@
     libglvnd
     libGL
     libGLX
-    xorg.libX11
+    libX11
+    xclip
     xinput
     xmodmap
-    wl-clipboard
     qimgv
     thinkfan
     ripgrep

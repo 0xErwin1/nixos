@@ -24,6 +24,7 @@
       export XCURSOR_THEME=Bibata-Modern-Classic
       export XCURSOR_SIZE=16
       xsetroot -cursor_name left_ptr
+      xrdb -merge <<< "Xft.dpi: 96"
 
       lxsession &
       nm-applet &

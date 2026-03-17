@@ -97,7 +97,6 @@
     (window_class: "TelegramDesktop", window_title: None, spawn_on_tag: None, spawn_on_workspace: None, spawn_floating: true, spawn_sticky: None, spawn_fullscreen: None, spawn_as_type: None),
     (window_class: "whatsapp-nativefier-d40211", window_title: None, spawn_on_tag: None, spawn_on_workspace: None, spawn_floating: true, spawn_sticky: None, spawn_fullscreen: None, spawn_as_type: None),
     (window_class: "whatsdesk", window_title: None, spawn_on_tag: None, spawn_on_workspace: None, spawn_floating: true, spawn_sticky: None, spawn_fullscreen: None, spawn_as_type: None),
-    (window_class: "Settings", window_title: None, spawn_on_tag: None, spawn_on_workspace: None, spawn_floating: true, spawn_sticky: None, spawn_fullscreen: None, spawn_as_type: None),
     (window_class: "protonvpn", window_title: None, spawn_on_tag: None, spawn_on_workspace: None, spawn_floating: true, spawn_sticky: None, spawn_fullscreen: None, spawn_as_type: None),
     (window_class: "cpupower-gui", window_title: None, spawn_on_tag: None, spawn_on_workspace: None, spawn_floating: true, spawn_sticky: None, spawn_fullscreen: None, spawn_as_type: None),
     (window_class: "blueman-adapters", window_title: None, spawn_on_tag: None, spawn_on_workspace: None, spawn_floating: true, spawn_sticky: None, spawn_fullscreen: None, spawn_as_type: None),
