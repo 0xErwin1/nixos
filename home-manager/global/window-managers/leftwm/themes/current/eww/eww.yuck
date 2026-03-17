@@ -149,7 +149,7 @@
   (bar :monitor 0)
 )
 
-(defwindow monitor-DP-0 :monitor '[1, "DisplayPort-0", "DP-0", "DP-1-0", "HDMI-A-0"]'
+(defwindow monitor-DP-0 :monitor '[1, "DisplayPort-0", "DP-0", "DP-1-0", "HDMI-A-0", "HDMI-2"]'
   :geometry (geometry :x "2.5%" :y "96%" :width "95%" :height "2%")
   :reserve (struts :distance "4%" :side "bottom")
   :wm-ignore false

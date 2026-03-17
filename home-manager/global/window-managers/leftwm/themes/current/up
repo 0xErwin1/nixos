@@ -81,7 +81,7 @@ open_bar() {
 
 open_bar laptop
 
-if xrandr | grep -Eq '(^| )DisplayPort-0 connected|(^| )DP-0 connected|(^| )HDMI-A-0 connected|(^| )DP-1-0 connected'; then
+if xrandr | grep -Eq '(^| )DisplayPort-0 connected|(^| )DP-0 connected|(^| )HDMI-A-0 connected|(^| )DP-1-0 connected|(^| )HDMI-2 connected'; then
   open_bar monitor-DP-0
 fi
 
