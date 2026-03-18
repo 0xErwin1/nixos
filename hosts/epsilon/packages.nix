@@ -21,6 +21,5 @@
     gzip
     zip
     cloudflared
-    cloudflare-warp
   ];
 }

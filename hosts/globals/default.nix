@@ -5,7 +5,8 @@
     ./locale.nix
     ./users.nix
   ];
-  nix.settings.auto-optimise-store = true;
+  # Disabled for performance - run 'nix-store --optimise' manually when needed
+  nix.settings.auto-optimise-store = false;
 
   environment.systemPackages = with pkgs; [
     usbutils

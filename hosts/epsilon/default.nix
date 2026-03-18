@@ -4,12 +4,13 @@
 
   imports = [
     ./hardware-configuration.nix
+    ./kernel.nix
     ../globals
     ../globals/gaming.nix
     ./packages.nix
     ../globals/wireguard/local.nix
     ../globals/wireguard
-    ./rdp.nix
+    ./cloudflare-tunnel.nix
   ];
 
   boot = {
@@ -99,12 +100,8 @@
       enable = true;
       extraPortals = with pkgs; [
         xdg-desktop-portal-gtk
-        xdg-desktop-portal-hyprland
       ];
-      config.common.default = [
-        "gtk"
-        "hyprland"
-      ];
+      config.common.default = "gtk";
     };
   };
 

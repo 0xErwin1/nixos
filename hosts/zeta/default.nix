@@ -63,7 +63,6 @@
 
   environment.systemPackages = with pkgs; [
     cloudflared
-    cloudflare-warp
   ];
 
   system.stateVersion = "25.11";
