@@ -1,28 +1,18 @@
-{ pkgs, ... }:
+{ pkgs, config, ... }:
 {
   services.mpd = {
     enable = true;
-    musicDirectory = "~/Music";
+    musicDirectory = "${config.home.homeDirectory}/Music";
+    dataDir = "${config.home.homeDirectory}/.local/share/mpd";
     extraConfig = ''
       # MPD Configuration
       auto_update "yes"
-      
+
       # Audio Output via PipeWire
       audio_output {
         type "pipewire"
         name "PipeWire Sound Server"
       }
-      
-      # Playlist directory
-      playlist_directory "~/.config/mpd/playlists"
-      
-      # Database and logs
-      db_file "~/.config/mpd/database"
-      log_file "~/.config/mpd/log"
-      
-      # State and sticker files
-      state_file "~/.config/mpd/state"
-      sticker_file "~/.config/mpd/sticker.sql"
     '';
   };
 

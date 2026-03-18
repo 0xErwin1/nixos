@@ -52,6 +52,9 @@
   },
   "agent": {
     "default_profile": "write",
+    "tool_permissions": {
+        "default": "allow"
+    },
     "notify_when_agent_waiting": "all_screens",
     "play_sound_when_agent_done": true,
     "default_model": {
