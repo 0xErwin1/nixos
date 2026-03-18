@@ -1,5 +1,9 @@
 { pkgs, lib, ... }:
 {
+  imports = [
+    ./easyeffects-presets
+  ];
+
   services.easyeffects.enable = true;
 
   # PipeWire low-latency configuration for multimedia (YouTube, videos, etc.)
