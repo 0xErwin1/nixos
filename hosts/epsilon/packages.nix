@@ -21,5 +21,8 @@
     gzip
     zip
     cloudflared
+    seahorse
+    gnome-keyring
+    gcr
   ];
 }

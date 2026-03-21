@@ -28,5 +28,8 @@
     uv
     go
     awscli2
+
+    openvpn
+    openfortivpn
   ];
 }

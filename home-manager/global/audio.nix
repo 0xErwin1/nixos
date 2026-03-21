@@ -7,20 +7,14 @@
   services.easyeffects.enable = true;
 
   # PipeWire low-latency configuration for multimedia (YouTube, videos, etc.)
-  # The system-level config in hosts/epsilon/default.nix enables PipeWire.
-  # This home-manager config tunes latency for better audio/video sync.
-  #
-  # Problem: Default quantum=1024 @ 48kHz = ~21ms latency causes A/V desync
-  # Solution: quantum=256 @ 48kHz = ~5.3ms latency (good balance for multimedia)
-  #
-  # Note: Lower values (128, 64) can cause audio glitches on some systems.
-  #       If you experience crackling, increase to 512 or back to 1024.
+  # Keep a low default latency for A/V sync, but allow a higher runtime ceiling
+  # so Bluetooth call profiles (HFP/HSP) can negotiate more stable buffer sizes.
   xdg.configFile."pipewire/pipewire.conf.d/92-low-latency.conf".text = ''
     context.properties = {
       default.clock.rate = 48000
       default.clock.quantum = 256
       default.clock.min-quantum = 256
-      default.clock.max-quantum = 512
+      default.clock.max-quantum = 1024
     }
   '';
 
@@ -28,9 +22,9 @@
     pulse.properties = {
       pulse.min.req = 256/48000
       pulse.default.req = 256/48000
-      pulse.max.req = 512/48000
+      pulse.max.req = 1024/48000
       pulse.min.quantum = 256/48000
-      pulse.max.quantum = 512/48000
+      pulse.max.quantum = 1024/48000
     }
     stream.properties = {
       node.latency = 256/48000
@@ -60,6 +54,17 @@
       "GTK_THEME=Adwaita:dark"
     ];
   };
+
+  # Blueman runs inside an X11 session (LeftWM) on this host.
+  # Force GTK to use X11 backend so org.blueman.Manager activation does not
+  # fail waiting for a Wayland compositor.
+  systemd.user.services.blueman-manager.Service.Environment = [
+    "GDK_BACKEND=x11"
+  ];
+
+  systemd.user.services.blueman-applet.Service.Environment = [
+    "GDK_BACKEND=x11"
+  ];
 
   home.packages = with pkgs; [
     vlc

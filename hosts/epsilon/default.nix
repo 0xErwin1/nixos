@@ -37,6 +37,7 @@
       };
       autoRepeatDelay = 200;
       autoRepeatInterval = 40;
+      updateDbusEnvironment = true;
       dpi = 96;
 
       displayManager.sessionCommands = ''
@@ -71,7 +72,28 @@
         x42-plugins
         zam-plugins
       ];
-      wireplumber.enable = true;
+      wireplumber = {
+        enable = true;
+        extraConfig."10-bluez-stability" = {
+          "monitor.bluez.properties" = {
+            "bluez5.roles" = [
+              "a2dp_sink"
+              "a2dp_source"
+              "hfp_hf"
+              "hsp_hs"
+            ];
+            "bluez5.hfphsp-backend" = "native";
+            "bluez5.enable-sbc-xq" = true;
+          };
+
+          "wireplumber.settings" = {
+            "bluetooth.autoswitch-to-headset-profile" = true;
+            "bluetooth.use-persistent-storage" = true;
+            "device.restore-profile" = true;
+            "device.restore-routes" = true;
+          };
+        };
+      };
     };
     displayManager.ly.enable = true;
     geoclue2.enable = true;
@@ -117,7 +139,10 @@
     pam = {
       services = {
         ly.fprintAuth = true;
-        login.fprintAuth = true;
+        login = {
+          fprintAuth = true;
+          enableGnomeKeyring = true;
+        };
         i3lock = {
           fprintAuth = true;
           enable = true;

@@ -4,10 +4,14 @@
     fuse
     fuse3
     appimage-run
+    cage
+    wl-clipboard
     podman-tui
     dive
     docker-compose
+    waydroid-nftables
   ];
+  networking.nftables.enable = true;
 
   programs = {
     nix-ld = {
@@ -31,6 +35,10 @@
       defaultNetwork.settings.dns_enabled = true;
     };
     libvirtd.enable = true;
+    waydroid = {
+      enable = true;
+      package = pkgs.waydroid-nftables;
+    };
   };
 
   users.users.iperez.extraGroups = [ "libvirtd" ];
