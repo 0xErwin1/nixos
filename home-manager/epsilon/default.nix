@@ -7,8 +7,8 @@
     ../global/xdg.nix
     ../global/zed
     ../global/font.nix
-    #../global/window-managers/hyprland
-    ../global/window-managers/leftwm
+    ../global/window-managers/hyprland
+    #../global/window-managers/leftwm
     ../global/audio.nix
     ../global/themes.nix
     ../global/communication.nix
@@ -17,9 +17,9 @@
     ../global/neovim.nix
     ../global/zathura.nix
     ../global/music.nix
-    ../global/x11
-    ./x11.nix
-    ./monitor.nix
+    #../global/x11
+    #./x11.nix
+    #./monitor.nix
     ./packages.nix
   ];
 

@@ -73,7 +73,6 @@ in
 
       monitor = [
         "eDP-1, 1920x1080@60, 0x0, 1"
-        "DP-2, 1920x1080@60, 0x1080, 1"
         "DP-1, 1920x1080@60, 0x1080, 1"
       ];
 
@@ -83,14 +82,12 @@ in
         "systemctl --user import-environment WAYLAND_DISPLAY XDG_CURRENT_DESKTOP"
         "hyprctl setcursor Bibata-Modern-Classic 16"
         "tmux setenv -g HYPRLAND_INSTANCE_SIGNATURE \"$HYPRLAND_INSTANCE_SIGNATURE\""
-        "eww -c \"$HOME/.config/hypr/eww\" --force-wayland open-many laptop monitor"
+        "sleep 2 && eww -c \"$HOME/.config/hypr/eww\" --force-wayland open-many laptop monitor-DP-0"
         "nm-applet &"
         "blueman-adapters &"
         "udiskie -t &"
         "solaar -b regular -w hide &"
         "hyprpaper"
-        "xdg-desktop-portal &"
-        "xdg-desktop-portal-wlr &"
       ];
 
       general = {
@@ -187,7 +184,7 @@ in
       "$workBrowser" = "firefox";
       "$screenshot" =
         "hyprshot -m region --raw | satty --filename - --output-filename \$HOME/Pictures/Screenshots/screenshot-\$(date +'%Y-%m-%d_%H-%M-%S').png --early-exit --actions-on-enter save-to-clipboard --save-after-copy --copy-command wl-copy";
-      "$wallpaper" = "/home/iperez/Wallpaper/1udeandomn1e1.jpeg";
+      "$wallpaper" = "/home/iperez/Wallpaper/man-near-Torii-gate-wallpaper-gray-temple-wallpaper-landscape.jpg";
 
       inherit (bind) bind;
       inherit (bind) bindel;

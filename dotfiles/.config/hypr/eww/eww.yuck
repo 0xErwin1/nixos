@@ -182,8 +182,8 @@
   (bar :monitor 0)
 )
 
-(defwindow monitor-DP-0 :monitor '["DisplayPort-0","DP-0", "HDMI-A-0"]'
-  :geometry (geometry :width "95%" :height "2%" :anchor "bottom center")
+(defwindow monitor-DP-0 :monitor '[1, "DisplayPort-0","DP-0", "HDMI-A-0", "DP-1"]'
+  :geometry (geometry :width "95%" :height "3%" :anchor "bottom center")
   :wm-ignore false
   :windowtype "dock"
   :layer "bottom"
@@ -193,7 +193,7 @@
 )
 
 (defwindow monitor :monitor '[1, "DisplayPort-1", "DP-1", "DP-2"]'
-  :geometry (geometry :width "95%" :height "2%" :anchor "bottom center")
+  :geometry (geometry :width "95%" :height "3%" :anchor "bottom center")
   :wm-ignore false
   :windowtype "dock"
   :layer "bottom"

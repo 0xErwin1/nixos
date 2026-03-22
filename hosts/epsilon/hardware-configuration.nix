@@ -139,8 +139,10 @@
 
     nvidia = {
       modesetting.enable = true;
-      powerManagement.enable = true;
-      powerManagement.finegrained = true;
+      powerManagement = {
+        finegrained = true;
+        enable = true;
+      };
       open = false;
       nvidiaSettings = true;
       package = config.boot.kernelPackages.nvidiaPackages.stable;
@@ -165,7 +167,7 @@
     throttled.enable = true;
 
     tlp = {
-      enable = true;
+      enable = false;
       settings = {
         CPU_SCALING_GOVERNOR_ON_AC = "performance";
         CPU_SCALING_GOVERNOR_ON_BAT = "powersave";
@@ -216,46 +218,46 @@
         [
           0
           0
-          45
+          40
         ]
         [
           1
+          38
+          45
+        ]
+        [
+          2
           43
           50
         ]
         [
-          2
-          48
-          55
-        ]
-        [
           3
-          53
-          62
+          48
+          58
         ]
         [
           4
-          60
-          70
+          55
+          65
         ]
         [
           5
-          68
-          78
+          62
+          72
         ]
         [
           6
+          69
+          78
+        ]
+        [
+          7
           76
           84
         ]
         [
-          7
-          82
-          89
-        ]
-        [
           "level disengaged"
-          87
+          82
           32767
         ]
       ];

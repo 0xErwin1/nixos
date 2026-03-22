@@ -1,4 +1,9 @@
+{ pkgs, ... }:
 {
+  environment.systemPackages = with pkgs; [
+    mangohud
+  ];
+
   programs = {
     steam = {
       enable = true;

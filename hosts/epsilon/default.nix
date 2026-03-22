@@ -120,10 +120,12 @@
   xdg = {
     portal = {
       enable = true;
+      wlr.enable = true;
       extraPortals = with pkgs; [
+        xdg-desktop-portal-hyprland
         xdg-desktop-portal-gtk
       ];
-      config.common.default = "gtk";
+      config.common.default = "hyprland";
     };
   };
 
@@ -135,6 +137,7 @@
   hardware.bluetooth.enable = true;
 
   security = {
+    polkit.enable = true;
     rtkit.enable = true;
     pam = {
       services = {
@@ -151,9 +154,11 @@
     };
   };
 
+  services.dbus.enable = true;
+
   programs = {
     hyprland = {
-      enable = false;
+      enable = true;
       xwayland.enable = true;
     };
   };

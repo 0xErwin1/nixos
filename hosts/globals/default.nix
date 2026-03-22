@@ -11,5 +11,6 @@
   environment.systemPackages = with pkgs; [
     usbutils
     python3Packages.uv
+    upower
   ];
 }

@@ -108,7 +108,7 @@ in
     enable = true;
     keyMode = "vi";
     mouse = true;
-    prefix = "C-Space";
+    prefix = "C-a";
 
     plugins = [
       pkgs.tmuxPlugins.resurrect
