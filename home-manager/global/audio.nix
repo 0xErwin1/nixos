@@ -55,17 +55,6 @@
     ];
   };
 
-  # Blueman runs inside an X11 session (LeftWM) on this host.
-  # Force GTK to use X11 backend so org.blueman.Manager activation does not
-  # fail waiting for a Wayland compositor.
-  systemd.user.services.blueman-manager.Service.Environment = [
-    "GDK_BACKEND=x11"
-  ];
-
-  systemd.user.services.blueman-applet.Service.Environment = [
-    "GDK_BACKEND=x11"
-  ];
-
   home.packages = with pkgs; [
     vlc
     pavucontrol

@@ -147,6 +147,7 @@ in
       misc = {
         force_default_wallpaper = 1;
         disable_hyprland_logo = false;
+        vfr = false;
       };
 
       # Input/gestures
@@ -159,6 +160,7 @@ in
 
         follow_mouse = 1;
         sensitivity = 0;
+        accel_profile = "flat";
 
         touchpad = {
           natural_scroll = false;
@@ -184,7 +186,8 @@ in
       "$workBrowser" = "firefox";
       "$screenshot" =
         "hyprshot -m region --raw | satty --filename - --output-filename \$HOME/Pictures/Screenshots/screenshot-\$(date +'%Y-%m-%d_%H-%M-%S').png --early-exit --actions-on-enter save-to-clipboard --save-after-copy --copy-command wl-copy";
-      "$wallpaper" = "/home/iperez/Wallpaper/man-near-Torii-gate-wallpaper-gray-temple-wallpaper-landscape.jpg";
+      "$wallpaper" =
+        "/home/iperez/Wallpaper/man-near-Torii-gate-wallpaper-gray-temple-wallpaper-landscape.jpg";
 
       inherit (bind) bind;
       inherit (bind) bindel;

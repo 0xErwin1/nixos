@@ -9,7 +9,6 @@
     podman-tui
     dive
     docker-compose
-    waydroid-nftables
   ];
   networking.nftables.enable = true;
 
@@ -37,7 +36,6 @@
     libvirtd.enable = true;
     waydroid = {
       enable = true;
-      package = pkgs.waydroid-nftables;
     };
   };
 

@@ -31,5 +31,6 @@
 
     openvpn
     openfortivpn
+    openssl
   ];
 }

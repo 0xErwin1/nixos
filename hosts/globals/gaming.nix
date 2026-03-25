@@ -2,6 +2,7 @@
 {
   environment.systemPackages = with pkgs; [
     mangohud
+    solaar
   ];
 
   programs = {
@@ -12,6 +13,9 @@
       localNetworkGameTransfers.openFirewall = true;
     };
     gamemode = {
+      enable = true;
+    };
+    gamescope = {
       enable = true;
     };
   };
