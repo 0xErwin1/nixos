@@ -1,4 +1,4 @@
-{ pkgs, ... }:
+{ pkgs, lib, ... }:
 {
   nixpkgs.config.allowUnfree = true;
 
@@ -7,6 +7,8 @@
     ./kernel.nix
     ../globals
     ../globals/gaming.nix
+    ../globals/bluetooth.nix
+    ../globals/pipewire.nix
     ./packages.nix
     ../globals/wireguard/local.nix
     ../globals/wireguard
@@ -48,7 +50,7 @@
         xmodmap -e "keycode 66 = Control_L"
         xmodmap -e "add Control = Control_L"
       '';
-      windowManager.leftwm.enable = true;
+      windowManager.leftwm.enable = false;
     };
     openssh = {
       enable = true;
@@ -56,49 +58,6 @@
       settings.X11Forwarding = true;
     };
     libinput.enable = true;
-    pipewire = {
-      enable = true;
-      alsa = {
-        enable = true;
-        support32Bit = true;
-      };
-      pulse.enable = true;
-      jack.enable = true;
-      extraLv2Packages = with pkgs; [
-        calf
-        lsp-plugins
-        mda_lv2
-        rnnoise-plugin
-        x42-plugins
-        zam-plugins
-      ];
-      wireplumber = {
-        enable = true;
-        extraConfig."10-bluez-stability" = {
-          "monitor.bluez.properties" = {
-            "bluez5.enable-msbc" = true;
-            "bluez5.enable-hw-volume" = true;
-            "bluez5.roles" = [
-              "a2dp_sink"
-              "a2dp_source"
-              "hsp_hs"
-              "hsp_ag"
-              "hfp_hf"
-              "hfp_ag"
-            ];
-            "bluez5.hfphsp-backend" = "native";
-            "bluez5.enable-sbc-xq" = true;
-          };
-
-          "wireplumber.settings" = {
-            "bluetooth.autoswitch-to-headset-profile" = true;
-            "bluetooth.use-persistent-storage" = true;
-            "device.restore-profile" = true;
-            "device.restore-routes" = true;
-          };
-        };
-      };
-    };
     displayManager.ly.enable = true;
     geoclue2.enable = true;
     redshift = {
@@ -110,7 +69,6 @@
     };
     gnome.gnome-keyring.enable = true;
     ratbagd.enable = true;
-    blueman.enable = true;
     syncthing = {
       enable = true;
       user = "iperez";
@@ -138,7 +96,6 @@
     latitude = 0;
     longitude = 0;
   };
-  hardware.bluetooth.enable = true;
 
   security = {
     polkit.enable = true;
@@ -165,6 +122,14 @@
       enable = true;
       xwayland.enable = true;
     };
+  };
+
+  environment.sessionVariables = {
+    WLR_NO_HARDWARE_CURSORS = "0";
+    WLR_DRM_DEVICES = "/dev/dri/card0:/dev/dri/card1";
+    __GLX_VENDOR_LIBRARY_NAME = "nvidia";
+    GBM_BACKEND = "nvidia-drm";
+    LIBVA_DRIVER_NAME = "nvidia";
   };
 
   system.stateVersion = "25.11";

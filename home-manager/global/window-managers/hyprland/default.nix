@@ -53,12 +53,6 @@ in
         "GDK_SCALE,1"
         "GDK_DPI_SCALE,0.8"
         "QT_AUTO_SCREEN_SCALE_FACTOR,1"
-        # NVIDIA
-        "WLR_NO_HARDWARE_CURSORS,0"
-        "WLR_DRM_DEVICES,/dev/dri/card0:/dev/dri/card1"
-        "__GLX_VENDOR_LIBRARY_NAME,nvidia"
-        "GBM_BACKEND,nvidia-drm"
-        "LIBVA_DRIVER_NAME,nvidia"
       ];
 
       ecosystem = {

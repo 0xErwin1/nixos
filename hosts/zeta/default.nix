@@ -5,6 +5,8 @@
     ../globals/wireguard/local.nix
     ../globals/wireguard
     ../globals
+    ../globals/bluetooth.nix
+    ../globals/pipewire.nix
     ./x11.nix
     ./cpu.nix
   ];
@@ -19,18 +21,6 @@
 
   services = {
     fprintd.enable = true;
-    pipewire = {
-      enable = true;
-      alsa = {
-        enable = true;
-        support32Bit = true;
-      };
-      pulse.enable = true;
-      jack.enable = true;
-      wireplumber.enable = true;
-    };
-
-    blueman.enable = true;
     resolved.enable = true;
     fwupd.enable = true;
     openssh.enable = true;
@@ -64,6 +54,11 @@
   environment.systemPackages = with pkgs; [
     cloudflared
   ];
+
+  programs.hyprland = {
+    enable = true;
+    xwayland.enable = true;
+  };
 
   system.stateVersion = "25.11";
 }
