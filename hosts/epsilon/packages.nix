@@ -5,6 +5,7 @@
   environment.systemPackages = with pkgs; [
     wget
     mesa
+    mesa-demos
     libglvnd
     libGL
     libGLX
