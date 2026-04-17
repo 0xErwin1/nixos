@@ -4,10 +4,12 @@
     ../global/browser.nix
     ../global/terminal.nix
     ../global
+    ../global/git.nix
     ../global/xdg.nix
     ../global/zed
     ../global/font.nix
     ../global/window-managers/hyprland
+    ../global/window-managers/niri
     #../global/window-managers/leftwm
     ../global/audio.nix
     ../global/themes.nix
@@ -20,6 +22,7 @@
     #../global/x11
     #./x11.nix
     #./monitor.nix
+    ./kanshi.nix
     ./packages.nix
   ];
 
@@ -35,5 +38,15 @@
 
   programs = {
     home-manager.enable = true;
+  };
+
+  services = {
+    syncthing = {
+      enable = true;
+      extraOptions = [
+        "--config=/home/iperez/.config/syncthing"
+        "--data=/home/iperez"
+      ];
+    };
   };
 }

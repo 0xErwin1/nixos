@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+workspaces="$(niri msg --json workspaces 2>/dev/null || printf '[]')"
+windows="$(niri msg --json windows 2>/dev/null || printf '[]')"
+
+jq -nMc --argjson workspaces "$workspaces" --argjson windows "$windows" '
+  ([ $workspaces[] | select(.is_focused) ] | first) as $focusedWorkspace
+  | if $focusedWorkspace == null then
+      { windows: 0, hasFullScreen: false }
+    else
+      {
+        windows: ($windows | map(select(.workspace_id == $focusedWorkspace.id)) | length),
+        hasFullScreen: false
+      }
+    end
+'

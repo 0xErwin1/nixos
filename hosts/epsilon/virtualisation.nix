@@ -9,7 +9,10 @@
     podman-tui
     dive
     docker-compose
+    dnsmasq
+    virtiofsd
   ];
+  networking.firewall.trustedInterfaces = [ "virbr0" ];
   networking.nftables.enable = true;
 
   programs = {
@@ -33,10 +36,14 @@
       dockerCompat = true;
       defaultNetwork.settings.dns_enabled = true;
     };
-    libvirtd.enable = true;
+    libvirtd = {
+      enable = true;
+      qemu.vhostUserPackages = [ pkgs.virtiofsd ];
+    };
     waydroid = {
       enable = true;
     };
+
   };
 
   users.users.iperez.extraGroups = [ "libvirtd" ];

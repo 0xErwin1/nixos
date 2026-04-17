@@ -30,12 +30,13 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    engramFlake = {
-      url = "github:0xErwin1/engram";
-    };
-
     dbflux = {
       url = "github:0xErwin1/dbflux/dev";
+    };
+
+    niri-flake = {
+      url = "github:sodiboo/niri-flake";
+      inputs.nixpkgs.follows = "nixpkgs";
     };
   };
 
@@ -52,6 +53,7 @@
       overlays = {
         default = final: prev: {
           helium = final.callPackage "${self}/pkgs/helium" { };
+          engram = final.callPackage "${self}/pkgs/engram" { };
         };
       };
 

@@ -31,6 +31,7 @@
   };
 
   services = {
+    seatd.enable = true;
     xserver = {
       enable = true;
       xkb = {
@@ -69,13 +70,6 @@
     };
     gnome.gnome-keyring.enable = true;
     ratbagd.enable = true;
-    syncthing = {
-      enable = true;
-      user = "iperez";
-      dataDir = "/home/iperez";
-      configDir = "/home/iperez/.config/syncthing";
-      openDefaultPorts = true;
-    };
   };
   systemd.services."NetworkManager-wait-online".enable = false;
 
@@ -86,8 +80,14 @@
       extraPortals = with pkgs; [
         xdg-desktop-portal-hyprland
         xdg-desktop-portal-gtk
+        zenity
       ];
-      config.common.default = "hyprland";
+      config.common = {
+        default = [
+          "hyprland"
+        ];
+        "org.freedesktop.impl.portal.FileChooser" = [ "gtk" ];
+      };
     };
   };
 
@@ -122,11 +122,24 @@
       enable = true;
       xwayland.enable = true;
     };
+    niri = {
+      enable = true;
+    };
   };
+
+  environment.systemPackages = with pkgs; [
+    xwayland-satellite
+    swaylock
+    swaybg
+    swayidle
+    kanshi
+    mako
+    fuzzel
+  ];
 
   environment.sessionVariables = {
     WLR_NO_HARDWARE_CURSORS = "0";
-    WLR_DRM_DEVICES = "/dev/dri/card0:/dev/dri/card1";
+    WLR_DRM_DEVICES = "/dev/dri/card0";
     __GLX_VENDOR_LIBRARY_NAME = "nvidia";
     GBM_BACKEND = "nvidia-drm";
     LIBVA_DRIVER_NAME = "nvidia";

@@ -1,5 +1,11 @@
 { pkgs, ... }:
 {
+  environment.systemPackages = with pkgs; [
+    pulseaudioFull
+    pulsemixer
+    easyeffects
+  ];
+
   services.pipewire = {
     enable = true;
     alsa = {

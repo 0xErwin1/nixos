@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+emit() {
+  local focusedOutput workspaces windows
+
+  focusedOutput="$(niri msg --json focused-output 2>/dev/null | jq -r '.name // empty')"
+  workspaces="$(niri msg --json workspaces 2>/dev/null || printf '[]')"
+  windows="$(niri msg --json windows 2>/dev/null || printf '[]')"
+
+  jq -nMc \
+    --arg focusedOutput "$focusedOutput" \
+    --argjson workspaces "$workspaces" \
+    --argjson windows "$windows" '
+      ($workspaces
+        | map(select(.output == $focusedOutput))
+        | map({ key: (.idx | tostring), value: (.id | tostring) })
+        | from_entries) as $idxToWorkspaceId
+      |
+      (reduce $windows[] as $w ({}; .[($w.workspace_id | tostring)] = ((.[($w.workspace_id | tostring)] // 0) + 1))) as $windowCounts
+      |
+      [ range(1; 11) as $idx
+        | ($idxToWorkspaceId[($idx | tostring)] // null) as $workspaceId
+        | {
+            id: $idx,
+            windows: (if $workspaceId == null then 0 else ($windowCounts[$workspaceId] // 0) end)
+          }
+      ]'
+}
+
+emit
+
+niri msg --json event-stream 2>/dev/null | while read -r _; do
+  emit
+done

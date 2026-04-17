@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+emit() {
+  niri msg --json workspaces 2>/dev/null | jq -c '
+    ([.[] | select(.is_focused)] | first) as $ws
+    | if $ws == null then { id: 1 } else { id: $ws.idx } end
+  '
+}
+
+emit
+
+niri msg --json event-stream 2>/dev/null | while read -r _; do
+  emit
+done

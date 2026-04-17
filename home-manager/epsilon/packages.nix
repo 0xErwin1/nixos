@@ -4,5 +4,6 @@
     code-cursor
     discord
     mono
+    telegram-desktop
   ];
 }

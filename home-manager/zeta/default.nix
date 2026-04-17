@@ -43,4 +43,14 @@
   programs = {
     home-manager.enable = true;
   };
+
+  services = {
+    syncthing = {
+      enable = true;
+      extraOptions = [
+        "--config=/home/iperez/.config/syncthing"
+        "--data=/home/iperez"
+      ];
+    };
+  };
 }

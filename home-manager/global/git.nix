@@ -1,20 +1,14 @@
+{ pkgs, ... }:
 {
+  home.packages = with pkgs; [
+    gh
+  ];
   programs = {
+    gh-dash.enable = true;
     git = {
       enable = true;
       includes = [
-        {
-          path = "~/dev/work/Houlak/.gitconfig";
-          condition = "gitdir:~/dev/work/Houlak/";
-        }
-        {
-          path = "~/dev/personal/.gitconfig";
-          condition = "gitdir:~/dev/personal/";
-        }
-        {
-          path = "~/dev/personal/.gitconfig";
-          condition = "gitdir:~/.config/home-manager/";
-        }
+
       ];
       settings = {
         user = {

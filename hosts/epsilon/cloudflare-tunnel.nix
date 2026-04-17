@@ -1,5 +1,10 @@
-{ ... }:
+{ pkgs, ... }:
 {
+
+  environment.systemPackages = [ pkgs.cloudflare-warp ];
+  systemd.packages = [ pkgs.cloudflare-warp ];
+  systemd.services.warp-svc.enable = true;
+
   services.cloudflared = {
     enable = true;
     tunnels = {
