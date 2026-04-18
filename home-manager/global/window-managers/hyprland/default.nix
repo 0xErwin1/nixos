@@ -49,6 +49,8 @@ in
         "XDG_CURRENT_DESKTOP,Hyprland"
         "XDG_SESSION_DESKTOP,Hyprland"
         "XDG_SESSION_TYPE,wayland"
+        "NIXOS_OZONE_WL,1"
+        "ELECTRON_OZONE_PLATFORM_HINT,auto"
         "env,AQ_DRM_DEVICES,/dev/dri/card1:/dev/dri/card2"
         # Scaling
         "GDK_SCALE,1"

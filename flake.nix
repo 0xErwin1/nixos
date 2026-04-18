@@ -38,6 +38,11 @@
       url = "github:sodiboo/niri-flake";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    claude-desktop = {
+      url = "github:aaddrick/claude-desktop-debian";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs =
@@ -51,10 +56,13 @@
       inherit (self) outputs;
 
       overlays = {
-        default = final: prev: {
-          helium = final.callPackage "${self}/pkgs/helium" { };
-          engram = final.callPackage "${self}/pkgs/engram" { };
-        };
+        default = final: prev:
+          (inputs.claude-desktop.overlays.default final prev)
+          // {
+            helium = final.callPackage "${self}/pkgs/helium" { };
+            engram = final.callPackage "${self}/pkgs/engram" { };
+            tuicr = final.callPackage "${self}/pkgs/tuicr" { };
+          };
       };
 
       pkgsEpsilon = import nixpkgs {

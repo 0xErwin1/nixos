@@ -45,5 +45,10 @@
     openfortivpn
     openssl
     opencode-desktop
+    #claude-desktop
+
+    pi-coding-agent
+
+    tuicr
   ];
 }
