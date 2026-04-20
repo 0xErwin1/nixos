@@ -105,7 +105,7 @@
       binds = {
         "Mod+Return".action.spawn = "alacritty";
         "Mod+E".action.spawn = "pcmanfm";
-        "Mod+B".action.spawn = "helium";
+        "Mod+B".action.spawn = "brave-origin-nightly";
         "Mod+Shift+B".action.spawn = "firefox";
 
         "Mod+M".action.spawn = "fuzzel";

@@ -28,7 +28,8 @@ let
     + "Gcr-prompter"
     + "Steam";
 
-  peronsalBrowser = "firefox-nightly" + "floorp" + "LibreWolf" + "librewolf" + "helium";
+  peronsalBrowser =
+    "firefox-nightly" + "floorp" + "LibreWolf" + "librewolf" + "helium" + "brave-origin-nightly";
 
   development = "";
 

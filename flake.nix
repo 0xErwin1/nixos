@@ -59,6 +59,7 @@
         default = final: prev:
           (inputs.claude-desktop.overlays.default final prev)
           // {
+            brave-origin-nightly = final.callPackage "${self}/pkgs/brave-origin-nightly" { };
             helium = final.callPackage "${self}/pkgs/helium" { };
             engram = final.callPackage "${self}/pkgs/engram" { };
             tuicr = final.callPackage "${self}/pkgs/tuicr" { };

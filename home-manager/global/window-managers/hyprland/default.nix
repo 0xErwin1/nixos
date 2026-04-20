@@ -179,7 +179,7 @@ in
       "$fileManager" = "pcmanfm";
       "$menu" = "wofi --show drun";
       "$menuWindow" = "wofi --show window";
-      "$browser" = "helium";
+      "$browser" = "brave-origin-nightly";
       "$workBrowser" = "firefox";
       "$screenshot" =
         "hyprshot -m region --raw | satty --filename - --output-filename \$HOME/Pictures/Screenshots/screenshot-\$(date +'%Y-%m-%d_%H-%M-%S').png --early-exit --actions-on-enter save-to-clipboard --save-after-copy --copy-command wl-copy";
