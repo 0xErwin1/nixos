@@ -43,6 +43,7 @@
       url = "github:aaddrick/claude-desktop-debian";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
   };
 
   outputs =
@@ -62,6 +63,7 @@
             brave-origin-nightly = final.callPackage "${self}/pkgs/brave-origin-nightly" { };
             helium = final.callPackage "${self}/pkgs/helium" { };
             engram = final.callPackage "${self}/pkgs/engram" { };
+            opencode = final.callPackage "${self}/pkgs/opencode" { };
             tuicr = final.callPackage "${self}/pkgs/tuicr" { };
           };
       };

@@ -1,9 +1,12 @@
-{ pkgs, inputs, ... }:
+{ pkgs, ... }:
 {
   programs = {
     codex.enable = true;
     claude-code.enable = true;
-    opencode.enable = true;
+    opencode = {
+      enable = true;
+      package = pkgs.opencode;
+    };
     uv.enable = true;
     go.enable = true;
     awscli = {
@@ -44,8 +47,7 @@
     openvpn
     openfortivpn
     openssl
-    opencode-desktop
-    #claude-desktop
+    claude-desktop
 
     pi-coding-agent
 
