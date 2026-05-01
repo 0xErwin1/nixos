@@ -1,7 +1,6 @@
 { pkgs, ... }:
 {
   environment.systemPackages = with pkgs; [
-    pulseaudioFull
     pulsemixer
     easyeffects
   ];
@@ -24,27 +23,25 @@
     ];
     wireplumber = {
       enable = true;
-      extraConfig."10-bluez-stability" = {
+      extraConfig."10-bluetooth" = {
         "monitor.bluez.properties" = {
-          "bluez5.enable-msbc" = true;
-          "bluez5.enable-hw-volume" = true;
-          "bluez5.roles" = [
-            "a2dp_sink"
-            "a2dp_source"
-            "hsp_hs"
-            "hsp_ag"
-            "hfp_hf"
-            "hfp_ag"
-          ];
+          # mSBC (HFP codec 2) negotiation fails with XM5 on this system,
+          # causing transport creation to fail and profile switch to abort.
+          # Force CVSD (codec 1) for reliable HFP connections.
+          "bluez5.enable-msbc" = false;
+          # Explicit native backend to skip the oFono probe that logs errors
+          # when oFono is not running.
           "bluez5.hfphsp-backend" = "native";
-          "bluez5.enable-sbc-xq" = true;
+          # Without an explicit profile, the device idles to "off" after no audio.
+          # When autoswitch tries to switch to HFP it looks for the current
+          # non-headset profile as fallback — if profile is "off" it aborts with
+          # "Could not find valid non-headset profile, not switching".
+          # Keeping a2dp-sink active ensures the autoswitch always has a valid
+          # profile to return to after a call.
+          "bluez5.profile" = "a2dp-sink";
         };
-
         "wireplumber.settings" = {
           "bluetooth.autoswitch-to-headset-profile" = true;
-          "bluetooth.use-persistent-storage" = true;
-          "device.restore-profile" = true;
-          "device.restore-routes" = true;
         };
       };
     };

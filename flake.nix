@@ -9,7 +9,9 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    nixvim.url = "github:0xErwin1/nixvim";
+    nixvim = {
+      url = "github:0xErwin1/nixvim";
+    };
 
     rofiAyuDarkTheme = {
       url = "github:regolith-linux/regolith-styles";
@@ -65,6 +67,7 @@
             engram = final.callPackage "${self}/pkgs/engram" { };
             opencode = final.callPackage "${self}/pkgs/opencode" { };
             tuicr = final.callPackage "${self}/pkgs/tuicr" { };
+            codex-desktop = final.callPackage "${self}/pkgs/codex-desktop" { };
           };
       };
 

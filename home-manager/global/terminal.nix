@@ -110,7 +110,7 @@
       };
       font = {
         name = "JetBrains Mono Nerd Font";
-        size = 13;
+        size = 14;
       };
       extraConfig = ''
         map shift+enter send_text all \x1b\r

@@ -13,7 +13,6 @@
     xclip
     xinput
     xmodmap
-    qimgv
     thinkfan
     ripgrep
     piper

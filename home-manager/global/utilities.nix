@@ -1,4 +1,4 @@
-{ pkgs, ... }:
+{ pkgs, lib, ... }:
 {
   programs = {
     codex.enable = true;
@@ -23,6 +23,16 @@
   };
 
   home.packages = with pkgs; [
+    (pkgs.symlinkJoin {
+      name = "warp-terminal";
+      paths = [ pkgs.warp-terminal ];
+      nativeBuildInputs = [ pkgs.makeWrapper ];
+      postBuild = ''
+        wrapProgram $out/bin/warp-terminal \
+          --prefix LD_LIBRARY_PATH : ${lib.makeLibraryPath [ pkgs.wayland ]}
+      '';
+    })
+    calibre
     gnupg
     ncdu
     tokei
@@ -48,9 +58,12 @@
     openfortivpn
     openssl
     claude-desktop
+    codex-desktop
 
     pi-coding-agent
 
     tuicr
+
+    python3
   ];
 }

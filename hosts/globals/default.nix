@@ -13,4 +13,9 @@
     python3Packages.uv
   ];
   services.udisks2.enable = true;
+
+  # Many scripts hardcode /bin/bash; NixOS only provides /bin/sh by default.
+  system.activationScripts.binbash = ''
+    ln -sf ${pkgs.bash}/bin/bash /bin/bash
+  '';
 }

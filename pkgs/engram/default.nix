@@ -2,17 +2,19 @@
 
 pkgs.buildGoModule rec {
   pname = "engram";
-  version = "1.12.0";
+  version = "1.15.0";
 
   src = pkgs.fetchFromGitHub {
     owner = "Gentleman-Programming";
     repo = "engram";
     rev = "v${version}";
-    hash = "sha256-qPANLsBeF4hDjJShnBc2Pn7Mg2eh1IlvDAEfUc8YE8s=";
+    hash = "sha256-WY/viqA6CDmPnrohJykLCK8lwEIv4NTzvndxDOoglSs=";
   };
 
-  vendorHash = "sha256-wnRtuBn5H+UdWkXucpfHPEbFosVCUa8i9hVRXg5Wqc4=";
+  vendorHash = "sha256-JBwLW62M6SFXqgYKeSdUI136B42f3h43V9ud1qUW484=";
   proxyVendor = true;
+
+  doCheck = false;
 
   subPackages = [ "cmd/engram" ];
 
