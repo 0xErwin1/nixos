@@ -67,7 +67,6 @@
             engram = final.callPackage "${self}/pkgs/engram" { };
             opencode = final.callPackage "${self}/pkgs/opencode" { };
             tuicr = final.callPackage "${self}/pkgs/tuicr" { };
-            codex-desktop = final.callPackage "${self}/pkgs/codex-desktop" { };
           };
       };
 

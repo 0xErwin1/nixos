@@ -58,7 +58,6 @@
     openfortivpn
     openssl
     claude-desktop
-    codex-desktop
 
     pi-coding-agent
 
