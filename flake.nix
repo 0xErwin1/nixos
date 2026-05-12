@@ -36,11 +36,6 @@
       url = "github:0xErwin1/dbflux";
     };
 
-    niri-flake = {
-      url = "github:sodiboo/niri-flake";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-
     claude-desktop = {
       url = "github:aaddrick/claude-desktop-debian";
       inputs.nixpkgs.follows = "nixpkgs";

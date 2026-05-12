@@ -9,7 +9,6 @@
     ../global/zed
     ../global/font.nix
     ../global/window-managers/hyprland
-    ../global/window-managers/niri
     #../global/window-managers/leftwm
     ../global/audio.nix
     ../global/themes.nix
