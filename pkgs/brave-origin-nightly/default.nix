@@ -20,14 +20,14 @@ let
     ;
 
   pname = "brave-origin-nightly";
-  version = "1.91.125";
+  version = "1.92.41";
 
   commandLineArgs = "--ozone-platform=wayland --disable-features=OutdatedBuildDetector,Vulkan";
 
   sources = {
     x86_64-linux = {
       target = "amd64";
-      hash = "sha256-R+tejAUIj+IX5wAYKQDfm+Is0v/UTUKfqVPZRzlmkMM=";
+      hash = "sha256-booh3shEAjC8ZmRQNYRbCHNHrDI8oCInD6+DKquuXP8=";
     };
 
     aarch64-linux = {
@@ -175,7 +175,7 @@ stdenv.mkDerivation {
 
     for size in 16 24 32 48 64 128 256; do
       mkdir -p "$out/share/icons/hicolor/''${size}x''${size}/apps"
-      ln -s "$out/opt/brave.com/${pname}/product_logo_''${size}.png" \
+      ln -s "$out/opt/brave.com/${pname}/product_logo_''${size}_nightly.png" \
         "$out/share/icons/hicolor/''${size}x''${size}/apps/${pname}.png"
     done
 

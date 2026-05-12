@@ -2,7 +2,7 @@
 {
   home.packages = with pkgs; [
     dbeaver-bin
-    inputs.dbflux.packages.${pkgs.system}.default
+    dbflux
     aws-sso-cli
     awscli2
     ssm-session-manager-plugin

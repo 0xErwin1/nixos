@@ -2,7 +2,7 @@
 
 pkgs.buildGoModule rec {
   pname = "engram";
-  version = "1.15.0";
+  version = "1.15.9";
 
   src = pkgs.fetchFromGitHub {
     owner = "Gentleman-Programming";

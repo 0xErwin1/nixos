@@ -33,7 +33,7 @@
     };
 
     dbflux = {
-      url = "github:0xErwin1/dbflux/dev";
+      url = "github:0xErwin1/dbflux";
     };
 
     niri-flake = {
@@ -59,8 +59,10 @@
       inherit (self) outputs;
 
       overlays = {
-        default = final: prev:
+        default =
+          final: prev:
           (inputs.claude-desktop.overlays.default final prev)
+          // (inputs.dbflux.overlays.default final prev)
           // {
             brave-origin-nightly = final.callPackage "${self}/pkgs/brave-origin-nightly" { };
             helium = final.callPackage "${self}/pkgs/helium" { };
