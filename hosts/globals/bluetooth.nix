@@ -1,13 +1,6 @@
 { pkgs, lib, ... }:
 {
-  hardware.bluetooth = {
-    enable = true;
-    settings = {
-      General = {
-        Experimental = "true";
-      };
-    };
-  };
+  hardware.bluetooth.enable = true;
   services.blueman.enable = true;
 
   # NixOS generates a drop-in override for blueman-applet that adds ExecStart=
