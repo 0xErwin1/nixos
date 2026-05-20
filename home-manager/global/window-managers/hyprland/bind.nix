@@ -85,6 +85,8 @@ let
 
     "$mod, P, exec, $screenshot"
     "$mod Control, L, exec, hyprlock"
+
+    "$mod ALT, B, exec, bt-menu"
   ];
 
   bindm = mouseBind;

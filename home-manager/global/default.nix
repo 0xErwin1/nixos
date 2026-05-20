@@ -7,5 +7,6 @@
     ./direnv.nix
     ./zathura.nix
     ./utilities.nix
+    ./scripts
   ];
 }
