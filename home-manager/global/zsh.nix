@@ -102,10 +102,7 @@ in
           "direnv"
           "fnm"
           "pyenv"
-          "jenv"
           "node"
-          "sdk"
-          "rust"
         ];
       };
       shellAliases = {
