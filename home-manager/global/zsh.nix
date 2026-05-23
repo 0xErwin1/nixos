@@ -89,6 +89,31 @@ in
           tmux kill-pane -t "$TML_AI_PANE" 2>/dev/null
           tmux kill-pane -t "$TML_BOTTOM_PANE" 2>/dev/null
         }
+
+        __dev_project_cd() {
+          local base="$1"
+          local target
+
+          target="$(
+            find "$base" -mindepth 2 -maxdepth 3 -name .git -print 2>/dev/null \
+              | sed 's#/.git$##' \
+              | sort -u \
+              | fzf --preview 'eza -T -a --icons -L1 {}'
+          )" || return
+
+          [[ -n "$target" ]] && cd "$target"
+        }
+
+        unalias fp 2>/dev/null
+        unalias wp 2>/dev/null
+
+        function fp {
+          __dev_project_cd "$PERSONAL_DIR"
+        }
+
+        function wp {
+          __dev_project_cd "$HOME/dev/work"
+        }
       '';
       oh-my-zsh = {
         enable = true;
@@ -128,9 +153,7 @@ in
         down = "docker compose down";
         downt = "docker compose -f docker-compose.test.yml down";
 
-        fp = "cd $(find ~/dev/personal -mindepth 2 -maxdepth 2 -type d | fzf --preview 'eza -T -a --icons -L1 {}')";
         pl = "cd $(find ~/dev/personal -mindepth 1 -maxdepth 1 -type d | fzf --preview 'eza -T -a --icons -L1 {}')";
-        wp = "cd $(find ~/dev/work -mindepth 2 -maxdepth 2 -type d | fzf --preview 'eza -T -a --icons -L1 {}')";
         wl = "cd $(find ~/dev/work -mindepth 1 -maxdepth 1 -type d | fzf --preview 'eza -T -a --icons -L1 {}')";
         ssh_fzf = ''ssh "$(awk "/^Host / {print \$2}" ~/.ssh/config | fzf)"'';
         docker_connect = ''docker ps >/dev/null 2>&1 || echo "Docker is not running" && docker exec -it $(docker ps --format "{{.Names}}" | fzf) /bin/sh'';
