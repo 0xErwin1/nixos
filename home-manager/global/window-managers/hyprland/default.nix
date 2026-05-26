@@ -30,6 +30,18 @@ in
     recursive = true;
   };
 
+  # xdg-desktop-portal-hyprland config. On the hybrid Intel + NVIDIA setup the
+  # default DMA-BUF screencast path produces an empty PipeWire stream: the
+  # picker shows, the user selects a source, but no frames are ever delivered
+  # to consumers (Slack, Firefox, Meet, ...). Forcing SHM transport bypasses
+  # the broken DMA-BUF import on the NVIDIA secondary GPU at the cost of some
+  # CPU copies, which is acceptable for screen sharing.
+  xdg.configFile."hypr/xdph.conf".text = ''
+    screencopy {
+        force_shm = true
+    }
+  '';
+
   wayland.windowManager.hyprland = {
     enable = true;
     xwayland.enable = true;
