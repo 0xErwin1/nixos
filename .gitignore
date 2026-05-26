@@ -3,3 +3,5 @@ result
 thoughts/
 .logs
 .claude
+# Local Pi runtime state
+.agent/

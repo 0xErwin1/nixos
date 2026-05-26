@@ -133,7 +133,6 @@ in
       };
 
       dwindle = {
-        pseudotile = false;
         preserve_split = true;
       };
 
@@ -144,7 +143,14 @@ in
       misc = {
         force_default_wallpaper = 1;
         disable_hyprland_logo = false;
-        vfr = false;
+      };
+
+      # Hybrid Intel (primary) + NVIDIA setup: the external monitor is driven by
+      # the NVIDIA GPU. Hardware cursors stutter there because the cursor buffer
+      # is re-imported into the secondary GPU's KMS on every move. Software
+      # cursors are composited by Hyprland and stay smooth on that output.
+      cursor = {
+        no_hardware_cursors = true;
       };
 
       # Input/gestures

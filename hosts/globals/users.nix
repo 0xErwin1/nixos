@@ -9,6 +9,7 @@
       "networkmanager"
       "wheel"
       "audio"
+      "dialout"
     ];
     shell = pkgs.zsh;
   };

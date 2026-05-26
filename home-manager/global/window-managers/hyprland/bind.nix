@@ -73,7 +73,7 @@ let
     "$mod, F, togglefloating"
 
     "$mod, Z, pseudo"
-    "$mod, Tab, togglesplit"
+    "$mod, Tab, layoutmsg, togglesplit"
     "$mod, Space, fullscreen, 1"
   ];
 
