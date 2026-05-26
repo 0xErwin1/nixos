@@ -114,6 +114,21 @@ in
         function wp {
           __dev_project_cd "$HOME/dev/work"
         }
+
+        # Run a command inside the CPU-capped build.slice (see cpu-limit.nix).
+        # Use for heavy builds that would otherwise saturate the CPU:
+        #   cap cargo build
+        #   cap nix build .#foo
+        # The slice limits total CPU usage across all processes in it, so
+        # multiple parallel `cap` invocations still share the same budget.
+        function cap {
+          if [ $# -eq 0 ]; then
+            echo "usage: cap <command> [args...]" >&2
+            return 64
+          fi
+          systemd-run --user --quiet --collect --scope \
+            --slice=build.slice --same-dir -- "$@"
+        }
       '';
       oh-my-zsh = {
         enable = true;

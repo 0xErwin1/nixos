@@ -7,6 +7,7 @@
     ./direnv.nix
     ./zathura.nix
     ./utilities.nix
+    ./cpu-limit.nix
     ./scripts
   ];
 }
