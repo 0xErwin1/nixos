@@ -4,6 +4,5 @@
     code-cursor
     slack
     teams-for-linux
-    zoom
   ];
 }

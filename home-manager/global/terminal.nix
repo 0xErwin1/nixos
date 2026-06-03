@@ -36,7 +36,7 @@
             {
               key = "Return";
               mods = "Shift";
-              chars = "\\u001b[13;2u";
+              chars = builtins.fromJSON ''"\u001b\u000d"'';
             }
           ];
         };

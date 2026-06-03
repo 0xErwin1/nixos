@@ -16,6 +16,14 @@
     delta.enable = true;
     fd.enable = true;
     fastfetch.enable = true;
+    nh = {
+      enable = true;
+      flake = "/home/iperez/.config/home-manager";
+      clean = {
+        enable = true;
+        extraArgs = "--keep-since 7d --keep 5";
+      };
+    };
   };
 
   services.udiskie = {
@@ -57,7 +65,7 @@
     openvpn
     openfortivpn
     openssl
-    claude-desktop
+    #claude-desktop
 
     pi-coding-agent
 

@@ -61,13 +61,6 @@
     libinput.enable = true;
     displayManager.ly.enable = true;
     geoclue2.enable = true;
-    redshift = {
-      enable = true;
-      temperature = {
-        day = 4000;
-        night = 4000;
-      };
-    };
     gnome.gnome-keyring.enable = true;
     ratbagd.enable = true;
   };

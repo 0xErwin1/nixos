@@ -113,7 +113,10 @@
     enable = true;
     memoryPercent = 20;
     algorithm = "zstd";
+    priority = 100;
   };
+
+  powerManagement.cpuFreqGovernor = "performance";
 
   hardware = {
     enableRedistributableFirmware = true;

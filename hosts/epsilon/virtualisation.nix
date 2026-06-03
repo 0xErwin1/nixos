@@ -40,10 +40,6 @@
       enable = true;
       qemu.vhostUserPackages = [ pkgs.virtiofsd ];
     };
-    waydroid = {
-      enable = true;
-    };
-
   };
 
   users.users.iperez.extraGroups = [ "libvirtd" ];

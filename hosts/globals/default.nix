@@ -7,6 +7,7 @@
   ];
   # Disabled for performance - run 'nix-store --optimise' manually when needed
   nix.settings.auto-optimise-store = false;
+  nix.settings.experimental-features = [ "nix-command" "flakes" ];
 
   environment.systemPackages = with pkgs; [
     usbutils
