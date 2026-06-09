@@ -1,7 +1,7 @@
 { pkgs, ... }:
 {
   home.packages = with pkgs; [
-    code-cursor
+    #code-cursor
     discord
     mono
     telegram-desktop

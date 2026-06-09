@@ -33,7 +33,7 @@
     };
 
     dbflux = {
-      url = "github:0xErwin1/dbflux";
+      url = "github:0xErwin1/dbflux/nightly";
     };
 
     claude-desktop = {
@@ -59,7 +59,9 @@
           (inputs.claude-desktop.overlays.default final prev)
           // (inputs.dbflux.overlays.default final prev)
           // {
+            dbflux-nightly = inputs.dbflux.packages.${final.stdenv.hostPlatform.system}.dbflux-nightly;
             brave-origin-nightly = final.callPackage "${self}/pkgs/brave-origin-nightly" { };
+            claude-code-latest = final.callPackage "${self}/pkgs/claude-code-latest" { };
             helium = final.callPackage "${self}/pkgs/helium" { };
             engram = final.callPackage "${self}/pkgs/engram" { };
             opencode = final.callPackage "${self}/pkgs/opencode" { };
