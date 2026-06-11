@@ -34,6 +34,7 @@
   };
 
   home.packages = with pkgs; [
+    ccstatusline
     (pkgs.symlinkJoin {
       name = "warp-terminal";
       paths = [ pkgs.warp-terminal ];
@@ -68,7 +69,7 @@
     openvpn
     openfortivpn
     openssl
-    #claude-desktop
+    claude-desktop
 
     pi-coding-agent
 

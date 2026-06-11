@@ -62,6 +62,7 @@
             dbflux-nightly = inputs.dbflux.packages.${final.stdenv.hostPlatform.system}.dbflux-nightly;
             brave-origin-nightly = final.callPackage "${self}/pkgs/brave-origin-nightly" { };
             claude-code-latest = final.callPackage "${self}/pkgs/claude-code-latest" { };
+            ccstatusline = final.callPackage "${self}/pkgs/ccstatusline" { };
             helium = final.callPackage "${self}/pkgs/helium" { };
             engram = final.callPackage "${self}/pkgs/engram" { };
             opencode = final.callPackage "${self}/pkgs/opencode" { };

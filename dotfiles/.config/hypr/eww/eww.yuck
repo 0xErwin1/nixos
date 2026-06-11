@@ -4,23 +4,21 @@
 
 (defvar bright false)
 (defvar volum false)
-(deflisten wmstate "leftwm state")
 
-(defpoll notificationsIsPaused :interval "1s" "dunstctl is-paused")
+(defpoll notificationsIsPaused :interval "3s" "dunstctl is-paused")
 
-(defpoll wifiIcon :interval "1s" "~/.config/eww/scripts/wifi --icon")
-(defpoll wifiName :interval "1s" "~/.config/eww/scripts/wifi --name")
+(defpoll wifiIcon :interval "5s" "~/.config/eww/scripts/wifi --icon")
+(defpoll wifiName :interval "5s" "~/.config/eww/scripts/wifi --name")
 
-(defpoll batteryIcon :interval "1s" "~/.config/eww/scripts/battery --icon")
-(defpoll batteryPercent :interval "1s" "~/.config/eww/scripts/battery --percent")
+(defpoll batteryIcon :interval "10s" "~/.config/eww/scripts/battery --icon")
+(defpoll batteryPercent :interval "10s" "~/.config/eww/scripts/battery --percent")
 (defpoll volumeIcon :interval "1s" "~/.config/eww/scripts/volume --icon")
 (defpoll volumePercent :interval "1s" "~/.config/eww/scripts/volume --percent")
-(defpoll microphoneIcon :interval "1s" "~/.config/eww/scripts/microphone --icon")
-(defpoll microphoneStatus :interval "1s" "~/.config/eww/scripts/microphone --status")
+(defpoll microphoneIcon :interval "2s" "~/.config/eww/scripts/microphone --icon")
+(defpoll microphoneStatus :interval "2s" "~/.config/eww/scripts/microphone --status")
 (defpoll brightnessPercent :interval "1s" "~/.config/eww/scripts/brightness --percent")
 (defpoll brightnessIcon :interval "1s" "~/.config/eww/scripts/brightness --icon")
-(defpoll hour :interval "1s" "date '+%H'")
-(defpoll min :interval "1s" "date '+%M'")
+(defpoll time :interval "5s" "date '+%H:%M'")
 
 (defpoll dayName :interval "10h" "date '+%A'")
 (defpoll month :interval "10s" "date '+%b'")
@@ -109,7 +107,7 @@
 (defwidget date []
   (box :orientation "h" :class "date" :halign "end" :valign "center"
     (box :orientation "h" :valign "center"
-      (label :class "time" :text "${hour}:${min} │ " :valign "center")
+      (label :class "time" :text "${time} │ " :valign "center")
       (label :class "month" :text "${month} ${day}," :valign "center")
       (label :class "year" :text "${year}" :valign "center")
     )

@@ -1,59 +1,93 @@
 {
-  xdg.mimeApps = {
-    enable = true;
-    defaultApplications = {
-      "default-web-browser" = [ "brave-origin-nightly.desktop" ];
-      "text/html" = [ "brave-origin-nightly.desktop" ];
-      "x-scheme-handler/http" = [ "brave-origin-nightly.desktop" ];
-      "x-scheme-handler/https" = [ "brave-origin-nightly.desktop" ];
-      "x-scheme-handler/about" = [ "brave-origin-nightly.desktop" ];
-      "x-scheme-handler/unknown" = [ "brave-origin-nightly.desktop" ];
-      "x-scheme-handler/chrome" = [ "brave-origin-nightly.desktop" ];
-      "application/epub" = [ "org.pwmt.zathura.desktop" ];
-      "application/pdf" = [ "org.pwmt.zathura.desktop" ];
-      "text/calendar" = [ "userapp-Thunderbird-EDTY12.desktop" ];
-      "message/rfc822" = [ "userapp-Thunderbird-4SPX12.desktop" ];
-      "x-scheme-handler/mailto" = [ "userapp-Thunderbird-4SPX12.desktop" ];
-      "x-scheme-handler/mid" = [ "userapp-Thunderbird-4SPX12.desktop" ];
-      "x-scheme-handler/webcal" = [ "userapp-Thunderbird-EDTY12.desktop" ];
-      "application/x-extension-ics" = [ "userapp-Thunderbird-EDTY12.desktop" ];
-      "x-scheme-handler/webcals" = [ "userapp-Thunderbird-EDTY12.desktop" ];
-      "inode/directory" = [ "pcmanfm.desktop" ];
-    };
+  # The regular Brave package (programs.brave) ships brave-browser.desktop and
+  # com.brave.Browser.desktop, both declaring MimeType= for web, image and xml
+  # types. Any of those types without an explicit default here would let the
+  # XDG resolver fall back to regular Brave. brave-origin-nightly is claimed
+  # explicitly for every type Brave declares, and both regular-Brave desktop
+  # files are removed as candidates for those same types.
+  xdg.mimeApps =
+    let
+      braveOrigin = [ "brave-origin-nightly.desktop" ];
+      thunderbirdMail = [ "userapp-Thunderbird-4SPX12.desktop" ];
+      thunderbirdCalendar = [ "userapp-Thunderbird-EDTY12.desktop" ];
 
-    associations = {
-      added = {
-        "x-scheme-handler/tg" = [ "org.telegram.desktop.desktop" ];
-        "x-scheme-handler/tonsite" = [ "org.telegram.desktop.desktop" ];
-        "x-scheme-handler/mailto" = [ "userapp-Thunderbird-4SPX12.desktop" ];
-        "x-scheme-handler/mid" = [ "userapp-Thunderbird-4SPX12.desktop" ];
-        "x-scheme-handler/webcal" = [ "userapp-Thunderbird-EDTY12.desktop" ];
-        "x-scheme-handler/webcals" = [ "userapp-Thunderbird-EDTY12.desktop" ];
+      regularBrave = [
+        "brave-browser.desktop"
+        "com.brave.Browser.desktop"
+      ];
+
+      # Exact MimeType= set declared by the regular Brave desktop files.
+      regularBraveTypes = [
+        "application/pdf"
+        "application/rdf+xml"
+        "application/rss+xml"
+        "application/xhtml+xml"
+        "application/xhtml_xml"
+        "application/xml"
+        "image/gif"
+        "image/jpeg"
+        "image/png"
+        "image/webp"
+        "text/html"
+        "text/xml"
+        "x-scheme-handler/http"
+        "x-scheme-handler/https"
+        "x-scheme-handler/chromium"
+      ];
+    in
+    {
+      enable = true;
+
+      defaultApplications = {
+        "default-web-browser" = braveOrigin;
+        "text/html" = braveOrigin;
+        "text/xml" = braveOrigin;
+        "application/xhtml+xml" = braveOrigin;
+        "application/xhtml_xml" = braveOrigin;
+        "application/xml" = braveOrigin;
+        "application/rdf+xml" = braveOrigin;
+        "application/rss+xml" = braveOrigin;
+        "image/gif" = braveOrigin;
+        "image/jpeg" = braveOrigin;
+        "image/png" = braveOrigin;
+        "image/webp" = braveOrigin;
+        "x-scheme-handler/http" = braveOrigin;
+        "x-scheme-handler/https" = braveOrigin;
+        "x-scheme-handler/about" = braveOrigin;
+        "x-scheme-handler/unknown" = braveOrigin;
+        "x-scheme-handler/chrome" = braveOrigin;
+        "x-scheme-handler/chromium" = braveOrigin;
+
+        "application/epub" = [ "org.pwmt.zathura.desktop" ];
+        "application/pdf" = [ "org.pwmt.zathura.desktop" ];
+
+        "text/calendar" = thunderbirdCalendar;
+        "message/rfc822" = thunderbirdMail;
+        "x-scheme-handler/mailto" = thunderbirdMail;
+        "x-scheme-handler/mid" = thunderbirdMail;
+        "x-scheme-handler/webcal" = thunderbirdCalendar;
+        "application/x-extension-ics" = thunderbirdCalendar;
+        "x-scheme-handler/webcals" = thunderbirdCalendar;
+
+        "inode/directory" = [ "pcmanfm.desktop" ];
       };
-      removed = {
-        "default-web-browser" = [ "brave.desktop" ];
-        "text/html" = [ "brave.desktop" ];
-        "image/svg+xml" = [ "brave.desktop" ];
-        "image/x-icon" = [ "brave.desktop" ];
-        "image/gif" = [ "brave.desktop" ];
-        "image/jpeg" = [ "brave.desktop" ];
-        "image/png" = [ "brave.desktop" ];
-        "image/jpg" = [ "brave.desktop" ];
-        "application/epub" = [ "brave.desktop" ];
-        "application/pdf" = [ "brave.desktop" ];
-        "application/x-extension-html" = [ "brave.desktop" ];
-        "application/x-extension-htm" = [ "brave.desktop" ];
-        "application/x-extension-xhtml" = [ "brave.desktop" ];
-        "application/x-extension-xht" = [ "brave.desktop" ];
-        "application/x-extension-xml" = [ "brave.desktop" ];
-        "application/x-extension-rss" = [ "brave.desktop" ];
-        "application/x-extension-atom" = [ "brave.desktop" ];
-        "x-scheme-handler/http" = [ "brave.desktop" ];
-        "x-scheme-handler/https" = [ "brave.desktop" ];
-        "x-scheme-handler/about" = [ "brave.desktop" ];
-        "x-scheme-handler/unknown" = [ "brave.desktop" ];
-        "x-scheme-handler/chrome" = [ "brave.desktop" ];
+
+      associations = {
+        added = {
+          "x-scheme-handler/tg" = [ "org.telegram.desktop.desktop" ];
+          "x-scheme-handler/tonsite" = [ "org.telegram.desktop.desktop" ];
+          "x-scheme-handler/mailto" = thunderbirdMail;
+          "x-scheme-handler/mid" = thunderbirdMail;
+          "x-scheme-handler/webcal" = thunderbirdCalendar;
+          "x-scheme-handler/webcals" = thunderbirdCalendar;
+        };
+
+        removed = builtins.listToAttrs (
+          map (type: {
+            name = type;
+            value = regularBrave;
+          }) regularBraveTypes
+        );
       };
     };
-  };
 }

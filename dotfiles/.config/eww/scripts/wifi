@@ -4,12 +4,12 @@ if [[ $(cat /sys/class/net/eth0/operstate) == "up" || $(cat /sys/class/net/enp*/
   DEVICE="ETHERNET"
 elif [[ $(cat /sys/class/net/w*/operstate) == "up" || $(cat /sys/class/net/w*/operstate | grep -w "up") ]]; then
   DEVICE="WIFI"
-elif [[ $(nmcli | grep "^tun") || $(cat /sys/class/net/wg*/operstate | grep -w "up") ]]; then
+elif [[ $(cat /sys/class/net/tun*/operstate 2>/dev/null | grep -w "up") || $(cat /sys/class/net/wg*/operstate 2>/dev/null | grep -w "up") ]]; then
   DEVICE="VPN"
 fi
 
 get_name() {
-  nmcli | grep "^wlp" | sed 's/\ connected\ to\ /Connected to /g' | cut -d ':' -f2
+  nmcli -t -f NAME,TYPE connection show --active 2>/dev/null | awk -F: '$2 ~ /wireless/ {print "Connected to " $1; exit}'
 }
 
 get_icon() {

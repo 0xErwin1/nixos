@@ -34,17 +34,15 @@ get_icon() {
       ;;
     2[0-9])
         echo " "
-        notify-send -u critical "Battery Low: ${PERCENTAGE}%" "Connect Charger"
-        sleep 5
+        notify-send -r 9991 -u critical "Battery Low: ${PERCENTAGE}%" "Connect Charger"
       ;;
     1[0-9])
         echo " "
-        notify-send -u critical "Battery Low: ${PERCENTAGE}%" "Connect Charger"
-        sleep 5
+        notify-send -r 9991 -u critical "Battery Low: ${PERCENTAGE}%" "Connect Charger"
       ;;
     [1-9])
         echo " "
-        notify-send -u critical "Battery Low: ${PERCENTAGE}%" "Connect Charger"
+        notify-send -r 9991 -u critical "Battery Low: ${PERCENTAGE}%" "Connect Charger"
       ;;
     *)
         echo " "
