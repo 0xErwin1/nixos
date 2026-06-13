@@ -29,6 +29,13 @@
     ];
   };
 
+  # Keep EasyEffects processing playback (the output EQ) but stop it from
+  # grabbing recording streams. On the WH-1000XM5 the headset cannot hold A2DP
+  # and HFP at once: when EasyEffects attaches to the Bluetooth microphone the
+  # call profile switch flaps and reverts to A2DP mid-call. Output processing
+  # only touches the A2DP music path, so the EQ is unaffected.
+  dconf.settings."org/gnome/easyeffects".process-all-inputs = false;
+
   home.packages = with pkgs; [
     vlc
     pavucontrol
