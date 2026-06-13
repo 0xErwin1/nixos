@@ -12,6 +12,7 @@
     ./packages.nix
     ../globals/wireguard/local.nix
     ../globals/wireguard
+    ./flatpak.nix
     ./cloudflare-tunnel.nix
   ];
 

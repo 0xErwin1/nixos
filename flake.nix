@@ -40,7 +40,8 @@
       url = "github:aaddrick/claude-desktop-debian";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-
+    
+    nix-flatpak.url = "github:gmodena/nix-flatpak";
   };
 
   outputs =
@@ -48,6 +49,7 @@
       self,
       nixpkgs,
       home-manager,
+      nix-flatpak,
       ...
     }@inputs:
     let
@@ -93,7 +95,7 @@
       nixosConfigurations = {
         epsilon = nixpkgs.lib.nixosSystem {
           specialArgs = { inherit inputs outputs wireguardLocal; };
-          modules = [ ./hosts/epsilon ];
+          modules = [ ./hosts/epsilon nix-flatpak.nixosModules.nix-flatpak ];
         };
 
         zeta = nixpkgs.lib.nixosSystem {
