@@ -8,7 +8,7 @@ pkgs.buildGoModule rec {
     owner = "Gentleman-Programming";
     repo = "engram";
     rev = "v${version}";
-    hash = "sha256-QjGTLYSeaKJwMYDC4ITZIyd++u6xLA6EsAYxTTUPZgw=";
+    hash = "sha256-qk3pnrE/2Vzn+sOHsVp+pXyqCEFVLpaecb/AbAQPds0=";
   };
 
   vendorHash = "sha256-JBwLW62M6SFXqgYKeSdUI136B42f3h43V9ud1qUW484=";

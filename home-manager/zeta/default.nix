@@ -14,6 +14,7 @@
     ../global/zathura.nix
     ../global/music.nix
     ../global/communication.nix
+    ../global/database.nix
     ../global/x11
     ./monitor.nix
     ./xorg.nix
