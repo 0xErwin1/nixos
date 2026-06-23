@@ -70,7 +70,7 @@
 
   services = {
     fwupd.enable = true;
-    thermald.enable = true;
+    thermald.enable = false;
     throttled.enable = true;
     fprintd.enable = true;
 
