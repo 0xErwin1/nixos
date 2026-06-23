@@ -44,11 +44,11 @@
         "rust-overlay": "rust-overlay"
       },
       "locked": {
-        "lastModified": 1781327528,
-        "narHash": "sha256-bbKws6Q3AZQmJRFhoX1IBfBk5Rdc58kla5CU614pji0=",
+        "lastModified": 1782138107,
+        "narHash": "sha256-CDLO6shW+ryb7jFOhulBX+9br9ZiN7kuZ0kKPJvE0Zk=",
         "owner": "0xErwin1",
         "repo": "dbflux",
-        "rev": "4b5154029f3fa266edde1b61686630d1b78e730d",
+        "rev": "e386dce11e605fe133db49fbda8dea6b9e73bdee",
         "type": "github"
       },
       "original": {
