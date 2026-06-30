@@ -62,6 +62,7 @@
     glab
 
     engram
+    codegraph
 
     pnpm
     nodejs

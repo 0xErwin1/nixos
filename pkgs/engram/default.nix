@@ -2,13 +2,13 @@
 
 pkgs.buildGoModule rec {
   pname = "engram";
-  version = "1.16.3";
+  version = "1.17.0";
 
   src = pkgs.fetchFromGitHub {
     owner = "Gentleman-Programming";
     repo = "engram";
     rev = "v${version}";
-    hash = "sha256-qk3pnrE/2Vzn+sOHsVp+pXyqCEFVLpaecb/AbAQPds0=";
+    hash = "sha256-qC/8QWmbr6of/s8YiLEYRMWBGVO+IAlvmNVVWOFaY6k=";
   };
 
   vendorHash = "sha256-JBwLW62M6SFXqgYKeSdUI136B42f3h43V9ud1qUW484=";
