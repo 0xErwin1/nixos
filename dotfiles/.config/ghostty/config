@@ -5,6 +5,9 @@ font-style = Regular
 
 # Colors
 theme = "Ayu"
+# Lighten the theme's near-black background (~#0B0E14) one tone for readability.
+# An explicit background set after `theme` overrides the theme's background.
+background = 141821
 
 # Window
 window-padding-x = 0
