@@ -6,6 +6,7 @@
     ./tmux.nix
     ./direnv.nix
     ./zathura.nix
+    ./ai.nix
     ./utilities.nix
     ./cpu-limit.nix
     ./scripts

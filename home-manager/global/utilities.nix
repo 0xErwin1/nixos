@@ -1,15 +1,6 @@
 { pkgs, lib, ... }:
 {
   programs = {
-    codex.enable = true;
-    claude-code = {
-      enable = true;
-      package = pkgs.claude-code-latest;
-    };
-    opencode = {
-      enable = true;
-      package = pkgs.opencode;
-    };
     uv.enable = true;
     go.enable = true;
     awscli = {
@@ -34,7 +25,6 @@
   };
 
   home.packages = with pkgs; [
-    ccstatusline
     (pkgs.symlinkJoin {
       name = "warp-terminal";
       paths = [ pkgs.warp-terminal ];
@@ -61,20 +51,12 @@
 
     glab
 
-    engram
-    codegraph
-
     pnpm
     nodejs
 
     openvpn
     openfortivpn
     openssl
-    claude-desktop
-
-    pi-coding-agent
-
-    tuicr
 
     python3
   ];

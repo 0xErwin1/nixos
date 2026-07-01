@@ -24,7 +24,7 @@
     # Shell
     shell-integration-features = cursor,no-sudo,title,ssh-env
 
-    keybind = shift+enter=text:\x1b\r
+    keybind = shift+enter=text:\x1b[13;2u
   '';
 
   programs = {
@@ -36,7 +36,7 @@
             {
               key = "Return";
               mods = "Shift";
-              chars = builtins.fromJSON ''"\u001b\u000d"'';
+              chars = builtins.fromJSON ''"\u001b[13;2u"'';
             }
           ];
         };
@@ -113,7 +113,7 @@
         size = 14;
       };
       extraConfig = ''
-        map shift+enter send_text all \x1b\r
+        map shift+enter send_text all \x1b[13;2u
         term xterm-256color
 
         background_opacity 0.85

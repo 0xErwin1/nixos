@@ -1,5 +1,28 @@
 { pkgs, ... }:
 let
+  agentStatusScript = pkgs.writeShellScript "tmux-agent-status" ''
+    set -uo pipefail
+    command -v tmux >/dev/null 2>&1 || exit 0
+
+    recompute_rollup() {
+      local win="$1" worst=idle s
+      while read -r s; do
+        case "$s" in
+          blocked) worst=blocked; break ;;
+          working) [ "$worst" = idle ] && worst=working ;;
+        esac
+      done < <(tmux list-panes -t "$win" -F '#{@agent_state}' 2>/dev/null)
+      tmux set -w -t "$win" @win_agent_state "$worst" 2>/dev/null || true
+    }
+
+    while IFS='|' read -r pid st vis wid; do
+      if [ "$st" = "blocked" ] && [ "$vis" = "1" ]; then
+        tmux set -p -t "$pid" @agent_state idle 2>/dev/null || true
+        recompute_rollup "$wid"
+      fi
+    done < <(tmux list-panes -a -F "#{pane_id}|#{?#{@agent_state},#{@agent_state},-}|#{&&:#{window_active},#{session_attached}}|#{window_id}" 2>/dev/null)
+  '';
+
   tmuxAyuThemeScript = pkgs.writeShellScript "tmux-ayu-theme.tmux" ''
     ayu_black="#101521"
     ayu_blue="#5CCFE6"
@@ -80,14 +103,12 @@ let
     set "@prefix_highlight_output_prefix" "  "
 
     status_widgets=$(get "@ayu_widgets")
-    time_format=$(get "@ayu_time_format" "%R")
-    date_format=$(get "@ayu_date_format" "%d.%m.%Y")
 
-    set "status-right" "#[fg=$ayu_white,bg=$ayu_black,nounderscore,noitalics]  ''${time_format}    ''${date_format} #[fg=$ayu_visual_grey,bg=$ayu_black]#[fg=$ayu_visual_grey,bg=$ayu_visual_grey]#[fg=$ayu_white, bg=$ayu_visual_grey]''${status_widgets} #[fg=$ayu_green,bg=$ayu_visual_grey,nobold,nounderscore,noitalics]#[fg=$ayu_black,bg=$ayu_green,bold] #h "
+    set "status-right" "#(${agentStatusScript})#[fg=$ayu_visual_grey,bg=$ayu_black]#[fg=$ayu_visual_grey,bg=$ayu_visual_grey]#[fg=$ayu_white, bg=$ayu_visual_grey]''${status_widgets} #[fg=$ayu_green,bg=$ayu_visual_grey,nobold,nounderscore,noitalics]#[fg=$ayu_black,bg=$ayu_green,bold] #h "
     set "status-left" "#[fg=$ayu_black,bg=$ayu_green,bold]   #S #{prefix_highlight}#[fg=$ayu_green,bg=$ayu_black,nobold,nounderscore,noitalics]"
 
-    set "window-status-format" "#[fg=$ayu_black,bg=$ayu_black,nobold,nounderscore,noitalics]#[fg=$ayu_white,bg=$ayu_black] #I  #W #[fg=$ayu_black,bg=$ayu_black,nobold,nounderscore,noitalics]"
-    set "window-status-current-format" "#[fg=$ayu_black,bg=$ayu_yellow,nobold,nounderscore,noitalics]#[fg=$ayu_black,bg=$ayu_yellow,nobold] #I  #W #[fg=$ayu_yellow,bg=$ayu_black,nobold,nounderscore,noitalics]"
+    set "window-status-format" "#[fg=$ayu_black,bg=$ayu_black,nobold,nounderscore,noitalics]#[fg=$ayu_white,bg=$ayu_black] #I  #W#{?#{==:#{@win_agent_state},blocked}, #[fg=$ayu_red]x#[fg=$ayu_white],#{?#{==:#{@win_agent_state},working}, #[fg=$ayu_yellow]o#[fg=$ayu_white],}} #[fg=$ayu_black,bg=$ayu_black,nobold,nounderscore,noitalics]"
+    set "window-status-current-format" "#[fg=$ayu_black,bg=$ayu_yellow,nobold,nounderscore,noitalics]#[fg=$ayu_black,bg=$ayu_yellow,nobold] #I  #W#{?#{==:#{@win_agent_state},blocked}, #[fg=$ayu_red]x#[fg=$ayu_black],#{?#{==:#{@win_agent_state},working}, #[fg=$ayu_blue]o#[fg=$ayu_black],}} #[fg=$ayu_yellow,bg=$ayu_black,nobold,nounderscore,noitalics]"
   '';
 
   tmuxConfig =
