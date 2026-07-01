@@ -247,7 +247,14 @@ Any action that cannot be undone with `git checkout` or by deleting a generated 
 - When recovering after compaction or session loss, restore state from the configured persistence backend before continuing.
 - Do not treat transient chat summaries as a reliable long-term source of truth when persistent storage is available.
 
-## 17) Personal documentation
+## 17) Atlas task retrieval
+
+- When retrieving Atlas tasks for planning, implementation, status, editing, or summary work, treat list/search results as discovery only unless the user explicitly asks for a lightweight list.
+- For each relevant readable task ID, call `atlas_get_task` with `detail: "full"` before reasoning from the task.
+- Also fetch useful related context when available: references, backlinks, checklists, subtasks, activity, linked documents/files/external links, and task attachment metadata via `atlas_list_task_attachments` with `workspace` and `readable_id`.
+- Task attachment metadata includes `id`, `file_name`, `content_type`, `size_bytes`, `actor`, and `created_at`.
+
+## 18) Personal documentation
 
 - Personal notes should explain the project in plain language and help the user learn from it.
 - Good personal notes may include architecture, codebase structure, important technical decisions, lessons learned, bugs encountered, fixes applied, pitfalls, and engineering best practices.

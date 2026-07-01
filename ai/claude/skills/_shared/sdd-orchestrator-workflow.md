@@ -126,9 +126,9 @@ Read this table at session start (or before first delegation), cache it for the 
 |-------|---------------|--------|
 | orchestrator | opus | Coordinates, makes decisions |
 | sdd-explore | sonnet | Reads code, structural - not architectural |
-| sdd-propose | opus | Architectural decisions |
+| sdd-propose | fable | Architectural decisions — most demanding reasoning |
 | sdd-spec | opus | Structured writing |
-| sdd-design | opus | Architecture decisions |
+| sdd-design | fable | Architecture decisions — most demanding reasoning |
 | sdd-tasks | sonnet | Mechanical breakdown |
 | sdd-apply | sonnet | Implementation |
 | sdd-apply (visual/design slice) | opus | UI/visual/design work — sonnet tends to produce weak designs |
