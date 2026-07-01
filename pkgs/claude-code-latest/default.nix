@@ -10,13 +10,13 @@ let
     ;
 
   pname = "claude-code-latest";
-  version = "2.1.195";
+  version = "2.1.197";
 
   sources = {
     x86_64-linux = {
       platform = "linux-x64";
       loader = "ld-linux-x86-64.so.2";
-      hash = "sha256-EDjbqIvfG4CUHcPjg+k7CIMlsASXMprFDaRgyHhtW+4=";
+      hash = "sha256-9U5py8ibLaYaQVcAr3/1KhR+hiUX1PGw7s92hEjPf4M=";
     };
 
     aarch64-linux = {
