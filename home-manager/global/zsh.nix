@@ -95,8 +95,9 @@ in
           local target
 
           target="$(
-            find "$base" -mindepth 2 -maxdepth 3 -name .git -print 2>/dev/null \
-              | sed 's#/.git$##' \
+            find "$base" \
+              \( -name .git -o -name node_modules -o -name deps -o -name _build -o -name dist -o -name build -o -name target \) -prune \
+              -o -mindepth 1 -maxdepth 4 -type d -print 2>/dev/null \
               | sort -u \
               | fzf --preview 'eza -T -a --icons -L1 {}'
           )" || return

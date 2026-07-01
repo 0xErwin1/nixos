@@ -94,9 +94,21 @@ let
     builtins.replaceStrings
       [
         "run '~/.tmux/plugins/tpm/tpm'"
+        "set -g @plugin 'tmux-plugins/tpm'"
+        "set -g @plugin 'tmux-plugins/tmux-continuum'"
+        "set -g @plugin 'tmux-plugins/tmux-sensible'"
+        "set -g @plugin 'christoomey/vim-tmux-navigator'"
+        "set -g @plugin 'tmux-plugins/tmux-yank'"
+        "set -g @plugin 'sainnhe/tmux-fzf'"
         "set -g @plugin 'TechnicalDC/tmux-ayu-theme'"
       ]
       [
+        ""
+        ""
+        ""
+        ""
+        ""
+        ""
         ""
         ""
       ]
@@ -111,16 +123,34 @@ in
     prefix = "C-a";
 
     plugins = [
-      pkgs.tmuxPlugins.resurrect
-      pkgs.tmuxPlugins.continuum
+      {
+        plugin = pkgs.tmuxPlugins.continuum;
+        extraConfig = ''
+          set -g @continuum-restore 'on'
+          set -g @continuum-save-interval '10'
+          set -g @resurrect-save-script-path '${pkgs.tmuxPlugins.resurrect}/share/tmux-plugins/resurrect/scripts/save.sh'
+          set -g @resurrect-restore-script-path '${pkgs.tmuxPlugins.resurrect}/share/tmux-plugins/resurrect/scripts/restore.sh'
+          set -g @resurrect-capture-pane-contents 'on'
+          set -g @resurrect-strategy-nvim 'session'
+        '';
+      }
       pkgs.tmuxPlugins.sensible
       pkgs.tmuxPlugins.vim-tmux-navigator
-      pkgs.tmuxPlugins.tmux-fzf
+      {
+        plugin = pkgs.tmuxPlugins.tmux-fzf;
+        extraConfig = ''
+          set-environment -g TMUX_FZF_OPTIONS "-p -w 62% -h 38% -m"
+          set-environment -g TMUX_FZF_LAUNCH_KEY "f"
+          set-environment -g TMUX_FZF_ORDER "copy-mode|session|window|pane|command|keybinding"
+        '';
+      }
       pkgs.tmuxPlugins.yank
     ];
 
     extraConfig = ''
       ${tmuxConfig}
+
+      bind-key f run-shell -b '${pkgs.tmuxPlugins.tmux-fzf}/share/tmux-plugins/tmux-fzf/main.sh'
 
       run-shell ${tmuxAyuThemeScript}
     '';
