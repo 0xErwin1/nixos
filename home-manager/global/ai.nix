@@ -2,6 +2,7 @@
 {
   imports = [
     inputs.pi-harness.homeModules.default
+    ./ai-harness.nix
   ];
 
   programs = {
