@@ -36,11 +36,6 @@
       url = "github:0xErwin1/dbflux/nightly";
     };
 
-    claude-desktop = {
-      url = "github:aaddrick/claude-desktop-debian";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-    
     nix-flatpak.url = "github:gmodena/nix-flatpak";
   };
 
@@ -58,12 +53,12 @@
       overlays = {
         default =
           final: prev:
-          (inputs.claude-desktop.overlays.default final prev)
-          // (inputs.dbflux.overlays.default final prev)
+          (inputs.dbflux.overlays.default final prev)
           // {
             dbflux-nightly = inputs.dbflux.packages.${final.stdenv.hostPlatform.system}.dbflux-nightly;
             brave-origin-nightly = final.callPackage "${self}/pkgs/brave-origin-nightly" { };
             claude-code-latest = final.callPackage "${self}/pkgs/claude-code-latest" { };
+            claude-desktop = final.callPackage "${self}/pkgs/claude-desktop" { };
             ccstatusline = final.callPackage "${self}/pkgs/ccstatusline" { };
             helium = final.callPackage "${self}/pkgs/helium" { };
             engram = final.callPackage "${self}/pkgs/engram" { };
@@ -96,7 +91,10 @@
       nixosConfigurations = {
         epsilon = nixpkgs.lib.nixosSystem {
           specialArgs = { inherit inputs outputs wireguardLocal; };
-          modules = [ ./hosts/epsilon nix-flatpak.nixosModules.nix-flatpak ];
+          modules = [
+            ./hosts/epsilon
+            nix-flatpak.nixosModules.nix-flatpak
+          ];
         };
 
         zeta = nixpkgs.lib.nixosSystem {

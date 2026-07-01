@@ -70,7 +70,7 @@
     openvpn
     openfortivpn
     openssl
-    #claude-desktop
+    claude-desktop
 
     pi-coding-agent
 
