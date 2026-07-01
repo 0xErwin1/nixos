@@ -321,8 +321,8 @@
         ]
       },
       "locked": {
-        "lastModified": 1782932857,
-        "narHash": "sha256-rmc5WcOAPdS+gJubqo8PBtCQWjbd1/aqugmyp/eFQmU=",
+        "lastModified": 1782942618,
+        "narHash": "sha256-5VbJFNPsa75qj0HTwyREKjhJ0iT5L1j/Ofy7s7cqB0w=",
         "path": "/home/iperez/dev/personal/pi-harness",
         "type": "path"
       },

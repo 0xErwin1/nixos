@@ -8,7 +8,6 @@ let
     "iperez@zeta"
   ];
   canonicalAssets = [
-    "ai/pi/AGENTS.md"
     "ai/skills/_shared/obsidian-convention.md"
     "ai/opencode/AGENTS.md"
     "ai/opencode/ORCHESTRATOR.md"
@@ -24,8 +23,6 @@ let
     "ai/support/operator-cutover-rollback.md"
   ];
   expectedTargets = [
-    ".pi/agent/AGENTS.md"
-    ".pi/agent/skills"
     ".agents/skills"
     ".config/opencode/AGENTS.md"
     ".config/opencode/ORCHESTRATOR.md"

@@ -6,15 +6,6 @@ let
 
   projectedResources = [
     {
-      source = canonicalRoot + "/pi/AGENTS.md";
-      target = ".pi/agent/AGENTS.md";
-    }
-    {
-      source = canonicalRoot + "/skills";
-      target = ".pi/agent/skills";
-      recursive = true;
-    }
-    {
       source = canonicalRoot + "/skills";
       target = ".agents/skills";
       recursive = true;

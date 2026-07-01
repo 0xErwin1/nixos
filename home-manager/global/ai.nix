@@ -25,7 +25,32 @@
       resources = [
         {
           source = inputs.pi-harness.assets.orchestrator;
-          target = ".local/share/pi-harness/assets/orchestrator.md";
+          target = ".pi/agent/AGENTS.md";
+        }
+        {
+          source = inputs.pi-harness.assets.agents;
+          target = ".pi/agent/agents";
+          recursive = true;
+        }
+        {
+          source = inputs.pi-harness.assets.chains;
+          target = ".pi/agent/chains";
+          recursive = true;
+        }
+        {
+          source = inputs.pi-harness.assets.support;
+          target = ".pi/agent/support";
+          recursive = true;
+        }
+        {
+          source = inputs.pi-harness.assets.extensions;
+          target = ".pi/agent/extensions";
+          recursive = true;
+        }
+        {
+          source = inputs.pi-harness.assets.packages;
+          target = ".pi/agent/packages";
+          recursive = true;
         }
       ];
     };
