@@ -314,6 +314,23 @@
         "type": "github"
       }
     },
+    "pi-harness": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1782932857,
+        "narHash": "sha256-rmc5WcOAPdS+gJubqo8PBtCQWjbd1/aqugmyp/eFQmU=",
+        "path": "/home/iperez/dev/personal/pi-harness",
+        "type": "path"
+      },
+      "original": {
+        "path": "/home/iperez/dev/personal/pi-harness",
+        "type": "path"
+      }
+    },
     "plugin-surround": {
       "flake": false,
       "locked": {
@@ -386,6 +403,7 @@
         "nix-flatpak": "nix-flatpak",
         "nixpkgs": "nixpkgs_2",
         "nixvim": "nixvim",
+        "pi-harness": "pi-harness",
         "rofiAyuDarkTheme": "rofiAyuDarkTheme",
         "spicetify-nix": "spicetify-nix",
         "zenBrowserFlake": "zenBrowserFlake"

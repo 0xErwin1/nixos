@@ -1,5 +1,9 @@
-{ pkgs, ... }:
+{ pkgs, inputs, ... }:
 {
+  imports = [
+    inputs.pi-harness.homeModules.default
+  ];
+
   programs = {
     codex.enable = true;
     claude-code = {
@@ -9,6 +13,20 @@
     opencode = {
       enable = true;
       package = pkgs.opencode;
+    };
+    pi.coding-agent = {
+      enable = true;
+      package = inputs.pi-harness.packages.${pkgs.stdenv.hostPlatform.system}.default;
+      settings.harness = {
+        managedBy = "home-manager";
+        source = "pi-harness";
+      };
+      resources = [
+        {
+          source = inputs.pi-harness.assets.orchestrator;
+          target = ".local/share/pi-harness/assets/orchestrator.md";
+        }
+      ];
     };
   };
 
