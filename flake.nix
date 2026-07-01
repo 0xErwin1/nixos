@@ -131,18 +131,15 @@
       checks.x86_64-linux.ai-harness-readiness =
         let
           pkgs = nixpkgs.legacyPackages.x86_64-linux;
-          scannedFiles = [
-            ./ai/support/home-manager-canonical-assets.md
-            ./ai/support/projection-preflight.md
-            ./ai/support/secrets-env-contract.md
-            ./ai/support/operator-cutover-rollback.md
+          scannedRoots = [
+            ./ai
             ./home-manager/global/ai-harness.nix
             ./home-manager/global/ai.nix
             ./tests/ai-harness-projections.nix
           ];
           scannedArgs = nixpkgs.lib.concatMapStringsSep " " (
             path: nixpkgs.lib.escapeShellArg (toString path)
-          ) scannedFiles;
+          ) scannedRoots;
         in
         pkgs.runCommandLocal "ai-harness-readiness" { nativeBuildInputs = [ pkgs.gnugrep ]; } ''
           set -eu
@@ -153,8 +150,19 @@
           grep -F AI_HARNESS_API_ENV_FILE ${./ai/support/secrets-env-contract.md} >/dev/null
           grep -F "AI harness required env file is missing" ${./home-manager/global/ai-harness.nix} >/dev/null
 
+          if find ${./ai} -type l -print -quit | grep -q .; then
+            echo "Managed AI asset tree must not contain symlinks." >&2
+            find ${./ai} -type l -print >&2
+            exit 1
+          fi
+
+          if grep -R -F "/.tabularium/AI" ${scannedArgs}; then
+            echo "Managed AI harness files must not reference Tabularium as the canonical source." >&2
+            exit 1
+          fi
+
           token_pattern='(Bearer[[:space:]]+[A-Za-z0-9._~+/=-]{20,}|sk-[A-Za-z0-9]{20,}|gh[pousr]_[A-Za-z0-9_]{20,}|xox[baprs]-[A-Za-z0-9-]{20,}|(api[_-]?key|token|secret|password)[[:space:]]*[:=][[:space:]]*"?[A-Za-z0-9_./+-]{16,})'
-          if grep -E -i "$token_pattern" ${scannedArgs}; then
+          if grep -R -E -i "$token_pattern" ${scannedArgs}; then
             echo "Token-like literal value detected in managed AI harness files." >&2
             exit 1
           fi

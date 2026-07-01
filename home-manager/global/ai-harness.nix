@@ -6,12 +6,98 @@ let
 
   projectedResources = [
     {
-      source = canonicalRoot + "/support/home-manager-canonical-assets.md";
-      target = ".pi/agent/support/home-manager-canonical-assets.md";
+      source = canonicalRoot + "/pi/AGENTS.md";
+      target = ".pi/agent/AGENTS.md";
     }
     {
-      source = canonicalRoot + "/support/home-manager-canonical-assets.md";
-      target = ".config/opencode/support/home-manager-canonical-assets.md";
+      source = canonicalRoot + "/skills";
+      target = ".pi/agent/skills";
+      recursive = true;
+    }
+    {
+      source = canonicalRoot + "/skills";
+      target = ".agents/skills";
+      recursive = true;
+    }
+    {
+      source = canonicalRoot + "/opencode/AGENTS.md";
+      target = ".config/opencode/AGENTS.md";
+    }
+    {
+      source = canonicalRoot + "/opencode/ORCHESTRATOR.md";
+      target = ".config/opencode/ORCHESTRATOR.md";
+    }
+    {
+      source = canonicalRoot + "/opencode/agent";
+      target = ".config/opencode/agent";
+      recursive = true;
+    }
+    {
+      source = canonicalRoot + "/opencode/commands";
+      target = ".config/opencode/commands";
+      recursive = true;
+    }
+    {
+      source = canonicalRoot + "/command";
+      target = ".config/opencode/command";
+      recursive = true;
+    }
+    {
+      source = canonicalRoot + "/opencode/skills";
+      target = ".config/opencode/skills";
+      recursive = true;
+    }
+    {
+      source = canonicalRoot + "/opencode/opencode.jsonc";
+      target = ".config/opencode/opencode.jsonc";
+    }
+    {
+      source = canonicalRoot + "/opencode/tui.json";
+      target = ".config/opencode/tui.json";
+    }
+    {
+      source = canonicalRoot + "/claude/CLAUDE.md";
+      target = ".claude/CLAUDE.md";
+    }
+    {
+      source = canonicalRoot + "/claude/sdd-orchestrator.md";
+      target = ".claude/sdd-orchestrator.md";
+    }
+    {
+      source = canonicalRoot + "/claude/engram-protocol.md";
+      target = ".claude/engram-protocol.md";
+    }
+    {
+      source = canonicalRoot + "/claude/agents";
+      target = ".claude/agents";
+      recursive = true;
+    }
+    {
+      source = canonicalRoot + "/claude/commands";
+      target = ".claude/commands";
+      recursive = true;
+    }
+    {
+      source = canonicalRoot + "/claude/skills";
+      target = ".claude/skills";
+      recursive = true;
+    }
+    {
+      source = canonicalRoot + "/codex/AGENTS.md";
+      target = ".codex/AGENTS.md";
+    }
+    {
+      source = canonicalRoot + "/codex/sdd-orchestrator.md";
+      target = ".codex/sdd-orchestrator.md";
+    }
+    {
+      source = canonicalRoot + "/codex/engram-instructions.md";
+      target = ".codex/engram-instructions.md";
+    }
+    {
+      source = canonicalRoot + "/codex/skills";
+      target = ".codex/skills";
+      recursive = true;
     }
   ];
 

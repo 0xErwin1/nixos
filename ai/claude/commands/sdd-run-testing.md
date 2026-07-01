@@ -1,0 +1,25 @@
+---
+description: Execute the test plan — drives the chosen engine (live Chrome extension or Playwright), backend runner, or API calls per the plan.
+---
+
+If the native `sdd-run-testing` sub-agent is available, delegate this command to it.
+Otherwise, read the agent file at `~/.claude/agents/sdd-run-testing.md` FIRST, then follow its instructions exactly inline.
+
+CONTEXT:
+- Working directory: !`pwd`
+- Current project: (last path component of the working directory above — no shell command needed, derive it from the path)
+- Feature to run tests for: $ARGUMENTS
+- Artifact store mode: engram
+
+TASK:
+Execute the test plan for "$ARGUMENTS". Read the plan artifact from engram
+(topic_key: "testing/{project_slug}/$ARGUMENTS/plan"), execute the plan's cases via the engine the
+plan/persona specifies (chrome-extension / playwright / backend / api), perform visual diff checks
+where a design reference is available, and persist raw results to engram.
+
+ENGRAM PERSISTENCE:
+Read plan (required):
+  mcp__plugin_engram_engram__mem_search(query: "testing/{project_slug}/$ARGUMENTS/plan", project: "{project}") → mem_get_observation(id)
+Save run results: persist per the agent's own Engram Save section (it specifies the correct topic key and observation type) — do not override the type here. The orchestrator owns the session-id, the parallel fan-out across execution units, the shard merge, and `run/latest` (see CLAUDE.md `### Execution Policy → Parallel execution`). This runner writes only its shard `testing/{project_slug}/$ARGUMENTS/run/{session-id}/{unit-id}` (or the consolidated `run/{session-id}` if it is the sole runner) per the agent's Engram Save section; it does NOT write `run/latest`.
+
+Return a structured result with: status, executive_summary, artifacts, next_recommended, risks.

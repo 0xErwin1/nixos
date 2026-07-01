@@ -1,9 +1,9 @@
 # Home Manager Canonical AI Assets
 
-This file is a small proof-of-projection asset for the AI harness centralization work.
+The canonical copy of shared AI harness assets now lives under `/home/iperez/.config/home-manager/ai/`.
 
-The canonical copy lives in `/home/iperez/.config/home-manager/ai/`. Tool-specific paths may receive selected links to this content, but runtime state remains unmanaged.
+Home Manager projects selected files and directories from this tree into tool-specific locations for Pi, OpenCode, Claude, Codex, and shared agent skills. The previous external asset hub is no longer the intended canonical source for these managed assets.
 
-Managed examples include static support notes, command templates, prompts, rules, and other non-secret reviewable assets.
+Managed examples include skills, agents, commands, orchestrators, prompts, static support notes, and non-secret tool configuration files selected by the Home Manager module.
 
-Unmanaged examples include auth files, sessions, caches, logs, databases, histories, sockets, PIDs, telemetry, and machine-local secret files.
+Unmanaged examples include auth files, sessions, caches, logs, databases, histories, sockets, PIDs, telemetry, local backups, and machine-local secret files.

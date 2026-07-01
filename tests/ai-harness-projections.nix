@@ -8,14 +8,43 @@ let
     "iperez@zeta"
   ];
   canonicalAssets = [
-    "ai/support/home-manager-canonical-assets.md"
-    "ai/support/projection-preflight.md"
+    "ai/pi/AGENTS.md"
+    "ai/skills/_shared/obsidian-convention.md"
+    "ai/opencode/AGENTS.md"
+    "ai/opencode/ORCHESTRATOR.md"
+    "ai/opencode/agent/scout.md"
+    "ai/opencode/commands/sdd-apply.md"
+    "ai/claude/CLAUDE.md"
+    "ai/claude/sdd-orchestrator.md"
+    "ai/claude/agents/sdd-apply.md"
+    "ai/claude/commands/sdd-apply.md"
+    "ai/codex/AGENTS.md"
+    "ai/codex/sdd-orchestrator.md"
     "ai/support/secrets-env-contract.md"
     "ai/support/operator-cutover-rollback.md"
   ];
   expectedTargets = [
-    ".pi/agent/support/home-manager-canonical-assets.md"
-    ".config/opencode/support/home-manager-canonical-assets.md"
+    ".pi/agent/AGENTS.md"
+    ".pi/agent/skills"
+    ".agents/skills"
+    ".config/opencode/AGENTS.md"
+    ".config/opencode/ORCHESTRATOR.md"
+    ".config/opencode/agent"
+    ".config/opencode/commands"
+    ".config/opencode/command"
+    ".config/opencode/skills"
+    ".config/opencode/opencode.jsonc"
+    ".config/opencode/tui.json"
+    ".claude/CLAUDE.md"
+    ".claude/sdd-orchestrator.md"
+    ".claude/engram-protocol.md"
+    ".claude/agents"
+    ".claude/commands"
+    ".claude/skills"
+    ".codex/AGENTS.md"
+    ".codex/sdd-orchestrator.md"
+    ".codex/engram-instructions.md"
+    ".codex/skills"
   ];
   expectedSecretEnv = {
     AI_HARNESS_MCP_ENV_FILE = "/home/iperez/.config/ai-harness/secrets/mcp.env";
@@ -38,7 +67,6 @@ let
     "cache"
     "session"
     "history"
-    "log"
     "sqlite"
     "wal"
     "socket"
@@ -47,16 +75,12 @@ let
     "token"
     "secret"
   ];
-  knownCollisionTargets = [
-    ".pi/agent/AGENTS.md"
+  forbiddenTargets = [
     ".pi/agent/settings.json"
     ".pi/agent/mcp.json"
-    ".config/opencode/AGENTS.md"
-    ".config/opencode/opencode.jsonc"
-    ".claude/CLAUDE.md"
-    ".claude/settings.json"
-    ".codex/AGENTS.md"
     ".codex/config.toml"
+    ".claude/settings.json"
+    ".claude/claude.json"
   ];
   hasFragment = fragment: target: builtins.match (".*" + fragment + ".*") target != null;
   unique = values: builtins.length values == builtins.length (flake.inputs.nixpkgs.lib.unique values);
@@ -95,11 +119,12 @@ let
       targetsAvoidRuntimeState = builtins.all (
         target: !(builtins.any (fragment: hasFragment fragment target) runtimeTargetFragments)
       ) targets;
-      targetsAvoidKnownCollisions = builtins.all (
-        target: !(builtins.elem target knownCollisionTargets)
+      targetsAvoidForbiddenState = builtins.all (
+        target: !(builtins.elem target forbiddenTargets)
       ) targets;
-      canonicalSources = builtins.filter (
-        source: builtins.match (".*/ai/support/.*") source != null
+      canonicalSources = builtins.filter (source: builtins.match (".*/ai/.*") source != null) sources;
+      sourcesAvoidTabularium = builtins.all (
+        source: builtins.match ".*/\\.tabularium/.*" source == null
       ) sources;
       exposesOnlySecretPathReferences = builtins.all (
         name: environment.${name} == expectedSecretEnv.${name}
@@ -133,8 +158,9 @@ let
     state.hasExpectedTargets
     && state.targetsAreUnique
     && state.targetsAvoidRuntimeState
-    && state.targetsAvoidKnownCollisions
+    && state.targetsAvoidForbiddenState
     && builtins.length state.canonicalSources >= builtins.length expectedTargets
+    && state.sourcesAvoidTabularium
     && state.exposesOnlySecretPathReferences
     && state.exposesNoInlineSecretEnvironment
     && state.generatedEnvFileMentionsOnlyPathsAndNames
