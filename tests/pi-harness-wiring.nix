@@ -1,7 +1,6 @@
-{ flakePath }:
+{ flake }:
 
 let
-  flake = builtins.getFlake ("path:" + flakePath);
   hosts = [
     "iperez@delta"
     "iperez@epsilon"

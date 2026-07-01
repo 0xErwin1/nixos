@@ -321,14 +321,17 @@
         ]
       },
       "locked": {
-        "lastModified": 1782942618,
-        "narHash": "sha256-5VbJFNPsa75qj0HTwyREKjhJ0iT5L1j/Ofy7s7cqB0w=",
-        "path": "/home/iperez/dev/personal/pi-harness",
-        "type": "path"
+        "lastModified": 1782941013,
+        "narHash": "sha256-tajQwmUW6OxBVHACULHtMkVJ1xH9qEnfFR3ADhy8pvs=",
+        "owner": "0xErwin1",
+        "repo": "pi-harness",
+        "rev": "d4f21b1595af1d5d6659fa2c896ab1770aa723b9",
+        "type": "github"
       },
       "original": {
-        "path": "/home/iperez/dev/personal/pi-harness",
-        "type": "path"
+        "owner": "0xErwin1",
+        "repo": "pi-harness",
+        "type": "github"
       }
     },
     "plugin-surround": {
