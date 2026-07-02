@@ -1,4 +1,4 @@
-{ config, lib, ... }:
+{ config, lib, pkgs, ... }:
 
 let
   canonicalRoot = ../../ai;
@@ -37,10 +37,6 @@ let
       source = canonicalRoot + "/opencode/skills";
       target = ".config/opencode/skills";
       recursive = true;
-    }
-    {
-      source = canonicalRoot + "/opencode/opencode.jsonc";
-      target = ".config/opencode/opencode.jsonc";
     }
     {
       source = canonicalRoot + "/opencode/tui.json";
@@ -92,6 +88,39 @@ let
     }
   ];
 
+  # Config files that must carry secret values into their final on-disk
+  # location. They cannot be Nix-store symlinks (read-only, so tokens could not
+  # be edited) and must not hold secrets in Git, so Home Manager renders them at
+  # activation from the canonical template, substituting @VAR@ placeholders with
+  # values sourced from the secret env files. Extend this list as more agents'
+  # MCP configs get centralized.
+  renderedSecretConfigs = [
+    {
+      template = canonicalRoot + "/opencode/opencode.jsonc";
+      target = ".config/opencode/opencode.jsonc";
+    }
+    # Prepared for future centralization; add a template under ai/ and uncomment:
+    # { template = canonicalRoot + "/claude/claude.json";  target = ".claude.json"; }
+    # { template = canonicalRoot + "/codex/config.toml";   target = ".codex/config.toml"; }
+    # { template = canonicalRoot + "/pi/mcp.json";         target = ".pi/agent/mcp.json"; }
+  ];
+
+  renderTemplateSources = map (entry: entry.template) renderedSecretConfigs;
+
+  renderCommands = lib.concatMapStringsSep "\n" (
+    entry: ''
+      render_secret_config ${lib.escapeShellArg (toString entry.template)} ${lib.escapeShellArg "${homeDirectory}/${entry.target}"}
+    ''
+  ) renderedSecretConfigs;
+
+  sourceSecretEnvFiles = lib.concatMapStringsSep "\n" (
+    entry: ''
+      set -a
+      . ${lib.escapeShellArg entry.path}
+      set +a
+    ''
+  ) secretEnvContract;
+
   secretEnvContract = [
     {
       envVar = "AI_HARNESS_MCP_ENV_FILE";
@@ -126,6 +155,10 @@ in
     {
       assertion = lib.all builtins.pathExists projectionSources;
       message = "AI harness projection sources must exist under the canonical Home Manager ai/ tree.";
+    }
+    {
+      assertion = lib.all builtins.pathExists renderTemplateSources;
+      message = "AI harness rendered-config templates must exist under the canonical Home Manager ai/ tree.";
     }
     {
       assertion = lib.all (
@@ -174,5 +207,26 @@ in
         exit 1
       fi
     done
+  '';
+
+  home.activation.aiHarnessSecretConfigRender = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+    set -eu
+
+    ${sourceSecretEnvFiles}
+
+    render_secret_config() {
+      template="$1"
+      target="$2"
+
+      if [ -L "$target" ]; then
+        rm "$target"
+      fi
+
+      mkdir -p "$(dirname "$target")"
+
+      ${pkgs.python3}/bin/python3 ${./ai-harness-render.py} "$template" "$target"
+    }
+
+    ${renderCommands}
   '';
 }

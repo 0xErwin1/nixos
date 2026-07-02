@@ -29,7 +29,6 @@ let
     ".config/opencode/commands"
     ".config/opencode/command"
     ".config/opencode/skills"
-    ".config/opencode/opencode.jsonc"
     ".config/opencode/tui.json"
     ".claude/CLAUDE.md"
     ".claude/sdd-orchestrator.md"
@@ -46,6 +45,18 @@ let
     AI_HARNESS_MCP_ENV_FILE = "/home/iperez/.config/ai-harness/secrets/mcp.env";
     AI_HARNESS_API_ENV_FILE = "/home/iperez/.config/ai-harness/secrets/api.env";
   };
+  renderedSecretTargets = [
+    ".config/opencode/opencode.jsonc"
+  ];
+  renderedTemplateChecks = [
+    {
+      file = "ai/opencode/opencode.jsonc";
+      placeholders = [
+        "@ATLAS_TOKEN@"
+        "@CONTEXT7_API_KEY@"
+      ];
+    }
+  ];
   expectedSecretPaths = builtins.attrValues expectedSecretEnv;
   expectedSecretVars = builtins.attrNames expectedSecretEnv;
   managedFilesToScan = [
@@ -95,6 +106,7 @@ let
       cfg = homeConfiguration.config.programs.pi.coding-agent;
       activation = homeConfiguration.config.home.activation.aiHarnessProjectionPreflight.data;
       secretActivation = homeConfiguration.config.home.activation.aiHarnessSecretsPreflight.data;
+      renderActivation = homeConfiguration.config.home.activation.aiHarnessSecretConfigRender.data;
       targets = map (resource: resource.target) cfg.resources;
       sources = map (resource: toString resource.source) cfg.resources;
       environment = cfg.environment;
@@ -147,6 +159,15 @@ let
       activationBlocksUnmanagedSymlinks =
         builtins.match ".*already exists as an unmanaged symlink.*" activation != null;
       activationAllowsNixStoreSymlinks = builtins.match ".*/nix/store/\\*.*" activation != null;
+      renderedSecretConfigsNotProjected = builtins.all (
+        target: !(builtins.elem target targets)
+      ) renderedSecretTargets;
+      renderMentionsRenderedTargets = builtins.all (
+        target: builtins.match (".*" + target + ".*") renderActivation != null
+      ) renderedSecretTargets;
+      renderSourcesSecretEnvFiles = builtins.all (
+        path: builtins.match (".*" + path + ".*") renderActivation != null
+      ) expectedSecretPaths;
     };
   states = map hostState hosts;
   validState =
@@ -165,7 +186,10 @@ let
     && state.activationMentionsTargets
     && state.activationBlocksUnmanagedFiles
     && state.activationBlocksUnmanagedSymlinks
-    && state.activationAllowsNixStoreSymlinks;
+    && state.activationAllowsNixStoreSymlinks
+    && state.renderedSecretConfigsNotProjected
+    && state.renderMentionsRenderedTargets
+    && state.renderSourcesSecretEnvFiles;
 in
 assert builtins.all assetExists canonicalAssets;
 assert builtins.all (
@@ -181,6 +205,11 @@ assert builtins.all (
   ]
 ) [ "ai/support/operator-cutover-rollback.md" ];
 assert builtins.all (relativePath: !(fileHasTokenLikeAssignment relativePath)) managedFilesToScan;
+assert builtins.all (
+  check:
+  builtins.all (placeholder: fileContains check.file placeholder) check.placeholders
+  && !(fileHasTokenLikeAssignment check.file)
+) renderedTemplateChecks;
 assert flake.checks.x86_64-linux ? ai-harness-readiness;
 assert builtins.all validState states;
 {

@@ -9,7 +9,22 @@ Create these files outside Git before the cutover switch:
 - `/home/iperez/.config/ai-harness/secrets/mcp.env`
 - `/home/iperez/.config/ai-harness/secrets/api.env`
 
-The files are machine-local and should be mode `600`. They are not read by validation in this change.
+The files are machine-local and should be mode `600`. Validation never opens or prints their contents; it only checks that the files exist.
+
+## File format and consumption
+
+Each file is a shell env file of `export VAR=value` lines. At activation, Home Manager sources both files and renders every template in `renderedSecretConfigs` (see `home-manager/global/ai-harness.nix`), replacing each `@VAR@` placeholder with the value of the matching environment variable. A placeholder whose variable is unset or empty aborts the switch, so a missing token is caught instead of silently shipped.
+
+Templates live in Git with placeholders only; the rendered files are written outside Git as mutable `600` files (they cannot be read-only Nix-store symlinks, since tokens must reach the final config).
+
+### Required variables
+
+Provide at least the placeholders referenced by the active templates. Today `ai/opencode/opencode.jsonc` requires:
+
+- `ATLAS_TOKEN` — Atlas MCP token
+- `CONTEXT7_API_KEY` — Context7 MCP API key
+
+`api.env` may be empty if no `@VAR@` placeholder resolves to it; it only needs to exist for the preflight.
 
 ## Managed variable names
 
