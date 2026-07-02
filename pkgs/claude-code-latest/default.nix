@@ -61,10 +61,15 @@ stdenv.mkDerivation {
 
     install -Dm755 "$src" "$out/libexec/claude-code/claude"
 
+    # This binary is launched through the dynamic loader, so Claude Code sees the
+    # loader (not itself) as its exec path and its bundled-ripgrep/grep shell
+    # interception mis-fires (`ld.so -G ...`). Fall back to the system ripgrep,
+    # which is the documented remedy when the bundled ripgrep does not run.
     makeWrapper "${glibc}/lib/${source.loader}" "$out/bin/claude" \
       --add-flags "--library-path ${libPath}" \
       --add-flags "$out/libexec/claude-code/claude" \
-      --set-default DISABLE_AUTOUPDATER 1
+      --set-default DISABLE_AUTOUPDATER 1 \
+      --set-default USE_BUILTIN_RIPGREP 0
 
     runHook postInstall
   '';
