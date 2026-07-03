@@ -46,6 +46,8 @@
     btop
     postman
     cartero
+    maestro
+    codexbar
 
     obsidian
 

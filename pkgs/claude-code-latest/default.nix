@@ -10,7 +10,7 @@ let
     ;
 
   pname = "claude-code-latest";
-  version = "2.1.197";
+  version = "2.1.199";
 
   sources = {
     x86_64-linux = {
