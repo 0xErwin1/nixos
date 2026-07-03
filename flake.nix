@@ -64,7 +64,6 @@
             brave-origin-nightly = final.callPackage "${self}/pkgs/brave-origin-nightly" { };
             claude-code-latest = final.callPackage "${self}/pkgs/claude-code-latest" { };
             claude-desktop = final.callPackage "${self}/pkgs/claude-desktop" { };
-            codexbar = final.callPackage "${self}/pkgs/codexbar" { };
             ccstatusline = final.callPackage "${self}/pkgs/ccstatusline" { };
             helium = final.callPackage "${self}/pkgs/helium" { };
             engram = final.callPackage "${self}/pkgs/engram" { };

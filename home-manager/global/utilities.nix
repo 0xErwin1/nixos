@@ -47,7 +47,6 @@
     postman
     cartero
     maestro
-    codexbar
 
     obsidian
 
