@@ -1,0 +1,41 @@
+{
+  "mcpServers": {
+    "aws": {
+      "command": "uvx",
+      "args": ["awslabs.aws-documentation-mcp-server@latest"],
+      "env": {
+        "AWS_DOCUMENTATION_PARTITION": "aws",
+        "FASTMCP_LOG_LEVEL": "ERROR"
+      }
+    },
+    "context7": {
+      "url": "https://mcp.context7.com/mcp",
+      "headers": {
+        "CONTEXT7_API_KEY": "@CONTEXT7_API_KEY@"
+      }
+    },
+    "figma": {
+      "url": "https://mcp.figma.com/mcp"
+    },
+    "dbflux": {
+      "command": "dbflux",
+      "args": ["mcp", "--client-id", "pi"]
+    },
+    "engram": {
+      "command": "engram",
+      "args": ["mcp"]
+    },
+    "obsidian": {
+      "command": "pnpx",
+      "args": ["@mauricio.wolff/mcp-obsidian@latest", "/home/iperez/Atlas"]
+    },
+    "atlas": {
+      "command": "/home/iperez/dev/personal/atlas/target/release/atlas_mcp",
+      "args": ["--transport", "stdio"],
+      "env": {
+        "ATLAS_BASE_URL": "http://localhost:8080",
+        "ATLAS_TOKEN": "@ATLAS_TOKEN@"
+      }
+    }
+  }
+}

@@ -1,0 +1,34 @@
+[mcp_servers.aws]
+command = "uvx"
+args = ["awslabs.aws-documentation-mcp-server@latest"]
+
+[mcp_servers.aws.env]
+AWS_DOCUMENTATION_PARTITION = "aws"
+FASTMCP_LOG_LEVEL = "ERROR"
+
+[mcp_servers.dbflux]
+command = "dbflux"
+args = ["mcp", "--client-id", "codex"]
+
+[mcp_servers.engram]
+command = "engram"
+args = ["mcp"]
+
+[mcp_servers.obsidian]
+command = "pnpx"
+args = ["@mauricio.wolff/mcp-obsidian@latest", "/home/iperez/Atlas"]
+
+[mcp_servers.atlas]
+command = "/home/iperez/dev/personal/atlas/target/release/atlas_mcp"
+args = ["--transport", "stdio"]
+
+[mcp_servers.atlas.env]
+ATLAS_BASE_URL = "http://localhost:8080"
+ATLAS_TOKEN = "@ATLAS_TOKEN@"
+
+[mcp_servers.figma]
+url = "https://mcp.figma.com/mcp"
+
+[mcp_servers.context7]
+command = "pnpx"
+args = ["mcp-remote", "https://mcp.context7.com/mcp", "--header", "CONTEXT7_API_KEY: @CONTEXT7_API_KEY@"]

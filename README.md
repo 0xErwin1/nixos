@@ -37,6 +37,7 @@ nix flake check --no-build
 ```
 .
 ├── flake.nix
+├── ai/                   # Canonical AI agent assets (skills, agents, commands, MCP templates)
 ├── hosts/
 │   ├── epsilon/          # NixOS host (ThinkPad)
 │   │   ├── default.nix
@@ -78,6 +79,40 @@ nix flake check --no-build
 - `homeConfigurations."iperez@epsilon"`
 - `homeConfigurations."iperez@zeta"`
 - `homeConfigurations."iperez@zeta-thin"`
+
+## AI Harness
+
+Shared configuration for the local AI coding agents (`pi`, `opencode`, Claude Code, Codex), wired through `home-manager/global/ai-harness.nix`. Canonical assets live in `ai/`; secret values never do.
+
+### First-time setup
+
+Activation aborts early if the secret env files are missing. Create them once per machine (mode `600`, never committed):
+
+```bash
+mkdir -p ~/.config/ai-harness/secrets
+# mcp.env — export ATLAS_TOKEN=... and CONTEXT7_API_KEY=...
+# api.env — may be empty; only needs to exist
+touch ~/.config/ai-harness/secrets/{mcp.env,api.env}
+chmod 600 ~/.config/ai-harness/secrets/*.env
+```
+
+Required variable names are listed in `ai/support/secrets-env-contract.md`.
+
+### How assets reach each agent
+
+| Mechanism | Used for | On disk |
+|-----------|----------|---------|
+| **Projection** (symlink) | Static assets: skills, agents, commands, prompts | `/nix/store` symlinks. A recursive directory becomes a real directory whose leaf files are the symlinks. |
+| **Rendered secret config** | Files the harness fully owns | Whole-file render at activation: `@VAR@` → value from the env files, written `600`. Targets: `.config/opencode/opencode.jsonc`, `.pi/agent/mcp.json`. |
+| **Merged config** | Files the agent rewrites at runtime | Only the MCP / permissions section is injected; all other runtime state (OAuth, project trust, caches) is preserved. Targets: `.claude.json`, `.codex/config.toml`, `.claude/settings.json`. |
+
+Switches are idempotent: projections re-point and configs re-merge on every `home-manager switch` — no manual file deletion is required. The projection preflight blocks a switch only when a **single-file** target already exists as an unmanaged file; recursive directory targets are left to Home Manager's native collision handling (see `ai/support/projection-preflight.md`).
+
+Rendering and merging run in a small activation-time helper (`home-manager/global/ai-harness-{render,merge}.py`) because they operate on runtime secrets and agent-owned files that pure Nix evaluation cannot read. The symlink projections themselves are plain Home Manager, no scripting.
+
+### MCP servers
+
+The same MCP set is provisioned across agents (`aws`, `context7`, `figma`, `dbflux`, `engram`, `obsidian`, `atlas`), with per-agent adjustments — e.g. Claude Code omits `engram`/`figma` since those are already provided as plugins. Tokens are substituted from `mcp.env` at activation; the templates under `ai/` hold placeholders only.
 
 ## Notes
 

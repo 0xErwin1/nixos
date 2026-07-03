@@ -41,6 +41,23 @@ let
     ".codex/engram-instructions.md"
     ".codex/skills"
   ];
+  # Single-file projection targets: Home Manager materializes each as a
+  # whole-path /nix/store symlink, so the unmanaged-collision preflight guards
+  # exactly these. Recursive directory targets become real directories with
+  # symlinked leaves, so the preflight intentionally skips them (guarding the
+  # directory's top level would abort on every switch after the first).
+  expectedFileTargets = [
+    ".config/opencode/AGENTS.md"
+    ".config/opencode/ORCHESTRATOR.md"
+    ".config/opencode/tui.json"
+    ".claude/CLAUDE.md"
+    ".claude/sdd-orchestrator.md"
+    ".claude/engram-protocol.md"
+    ".codex/AGENTS.md"
+    ".codex/sdd-orchestrator.md"
+    ".codex/engram-instructions.md"
+  ];
+  recursiveTargetSample = ".agents/skills";
   expectedSecretEnv = {
     AI_HARNESS_MCP_ENV_FILE = "/home/iperez/.config/ai-harness/secrets/mcp.env";
     AI_HARNESS_API_ENV_FILE = "/home/iperez/.config/ai-harness/secrets/api.env";
@@ -153,7 +170,9 @@ let
         builtins.match ".*AI harness required env file is missing.*" secretActivation != null;
       activationMentionsTargets = builtins.all (
         target: builtins.match (".*" + target + ".*") activation != null
-      ) expectedTargets;
+      ) expectedFileTargets;
+      activationSkipsRecursiveTargets =
+        builtins.match (".*" + recursiveTargetSample + ".*") activation == null;
       activationBlocksUnmanagedFiles =
         builtins.match ".*already exists and is not a Home Manager symlink.*" activation != null;
       activationBlocksUnmanagedSymlinks =
@@ -184,6 +203,7 @@ let
     && state.secretPreflightMentionsPaths
     && state.secretPreflightReportsMissingFiles
     && state.activationMentionsTargets
+    && state.activationSkipsRecursiveTargets
     && state.activationBlocksUnmanagedFiles
     && state.activationBlocksUnmanagedSymlinks
     && state.activationAllowsNixStoreSymlinks

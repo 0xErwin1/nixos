@@ -19,7 +19,10 @@ Templates live in Git with placeholders only; the rendered files are written out
 
 ### Required variables
 
-Provide at least the placeholders referenced by the active templates. Today `ai/opencode/opencode.jsonc` requires:
+Provide at least the placeholders referenced by the active templates. The MCP
+templates for opencode (`ai/opencode/opencode.jsonc`), pi (`ai/pi/mcp.json`),
+Claude Code (`ai/claude/mcp-servers.json`), and Codex
+(`ai/codex/mcp-servers.toml`) require:
 
 - `ATLAS_TOKEN` — Atlas MCP token
 - `CONTEXT7_API_KEY` — Context7 MCP API key

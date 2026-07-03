@@ -99,19 +99,50 @@ let
       template = canonicalRoot + "/opencode/opencode.jsonc";
       target = ".config/opencode/opencode.jsonc";
     }
-    # Prepared for future centralization; add a template under ai/ and uncomment:
-    # { template = canonicalRoot + "/claude/claude.json";  target = ".claude.json"; }
-    # { template = canonicalRoot + "/codex/config.toml";   target = ".codex/config.toml"; }
-    # { template = canonicalRoot + "/pi/mcp.json";         target = ".pi/agent/mcp.json"; }
+    {
+      template = canonicalRoot + "/pi/mcp.json";
+      target = ".pi/agent/mcp.json";
+    }
   ];
 
-  renderTemplateSources = map (entry: entry.template) renderedSecretConfigs;
+  # Agents whose config file is owned and rewritten by the agent itself at
+  # runtime (Claude Code's OAuth/project state in .claude.json; Codex's project
+  # trust levels, notices, and plugin state in config.toml). A whole-file render
+  # would clobber that state, so Home Manager only owns the MCP section: the
+  # merge helper injects the rendered servers and preserves everything else.
+  mergedSecretConfigs = [
+    {
+      kind = "json-mcpservers";
+      template = canonicalRoot + "/claude/mcp-servers.json";
+      target = ".claude.json";
+    }
+    {
+      kind = "toml-mcpservers";
+      template = canonicalRoot + "/codex/mcp-servers.toml";
+      target = ".codex/config.toml";
+    }
+    {
+      kind = "json-deep-merge";
+      template = canonicalRoot + "/claude/settings-merge.json";
+      target = ".claude/settings.json";
+    }
+  ];
+
+  renderTemplateSources =
+    (map (entry: entry.template) renderedSecretConfigs)
+    ++ (map (entry: entry.template) mergedSecretConfigs);
 
   renderCommands = lib.concatMapStringsSep "\n" (
     entry: ''
       render_secret_config ${lib.escapeShellArg (toString entry.template)} ${lib.escapeShellArg "${homeDirectory}/${entry.target}"}
     ''
   ) renderedSecretConfigs;
+
+  mergeCommands = lib.concatMapStringsSep "\n" (
+    entry: ''
+      merge_secret_config ${lib.escapeShellArg entry.kind} ${lib.escapeShellArg (toString entry.template)} ${lib.escapeShellArg "${homeDirectory}/${entry.target}"}
+    ''
+  ) mergedSecretConfigs;
 
   sourceSecretEnvFiles = lib.concatMapStringsSep "\n" (
     entry: ''
@@ -141,7 +172,35 @@ let
 
   projectionTargets = map (resource: resource.target) projectedResources;
   projectionSources = map (resource: resource.source) projectedResources;
-  shellTargets = lib.concatMapStringsSep " " (target: lib.escapeShellArg target) projectionTargets;
+
+  # Recursive resources are materialized by Home Manager as a real directory
+  # whose leaf files are the managed symlinks, so the directory itself is never
+  # a symlink. Only single-file targets are whole-path symlinks, so the
+  # unmanaged-collision guard applies solely to them; checking a recursive
+  # directory's top level would abort on every switch after the first.
+  projectionPreflightChecks = lib.concatMapStringsSep "\n" (
+    resource:
+    lib.optionalString (!(resource.recursive or false)) ''
+      target_path=${lib.escapeShellArg "${homeDirectory}/${resource.target}"}
+
+      if [ -L "$target_path" ]; then
+        link_target="$(readlink "$target_path")"
+        case "$link_target" in
+          /nix/store/*) ;;
+          *)
+            echo "AI harness projection target already exists as an unmanaged symlink: $target_path -> $link_target" >&2
+            echo "Move or back up the unmanaged symlink before running home-manager switch." >&2
+            exit 1
+            ;;
+        esac
+      elif [ -e "$target_path" ]; then
+        echo "AI harness projection target already exists and is not a Home Manager symlink: $target_path" >&2
+        echo "Move or back up the unmanaged file before running home-manager switch." >&2
+        exit 1
+      fi
+    ''
+  ) projectedResources;
+
   shellSecretEnvFiles = lib.concatMapStringsSep " " (
     entry: lib.escapeShellArg entry.path
   ) secretEnvContract;
@@ -176,25 +235,7 @@ in
   home.activation.aiHarnessProjectionPreflight = lib.hm.dag.entryBefore [ "writeBoundary" ] ''
     set -eu
 
-    for target in ${shellTargets}; do
-      target_path="$HOME/$target"
-
-      if [ -L "$target_path" ]; then
-        link_target="$(readlink "$target_path")"
-        case "$link_target" in
-          /nix/store/*) ;;
-          *)
-            echo "AI harness projection target already exists as an unmanaged symlink: $target_path -> $link_target" >&2
-            echo "Move or back up the unmanaged symlink before running home-manager switch." >&2
-            exit 1
-            ;;
-        esac
-      elif [ -e "$target_path" ]; then
-        echo "AI harness projection target already exists and is not a Home Manager symlink: $target_path" >&2
-        echo "Move or back up the unmanaged file before running home-manager switch." >&2
-        exit 1
-      fi
-    done
+    ${projectionPreflightChecks}
   '';
 
   home.activation.aiHarnessSecretsPreflight = lib.hm.dag.entryBefore [ "writeBoundary" ] ''
@@ -227,6 +268,18 @@ in
       ${pkgs.python3}/bin/python3 ${./ai-harness-render.py} "$template" "$target"
     }
 
+    merge_secret_config() {
+      kind="$1"
+      template="$2"
+      target="$3"
+
+      mkdir -p "$(dirname "$target")"
+
+      ${pkgs.python3}/bin/python3 ${./ai-harness-merge.py} "$kind" "$template" "$target"
+    }
+
     ${renderCommands}
+
+    ${mergeCommands}
   '';
 }

@@ -5,3 +5,5 @@ thoughts/
 .claude
 # Local Pi runtime state
 .agent/
+# CodeGraph index
+.codegraph/
