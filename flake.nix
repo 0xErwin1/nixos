@@ -70,6 +70,7 @@
             opencode = final.callPackage "${self}/pkgs/opencode" { };
             tuicr = final.callPackage "${self}/pkgs/tuicr" { };
             codegraph = final.callPackage "${self}/pkgs/codegraph" { };
+            maestro-studio = final.callPackage "${self}/pkgs/maestro-studio" { };
           };
       };
 

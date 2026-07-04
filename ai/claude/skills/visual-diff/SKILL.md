@@ -1,19 +1,26 @@
 ---
 name: visual-diff
-description: "Compare a design reference (Figma, Zeplin, XD, screenshot, URL) against a live web UI via structured checklist. Trigger: visual diff in sdd-run-testing."
+description: "Compare a design reference (Figma, Zeplin, XD, screenshot, URL) against a live web or mobile UI via structured checklist. Trigger: visual diff in sdd-run-testing."
 license: Apache-2.0
 metadata:
   author: iperez
-  version: "0.1-draft"
+  version: "0.2-draft"
 ---
 
 > NOTE: This skill is DRAFT. The checklist approach and output format are defined here, but the
-> implementation inside sdd-run-testing is not yet built out. The agent will follow this spec to
-> the extent that available tools allow. Actual automation is out of scope for this draft.
+> implementation inside `sdd-run-testing` is still best-effort. The agent follows this spec to the
+> extent that available tools allow. Actual automation depth depends on the active engine and tools.
 
 ## Engine Compatibility
 
-Visual diff works with both browser engines (`playwright` and `chrome-extension`). Cross-browser visual coverage (Chromium + Firefox + WebKit) requires `engine: playwright`; `engine: chrome-extension` provides Chrome-only coverage.
+Visual diff works with all supported UI engines:
+
+- `playwright` — browser DOM + screenshots, best for cross-browser verification
+- `chrome-extension` — real Chrome session, Chrome-only visual verification
+- `maestro` — Android / iOS / web/Chromium screenshots and screen hierarchy, best for device-first validation
+
+Cross-browser visual coverage (Chromium + Firefox + WebKit) still requires `engine: playwright`.
+`engine: maestro` is the device / Chromium path; `engine: chrome-extension` is real-session Chrome only.
 
 ## When to Use
 
@@ -27,8 +34,7 @@ A design reference can be any of: a Figma frame URL or node ID, a Zeplin share l
 Skip visual diff if:
 
 - No design reference is available.
-- The screen has highly dynamic content (charts, live feeds, user-generated content) where
-  structural comparison is not meaningful.
+- The screen has highly dynamic content (charts, live feeds, user-generated content) where structural comparison is not meaningful.
 
 ## Pass/Fail Criterion
 
@@ -57,14 +63,14 @@ In all cases, extract:
 
 Navigate to the screen under test, branching on the engine:
 
-- **engine: playwright** → navigate and capture via Playwright (`page.evaluate()` for computed styles, screenshot via the CLI).
-- **engine: chrome-extension** → drive the live Chrome session via the Claude Chrome extension; read computed styles through the extension's DOM inspection / element evaluation and capture a screenshot from the live tab. Do NOT use Playwright for this engine.
+- **`engine: playwright`** → navigate and capture via Playwright (`page.evaluate()` for computed styles, screenshot via the CLI).
+- **`engine: chrome-extension`** → drive the live Chrome session via the Claude Chrome extension; read computed styles through the extension's DOM inspection / element evaluation and capture a screenshot from the live tab. Do NOT use Playwright for this engine.
+- **`engine: maestro`** → drive the device or Chromium/web target through Maestro. Prefer Maestro MCP helpers (`inspect_screen`, `take_screenshot`) when available; otherwise fall back to `maestro hierarchy` plus the best screenshot mechanism exposed by the runtime.
 
-Capture (shared between both engines):
+Capture (shared between all engines):
 
 - Screenshot (informative only — not pass/fail)
-- Computed styles via `page.evaluate()` or DOM inspection for the elements that correspond
-  to Figma components
+- Computed styles, screen hierarchy, or other inspectable UI properties for the elements that correspond to the design reference
 
 ### Step 3 — Build the checklist
 
@@ -79,7 +85,7 @@ For each property extracted in Step 1, create a checklist item:
 
 Mark an item `skip` when:
 - The element is not present in the current state (e.g. empty state vs. populated state).
-- The property is not inspectable via computed styles (e.g. blur filters, complex gradients).
+- The property is not inspectable via computed styles / hierarchy (e.g. blur filters, complex gradients).
 
 ### Step 4 — Produce output
 
@@ -87,9 +93,10 @@ Return:
 
 - **Checklist table** (pass/fail/skip per item)
 - **Summary**: X pass, Y fail, Z skip
-- **Informative screenshot** — persistence depends on the persona engine (the screenshot is informative-only and never gates pass/fail):
+- **Informative screenshot / evidence** — persistence depends on the persona engine (the screenshot is informative-only and never gates pass/fail):
   - `playwright (code)`: save to a temporary directory outside the repo (e.g. `/tmp/sdd-testing/{feature}/screenshots/`) and reference the path.
-  - `live (no code)` / `chrome-extension`: do NOT write any file to the repo (this persona has no repo write access). Describe the screenshot in the run artifact (and attach it to the engram run observation if supported); never create a file under the repository tree.
+  - `live (no code)` / `chrome-extension`: do NOT write any file to the repo. Describe the screenshot in the run artifact (and attach it to the engram run observation if supported).
+  - `maestro (visual device)`: prefer Maestro screenshots / hierarchy attached to the run artifact or saved to a temporary directory outside the repo. `.maestro/**/*.yaml` is the only repo-backed Maestro artifact, and only when the persona explicitly allows persisted flows.
 - **Verdict**: `pass` (all non-skip items pass) | `fail` (any item fails) | `partial` (skips present)
 
 ## What to Check vs. What to Skip
@@ -104,11 +111,11 @@ Check:
 Do NOT check:
 
 - Pixel-exact positions of dynamic content
-- Shadow and blur values (too variable across browsers)
+- Shadow and blur values (too variable across browsers / devices)
 - Animation timing
 - Content that varies by user or session (avatars, names, dates)
 
-## Integration with sdd-run-testing
+## Integration with `sdd-run-testing`
 
 The `sdd-run-testing` agent calls this skill's logic inline. It does not invoke a sub-agent.
 The agent reads this file, applies the checklist methodology, and includes the checklist output

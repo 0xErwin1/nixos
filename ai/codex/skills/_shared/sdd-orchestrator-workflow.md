@@ -37,7 +37,7 @@ Meta-commands (type directly -- orchestrator handles them, won't appear in autoc
 
 ### Status-First Routing Guard
 
-Before routing, continuing, applying, verifying, or archiving an SDD change, produce structured status first by reading `~/.claude/skills/_shared/sdd-status-contract.md` and following it against the active artifact store (engram by default). Route ONLY by `nextRecommended` and the dependency states; never infer routing from free text. If `blockedReasons` is non-empty, do not proceed to apply, archive, or terminal work. If `nextRecommended` is `verify`, verification/remediation may run only to refresh evidence; if it is `resolve-blockers`, report `blockedReasons` and stop. Carry `contextFiles`, task progress, dependency states, and `actionContext` (allowed edit roots) into every sub-agent launch.
+Before routing, continuing, applying, verifying, or archiving an SDD change, produce structured status first by reading `~/.codex/skills/_shared/sdd-status-contract.md` and following it against the active artifact store (engram by default). Route ONLY by `nextRecommended` and the dependency states; never infer routing from free text. If `blockedReasons` is non-empty, do not proceed to apply, archive, or terminal work. If `nextRecommended` is `verify`, verification/remediation may run only to refresh evidence; if it is `resolve-blockers`, report `blockedReasons` and stop. Carry `contextFiles`, task progress, dependency states, and `actionContext` (allowed edit roots) into every sub-agent launch.
 
 ### SDD Init Guard (MANDATORY)
 
@@ -144,7 +144,7 @@ Read this table at session start (or before first delegation), cache it for the 
 <!-- /tabularium-ai:sdd-model-assignments -->
 
 **Conditional model for `sdd-run-testing`:** the orchestrator resolves the sub-agent model AFTER `plan-testing` returns, based on the plan contents:
-- If the plan contains at least one case with `visual diff: yes`, launch `sdd-run-testing` with `opus` — interpreting captured screenshots against the design reference benefits most from the strongest vision model. This holds for both engines: a `chrome-extension` visual run reads computed styles and screenshots from a real Chrome session; a `playwright` visual run captures them via the CLI.
+- If the plan contains at least one case with `visual diff: yes`, launch `sdd-run-testing` with `opus` — interpreting captured screenshots against the design reference benefits most from the strongest vision model. This holds for both user-facing UI engines here: a `playwright` visual run captures styles and screenshots via the CLI, and a `maestro` visual run captures device/browser evidence through Maestro MCP or CLI.
 - Otherwise (backend, api, or browser cases with no design reference), launch with `sonnet` — these are mechanical execution and gain nothing from a larger model.
 
 **Conditional model for `sdd-apply` (local policy):** the orchestrator inspects the tasks artifact BEFORE launching apply. If it contains any design/visual work, the visual slice is applied by an `opus` sub-agent while purely non-visual slices stay on `sonnet`. See **Visual-Aware Apply Split** under Sub-Agent Context Protocol for the split mechanism.
@@ -152,7 +152,7 @@ Read this table at session start (or before first delegation), cache it for the 
 
 ### Sub-Agent Launch Pattern
 
-ALL sub-agent launch prompts that involve reading, writing, or reviewing code MUST include the matching skill **paths** from the skill registry. Follow the **Skill Resolver Protocol** (`~/.claude/skills/_shared/skill-resolver.md`).
+ALL sub-agent launch prompts that involve reading, writing, or reviewing code MUST include the matching skill **paths** from the skill registry. Follow the **Skill Resolver Protocol** (`~/.codex/skills/_shared/skill-resolver.md`).
 
 The orchestrator resolves skills from the registry ONCE (at session start or first delegation), caches the index, and injects matching skill paths into each sub-agent's prompt. Also reads the Model Assignments table once per session, caches `phase -> alias`, includes that alias in every Agent tool call via `model`.
 
@@ -404,7 +404,7 @@ In all three paths the approved suites are persisted to engram BEFORE `plan-test
 
 Everything is human-in-the-loop. On entering the testing pipeline for the first time in a session, STOP and ask the user the questions below before launching any sub-agent. Do NOT infer answers from prior conversation, available tools, or project structure — always ask explicitly.
 
-Present all questions together in a single message so the user can answer in one reply. Do NOT proceed to `explore-testing` until all three answers are received.
+Present all questions together in a single message so the user can answer in one reply. Do NOT proceed to `explore-testing` until all four answers are received.
 
 1. **Test-case source** — where the cases come from:
    - **conversation** — the user already provided the story / cases in this thread.
@@ -412,15 +412,14 @@ Present all questions together in a single message so the user can answer in one
    - **generate** — run `test-suite-generator` now from the spec / PRD, then capture its output to `testing/{project}/{feature}/suites`.
    In all three cases the resolved cases end up persisted in engram BEFORE `plan-testing`.
 
-2. **Execution engine** — BLOCKING. The user MUST choose; there is no default:
-   - **Sin código (Chrome extension)** (the `chrome-extension` engine) — Claude drives an open Chrome browser with the user's real session. No scripts are written or committed. Ideal for non-technical users, one-off validation, or flows that require a real logged-in session.
-   - **Playwright (código)** (the `playwright` engine) — Claude writes and runs Playwright spec files. Cross-browser, reproducible, leaves artifacts in the repo. Requires repo write access and Playwright installed.
+2. **Execution engine / persona** — BLOCKING. The user MUST choose; there is no default:
+   - **Sin código (Maestro visual/device)** (the `maestro` engine / `maestro (visual device)` persona) — the agent drives Android, iOS, or web/Chromium flows through Maestro MCP or CLI. It is device-first visual E2E, works with a real device, emulator, simulator, or supported web surface, and only persists `.maestro/**/*.yaml` flows when the user explicitly allows repo writes.
+   - **Playwright (código)** (the `playwright` engine / `playwright (code)` persona) — the agent writes and runs Playwright spec files. Cross-browser, reproducible, leaves artifacts in the repo. Requires repo write access and Playwright installed.
 
-   Present both options with a brief description. Do NOT pick one based on what tools are available. Wait for the user's explicit choice before proceeding. The chosen engine is passed to `plan-testing` and `run-testing` and overrides any per-case engine assignment.
+   Present both options with a brief description. Do NOT pick one based on what tools are available. Wait for the user's explicit choice before proceeding. The chosen engine/persona is passed to `plan-testing` and `run-testing` and overrides any per-case engine assignment where applicable.
 
-3. **Target environment** — local / staging / preview / production URL.
-
-Also ask Execution Mode (interactive / automatic) as in SDD; default **interactive**, which pauses after EACH phase (explore → plan → run → report) to show that phase's result for approval before continuing.
+3. **Target environment** — local / staging / preview / production URL, or the app build / installed app to open when the run is mobile.
+4. **Execution mode** — interactive / automatic. Default **interactive**, which pauses after EACH phase (explore → plan → run → report) to show that phase's result for approval before continuing.
 
 ### Feature Slug Resolution
 
@@ -460,11 +459,11 @@ This binding applies only while you are inside the testing pipeline. For the qui
 
 | Phase | Responsibility |
 |-------|---------------|
-| `explore-testing` | Consult engram first (same-project prior testing + cross-project analogous flows) and read the `suites` artifact if present; read codebase, TESTING_CONTEXT.md, Figma frames, ClickUp task — produce testing scope including likely testing modes; for browser-mode cases, flag engine sensitivity (real-session dependency → `chrome-extension`; multi-browser or Safari coverage → `playwright`) |
+| `explore-testing` | Consult engram first (same-project prior testing + cross-project analogous flows) and read the `suites` artifact if present; read codebase, existing Playwright and `.maestro/**/*.yaml` flows, TESTING_CONTEXT.md, Figma frames, ClickUp task — produce testing scope including likely testing modes; for browser/mobile cases, flag engine sensitivity (multi-browser or Safari coverage → `playwright`; device-first, native-app, or Chromium/web validation → `maestro`) |
 | **suites gate** (orchestrator, not a sub-agent) | MANDATORY human-in-the-loop checkpoint between explore and plan. Resolve test-case suites per the cached source (generate / conversation / engram), SHOW them to the user, collect priority + edge-case decisions, and persist the APPROVED suites to `testing/{project}/{feature}/suites`. Never auto-skip — automatic mode does not bypass it. See "Test-Case Source → Suites resolution gate". |
-| `plan-testing` | DERIVE the executable plan from the `suites` artifact when present (do NOT re-invent cases); otherwise generate from exploration. Structured test cases with IDs, priorities, mode per case, browser targets (browser mode only), engine per case (honoring the session-chosen persona engine when set), visual-diff flags (browser mode with a design reference only) |
-| `run-testing` | Delegated to the sub-agent for every engine. Branch on the session persona engine: `live (no code)` → Chrome extension against the deployed / preview URL, NO spec files written; `playwright (code)` → Playwright CLI via Bash + spec files. Project test runner for backend; HTTP calls for api — perform visual diff only when mode is browser and a design reference is available. **Read-only for application code: failures are recorded as findings, never fixed.** |
-| `report-testing` | Produce human-readable summary — pass/fail table with Engine column for browser rows, findings grouped by mode when mixed, follow-up items. This is the final phase of the testing pipeline. |
+| `plan-testing` | DERIVE the executable plan from the `suites` artifact when present (do NOT re-invent cases); otherwise generate from exploration. Structured test cases with IDs, priorities, mode per case, browser targets (browser mode only), engine per case (`playwright` / `maestro` for browser; `maestro` for mobile), visual-diff flags (browser/mobile mode with a design reference only) |
+| `run-testing` | Delegated to the sub-agent for every engine. Branch on the session persona engine: `maestro (visual device)` → Maestro MCP/CLI against the approved Android / iOS / web target, no repo writes unless the user explicitly allows persisted `.maestro/**/*.yaml` flows; `playwright (code)` → Playwright CLI via Bash + spec files. Project test runner for backend; HTTP calls for api; mobile mode runs through Maestro — perform visual diff only when mode is browser or mobile and a design reference is available. **Read-only for application code: failures are recorded as findings, never fixed.** |
+| `report-testing` | Produce human-readable summary — pass/fail table with Engine column for browser/mobile rows, evidence references (browser/device + screenshot/hierarchy when present), findings grouped by mode when mixed, follow-up items. This is the final phase of the testing pipeline. |
 
 ### Engram pre-flight guard (MANDATORY — blocking)
 
@@ -476,7 +475,7 @@ Run this BEFORE anything else in the testing pipeline (before `explore-testing`,
 
 ### Prerequisites Check
 
-Two checkpoints. Do NOT block the pipeline on missing prerequisites — warn and continue. If two or more tool prerequisites are absent at once, ASK the user what they want to do before continuing: "Faltan algunas herramientas del pipeline. ¿Querés que corra `/setup-testing` para instalarlas ahora, o seguimos con lo que haya (best-effort)?"
+Two checkpoints. Do NOT block the pipeline on missing prerequisites — warn and continue. Setup remains system-agnostic and user-guided: discover the current OS / toolchain first, do NOT assume a package manager or a pre-created device, and ask before any heavy install, SDK license acceptance, AVD / simulator creation, cloud provisioning, or repo file write. If two or more tool prerequisites are absent at once, ASK the user what they want to do before continuing: "Faltan algunas herramientas del pipeline. ¿Querés que corra `/setup-testing` para prepararlas ahora, o seguimos con lo que haya (best-effort)?"
 
 **Checkpoint 1 — before launching `explore-testing` (universal, mode not yet known):**
 
@@ -491,8 +490,13 @@ Two checkpoints. Do NOT block the pipeline on missing prerequisites — warn and
 |------|--------|-------------|-------------|-------------------|
 | `browser` | `playwright` | Playwright installed | `npx playwright --version` | "Playwright not found. Run `/setup-testing` or install manually: `npm install -D @playwright/test`" |
 | `browser` | `playwright` | Browser binaries | `npx playwright install --dry-run` | "Some browser binaries may be missing. Run `/setup-testing` or: `npx playwright install`" |
-| `browser` | `chrome-extension` | Chrome extension installed and connected | Check extension status before running | "Chrome extension not detected. Connect it before running, or switch to `engine: playwright` if cross-browser coverage is acceptable." |
-| `browser` | `chrome-extension` | Chrome browser open | — | "Chrome must be open for the extension to drive it." |
+| `browser` | `maestro` | Maestro CLI | `maestro --version` | "Maestro CLI not found. Run `/setup-testing` or install Maestro before the run." |
+| `browser` | `maestro` | Maestro MCP helpers | Check whether tools such as `list_devices` / `run` are available before delegating | "Maestro MCP helpers not detected. Continuing with CLI-only Maestro; live inspection helpers may be unavailable." |
+| `browser` | `maestro` | Reachable Maestro web / device target | Prefer `list_devices`; otherwise confirm the Chromium/web target from `TESTING_SETUP.md` or the user | "No Maestro target was confirmed for the web run. Ask the user before provisioning a browser/device session." |
+| `mobile` | `maestro` | Maestro CLI | `maestro --version` | "Maestro CLI not found. Run `/setup-testing` or install Maestro before the run." |
+| `mobile` | `maestro` | Maestro MCP helpers | Check whether tools such as `list_devices` / `run` are available before delegating | "Maestro MCP helpers not detected. Continuing with CLI-only Maestro; live inspection helpers may be unavailable." |
+| `mobile` | `maestro` | Device / simulator availability | Prefer `list_devices`; otherwise `adb devices`, `xcrun simctl list devices`, or a user-approved cloud target | "No eligible device/simulator found. Ask before creating an AVD/simulator or using a cloud device." |
+| `mobile` | `maestro` | `appId`, bundle ID, or launchable app target | Read `TESTING_SETUP.md` or the plan for the installed app ID, app path, or launch command | "Mobile Maestro run has no app target. Provide the installed app identifier or build artifact before running." |
 | `backend` | — | Project test runner reachable | Run the test command with `--help` or `--version`, or check PATH for `pytest`/`go`/etc. | "Test runner not found. Check TESTING_SETUP.md for the correct command." |
 | `api` | — | `curl` or project-defined HTTP runner available | `curl --version` | "curl not found. HTTP-based tests will fail." |
 
@@ -518,7 +522,7 @@ Session IDs use timestamp format `YYYYMMDD-HHMM`. The orchestrator generates ONE
 |-------|-------|--------|
 | `explore-testing` | engram discovery (same + cross project), `testing/{project}/{feature}/suites` (if present), TESTING_CONTEXT.md (product context), TESTING_SETUP.md (tech setup), ARCHITECTURE.md, GLOSSARY.md (optional), codebase files | `testing/{project}/{feature}/explore` |
 | `plan-testing` | `testing/{project}/{feature}/explore` (required), `testing/{project}/{feature}/suites` (if present — derive from it), engram discovery, TESTING_CONTEXT.md, TESTING_SETUP.md | `testing/{project}/{feature}/plan` |
-| `run-testing` (per parallel runner) | its assigned execution unit from `testing/{project}/{feature}/plan` (required), engram discovery (prior runs / flaky), TESTING_SETUP.md (required — warn if absent), TESTING_CONTEXT.md (optional — informs pass/fail interpretation) | `testing/{project}/{feature}/run/{session-id}/{unit-id}` (shard), or the consolidated `run/{session-id}` if it is the only runner (never `run/latest`); Playwright spec files (playwright persona only) |
+| `run-testing` (per parallel runner) | its assigned execution unit from `testing/{project}/{feature}/plan` (required), engram discovery (prior runs / flaky), TESTING_SETUP.md (required — warn if absent), TESTING_CONTEXT.md (optional — informs pass/fail interpretation) | `testing/{project}/{feature}/run/{session-id}/{unit-id}` (shard), or the consolidated `run/{session-id}` if it is the only runner (never `run/latest`); Playwright spec files (playwright persona only); optional `.maestro/**/*.yaml` flows (Maestro persona only, and only when the user explicitly allowed persisted flows) |
 | orchestrator (after runners return) | all shard observations | merges into `testing/{project}/{feature}/run/{session-id}` and `testing/{project}/{feature}/run/latest` |
 | `report-testing` | `testing/{project}/{feature}/run/latest` (required), `testing/{project}/{feature}/plan` (required), prior reports (engram discovery) | `testing/{project}/{feature}/report` (full report returned in result; surfaced in chat, optionally stored in Obsidian — never written into the repo tree) |
 
@@ -532,19 +536,20 @@ The orchestrator asks the user for PRODUCT decisions. It does NOT ask for TECHNI
 **Ask the user (PRODUCT decisions):**
 
 - Where do the test cases come from? (this conversation / engram / generate now with `test-suite-generator`)
-- Which execution engine / persona? (`live (no code)` for non-technical vs `playwright (code)` for a dev regression suite)
+- Which execution engine / persona? (`maestro (visual device)` / `maestro` for device-first Android / iOS / web validation, or `playwright (code)` for reproducible cross-browser coverage)
 - Which test cases are `critical` vs `low` priority?
-- Which browsers must be covered (e.g. is Safari/WebKit a requirement)?
+- Which browsers or device surfaces must be covered (e.g. Safari/WebKit, Android, iOS, or Chromium via Maestro)?
 - Which edge cases matter for this feature (e.g. empty state, error state)?
-- Is mobile viewport required for this run?
-- Which environment to target (local / staging / preview)?
+- Is `mobile` mode required for this run, or is browser-only enough?
+- If Maestro is chosen, should flows stay ephemeral or may the runner persist `.maestro/**/*.yaml` files in the repo?
+- Which environment to target (local / staging / preview / installed app build)?
 
 **Do NOT ask the user (TECHNICAL decisions):**
 
-- Which CSS selector or Playwright locator to use
+- Which CSS selector, Maestro locator, or Playwright locator to use
 - Which timeout value to set
-- Whether to use `getByRole` vs `getByTestId`
-- Which Playwright project configuration to apply
+- Whether to use `getByRole`, a test id, or a Maestro hierarchy selector
+- Which Playwright project or Maestro flag to apply
 
 When in doubt about a technical decision, choose the approach that follows existing project
 conventions and note it in the run artifact.
@@ -573,13 +578,13 @@ A bare `"SUM-03: ¿qué hago?"` with options the user can only guess at is a def
 
 #### run-testing is always delegated (read first)
 
-`run-testing` is DELEGATED to the `sdd-run-testing` sub-agent for EVERY engine, with no exception. The orchestrator stays thin and never executes the run itself — that is the whole point of the sub-agent architecture, and it holds for the non-technical `live (no code)` path just as much as for code-driven runs.
+`run-testing` is DELEGATED to the `sdd-run-testing` sub-agent for EVERY engine, with no exception. The orchestrator stays thin and never executes the run itself — that is the whole point of the sub-agent architecture, and it holds for the no-code and code-driven paths equally.
 
-- **`chrome-extension` / `live (no code)` → delegate.** The sub-agent drives the Claude Chrome extension (`mcp__claude-in-chrome__*`, listed in its tools) against the deployed / preview URL. This is the PRIMARY engine for non-technical users — it must be a first-class, delegatable path. Assume it works; do not route it through the orchestrator and do not fall back to Playwright.
+- **`maestro` / `maestro (visual device)` → delegate.** The sub-agent drives Android, iOS, or web/Chromium flows through Maestro. Prefer Maestro MCP tools (`list_devices`, `inspect_screen`, `take_screenshot`, `run`, `cheat_sheet`, `open_maestro_viewer`) when available; otherwise fall back to Maestro CLI (`maestro test`, `maestro hierarchy`) where possible. Do NOT edit app source. Persist `.maestro/**/*.yaml` only when the user explicitly allows repo-backed flows; otherwise keep YAML inline / ephemeral.
 - **`playwright` / `backend` / `api` → delegate.** Bash-driven (`playwright test`, the project test runner, `curl`) plus engram.
 - **`mixed`**: delegated as parallel execution units (see below), one runner per unit, results merged.
 
-Playwright is NOT the default engine. The engine is a blocking product choice (see Testing Setup Questions); for a non-technical user the recommended and default-offered engine is `live (no code)`. Playwright, and future API/Postman runners, are supported options — never the only source of tests.
+There is NO default engine. The engine/persona is a blocking product choice (see Testing Setup Questions). On this agent surface, `maestro (visual device)` means the Maestro visual/device flow, while `playwright (code)` is the reproducible cross-browser suite option.
 
 #### Parallel execution — fan out N runners (read second)
 
@@ -592,22 +597,24 @@ run-testing is NOT a single runner by default. Most test cases are independent (
 **The orchestrator launches one runner per unit, concurrently**, passing each runner only its unit's cases. Bound the fan-out by:
 1. **Data dependencies** — already encapsulated: chains are single units, so ordering is preserved within a runner.
 2. **Shared mutable state** — two units that write the SAME data (same record, same user's state) would collide if concurrent. `plan-testing` flags these as conflicting; the orchestrator serializes conflicting units (or relies on isolated per-unit test data when the plan says it is available). Read-only cases never conflict.
-3. **Engine concurrency** — `playwright` / `backend` / `api` units parallelize freely (isolated processes / browser contexts). `chrome-extension` / `live` units are bounded by how many real browser sessions are available and by the user's wish to observe the run; when only one live session is practical, run the live units with limited or no concurrency while still parallelizing any non-live units. Do not force live parallelism that would corrupt the shared session.
+3. **Engine concurrency** — `playwright` / `backend` / `api` units parallelize freely (isolated processes / browser contexts). `maestro` / `live` units are bounded by how many devices, emulators, simulators, or web targets are actually available and by whether the user wants to watch the run. Do not auto-create or auto-provision extra targets without asking first.
 4. **A sane concurrency cap** — do not launch dozens at once; batch to a reasonable number of concurrent runners.
 
 **Per-unit model.** Apply the conditional model per runner: a unit whose cases include `visual diff: yes` launches with `opus`; purely mechanical units launch with `sonnet`. So visual units get the strong vision model without paying for it on the rest.
 
 **Result merge (orchestrator-owned).** Each runner writes its own shard observation under `testing/{project}/{feature}/run/{session-id}/{unit-id}` (a sole runner writes the consolidated `testing/{project}/{feature}/run/{session-id}` directly) and returns its `run_digest`. The orchestrator MERGES all shards into the consolidated `testing/{project}/{feature}/run/{session-id}` and ALWAYS writes `testing/{project}/{feature}/run/latest` itself — even for a single runner; runners never write `run/latest`. The `run/latest` content MUST include the top-level fields `session_id: "{session-id}"` and `session_topic_key: "testing/{project}/{feature}/run/{session-id}"`, so `report-testing` can read the `session_id` and resolve one latest run. Surface a combined run digest to the user.
 
-The session **persona engine** (chosen in Testing Setup Questions) takes precedence for browser cases: `live (no code)` forces `chrome-extension` for ALL browser cases (run against the deployed / preview URL, no spec files written); `playwright (code)` forces `playwright`. Only when no persona was set does the per-case `engine` determined during `plan-testing` apply. With that precedence in mind, automated test runs dispatch based on the `mode` and, for browser cases, the resolved `engine`:
+The session **persona engine** (chosen in Testing Setup Questions) takes precedence for browser/mobile cases: `maestro (visual device)` forces `maestro` for browser cases the user chose to validate through Chromium/web and for ALL `mobile` cases; `playwright (code)` forces `playwright` for browser cases. Only when no persona was set does the per-case `engine` determined during `plan-testing` apply. With that precedence in mind, automated test runs dispatch based on the `mode` and, for UI cases, the resolved `engine`:
 
 - **`browser`**: Two engines are available. The plan assigns one per test case.
 
   - **`engine: playwright`**: Run via Playwright CLI via Bash, headless or headed. Cross-browser across Chromium / Firefox / WebKit as specified in the test plan. Use for: multiple browsers required, regression suites, repeatable runs, anything needing visual diff across browsers.
 
-  - **`engine: chrome-extension`**: Drive a real Chrome session via the Claude Chrome extension. Single browser only (Chrome). Use for: flows that depend on a real authenticated session, one-shot exploratory validation, or when the user wants to observe the run live in their own Chrome window. Visual diff still works when a Figma frame is referenced, but coverage is Chrome-only.
+  - **`engine: maestro`**: Run web/Chromium or device-proxy flows through Maestro MCP or CLI. Use for: device-first visual E2E, the same flow needing to span mobile + web, or a no-code browser run where Chromium coverage is sufficient. Evidence comes from Maestro screenshots / hierarchy, not Playwright spec files.
 
-  Browser MCP tools (Chrome DevTools MCP, Playwright MCP) may be used for DOM inspection but do not replace CLI or extension execution.
+  Browser inspection helpers (Playwright MCP or Maestro helpers) may be used for DOM or screen inspection, but they do not replace the chosen execution engine.
+
+- **`mobile`**: `engine: maestro` only. Drive Android / iOS flows through Maestro MCP or CLI. Requires a reachable device/emulator/simulator (or approved cloud target) plus a known `appId`, bundle ID, app path, or launch target. Prefer inline YAML while refining a run; only write `.maestro/**/*.yaml` when the user explicitly allows persisted flows.
 
 - **`backend`**: Invoke the project's test runner via Bash. The command and runner are read from
   `TESTING_SETUP.md` when present; otherwise detect from the repo:
@@ -622,15 +629,15 @@ The session **persona engine** (chosen in Testing Setup Questions) takes precede
 
 ### Visual Diff Policy
 
-Applies only when `mode` includes `browser` AND a design reference is associated with the screen under test. Otherwise skipped.
+Applies only when `mode` includes `browser` or `mobile` AND a design reference is associated with the screen under test. Otherwise skipped.
 
 A design reference can be any of: a Figma frame URL or node ID, a Zeplin link, an Adobe XD share link, a Sketch Cloud URL, a screenshot file, or any URL that renders the intended design. The agent uses whatever is available — Figma MCP when the reference is a Figma URL and the MCP is connected, direct visual inspection for screenshots or rendered URLs, or a manual description when no tool can extract specs automatically.
 
 Visual comparison uses a **structured checklist**, not pixel diff.
 
-The checklist extracts typography, color, spacing, and layout specs from the design reference and verifies them against computed DOM styles. Pixel diff screenshots are informative artifacts for human review, NOT a pass/fail criterion. Screenshot persistence is persona-aware: `playwright (code)` saves them under a temporary directory outside the repository tree (e.g. `/tmp/sdd-testing/{feature}/screenshots/`); `live (no code)` does NOT write to the repo (it has no repo write access) — the screenshot is described in the run artifact only. Screenshots are never written into the repository tree.
+The checklist extracts typography, color, spacing, and layout specs from the design reference and verifies them against computed DOM styles or device-observed UI properties. Pixel diff screenshots are informative artifacts for human review, NOT a pass/fail criterion. Screenshot persistence is persona-aware: `playwright (code)` saves them under a temporary directory outside the repository tree (e.g. `/tmp/sdd-testing/{feature}/screenshots/`); `maestro (visual device)` / `maestro` prefers Maestro screenshots and hierarchy captures attached to the run artifact or saved to a temporary directory outside the repository tree. `.maestro/**/*.yaml` is the only repo-backed Maestro artifact, and only when the user explicitly permits persisted flows. Screenshots are never written into the repository tree.
 
-See `~/.claude/skills/visual-diff/SKILL.md` for the full methodology.
+See `~/.codex/skills/visual-diff/SKILL.md` for the full methodology.
 
 ### Re-runs
 

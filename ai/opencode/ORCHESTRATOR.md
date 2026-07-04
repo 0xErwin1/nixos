@@ -153,6 +153,11 @@ Skills (appear in autocomplete):
 - `/sdd-verify [change]` -> validate implementation against specs; reports CRITICAL / WARNING / SUGGESTION
 - `/sdd-archive [change]` -> close a change and persist final state in the active artifact store
 - `/sdd-onboard` -> guided end-to-end walkthrough of SDD using your real codebase
+- `/sdd-test [feature]` -> run the full testing pipeline (explore -> suites review -> plan -> run -> report)
+- `/sdd-explore-testing <feature>` -> investigate a feature or flow from a testing perspective
+- `/sdd-plan-testing <feature>` -> turn the approved testing scope into executable test cases and execution units
+- `/sdd-run-testing <feature>` -> execute the approved test plan with Playwright, Maestro, backend, or API runners
+- `/sdd-report-testing <feature>` -> generate the human-readable test report from the latest run
 
 Meta-commands (type directly - orchestrator handles them, won't appear in autocomplete):
 - `/sdd-new <change>` -> start a new change by delegating exploration + proposal to sub-agents
@@ -163,7 +168,7 @@ Meta-commands (type directly - orchestrator handles them, won't appear in autoco
 
 ### SDD Init Guard (MANDATORY)
 
-Before executing ANY SDD command (`/sdd-new`, `/sdd-ff`, `/sdd-continue`, `/sdd-explore`, `/sdd-apply`, `/sdd-verify`, `/sdd-archive`), check if `sdd-init` has been run for this project:
+Before executing ANY SDD command (`/sdd-new`, `/sdd-ff`, `/sdd-continue`, `/sdd-explore`, `/sdd-apply`, `/sdd-verify`, `/sdd-archive`, `/sdd-test`, `/sdd-explore-testing`, `/sdd-plan-testing`, `/sdd-run-testing`, `/sdd-report-testing`), check if `sdd-init` has been run for this project:
 
 1. Search Engram: `mem_search(query: "sdd-init/{project}", project: "{project}")`
 2. If found -> init was done, proceed normally

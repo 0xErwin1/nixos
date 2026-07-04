@@ -47,6 +47,7 @@
     postman
     cartero
     maestro
+    maestro-studio
 
     obsidian
 

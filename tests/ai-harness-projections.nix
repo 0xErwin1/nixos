@@ -18,6 +18,8 @@ let
     "ai/claude/commands/sdd-apply.md"
     "ai/codex/AGENTS.md"
     "ai/codex/sdd-orchestrator.md"
+    "ai/codex/commands/sdd-test.md"
+    "ai/codex/agents/sdd-run-testing.md"
     "ai/support/secrets-env-contract.md"
     "ai/support/operator-cutover-rollback.md"
   ];
@@ -39,6 +41,8 @@ let
     ".codex/AGENTS.md"
     ".codex/sdd-orchestrator.md"
     ".codex/engram-instructions.md"
+    ".codex/commands"
+    ".codex/agents"
     ".codex/skills"
   ];
   # Single-file projection targets: Home Manager materializes each as a

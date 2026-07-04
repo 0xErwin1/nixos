@@ -9,7 +9,7 @@
       "model": "openai/gpt-5.5",
       "description": "SDD delegate-only orchestrator",
       "mode": "all",
-      "prompt": "{file:/home/iperez/.tabularium/AI/ORCHESTRATOR.md}",
+      "prompt": "{file:/home/iperez/.config/opencode/ORCHESTRATOR.md}",
       "tools": {
         "bash": true,
         "delegate": true,

@@ -82,6 +82,16 @@ let
       target = ".codex/engram-instructions.md";
     }
     {
+      source = canonicalRoot + "/codex/commands";
+      target = ".codex/commands";
+      recursive = true;
+    }
+    {
+      source = canonicalRoot + "/codex/agents";
+      target = ".codex/agents";
+      recursive = true;
+    }
+    {
       source = canonicalRoot + "/codex/skills";
       target = ".codex/skills";
       recursive = true;
