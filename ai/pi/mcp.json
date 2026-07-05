@@ -17,6 +17,9 @@
     "figma": {
       "url": "https://mcp.figma.com/mcp"
     },
+    "penpot": {
+      "url": "https://penpot.iperez.dev/mcp/stream?userToken=@PENPOT_API_KEY@"
+    },
     "dbflux": {
       "command": "dbflux",
       "args": ["mcp", "--client-id", "pi"]

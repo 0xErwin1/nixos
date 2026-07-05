@@ -34,6 +34,11 @@ let
       recursive = true;
     }
     {
+      source = canonicalRoot + "/opencode/prompts";
+      target = ".config/opencode/prompts";
+      recursive = true;
+    }
+    {
       source = canonicalRoot + "/opencode/skills";
       target = ".config/opencode/skills";
       recursive = true;

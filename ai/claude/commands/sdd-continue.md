@@ -3,7 +3,7 @@ description: Continue the next SDD phase in the dependency chain
 ---
 
 If the native `sdd-orchestrator` agent is available, delegate this command to it.
-Otherwise, follow the SDD orchestrator workflow inline using the instructions already installed in `~/.claude/CLAUDE.md`.
+Otherwise, read `~/.claude/skills/_shared/sdd-orchestrator-workflow.md` first, then follow that workflow inline.
 
 WORKFLOW:
 1. Read `~/.claude/skills/_shared/sdd-status-contract.md` and produce structured status before acting. A native status dispatcher is authoritative only when the session artifact store is `openspec` or `hybrid`; it reads only `openspec/changes/` and cannot see Engram-backed changes. When the session artifact store is `engram`, do NOT rely on any native dispatcher output (`blocked`, `Active OpenSpec change not found`, `nextRecommended: sdd-new`) for a change that exists -- resolve status entirely from Engram (`mem_search` + `mem_get_observation` on the change's topic keys) using the manual status schema. If the change is missing and more than one active change exists, ask the user to choose and STOP. Do not guess.
@@ -25,4 +25,4 @@ ENGRAM NOTE:
 To check which artifacts exist, search: mem_search(query: "sdd/$ARGUMENTS/", project: "{project}") to list all artifacts for this change.
 Sub-agents handle persistence automatically with topic_key "sdd/$ARGUMENTS/{type}".
 
-Read the orchestrator instructions to coordinate this workflow. Do NOT execute phase work inline when a native sub-agent is available.
+Read `~/.claude/skills/_shared/sdd-orchestrator-workflow.md` to coordinate this workflow. Do NOT execute phase work inline when a native sub-agent is available.

@@ -5,7 +5,6 @@ let
     lib
     stdenv
     fetchurl
-    makeWrapper
     glibc
     ;
 
@@ -54,8 +53,6 @@ stdenv.mkDerivation {
   dontPatchELF = true;
   dontStrip = true;
 
-  nativeBuildInputs = [ makeWrapper ];
-
   installPhase = ''
     runHook preInstall
 
@@ -65,11 +62,16 @@ stdenv.mkDerivation {
     # loader (not itself) as its exec path and its bundled-ripgrep/grep shell
     # interception mis-fires (`ld.so -G ...`). Fall back to the system ripgrep,
     # which is the documented remedy when the bundled ripgrep does not run.
-    makeWrapper "${glibc}/lib/${source.loader}" "$out/bin/claude" \
-      --add-flags "--library-path ${libPath}" \
-      --add-flags "$out/libexec/claude-code/claude" \
-      --set-default DISABLE_AUTOUPDATER 1 \
-      --set-default USE_BUILTIN_RIPGREP 0
+    # Keep argv[0] as "claude" so terminal integrations such as tmux automatic
+    # window renaming do not display the dynamic loader as the active command.
+    mkdir -p "$out/bin"
+    cat > "$out/bin/claude" <<EOF
+#!${pkgs.runtimeShell}
+export DISABLE_AUTOUPDATER="\''${DISABLE_AUTOUPDATER:-1}"
+export USE_BUILTIN_RIPGREP="\''${USE_BUILTIN_RIPGREP:-0}"
+exec -a claude "${glibc}/lib/${source.loader}" --library-path "${libPath}" "$out/libexec/claude-code/claude" "\$@"
+EOF
+    chmod 0755 "$out/bin/claude"
 
     runHook postInstall
   '';

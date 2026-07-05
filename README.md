@@ -90,7 +90,7 @@ Activation aborts early if the secret env files are missing. Create them once pe
 
 ```bash
 mkdir -p ~/.config/ai-harness/secrets
-# mcp.env — export ATLAS_TOKEN=... and CONTEXT7_API_KEY=...
+# mcp.env — export ATLAS_TOKEN=..., CONTEXT7_API_KEY=..., and PENPOT_API_KEY=...
 # api.env — may be empty; only needs to exist
 touch ~/.config/ai-harness/secrets/{mcp.env,api.env}
 chmod 600 ~/.config/ai-harness/secrets/*.env
@@ -112,7 +112,7 @@ Rendering and merging run in a small activation-time helper (`home-manager/globa
 
 ### MCP servers
 
-The same MCP set is provisioned across agents (`aws`, `context7`, `figma`, `dbflux`, `engram`, `obsidian`, `atlas`), with per-agent adjustments — e.g. Claude Code omits `engram`/`figma` since those are already provided as plugins. Tokens are substituted from `mcp.env` at activation; the templates under `ai/` hold placeholders only.
+The same MCP set is provisioned across agents (`aws`, `context7`, `figma`, `penpot`, `dbflux`, `engram`, `obsidian`, `atlas`), with per-agent adjustments — e.g. Claude Code omits `engram`/`figma` since those are already provided as plugins. Tokens are substituted from `mcp.env` at activation; the templates under `ai/` hold placeholders only.
 
 ## Notes
 

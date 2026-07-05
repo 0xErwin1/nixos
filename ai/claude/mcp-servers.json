@@ -14,6 +14,10 @@
       "CONTEXT7_API_KEY": "@CONTEXT7_API_KEY@"
     }
   },
+  "penpot": {
+    "type": "http",
+    "url": "https://penpot.iperez.dev/mcp/stream?userToken=@PENPOT_API_KEY@"
+  },
   "dbflux": {
     "command": "dbflux",
     "args": ["mcp", "--client-id", "claude"]

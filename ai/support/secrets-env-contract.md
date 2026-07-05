@@ -26,6 +26,7 @@ Claude Code (`ai/claude/mcp-servers.json`), and Codex
 
 - `ATLAS_TOKEN` — Atlas MCP token
 - `CONTEXT7_API_KEY` — Context7 MCP API key
+- `PENPOT_API_KEY` — Penpot MCP API key
 
 `api.env` may be empty if no `@VAR@` placeholder resolves to it; it only needs to exist for the preflight.
 

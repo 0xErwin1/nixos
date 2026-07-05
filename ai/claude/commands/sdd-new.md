@@ -3,7 +3,7 @@ description: Start a new SDD change -- runs exploration then creates a proposal
 ---
 
 If the native `sdd-orchestrator` agent is available, delegate this command to it.
-Otherwise, follow the SDD orchestrator workflow inline using the instructions already installed in `~/.claude/CLAUDE.md`.
+Otherwise, read `~/.claude/skills/_shared/sdd-orchestrator-workflow.md` first, then follow that workflow inline.
 
 WORKFLOW:
 1. Launch `sdd-explore` to investigate the codebase for this change
@@ -22,4 +22,4 @@ CONTEXT:
 ENGRAM NOTE:
 Sub-agents handle persistence automatically. Each phase saves its artifact to engram with topic_key "sdd/$ARGUMENTS/{type}".
 
-Read the orchestrator instructions to coordinate this workflow. Do NOT execute phase work inline when a native sub-agent is available.
+Read `~/.claude/skills/_shared/sdd-orchestrator-workflow.md` to coordinate this workflow. Do NOT execute phase work inline when a native sub-agent is available.

@@ -37,7 +37,7 @@
       "description": "Implement code changes from task definitions",
       "hidden": true,
       "mode": "subagent",
-      "prompt": "{file:/home/iperez/.tabularium/AI/prompts/sdd/sdd-apply.md}",
+      "prompt": "{file:/home/iperez/.config/opencode/prompts/sdd/sdd-apply.md}",
       "tools": {
         "bash": true,
         "edit": true,
@@ -56,7 +56,7 @@
       "description": "Archive completed change artifacts",
       "hidden": true,
       "mode": "subagent",
-      "prompt": "{file:/home/iperez/.tabularium/AI/prompts/sdd/sdd-archive.md}",
+      "prompt": "{file:/home/iperez/.config/opencode/prompts/sdd/sdd-archive.md}",
       "tools": {
         "bash": true,
         "edit": true,
@@ -76,7 +76,7 @@
       "description": "Create technical design from proposals",
       "hidden": true,
       "mode": "subagent",
-      "prompt": "{file:/home/iperez/.tabularium/AI/prompts/sdd/sdd-design.md}",
+      "prompt": "{file:/home/iperez/.config/opencode/prompts/sdd/sdd-design.md}",
       "tools": {
         "bash": true,
         "edit": true,
@@ -96,7 +96,7 @@
       "description": "Explore codebase and think through ideas",
       "hidden": true,
       "mode": "subagent",
-      "prompt": "{file:/home/iperez/.tabularium/AI/prompts/sdd/sdd-explore.md}",
+      "prompt": "{file:/home/iperez/.config/opencode/prompts/sdd/sdd-explore.md}",
       "tools": {
         "bash": true,
         "edit": true,
@@ -116,7 +116,7 @@
       "description": "Bootstrap SDD context and project configuration",
       "hidden": true,
       "mode": "subagent",
-      "prompt": "{file:/home/iperez/.tabularium/AI/prompts/sdd/sdd-init.md}",
+      "prompt": "{file:/home/iperez/.config/opencode/prompts/sdd/sdd-init.md}",
       "tools": {
         "bash": true,
         "edit": true,
@@ -136,7 +136,7 @@
       "description": "Create change proposals from explorations",
       "hidden": true,
       "mode": "subagent",
-      "prompt": "{file:/home/iperez/.tabularium/AI/prompts/sdd/sdd-propose.md}",
+      "prompt": "{file:/home/iperez/.config/opencode/prompts/sdd/sdd-propose.md}",
       "tools": {
         "bash": true,
         "edit": true,
@@ -155,7 +155,7 @@
       "description": "Write detailed specifications from proposals",
       "hidden": true,
       "mode": "subagent",
-      "prompt": "{file:/home/iperez/.tabularium/AI/prompts/sdd/sdd-spec.md}",
+      "prompt": "{file:/home/iperez/.config/opencode/prompts/sdd/sdd-spec.md}",
       "tools": {
         "bash": true,
         "edit": true,
@@ -175,7 +175,7 @@
       "description": "Break down specs and designs into implementation tasks",
       "hidden": true,
       "mode": "subagent",
-      "prompt": "{file:/home/iperez/.tabularium/AI/prompts/sdd/sdd-tasks.md}",
+      "prompt": "{file:/home/iperez/.config/opencode/prompts/sdd/sdd-tasks.md}",
       "tools": {
         "bash": true,
         "edit": true,
@@ -194,7 +194,7 @@
       "description": "Validate implementation against specs",
       "hidden": true,
       "mode": "subagent",
-      "prompt": "{file:/home/iperez/.tabularium/AI/prompts/sdd/sdd-verify.md}",
+      "prompt": "{file:/home/iperez/.config/opencode/prompts/sdd/sdd-verify.md}",
       "tools": {
         "bash": true,
         "edit": true,
@@ -233,6 +233,11 @@
       "enabled": true,
       "type": "remote",
       "url": "https://mcp.figma.com/mcp"
+    },
+    "penpot": {
+      "enabled": true,
+      "type": "remote",
+      "url": "https://penpot.iperez.dev/mcp/stream?userToken=@PENPOT_API_KEY@"
     },
     "dbflux": {
       "type": "local",

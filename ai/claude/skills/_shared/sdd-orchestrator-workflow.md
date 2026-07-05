@@ -1,8 +1,8 @@
 # SDD Orchestrator Workflow (lazy-loaded)
 
-This is the detailed SDD + Testing procedure for the orchestrator. It is read on demand: the always-on `CLAUDE.md` keeps only the orchestrator role, delegation rules, and anti-patterns, and points here before any SDD command, SDD/Judgment-Day phase delegation, or testing-pipeline intent.
+This is the detailed SDD + Testing procedure for the orchestrator. It is read on demand: the always-on orchestrator shell keeps only the orchestrator role, delegation rules, memory protocol, and anti-patterns, and points here before any SDD command, SDD/Judgment-Day phase delegation, or testing-pipeline intent.
 
-The orchestrator role and Delegation Rules defined in `CLAUDE.md` still apply; this file does not repeat them.
+The orchestrator role and Delegation Rules defined in the always-on orchestrator shell still apply; this file does not repeat them.
 
 ---
 
@@ -37,7 +37,7 @@ Meta-commands (type directly -- orchestrator handles them, won't appear in autoc
 
 ### Status-First Routing Guard
 
-Before routing, continuing, applying, verifying, or archiving an SDD change, produce structured status first by reading `~/.claude/skills/_shared/sdd-status-contract.md` and following it against the active artifact store (engram by default). Route ONLY by `nextRecommended` and the dependency states; never infer routing from free text. If `blockedReasons` is non-empty, do not proceed to apply, archive, or terminal work. If `nextRecommended` is `verify`, verification/remediation may run only to refresh evidence; if it is `resolve-blockers`, report `blockedReasons` and stop. Carry `contextFiles`, task progress, dependency states, and `actionContext` (allowed edit roots) into every sub-agent launch.
+Before routing, continuing, applying, verifying, or archiving an SDD change, produce structured status first by reading `~/.claude/skills/_shared/sdd-status-contract.md` and following it against the active artifact store (engram by default). The native SDD dispatcher/status guard applies only to file-based stores (`openspec`/`hybrid`): a native engine reads ONLY OpenSpec file artifacts under `openspec/changes/` and always emits `artifactStore: openspec`, so it cannot observe Engram-backed changes. When the session artifact store is `engram`, do NOT invoke a native dispatcher and do NOT treat its openspec-oriented output (`blocked`, `Active OpenSpec change not found`, `nextRecommended: sdd-new`) as a real blocker for an Engram change that exists -- resolve status entirely from Engram (`mem_search` + `mem_get_observation` on the change's topic keys such as `sdd/{change-name}/tasks`) using the manual status schema. Treat native status as authoritative only for `openspec`/`hybrid`. Route ONLY by `nextRecommended` and the dependency states; never infer routing from free text. If `blockedReasons` is non-empty, do not proceed to apply, archive, or terminal work. If `nextRecommended` is `verify`, verification/remediation may run only to refresh evidence; if it is `resolve-blockers`, report `blockedReasons` and stop; if it is a planning token (`propose`, `spec`, `design`, or `tasks`), launch the corresponding planning phase. A missing planning artifact named by a planning token is the expected OUTPUT of that phase, not a blocker -- do not treat it as a `blockedReason`. Carry `contextFiles`, task progress, dependency states, and `actionContext` (allowed edit roots) into every sub-agent launch.
 
 ### SDD Init Guard (MANDATORY)
 
@@ -58,7 +58,7 @@ Do NOT skip this check. Do NOT ask the user -- just run init silently if needed.
 
 When the user invokes `/sdd-new`, `/sdd-ff`, or `/sdd-continue` for the first time in a session, ASK which execution mode they prefer:
 
-- **Automatic** (`auto`): Run all phases back-to-back without pausing. Show the final result only. Use this when the user wants speed and trusts the process.
+- **Automatic** (`auto`): Run phases back-to-back without pausing, but run the Automatic Mode Gatekeeper after every phase before launching the next sub-agent. Surface only real gate failures or the final result.
 - **Interactive** (`interactive`): After each phase completes, show the result summary and ASK: "Want to adjust anything or continue?" before proceeding to the next phase. Use this when the user wants to review and steer each step.
 
 If the user doesn't specify, default to **Interactive** (safer, gives the user control).
@@ -75,7 +75,31 @@ Interactive approval is phase-scoped. A reply such as "continue", "dale", or "go
 
 Before the propose phase in interactive mode, offer the user a proposal question round instead of silently deciding whether the proposal is clear enough. Explain that the questions are meant to improve the PRD/proposal by uncovering business understanding, business rules, implications, impact, edge cases, and product tradeoffs. Prefer 3-5 concrete product questions per round, then summarize the resulting assumptions and ask whether the user wants to correct anything or run a second round. Cover business and product decisions: business problem, target users and situations, business rules, product outcome, current-state gap, implications and impact, edge cases, decision gaps, first-slice scope boundaries, non-goals, product constraints, and business tradeoffs. Do not ask about test commands, PR shape, changed-line budget, or other harness mechanics at proposal time unless the user explicitly asks to discuss delivery.
 
-For this agent (sub-agent delegation): **Automatic** means phases run back-to-back via sub-agents without pausing. **Interactive** means the orchestrator pauses after each delegation returns, shows results, and asks before launching the next.
+For this agent (sub-agent delegation): **Automatic** means phases run back-to-back via sub-agents without pausing, with gatekeeper validation between phases. **Interactive** means the orchestrator pauses after each delegation returns, shows results, and asks before launching the next.
+
+### Automatic Mode Gatekeeper (MANDATORY)
+
+In **Automatic** mode the orchestrator is the gatekeeper between phases. The gatekeeper runs after every phase: when a delegated phase returns and BEFORE launching the next sub-agent, the orchestrator MUST validate that the phase reached its objective with everything in order. This is autonomous validation -- it does NOT ask the user; it only surfaces to the user when it catches a problem.
+
+**What the gatekeeper checks (every phase, against the Result Contract):**
+
+- **Contract conformance:** the phase returned `status`, `executive_summary`, `artifacts`, `next_recommended`, `risks`, and `skill_resolution`, and `status` indicates success (not partial, failed, or blocked).
+- **Artifact existence:** the declared artifact actually exists and is readable in the active backend -- read it back (engram: `mem_search` + `mem_get_observation` on the topic key; openspec: read the file path). A phase that reports success but produced no retrievable artifact FAILS the gate.
+- **No hallucination:** every file path, symbol, command, or artifact the phase claims it created or referenced must actually exist; spot-check the concrete claims. A referenced path that does not resolve FAILS the gate.
+- **No drift from inputs:** the output is consistent with the phase's required inputs per the Dependency Graph -- spec stays within the proposal's scope, design answers the proposal, tasks cover spec and design, apply implements the tasks. Invented requirements, scope creep, or dropped requirements FAILS the gate.
+- **Routing coherence:** `next_recommended` follows the Dependency Graph and `risks` are within tolerance (no unaddressed CRITICAL).
+
+**Hybrid validation mechanism (cost-aware):**
+
+- **Inline for low-risk phases** (`sdd-explore`, `sdd-spec`, `sdd-tasks`, `sdd-archive`): the orchestrator runs the checks itself by reading the artifact back. No extra sub-agent.
+- **Fresh-context reviewer for high-risk phases** (`sdd-design`, `sdd-apply`): delegate a fresh-context reviewer sub-agent for independent judgment, because errors in these phases compound downstream. Use the `sdd-verify` model alias for the delegated gate review and include `model` per the Model Assignments table.
+- **Escalation on smell:** if an inline check on a low-risk phase finds any smell (status mismatch, unresolved path, suspected drift, missing artifact), escalate that phase to a fresh-context delegated review before deciding.
+
+**On gate PASS:** continue automatically to the next phase. Auto stays auto on the happy path.
+
+**On gate FAIL:** re-run the same phase exactly once with corrective feedback that names the specific failures the gatekeeper found. Re-run the gate on the new result. If it passes, continue the chain. If it fails again, STOP the automatic chain and surface a report to the user naming the phase, what the gatekeeper caught, both attempts, and the recommended fix. Do not advance to dependent phases on a failed gate.
+
+The gatekeeper runs in addition to the Review Workload Guard and the delegation rules; it never relaxes them and never auto-marks anything reviewed in engram.
 
 ### Artifact Store Mode
 
@@ -92,6 +116,15 @@ Cache the artifact store choice for the session. Pass it as `artifact_store.mode
 ### Delivery Strategy
 
 On the first `/sdd-new`, `/sdd-ff`, or `/sdd-continue` in a session, ask once for and cache delivery strategy: `ask-on-risk` (default), `auto-chain`, `single-pr`, or `exception-ok`. Pass it as `delivery_strategy` to `sdd-tasks` and `sdd-apply` prompts.
+
+### Chain Strategy
+
+When `delivery_strategy` results in chained PRs (either by user choice via `ask-on-risk` or automatically via `auto-chain`), ask the user which chain strategy to use:
+
+- **`stacked-to-main`**: Each PR merges to main in order. Fast iteration, fix on the go. Best for speed-first teams and independent slices.
+- **`feature-branch-chain`**: The feature/tracker branch accumulates final integration; PR #1 targets the tracker branch, later child PRs target the immediate previous PR branch so review diffs stay focused. Only the tracker merges to main. Best for rollback control and coordinated releases.
+
+Cache the chain strategy for the session. Pass it as `chain_strategy` to `sdd-tasks` and `sdd-apply` prompts alongside `delivery_strategy`. Do not ask again unless the user changes scope.
 
 ### Dependency Graph
 ```
@@ -150,9 +183,27 @@ Read this table at session start (or before first delegation), cache it for the 
 **Conditional model for `sdd-apply` (local policy):** the orchestrator inspects the tasks artifact BEFORE launching apply. If it contains any design/visual work, the visual slice is applied by an `opus` sub-agent while purely non-visual slices stay on `sonnet`. See **Visual-Aware Apply Split** under Sub-Agent Context Protocol for the split mechanism.
 
 
+### Sub-Agent Launch Deduplication (MANDATORY)
+
+Before emitting any Agent tool call, check your in-session launch log:
+
+- Maintain a session-scoped list of `(phase, task-fingerprint)` pairs already launched this turn.
+- The task fingerprint is a short hash or normalized summary of the instruction text (phase name + key artifact references).
+- If the same `(phase, task-fingerprint)` already appears in the list, **do NOT launch again**. Emit exactly one launch per distinct task.
+- After launching, append the pair to the list.
+
+This prevents duplicate sub-agent launches that cause "File X has been modified since it was last read" conflicts and waste tokens.
+
 ### Sub-Agent Launch Pattern
 
 ALL sub-agent launch prompts that involve reading, writing, or reviewing code MUST include the matching skill **paths** from the skill registry. Follow the **Skill Resolver Protocol** (`~/.claude/skills/_shared/skill-resolver.md`).
+
+**Pre-flight before every Agent call (mandatory):**
+
+1. Identify the phase key (`sdd-apply`, `sdd-verify`, etc.) or use `default` for general delegation.
+2. Look up the alias in the Model Assignments table.
+3. Include `model: "<alias>"` in the Agent tool call.
+4. If `model` is absent, do not send the Agent call.
 
 The orchestrator resolves skills from the registry ONCE (at session start or first delegation), caches the index, and injects matching skill paths into each sub-agent's prompt. Also reads the Model Assignments table once per session, caches `phase -> alias`, includes that alias in every Agent tool call via `model`.
 

@@ -75,6 +75,7 @@ let
       placeholders = [
         "@ATLAS_TOKEN@"
         "@CONTEXT7_API_KEY@"
+        "@PENPOT_API_KEY@"
       ];
     }
   ];
