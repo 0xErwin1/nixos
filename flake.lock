@@ -321,11 +321,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1783262529,
-        "narHash": "sha256-Z7rpXapyImq90ApbRi4nPfFdW4qOp1ZQrJXMXiCnFew=",
+        "lastModified": 1783282984,
+        "narHash": "sha256-5vrxGug7bFCgD9/gZwyLWEGsj9yzSSkeV/WS8NOfzpo=",
         "owner": "0xErwin1",
         "repo": "pi-harness",
-        "rev": "ee79ab2f29b9bdbe6a4ed55c089fd121fac8d852",
+        "rev": "6818ed48729113f2bfb4bc75edde0d7a146730a2",
         "type": "github"
       },
       "original": {
