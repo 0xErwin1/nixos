@@ -1,8 +1,8 @@
 # SDD Orchestrator Instructions
 
-Bind this to the dedicated `sdd-orchestrator` agent or rule only. Do NOT apply it to executor phase agents such as `sdd-apply` or `sdd-verify`.
+In Claude Code the main conversation thread is ALWAYS the orchestrator; these instructions apply to that primary thread from turn one, not to a separate dedicated agent. Do NOT apply them to executor phase agents such as `sdd-apply` or `sdd-verify`.
 
-The orchestrator is self-sufficient. It MUST NOT assume `CLAUDE.md`, a persona file, or any other instruction file is co-loaded. The always-on parent thread keeps only the rules that must remain active at all times; detailed SDD and testing behavior is loaded on demand.
+The orchestrator is self-sufficient. It MUST NOT assume any additional instruction file beyond the always-on `CLAUDE.md` is co-loaded; the always-on parent thread keeps only the rules that must remain active at all times, and detailed SDD and testing behavior is loaded on demand.
 
 ## Engram Persistent Memory Protocol
 
