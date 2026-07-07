@@ -1,7 +1,12 @@
 { pkgs }:
 
 let
-  inherit (pkgs) lib stdenv fetchurl;
+  inherit (pkgs)
+    lib
+    stdenv
+    fetchurl
+    glibc
+    ;
 
   pname = "opencode";
   version = "1.14.25";
@@ -23,7 +28,11 @@ let
       or (throw "Unsupported system for ${pname}: ${stdenv.hostPlatform.system}");
 
 in
-stdenv.mkDerivation {
+let
+  # The upstream archive ships a dynamically linked executable with the generic
+  # Linux loader path (/lib64/ld-linux-*.so.*). Keep the ELF untouched and run it
+  # inside an FHS environment so hosts do not need nix-ld enabled.
+  rawPackage = stdenv.mkDerivation {
     inherit pname version;
 
     src = fetchurl {
@@ -34,6 +43,7 @@ stdenv.mkDerivation {
     dontUnpack = true;
     dontConfigure = true;
     dontBuild = true;
+    dontPatchELF = true;
     dontStrip = true;
 
     installPhase = ''
@@ -42,18 +52,33 @@ stdenv.mkDerivation {
       unpackDir="$(mktemp -d)"
       tar -xzf "$src" -C "$unpackDir"
 
-      install -Dm755 "$unpackDir/opencode" "$out/bin/opencode"
+      install -Dm755 "$unpackDir/opencode" "$out/libexec/opencode/opencode"
 
       runHook postInstall
     '';
+  };
+in
+pkgs.buildFHSEnv {
+  name = "${pname}-${version}";
 
-    meta = with lib; {
-      description = "Open source AI coding agent CLI";
-      homepage = "https://github.com/anomalyco/opencode";
-      changelog = "https://github.com/anomalyco/opencode/releases/tag/v${version}";
-      license = licenses.asl20;
-      mainProgram = "opencode";
-      platforms = builtins.attrNames sources;
-      sourceProvenance = [ sourceTypes.binaryNativeCode ];
-    };
+  targetPkgs = pkgs: [
+    glibc
+    stdenv.cc.cc.lib
+  ];
+
+  runScript = "${rawPackage}/libexec/opencode/opencode";
+
+  extraInstallCommands = ''
+    ln -s "$out/bin/${pname}-${version}" "$out/bin/opencode"
+  '';
+
+  meta = with lib; {
+    description = "Open source AI coding agent CLI";
+    homepage = "https://github.com/anomalyco/opencode";
+    changelog = "https://github.com/anomalyco/opencode/releases/tag/v${version}";
+    license = licenses.asl20;
+    mainProgram = "opencode";
+    platforms = builtins.attrNames sources;
+    sourceProvenance = [ sourceTypes.binaryNativeCode ];
+  };
 }

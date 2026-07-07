@@ -18,9 +18,13 @@
     pi.coding-agent = {
       enable = true;
       package = inputs.pi-harness.packages.${pkgs.stdenv.hostPlatform.system}.default;
-      settings.harness = {
-        managedBy = "home-manager";
-        source = "pi-harness";
+      settings = {
+        extensions = [ ];
+        packages = [ ];
+        harness = {
+          managedBy = "home-manager";
+          source = "pi-harness";
+        };
       };
       resources = [
         {

@@ -44,7 +44,7 @@ in
         export IGNIS_DIR="$HOME/dev/personal/Ignis"
         export HOME_MANAGER_DIR="$HOME/.home-manager"
         export NOTES_DIR="$HOME/.tabularium"
-        export PATH="$HOME//.cargo/bin:$HOME/.local/share/cargo/bin:$HOME/.local/bin:$HOME/.opencode/bin:$HOME/.cache/.bun/bin:$HOME/.local/share/go/bin:$PATH"
+        export PATH="$PATH:$HOME/.cargo/bin:$HOME/.local/share/cargo/bin:$HOME/.local/bin:$HOME/.opencode/bin:$HOME/.cache/.bun/bin:$HOME/.local/share/go/bin"
 
         export XDG_CONFIG_HOME="$HOME/.config"
         export XDG_DATA_HOME="$HOME/.local/share"
