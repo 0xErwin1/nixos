@@ -5,6 +5,7 @@
     ../globals/wireguard/local.nix
     ../globals/wireguard
     ../globals
+    ../globals/android.nix
     ../globals/bluetooth.nix
     ../globals/pipewire.nix
     ./x11.nix

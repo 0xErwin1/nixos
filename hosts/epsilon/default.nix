@@ -5,7 +5,7 @@
   imports = [
     ./hardware-configuration.nix
     ./kernel.nix
-    ./android.nix
+    ../globals/android.nix
     ../globals
     ../globals/gaming.nix
     ../globals/bluetooth.nix

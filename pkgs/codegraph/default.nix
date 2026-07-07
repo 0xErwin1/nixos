@@ -21,6 +21,6 @@ pkgs.buildNpmPackage rec {
     homepage = "https://github.com/colbymchenry/codegraph";
     license = licenses.mit;
     mainProgram = "codegraph";
-    platforms = platforms.linux ++ platforms.darwin;
+    platforms = platforms.linux;
   };
 }

@@ -23,11 +23,11 @@
         "rust-overlay": "rust-overlay"
       },
       "locked": {
-        "lastModified": 1783323533,
-        "narHash": "sha256-CxsSCkyUVsSE9UN04O/2xx2VS1K5NN9khI2GUuEEtaU=",
+        "lastModified": 1783409097,
+        "narHash": "sha256-13K8ePk9tNpwRd7OEK4ayedGIKz3axmAEqgrlWwFtcE=",
         "owner": "0xErwin1",
         "repo": "dbflux",
-        "rev": "9358bc6894bf7bcea4e08c54411dc68b5b026dbd",
+        "rev": "c34d4205b19e929dcc1cbb0be7586dc0064c47c5",
         "type": "github"
       },
       "original": {
@@ -321,11 +321,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1783367632,
-        "narHash": "sha256-qGd/khfp9H7+wxd/xkCF/E0LFF9qC+cisBHony+Lcx4=",
+        "lastModified": 1783424502,
+        "narHash": "sha256-lOksCArGKOWLfW4mPEKS7LypvEx2h6m02sL5TaaUfYQ=",
         "owner": "0xErwin1",
         "repo": "pi-harness",
-        "rev": "8bef9064cd59f938647e3a3b385ad5d0671bc77b",
+        "rev": "bbb7b809d7c4bb1c9bd28219f3da5daf865aad8d",
         "type": "github"
       },
       "original": {

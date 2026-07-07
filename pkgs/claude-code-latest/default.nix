@@ -15,7 +15,7 @@ let
     x86_64-linux = {
       platform = "linux-x64";
       loader = "ld-linux-x86-64.so.2";
-      hash = "sha256-9U5py8ibLaYaQVcAr3/1KhR+hiUX1PGw7s92hEjPf4M=";
+      hash = "sha256-sx39Xj3uI7UcQuDY3bQFFIl4I306q8jLv3fFz4M2fic=";
     };
 
     aarch64-linux = {
