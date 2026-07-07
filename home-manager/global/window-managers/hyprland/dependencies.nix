@@ -13,6 +13,7 @@
       slurp
       swappy
       satty
+      wl-clipboard
       hyprpaper
       hyprlock
       hyprshot
