@@ -11,12 +11,12 @@ This contract describes how agents should use an already configured Atlas instan
 - Do not assume a local Atlas source checkout or repository path.
 - Do not assume workspace, project, folder, board, column, document, or task identifiers.
 - Do not assume the current coding repository maps to an Atlas workspace/project.
-- Discover all runtime targets through Atlas MCP or CLI before reading or mutating.
+- Discover all runtime targets through Atlas MCP before reading or mutating.
 
 Atlas behavior this contract relies on:
 
 - Atlas exposes markdown knowledge, kanban tasks, projects, workspaces, search, and metadata through one shared backend.
-- Atlas MCP is the preferred agent interface and uses the same API semantics as other Atlas clients.
+- Atlas MCP is the required agent interface for Atlas operations.
 - Atlas document content writes are revision-based compare-and-swap operations.
 - Atlas task and document update tools use PATCH semantics.
 - Atlas destructive operations require explicit confirmation semantics.
@@ -37,7 +37,7 @@ Use Atlas when the user wants information to be visible and durable in an Atlas 
 
 ## MCP Surface
 
-Prefer the `atlas` MCP server whenever its tools are available. It exposes tools and resources; it does not expose prompts.
+Use the `atlas` MCP server for all Atlas operations. If its tools are unavailable, do not perform Atlas operations in this agent session. It exposes tools and resources; it does not expose prompts.
 
 ### Resources
 
@@ -150,9 +150,9 @@ Use these only when the user asks to manage Atlas structure:
 
 These operations affect shared workspace organization. Confirm intent, discover existing structure first, and avoid creating duplicates.
 
-## MCP Gaps and Fallbacks
+## MCP Coverage Limits
 
-Atlas MCP intentionally does not cover every Atlas capability. If the user asks for a missing operation, use the Atlas CLI or ask for guidance.
+Atlas operations in this contract must be performed through MCP. If the user asks for an Atlas operation that the MCP surface does not expose, stop and explain that the operation is not available through the connected MCP tools; ask whether they want to handle it outside this agent or wait for MCP support. Do not create shell, direct API, direct database, local source checkout, or internal-client fallbacks.
 
 Common MCP gaps include:
 
@@ -164,12 +164,12 @@ Common MCP gaps include:
 - no webhook, integration-config, or automation-rule tools;
 - no attachment upload/download/delete tools through MCP; MCP lists attachment metadata only.
 
-When falling back to CLI:
+When MCP support is missing:
 
-- Keep the same discovery-first and confirmation rules.
-- Use JSON output when scripting or when exact fields matter.
-- Do not put tokens on the command line if avoidable; prefer existing config, environment provided by the user, or stdin-based token setup.
-- Remember that workspace-scoped CLI commands need an explicit workspace when no default is configured.
+- Keep the same discovery-first and confirmation rules for future MCP support.
+- Do not invent shell, direct API, direct database, or internal-client workarounds.
+- Do not request Atlas tokens for non-MCP use.
+- Record the requested operation and the missing MCP capability so tool coverage can be added later.
 
 ## Persistence Boundaries
 
