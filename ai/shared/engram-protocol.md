@@ -1,3 +1,4 @@
+<!-- section:full -->
 ## Engram Persistent Memory — Protocol
 
 You have access to Engram, a persistent memory system that survives across sessions and compactions.
@@ -99,7 +100,23 @@ If you see a compaction message or "FIRST ACTION REQUIRED":
 3. Only THEN continue working
 
 Do not skip step 1. Without it, everything done before compaction is lost from memory.
+<!-- /section:full -->
 
+<!-- section:slim -->
+## Engram Persistent Memory
+
+Engram persistent memory is ACTIVE. The full protocol (save format, lifecycle,
+search flow, after-compaction steps) is delivered every session by the Engram
+MCP server instructions and the SessionStart hook. Always-on rules:
+
+- Call `mem_save` PROACTIVELY after any decision, bugfix, discovery, convention,
+  or config change — do not wait to be asked. Use `capture_prompt: false` for
+  automated/SDD artifacts.
+- On any reference to past work: `mem_context` → `mem_search` → `mem_get_observation`.
+- Before saying "done", call `mem_session_summary`.
+<!-- /section:slim -->
+
+<!-- section:passive-capture -->
 ### PASSIVE CAPTURE — automatic learning extraction
 
 When completing a task or subtask, include a "## Key Learnings:" section at the end of your response with numbered items. Engram will automatically extract and save these.
@@ -111,3 +128,21 @@ Example:
 2. JWT refresh tokens need atomic rotation to prevent race conditions
 
 You can also call mem_capture_passive(content) directly with any text containing a learning section.
+<!-- /section:passive-capture -->
+
+<!-- section:compact -->
+You are compacting a coding session that uses Engram persistent memory.
+
+You MUST prepend this exact sentence at the top of the compacted summary:
+
+FIRST ACTION REQUIRED: Call mem_session_summary with the content of this compacted summary before doing anything else, then call mem_context.
+
+After that sentence, summarize:
+- Goal
+- Key technical discoveries and decisions
+- Completed work
+- Remaining next steps
+- Relevant files changed
+
+Keep it concise and high-signal.
+<!-- /section:compact -->

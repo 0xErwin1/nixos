@@ -38,7 +38,7 @@ copied/mirrored verbatim into each client's tree.
 
 | Asset kind                | Claude                              | Codex                                              | OpenCode                                                                       | Generic                            | Pi-harness                                                | Shared source                            |
 | ------------------------- | ----------------------------------- | -------------------------------------------------- | ------------------------------------------------------------------------------ | ---------------------------------- | --------------------------------------------------------- | ---------------------------------------- |
-| Engram protocol           | `claude/engram-protocol.md` AND inlined into `claude/sdd-orchestrator.md` | `codex/engram-instructions.md` (+ `engram-compact-prompt.md`) AND inlined into `codex/sdd-orchestrator.md` | injected into `opencode/AGENTS.md` AND inlined into `opencode/ORCHESTRATOR.md` | n/a (kept in persona/orchestrator) | inlined into `assets/orchestrator.md`                     | also inlined into shared `ORCHESTRATOR.md` |
+| Engram protocol           | rendered from `shared/engram-protocol.md` into `claude/engram-protocol.md` AND inlined into `claude/sdd-orchestrator.md` | rendered from `shared/engram-protocol.md` into `codex/engram-instructions.md` + `engram-compact-prompt.md` AND inlined into `codex/sdd-orchestrator.md` | injected into `opencode/AGENTS.md` AND inlined into `opencode/ORCHESTRATOR.md` | n/a (kept in persona/orchestrator) | inlined into `assets/orchestrator.md`                     | `shared/engram-protocol.md` |
 | SDD orchestrator          | `claude/sdd-orchestrator.md`        | `codex/sdd-orchestrator.md`                        | `opencode/sdd-orchestrator.md` + `opencode/sdd-overlay-{single,multi}.json`    | `generic/sdd-orchestrator.md`      | embedded inside `assets/orchestrator.md`                  | --                                       |
 | Persona / output style    | `claude/persona-gentleman.md` + `claude/output-style-gentleman.md` | implicit in `AGENTS.md`         | `opencode/persona-gentleman.md`                                                | `generic/persona-{gentleman,neutral}.md` | neutral by local policy (no persona file)            | --                                       |
 | Global instructions       | `claude/CLAUDE.md` (composed)       | `codex/AGENTS.md` (composed)                       | `opencode/AGENTS.md` + JSON overlay                                            | shared `AGENTS.md`                 | `assets/orchestrator.md` (single file, provider-agnostic) | --                                       |
@@ -82,9 +82,10 @@ change.
 
 Engram protocol changes -- inspect ALL of:
 
-- `claude/engram-protocol.md`
-- `codex/engram-instructions.md`
-- `codex/engram-compact-prompt.md` (compaction prompt only)
+- `shared/engram-protocol.md` (canonical sectioned source)
+- `claude/engram-protocol.md` (rendered `full` section)
+- `codex/engram-instructions.md` (rendered `full` + `passive-capture` sections)
+- `codex/engram-compact-prompt.md` (rendered `compact` section)
 - `opencode/AGENTS.md` (engram section)
 - `opencode/sdd-overlay-{single,multi}.json` (if behavior affects overlay)
 - Local mirror in `~/.tabularium/AI/claude/CLAUDE.md`

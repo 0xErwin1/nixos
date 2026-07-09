@@ -19,12 +19,11 @@ command = "pnpx"
 args = ["@mauricio.wolff/mcp-obsidian@latest", "/home/iperez/Atlas"]
 
 [mcp_servers.atlas]
-command = "/home/iperez/dev/personal/atlas/target/release/atlas_mcp"
-args = ["--transport", "stdio"]
+type = "http"
+url = "https://atlas.iperez.dev/mcp"
 
-[mcp_servers.atlas.env]
-ATLAS_BASE_URL = "http://localhost:8080"
-ATLAS_TOKEN = "@ATLAS_TOKEN@"
+[mcp_servers.atlas.headers]
+Authorization = "Bearer @ATLAS_TOKEN@"
 
 [mcp_servers.figma]
 url = "https://mcp.figma.com/mcp"

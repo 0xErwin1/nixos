@@ -9,7 +9,7 @@ The managed projection set includes real AI harness assets such as:
 - `.agents/skills`
 - `.config/opencode/{AGENTS.md,ORCHESTRATOR.md,agent,command,commands,skills,opencode.jsonc,tui.json}`
 - `.claude/{CLAUDE.md,sdd-orchestrator.md,engram-protocol.md,agents,commands,skills}`
-- `.codex/{AGENTS.md,sdd-orchestrator.md,engram-instructions.md,skills}`
+- `.codex/{AGENTS.md,sdd-orchestrator.md,engram-instructions.md,engram-compact-prompt.md,skills}`
 
 The preflight guards **single-file targets** only. Home Manager materializes each single-file projection as a whole-path `/nix/store/` symlink, so if such a target already exists as an unmanaged regular file or unmanaged symlink, activation stops and asks the operator to resolve the collision before retrying. Existing symlinks into `/nix/store/` are treated as already Home Manager/Nix-managed and may be replaced by the new generation.
 

@@ -29,12 +29,8 @@
       "args": ["@mauricio.wolff/mcp-obsidian@latest", "/home/iperez/Atlas"]
     },
     "atlas": {
-      "command": "/home/iperez/dev/personal/atlas/target/release/atlas_mcp",
-      "args": ["--transport", "stdio"],
-      "env": {
-        "ATLAS_BASE_URL": "http://localhost:8080",
-        "ATLAS_TOKEN": "@ATLAS_TOKEN@"
-      }
+      "url": "https://atlas.iperez.dev/mcp",
+      "headers": { "Authorization": "Bearer @ATLAS_TOKEN@" }
     }
   }
 }

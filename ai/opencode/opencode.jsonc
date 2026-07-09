@@ -266,16 +266,11 @@
       ]
     },
     "atlas": {
-      "type": "local",
+      "type": "remote",
       "enabled": true,
-      "command": [
-        "/home/iperez/dev/personal/atlas/target/release/atlas_mcp",
-        "--transport",
-        "stdio"
-      ],
-      "environment": {
-        "ATLAS_BASE_URL": "http://localhost:8080",
-        "ATLAS_TOKEN": "@ATLAS_TOKEN@"
+      "url": "https://atlas.iperez.dev/mcp",
+      "headers": {
+        "Authorization": "Bearer @ATLAS_TOKEN@"
       }
     }
   },

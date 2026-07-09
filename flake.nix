@@ -165,7 +165,7 @@
         in
         {
           ai-harness-readiness =
-            pkgs.runCommandLocal "ai-harness-readiness" { nativeBuildInputs = [ pkgs.gnugrep ]; }
+            pkgs.runCommandLocal "ai-harness-readiness" { nativeBuildInputs = [ pkgs.gnugrep pkgs.python3 ]; }
               ''
                 set -eu
 
@@ -191,6 +191,42 @@
                   echo "Token-like literal value detected in managed AI harness files." >&2
                   exit 1
                 fi
+
+                python3 - \
+                  ${./ai/shared/engram-protocol.md} \
+                  ${./ai/claude/engram-protocol.md} \
+                  ${./ai/codex/engram-instructions.md} \
+                  ${./ai/codex/engram-compact-prompt.md} <<'PY'
+                import re
+                import sys
+                from pathlib import Path
+
+                protocol, claude, codex, compact = map(Path, sys.argv[1:])
+                text = protocol.read_text()
+                sections = dict(
+                    re.findall(
+                        r'<!-- section:([a-z-]+) -->\n(.*?)\n<!-- /section:\1 -->',
+                        text,
+                        re.S,
+                    )
+                )
+                required = {'full', 'slim', 'passive-capture', 'compact'}
+                missing = required - sections.keys()
+                if missing:
+                    raise SystemExit(f'Engram protocol missing sections: {sorted(missing)}')
+
+                expected = {
+                    claude: sections['full'] + '\n',
+                    codex: sections['full'] + '\n\n' + sections['passive-capture'] + '\n',
+                    compact: sections['compact'] + '\n',
+                }
+                for path, content in expected.items():
+                    actual = path.read_text()
+                    if '<!-- section:' in actual or '<!-- /section:' in actual:
+                        raise SystemExit(f'Rendered Engram projection contains section markers: {path}')
+                    if actual != content:
+                        raise SystemExit(f'Rendered Engram projection drifted: {path}')
+                PY
 
                 touch $out
               '';

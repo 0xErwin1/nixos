@@ -87,6 +87,10 @@ let
       target = ".codex/engram-instructions.md";
     }
     {
+      source = canonicalRoot + "/codex/engram-compact-prompt.md";
+      target = ".codex/engram-compact-prompt.md";
+    }
+    {
       source = canonicalRoot + "/codex/commands";
       target = ".codex/commands";
       recursive = true;

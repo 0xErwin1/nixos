@@ -12,12 +12,16 @@ let
     "ai/opencode/ORCHESTRATOR.md"
     "ai/opencode/agent/scout.md"
     "ai/opencode/commands/sdd-apply.md"
+    "ai/shared/engram-protocol.md"
     "ai/claude/CLAUDE.md"
     "ai/claude/sdd-orchestrator.md"
+    "ai/claude/engram-protocol.md"
     "ai/claude/agents/sdd-apply.md"
     "ai/claude/commands/sdd-apply.md"
     "ai/codex/AGENTS.md"
     "ai/codex/sdd-orchestrator.md"
+    "ai/codex/engram-instructions.md"
+    "ai/codex/engram-compact-prompt.md"
     "ai/codex/commands/sdd-test.md"
     "ai/codex/agents/sdd-run-testing.md"
     "ai/support/secrets-env-contract.md"
@@ -41,6 +45,7 @@ let
     ".codex/AGENTS.md"
     ".codex/sdd-orchestrator.md"
     ".codex/engram-instructions.md"
+    ".codex/engram-compact-prompt.md"
     ".codex/commands"
     ".codex/agents"
     ".codex/skills"
@@ -60,6 +65,7 @@ let
     ".codex/AGENTS.md"
     ".codex/sdd-orchestrator.md"
     ".codex/engram-instructions.md"
+    ".codex/engram-compact-prompt.md"
   ];
   recursiveTargetSample = ".agents/skills";
   expectedSecretEnv = {
