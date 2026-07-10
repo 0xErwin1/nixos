@@ -1,8 +1,8 @@
 # SDD Orchestrator Workflow (lazy-loaded)
 
-This is the detailed SDD + Testing procedure for the orchestrator. It is read on demand: the always-on `CLAUDE.md` keeps only the orchestrator role, delegation rules, and anti-patterns, and points here before any SDD command, SDD/Judgment-Day phase delegation, or testing-pipeline intent.
+This is the detailed SDD + Testing procedure for the orchestrator. It is read on demand: the always-on OpenCode `AGENTS.md` keeps only the orchestrator role, delegation rules, and anti-patterns, and points here before any SDD command, SDD/Judgment-Day phase delegation, or testing-pipeline intent.
 
-The orchestrator role and Delegation Rules defined in `CLAUDE.md` still apply; this file does not repeat them.
+The orchestrator role and Delegation Rules defined in the OpenCode `AGENTS.md` still apply; this file does not repeat them.
 
 ---
 
@@ -73,7 +73,7 @@ In **Interactive** mode, between phases:
 
 Interactive approval is phase-scoped. A reply such as "continue", "dale", or "go on" approves only the immediate next phase, not the rest of the SDD pipeline. Do not treat a generated artifact as approved until the user has had a chance to review it or explicitly delegate that review.
 
-Before the propose phase in interactive mode, offer the user a proposal question round instead of silently deciding whether the proposal is clear enough. Explain that the questions are meant to improve the PRD/proposal by uncovering business understanding, business rules, implications, impact, edge cases, and product tradeoffs. Prefer 3-5 concrete product questions per round, then summarize the resulting assumptions and ask whether the user wants to correct anything or run a second round. Cover business and product decisions: business problem, target users and situations, business rules, product outcome, current-state gap, implications and impact, edge cases, decision gaps, first-slice scope boundaries, non-goals, product constraints, and business tradeoffs. Do not ask about test commands, PR shape, changed-line budget, or other harness mechanics at proposal time unless the user explicitly asks to discuss delivery.
+Before the propose phase in interactive mode, offer the user a proposal question round instead of silently deciding whether the proposal is clear enough. Explain that the questions are meant to improve the PRD/proposal by uncovering business understanding, business rules, implications, impact, edge cases, and product tradeoffs. Prefer 3-5 concrete product questions per round, then summarize the resulting assumptions and ask whether the user wants to correct anything or run a second round. Cover business and product decisions: business problem, target users and situations, business rules, product outcome, current-state gap, implications and impact, edge cases, decision gaps, first-slice scope boundaries, non-goals, product constraints, and business tradeoffs. Do not ask about test commands, PR shape, changed-line budget, or other OpenCode delivery mechanics at proposal time unless the user explicitly asks to discuss delivery.
 
 For this agent (sub-agent delegation): **Automatic** means phases run back-to-back via sub-agents without pausing. **Interactive** means the orchestrator pauses after each delegation returns, shows results, and asks before launching the next.
 
@@ -118,43 +118,17 @@ If it says `Chained PRs recommended: Yes`, `400-line budget risk: High`, estimat
 Automatic mode does not override this guard. Always pass the resolved delivery strategy to `sdd-apply`.
 
 <!-- tabularium-ai:sdd-model-assignments -->
-## Model Assignments
+## OpenCode Agent Bindings
 
-Read this table at session start (or before first delegation), cache it for the session, and pass the mapped alias in every Agent tool call via the `model` parameter. If a phase is missing, use the `default` row. If you lack access to the assigned model, substitute `sonnet` and continue.
-
-| Phase | Default Model | Reason |
-|-------|---------------|--------|
-| orchestrator | opus | Coordinates, makes decisions |
-| sdd-explore | sonnet | Reads code, structural - not architectural |
-| sdd-propose | opus | Architectural decisions — most demanding reasoning |
-| sdd-spec | opus | Structured writing |
-| sdd-design | opus | Architecture decisions — most demanding reasoning |
-| sdd-tasks | sonnet | Mechanical breakdown |
-| sdd-apply | sonnet | Implementation |
-| sdd-apply (visual/design slice) | opus | UI/visual/design work — sonnet tends to produce weak designs |
-| sdd-verify | opus | Validation against spec |
-| sdd-archive | haiku | Copy and close |
-| sdd-explore-testing | sonnet | Codebase reading, structural - not architectural |
-| sdd-plan-testing | sonnet | Structured writing |
-| sdd-run-testing | sonnet | Implementation and execution |
-| sdd-run-testing (visual diff) | opus | Screenshot capture + design-spec interpretation needs the strongest vision |
-| sdd-report-testing | sonnet | Structured writing |
-| default | sonnet | Non-SDD general delegation |
+Launch each phase through the Task tool with `subagent_type`. Each OpenCode sub-agent's model is statically configured by the runtime; do not read or cache `opencode.json` or `opencode.jsonc`, and do not pass a model or model alias in a Task call. A distinct model requires a separately configured sub-agent type; do not invent one at runtime.
 
 <!-- /tabularium-ai:sdd-model-assignments -->
-
-**Conditional model for `sdd-run-testing`:** the orchestrator resolves the sub-agent model AFTER `plan-testing` returns, based on the plan contents:
-- If the plan contains at least one case with `visual diff: yes`, launch `sdd-run-testing` with `opus` — interpreting captured screenshots against the design reference benefits most from the strongest vision model. This holds for both user-facing UI engines here: a `playwright` visual run captures styles and screenshots via the CLI, and a `maestro` visual run captures device/browser evidence through Maestro MCP or CLI.
-- Otherwise (backend, api, or browser cases with no design reference), launch with `sonnet` — these are mechanical execution and gain nothing from a larger model.
-
-**Conditional model for `sdd-apply` (local policy):** the orchestrator inspects the tasks artifact BEFORE launching apply. If it contains any design/visual work, the visual slice is applied by an `opus` sub-agent while purely non-visual slices stay on `sonnet`. See **Visual-Aware Apply Split** under Sub-Agent Context Protocol for the split mechanism.
-
 
 ### Sub-Agent Launch Pattern
 
 ALL sub-agent launch prompts that involve reading, writing, or reviewing code MUST include the matching skill **paths** from the skill registry. Follow the **Skill Resolver Protocol** (`~/.config/opencode/skills/_shared/skill-resolver.md`).
 
-The orchestrator resolves skills from the registry ONCE (at session start or first delegation), caches the index, and injects matching skill paths into each sub-agent's prompt. Also reads the Model Assignments table once per session, caches `phase -> alias`, includes that alias in every Agent tool call via `model`.
+The orchestrator resolves skills from the registry ONCE (at session start or first delegation), caches the index, and injects matching skill paths into each sub-agent's prompt.
 
 Orchestrator skill resolution (do once per session):
 1. `mem_search(query: "skill-registry", project: "{project}")` -> `mem_get_observation(id)` for full registry content
@@ -196,7 +170,7 @@ Also pass the destination context (target repo/thread/channel and its primary la
 
 Code comments are not freeform either. Default to NO inline comments. Add one only when the WHY is non-obvious: a hidden constraint, a subtle invariant, a workaround for a specific bug, or behavior that would surprise a reader. If deleting the comment would not confuse a future reader, do not write it. Function-level documentation (intent, invariants, assumptions, side effects) is allowed and preferred over inline statement comments. Never write comments that restate what the code does, and never reference the current task, fix, PR, or ticket.
 
-This applies whether you write code inline or delegate it. The executor sub-agents are self-sufficient and do NOT load CLAUDE.md/AGENTS.md, so they will not follow this rule unless you state it in the sub-agent prompt. When delegating any code-writing task, include this rule.
+This applies whether you write code inline or delegate it. Executor sub-agents are self-sufficient and do not automatically inherit the project's `AGENTS.md` or this orchestrator workflow, so they will not follow this rule unless you state it in the sub-agent prompt. When delegating any code-writing task, include this rule.
 
 ### Sub-Agent Context Protocol
 
@@ -271,26 +245,9 @@ After `sdd-apply` returns, BEFORE launching the next batch or trusting the repor
 
 Defense in depth: the executor has its own hard boundary (the `sdd-apply` skill's **Assigned Scope — HARD BOUNDARY**), and the orchestrator independently scopes each launch and checks the result.
 
-#### Visual-Aware Apply Split (local policy, MANDATORY)
+#### Apply Agent Binding
 
-`sonnet` tends to produce weak visual/UI design. So when a change involves design work, the orchestrator isolates that work into its own `opus` apply.
-
-Before launching the first `sdd-apply`, the orchestrator MUST inspect the tasks artifact and classify each task as **visual/design** or **non-visual**:
-
-- **Visual/design**: UI layout, styling/CSS, component visual design, spacing/typography/color, responsive behavior, matching a design reference (Figma/Zeplin/screenshot), animations/transitions, or any task whose acceptance is "looks right".
-- **Non-visual**: business logic, data layer, API/handlers, state, tests, config, build, infra — anything whose acceptance is "behaves right", independent of appearance.
-
-If there are **no** visual/design tasks, run apply normally (single `sonnet` launch). Nothing changes.
-
-If there **are** visual/design tasks, split apply into sequential slices that preserve the original task order and dependencies, alternating by class:
-
-1. Non-visual tasks up to the first visual task → `sonnet`.
-2. The contiguous visual/design tasks → `opus`.
-3. The remaining non-visual tasks → `sonnet`.
-
-This is the canonical 3-slice shape; if visual and non-visual tasks interleave more than once, produce more slices following the same alternation. The invariant is absolute: **every slice that contains design/visual work runs on `opus`; every purely non-visual slice runs on `sonnet`.** Collapse empty slices (e.g. when the change opens with visual work, slice 1 is empty — start at the `opus` slice).
-
-Each slice is an ordinary `sdd-apply` launch and MUST follow the **Apply-Progress Continuity** protocol above: every slice after the first is a continuation batch, so tell it previous apply-progress exists and instruct it to read-merge-write. Forward Strict TDD to every slice as usual. Verify once, after the last slice.
+Use the statically configured `sdd-apply` sub-agent for apply work. Do not split apply work solely to switch models. A distinct model requires a separately configured OpenCode sub-agent type; do not invent one. Existing batching and slicing for scope, dependencies, checkpoints, PR boundaries, or review boundaries remains unchanged.
 
 #### Batched Apply-Verify Cycles (local policy)
 
@@ -309,7 +266,7 @@ Long or many-step changes are risky to apply in one shot: a single `sdd-apply` a
 
 Proceed to the next batch only after the current one's verify and report are done. After the last batch, run a final consolidated verify; archive only once all batches are complete and the **Task Completion Gate** passes.
 
-**Composition.** This composes with the **Visual-Aware Apply Split** (a batch that contains design/visual tasks still routes that slice to `opus`; the model rule applies per slice within a batch) and with the cached `delivery_strategy` / `Review Workload Guard` (batch boundaries may align with chained-PR slices). Batching governs apply EXECUTION checkpoints; PR delivery strategy is a separate decision.
+**Composition.** This composes with the cached `delivery_strategy` / `Review Workload Guard` (batch boundaries may align with chained-PR slices). Batching governs apply EXECUTION checkpoints; PR delivery strategy is a separate decision.
 
 #### Engram Topic Key Format
 
@@ -471,7 +428,7 @@ Run this BEFORE anything else in the testing pipeline (before `explore-testing`,
 
 1. Verify engram is reachable with a lightweight call (e.g. `mem_current_project` or a trivial `mem_search`).
 2. If it responds → proceed.
-3. If it is NOT available → STOP. Do NOT enter the pipeline. Tell the user plainly that engram (the memory the pipeline depends on) is not registered for this project, and how to fix it: re-run the installer, or `claude mcp add --scope project engram engram mcp`. Unlike the tool prerequisites below, this is a hard block — engram absence is not "best-effort continue".
+3. If it is NOT available → STOP. Do NOT enter the pipeline. Tell the user plainly that engram (the memory the pipeline depends on) is not registered for this project, and how to fix it: re-run the OpenCode installer or add the Engram MCP server to the applicable OpenCode configuration. Do not invent a configuration command; use the installer or the project's documented OpenCode configuration path. Unlike the tool prerequisites below, this is a hard block — engram absence is not "best-effort continue".
 
 ### Prerequisites Check
 
@@ -600,7 +557,7 @@ run-testing is NOT a single runner by default. Most test cases are independent (
 3. **Engine concurrency** — `playwright` / `backend` / `api` units parallelize freely (isolated processes / browser contexts). `maestro` / `live` units are bounded by how many devices, emulators, simulators, or web targets are actually available and by whether the user wants to watch the run. Do not auto-create or auto-provision extra targets without asking first.
 4. **A sane concurrency cap** — do not launch dozens at once; batch to a reasonable number of concurrent runners.
 
-**Per-unit model.** Apply the conditional model per runner: a unit whose cases include `visual diff: yes` launches with `opus`; purely mechanical units launch with `sonnet`. So visual units get the strong vision model without paying for it on the rest.
+Each runner uses the statically configured `sdd-run-testing` sub-agent. Execution units remain scoped by dependencies, shared state, engine concurrency, and the concurrency cap; they are not repartitioned to switch models.
 
 **Result merge (orchestrator-owned).** Each runner writes its own shard observation under `testing/{project}/{feature}/run/{session-id}/{unit-id}` (a sole runner writes the consolidated `testing/{project}/{feature}/run/{session-id}` directly) and returns its `run_digest`. The orchestrator MERGES all shards into the consolidated `testing/{project}/{feature}/run/{session-id}` and ALWAYS writes `testing/{project}/{feature}/run/latest` itself — even for a single runner; runners never write `run/latest`. The `run/latest` content MUST include the top-level fields `session_id: "{session-id}"` and `session_topic_key: "testing/{project}/{feature}/run/{session-id}"`, so `report-testing` can read the `session_id` and resolve one latest run. Surface a combined run digest to the user.
 

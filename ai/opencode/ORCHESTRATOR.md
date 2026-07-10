@@ -220,7 +220,7 @@ Cache the mode choice for the session - do not ask again unless the user explici
 
 Interactive approval is phase-scoped. A reply such as "continue", "dale", or "go on" approves only the immediate next phase, not the rest of the SDD pipeline. Do not treat a generated artifact as approved until the user has had a chance to review it or explicitly delegate that review.
 
-Before the `sdd-propose` phase in interactive mode, offer the user a proposal question round instead of silently deciding whether the proposal is clear enough. Explain that the questions are meant to improve the PRD/proposal by uncovering business understanding, business rules, implications, impact, edge cases, and product tradeoffs. Prefer 3-5 concrete product questions per round, then summarize the resulting assumptions and ask whether the user wants to correct anything or run a second round. Cover business and product decisions: business problem, target users and situations, business rules, product outcome, current-state gap, implications and impact, edge cases, decision gaps, first-slice scope boundaries, non-goals, product constraints, and business tradeoffs. Do not ask about test commands, PR shape, changed-line budget, or other harness mechanics at proposal time unless the user explicitly asks to discuss delivery.
+Before the `sdd-propose` phase in interactive mode, offer the user a proposal question round instead of silently deciding whether the proposal is clear enough. Explain that the questions are meant to improve the PRD/proposal by uncovering business understanding, business rules, implications, impact, edge cases, and product tradeoffs. Prefer 3-5 concrete product questions per round, then summarize the resulting assumptions and ask whether the user wants to correct anything or run a second round. Cover business and product decisions: business problem, target users and situations, business rules, product outcome, current-state gap, implications and impact, edge cases, decision gaps, first-slice scope boundaries, non-goals, product constraints, and business tradeoffs. Do not ask about test commands, PR shape, changed-line budget, or other OpenCode delivery mechanics at proposal time unless the user explicitly asks to discuss delivery.
 
 ### Automatic Mode Gatekeeper (MANDATORY)
 
@@ -235,7 +235,7 @@ In **Automatic** mode the orchestrator is the gatekeeper between phases. The gat
 
 **Hybrid validation mechanism (cost-aware):**
 - **Inline for low-risk phases** (`sdd-explore`, `sdd-spec`, `sdd-tasks`, `sdd-archive`): the orchestrator runs the checks itself by reading the artifact back. No extra sub-agent.
-- **Fresh-context reviewer for high-risk phases** (`sdd-design`, `sdd-apply`): delegate a fresh-context reviewer sub-agent for independent judgment, because errors in these phases compound downstream. Use the `sdd-verify` model for the delegated gate review.
+- **Fresh-context reviewer for high-risk phases** (`sdd-design`, `sdd-apply`): delegate the `sdd-verify` sub-agent for independent judgment, because errors in these phases compound downstream.
 - **Escalation on smell:** if an inline check on a low-risk phase finds any smell (status mismatch, unresolved path, suspected drift, missing artifact), escalate that phase to a fresh-context delegated review before deciding.
 
 **On gate PASS:** continue automatically to the next phase. Auto stays auto on the happy path.
@@ -318,14 +318,9 @@ Four read-only review sub-agents are available - `review-risk` (security), `revi
 These are recommendations the orchestrator surfaces and acts on by judgment; do not treat skipping them as a blocking failure.
 
 <!-- tabularium-ai:sdd-model-assignments -->
-## Model Assignments
+## OpenCode Agent Bindings
 
-Read the configured models from `opencode.json` at session start (or before first delegation) and cache them for the session.
-
-- Treat `agent.sdd-orchestrator.model` as authoritative when it is set.
-- Treat `agent.sdd-<phase>.model` as authoritative when it is set.
-- If a phase does not have an explicit model, use the default OpenCode runtime model for that agent and continue.
-- For named profiles, apply the same rule to the suffixed agent keys (for example, `sdd-apply-cheap`).
+Launch the Task tool with `subagent_type`. Each OpenCode sub-agent's model is statically configured by the runtime; do not read or cache `opencode.json` or `opencode.jsonc`, and do not pass a model or model alias in a Task call. A distinct model requires a separately configured sub-agent type; do not invent one at runtime.
 
 <!-- /tabularium-ai:sdd-model-assignments -->
 
@@ -384,7 +379,7 @@ Also pass the destination context (target repo/thread/channel and its primary la
 
 Code comments are not freeform either. Default to NO inline comments. Add one only when the WHY is non-obvious: a hidden constraint, a subtle invariant, a workaround for a specific bug, or behavior that would surprise a reader. If deleting the comment would not confuse a future reader, do not write it. Function-level documentation (intent, invariants, assumptions, side effects) is allowed and preferred over inline statement comments. Never write comments that restate what the code does, and never reference the current task, fix, PR, or ticket.
 
-This applies whether you write code inline or delegate it. The executor sub-agents are self-sufficient and do NOT load CLAUDE.md/AGENTS.md, so they will not follow this rule unless you state it in the sub-agent prompt. When delegating any code-writing task, include this rule.
+This applies whether you write code inline or delegate it. Executor sub-agents are self-sufficient and do not automatically inherit the project's `AGENTS.md` or this orchestrator's instructions, so they will not follow this rule unless you state it in the sub-agent prompt. When delegating any code-writing task, include this rule.
 
 ### Sub-Agent Context Protocol
 
@@ -445,19 +440,9 @@ After `sdd-apply` returns, BEFORE launching the next batch or trusting the repor
 
 Defense in depth: the executor has its own hard boundary (the `sdd-apply` skill's **Assigned Scope — HARD BOUNDARY**), and the orchestrator independently scopes each launch and checks the result.
 
-#### Visual-Aware Apply Split (local policy, MANDATORY)
+#### Apply Agent Binding
 
-Weaker models tend to produce weak visual/UI design. So when a change involves design work, the orchestrator isolates that work into its own apply launched with the strongest design-capable model this runtime offers — the same tier used for the design/architecture phases. Purely non-visual slices use the normal apply model.
-
-Before launching the first `sdd-apply`, classify each task as **visual/design** (acceptance is "looks right": UI layout, styling/CSS, component visual design, spacing/typography/color, responsive behavior, matching a design reference, animations/transitions) or **non-visual** (acceptance is "behaves right": business logic, data layer, API/handlers, state, tests, config, build, infra).
-
-If there are **no** visual/design tasks, run apply normally — nothing changes. If there **are**, split apply into sequential slices that preserve the original task order and dependencies, alternating by class:
-
-1. Non-visual tasks up to the first visual task → normal apply model.
-2. The contiguous visual/design tasks → strongest design-capable model.
-3. The remaining non-visual tasks → normal apply model.
-
-Produce more slices if visual and non-visual tasks interleave. The invariant is absolute: **every slice that contains design/visual work uses the strongest design-capable model; every purely non-visual slice uses the normal apply model.** Collapse empty slices. Each slice is an ordinary `sdd-apply` launch and MUST follow the **Apply-Progress Continuity** protocol (continuation batches read-merge-write). Forward Strict TDD to every slice. Verify once, after the last slice.
+Use the statically configured `sdd-apply` sub-agent for apply work. Do not split apply work solely to switch models. A distinct model requires a separately configured OpenCode sub-agent type; do not invent one. Existing batching and slicing for scope, dependencies, checkpoints, PR boundaries, or review boundaries remains unchanged.
 
 #### Batched Apply-Verify Cycles (local policy)
 
@@ -469,7 +454,7 @@ Long or many-step changes are risky to apply in one shot: a single `sdd-apply` a
 
 **Cycle.** For each batch in order: (1) launch `sdd-apply` scoped to that batch only — every batch after the first is a continuation batch, so **Apply-Progress Continuity** applies; (2) run `sdd-verify` scoped to that batch, validating its implemented tasks against the relevant spec/design slice, treating later-batch tasks as `pending` not failures; (3) report a concise checkpoint to the user — what the batch did, the verify verdict, what the next batch will do; (4) if the batch verify reports a CRITICAL issue, STOP and remediate that batch before starting the next. Proceed only after the current batch's verify and report are done. After the last batch, run a final consolidated verify; archive only once all batches are complete and the **Task Completion Gate** passes.
 
-**Composition.** Composes with the **Visual-Aware Apply Split** (a batch containing design tasks still routes that slice to the strongest design model; the model rule applies per slice within a batch) and with the cached `delivery_strategy` / `Review Workload Guard` (batch boundaries may align with chained-PR slices). Batching governs apply EXECUTION checkpoints; PR delivery is a separate decision.
+**Composition.** Composes with the cached `delivery_strategy` / `Review Workload Guard` (batch boundaries may align with chained-PR slices). Batching governs apply EXECUTION checkpoints; PR delivery is a separate decision.
 
 #### Engram Topic Key Format
 

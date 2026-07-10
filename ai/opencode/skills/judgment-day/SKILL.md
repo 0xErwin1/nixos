@@ -14,11 +14,11 @@ Load this skill only when the user explicitly asks for Judgment Day, Judgement D
 ## Hard Rules
 
 - Resolve project skills before launching agents: read skill registry, match skill paths by target files/task, and inject the same `Skills to load before work` block into both judge prompts and fix prompts.
-- Launch **two blind judges in parallel** with identical target and criteria; never review the code yourself.
+- Launch two independent OpenCode `reviewer` Task calls concurrently with identical target and criteria but distinct Judge A and Judge B role prompts; keep the reviews blind and never review the code yourself.
 - Wait for both judges before synthesis; never accept a partial verdict.
 - Classify warnings as `WARNING (real)` only if normal intended use can trigger them; otherwise downgrade to INFO as `WARNING (theoretical)`.
 - Ask before fixing Round 1 confirmed issues.
-- After any fix agent runs, immediately re-launch both judges in parallel before commit/push/done/session summary.
+- After the OpenCode `worker` Task applies approved fixes, immediately re-launch both `reviewer` Tasks concurrently before commit/push/done/session summary.
 - Terminal states are only `JUDGMENT: APPROVED` or `JUDGMENT: ESCALATED`.
 - After 2 fix iterations with remaining issues, ask the user whether to continue.
 
@@ -37,9 +37,9 @@ Load this skill only when the user explicitly asks for Judgment Day, Judgement D
 
 1. Confirm target and optional custom criteria.
 2. Resolve exact skill paths from registry or warn if missing.
-3. Start Judge A and Judge B concurrently via delegation; each runs the exhaustive first pass and emits its own findings ledger.
+3. Start two independent `Task(subagent_type="reviewer", prompt="...")` calls concurrently with distinct Judge A and Judge B role prompts; each runs the exhaustive first pass without seeing the other review and emits its own findings ledger.
 4. Synthesize findings into confirmed, suspect, contradiction, and INFO buckets; merge both judges' ledger rows into the persisted ledger and persist per the artifact-store branch.
-5. Ask before Round 1 fixes; delegate a separate fix agent for confirmed approved fixes only. The fix agent reads the persisted ledger, applies only confirmed fixes, and sets addressed ledger ids to `fixed`.
+5. Ask before Round 1 fixes; launch one `Task(subagent_type="worker", prompt="...")` call for confirmed approved fixes only. The worker reads the persisted ledger, applies only confirmed fixes, and sets addressed ledger ids to `fixed`.
 6. Re-judge in parallel after fixes, scoped to the persisted ledger and the fix diff per the Scoped re-review contract; repeat until approved, escalated, or user asks to stop.
 7. Before any terminal action, verify every active Judgment Day has a terminal state.
 
@@ -69,9 +69,9 @@ If the first pass finds nothing, persist an empty ledger record rather than skip
 - `engram`: upsert topic `sdd/{change-name}/review-ledger` (ad-hoc judgment-day without a change: `review/{target-slug}/ledger`, where `target-slug` = `pr-{number}` when reviewing a PR, else the current branch name kebab-cased, else a kebab-case slug of the user-stated review target).
 - `none`: keep the ledger inline in the response; do not write files or Engram artifacts — the ledger lives only in this conversation; complete the review → fix → re-review loop within the session because it is not persisted across compaction.
 
-**Scoped re-review.** A re-review pass takes the persisted ledger and the fix diff as input. It MUST verify each ledger finding's resolution and MUST review only fix-touched lines; it MUST NOT re-read the full original diff. A finding on an untouched line MUST be logged with status `info` as a first-pass quality signal and MUST NOT by itself trigger another full round. The re-judge pass following jd-fix-agent follows this same scoped re-review contract.
+**Scoped re-review.** A re-review pass takes the persisted ledger and the fix diff as input. It MUST verify each ledger finding's resolution and MUST review only fix-touched lines; it MUST NOT re-read the full original diff. A finding on an untouched line MUST be logged with status `info` as a first-pass quality signal and MUST NOT by itself trigger another full round. The re-judge pass following the `worker` Task follows this same scoped re-review contract.
 
-**Execution mode.** Judgment-day judges run as delegated agents; when the runtime provides named `jd-*` sub-agents, those agents emit their own ledger rows and hand them to the orchestrator, which merges both judges' rows into the persisted ledger. Otherwise, the orchestrator runs both judges via generic delegate and maintains the merged ledger directly.
+**Execution mode.** Judgment Day uses OpenCode Task calls with the configured generic sub-agent types: two concurrent, independent `reviewer` calls for Judge A and Judge B, followed after user approval by one `worker` call for confirmed fixes. The reviewers emit their own ledger rows and hand them to the orchestrator, which merges both reviewers' rows into the persisted ledger.
 
 ## References
 

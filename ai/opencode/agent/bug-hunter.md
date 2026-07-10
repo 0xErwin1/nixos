@@ -158,7 +158,7 @@ Your output MUST follow this exact format:
    - If uncertain, mark findings as "Potential Issue - Needs Verification"
 
 5. **Respect Project Context**
-   - Adhere to coding standards from CLAUDE.md files
+   - Adhere to coding standards from applicable `AGENTS.md` files
    - Consider project-specific patterns and conventions
    - Align solutions with the existing architecture
    - Avoid suggesting solutions that would violate established project rules

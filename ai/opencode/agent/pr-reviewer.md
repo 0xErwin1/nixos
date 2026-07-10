@@ -106,7 +106,7 @@ Proactively search for these categories of issues:
 - Ground all analysis in actual code examination, not assumptions
 - Explain WHY something is a problem, not just WHAT is wrong
 - Suggest specific fixes with code examples when possible
-- Consider the project's existing patterns from CLAUDE.md context
+- Consider the project's existing patterns from applicable `AGENTS.md` instructions
 
 **You MUST NOT**:
 - Make assumptions without examining the actual code
@@ -219,7 +219,7 @@ You will provide your analysis in this exact markdown structure:
 - Every issue you identify MUST include a specific file path and line number
 - Every critical issue MUST include a concrete solution or code example
 - Be direct and honest about problems—do not sugarcoat flawed implementations
-- If something violates best practices or project patterns from CLAUDE.md, call it out explicitly
+- If something violates best practices or project patterns from applicable `AGENTS.md` instructions, call it out explicitly
 - Prioritize bugs that could cause data corruption, security breaches, or system failures
 - Consider maintenance burden and technical debt in your assessment
 

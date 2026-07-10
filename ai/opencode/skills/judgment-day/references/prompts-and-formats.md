@@ -5,6 +5,9 @@
 ```markdown
 You are an adversarial code reviewer. Your ONLY job is to find problems.
 
+## Blind Review Role
+You are {Judge A|Judge B}. Review independently. Do not request, inspect, or infer the other judge's findings.
+
 ## Target
 {files, feature, architecture, component}
 
@@ -98,36 +101,25 @@ Approved criteria after Round 1: zero confirmed CRITICALs and zero confirmed rea
 
 ## Delegation Patterns
 
-When JD agents are configured as named sub-agents (e.g., OpenCode multi-mode overlay), use named delegation:
+Use OpenCode's configured generic sub-agent types. Launch the two reviewer calls concurrently with distinct blind-review role prompts:
 
 ```
-Judge A:   delegate(agent="jd-judge-a", prompt="...")
-Judge B:   delegate(agent="jd-judge-b", prompt="...")
-Fix Agent: delegate(agent="jd-fix-agent", prompt="...")
+Judge A: Task(subagent_type="reviewer", prompt="You are Judge A. Perform an independent blind review. ...")
+Judge B: Task(subagent_type="reviewer", prompt="You are Judge B. Perform an independent blind review. ...")
+Fixes:  Task(subagent_type="worker", prompt="Apply only the user-approved confirmed fixes. ...")
 ```
 
-Each named agent uses its configured model from the Model Assignments table.
-
-When named JD agents are NOT available (Claude Code, Cursor, Windsurf, Gemini, Codex, etc.), use the adapter's generic delegate syntax. These adapters do not support the `agent` parameter — all calls use the same delegate entry point and the model is controlled externally:
-
-```
-// Generic delegate — no named agent support; adapter-native syntax
-Judge A:   delegate(prompt="...")
-Judge B:   delegate(prompt="...")
-Fix Agent: delegate(prompt="...")
-```
-
-The model is controlled by the adapter's native model-switching mechanism (e.g., model sentinels in agent .md files). Pass the model alias from the Model Assignments table if the adapter supports per-call model parameters.
+Give both reviewers the same target, criteria, skill paths, exhaustive-pass instructions, and ledger schema. Keep their role prompts distinct and do not expose either reviewer's findings to the other before both calls return. After merging the ledgers, ask for user approval before launching the single `worker` Task.
 
 ## Ledger and Re-Judge Contract
 
-The Judge Prompt template above embeds the exhaustive first pass, the findings ledger schema and emission, and the ledger persistence branches. The Fix Agent Prompt template above embeds the read-ledger, mark-fixed, and no-new-rows rules for the fix role. This section documents the scoped re-review contract that governs the re-judge round following jd-fix-agent.
+The Judge Prompt template above embeds the exhaustive first pass, the findings ledger schema and emission, and the ledger persistence branches. The Fix Agent Prompt template above embeds the read-ledger, mark-fixed, and no-new-rows rules for the fix role. This section documents the scoped re-review contract that governs the re-judge round following the `worker` Task.
 
 **Fix agent execution mode.** This agent is the fix role: it receives confirmed findings from the orchestrator, applies them, and hands control back to the orchestrator, which runs the scoped re-judge against the updated ledger and the fix diff.
 
 **Scoped re-review.** A re-review pass takes the persisted ledger and the fix diff as input. It MUST verify each ledger finding's resolution and MUST review only fix-touched lines; it MUST NOT re-read the full original diff. A finding on an untouched line MUST be logged with status `info` as a first-pass quality signal and MUST NOT by itself trigger another full round.
 
-**Execution mode.** Judgment-day judges run as delegated agents; when the runtime provides named `jd-*` sub-agents, those agents emit their own ledger rows and hand them to the orchestrator, which merges both judges' rows into the persisted ledger. Otherwise, the orchestrator runs both judges via generic delegate and maintains the merged ledger directly.
+**Execution mode.** Judgment Day runs through OpenCode Task calls: two concurrent, independent `reviewer` calls for the blind judges and one `worker` call for user-approved confirmed fixes. The reviewers emit their own ledger rows and hand them to the orchestrator, which merges both reviewers' rows into the persisted ledger before any fix approval or scoped re-review.
 
 ## Language Snippets
 

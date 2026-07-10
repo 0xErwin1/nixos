@@ -9,13 +9,13 @@
 
 ## Skill Registry Scan Rules
 
-- Scan user skills: `~/.pi/agent/skills/`, `~/.config/agents/skills/`, `~/.agents/skills/`, `~/.kimi/skills/`, `~/.config/opencode/skills/`, `~/.config/kilo/skills/`, `~/.claude/skills/`, `~/.gemini/skills/`, `~/.gemini/antigravity/skills/`, `~/.cursor/skills/`, `~/.copilot/skills/`, `~/.codex/skills/`, `~/.codeium/windsurf/skills/`, `~/.qwen/skills/`, `~/.kiro/skills/`, and `~/.openclaw/skills/`.
-- Scan project skills: `{project-root}/skills/`, `{project-root}/.opencode/skills/`, `{project-root}/.claude/skills/`, `{project-root}/.gemini/skills/`, `{project-root}/.cursor/skills/`, `{project-root}/.github/skills/`, `{project-root}/.codex/skills/`, `{project-root}/.qwen/skills/`, `{project-root}/.kiro/skills/`, `{project-root}/.openclaw/skills/`, `{project-root}/.pi/skills/`, `{project-root}/.agent/skills/`, `{project-root}/.agents/skills/`, and `{project-root}/.agent/skills/`.
+- Scan OpenCode user skills: `~/.config/opencode/skills/`.
+- Scan project-owned skills: `{project-root}/skills/`, `{project-root}/.opencode/skills/`, `{project-root}/.agent/skills/`, and `{project-root}/.agents/skills/`.
 - Skip `sdd-*`, `_shared`, and `skill-registry`; deduplicate by skill name, preferring project-level skills over user-level skills.
 - Read each selected `SKILL.md` frontmatter as needed.
 - Extract `name`, trigger text from `description`, full `SKILL.md` path, and scope.
 - Treat the registry as an index, not a generated summary; subagents receive exact paths and read the full skill source of truth.
-- Scan project convention files: `agents.md`, `AGENTS.md`, project-level `CLAUDE.md`, `.cursorrules`, `GEMINI.md`, and `copilot-instructions.md`.
+- Scan applicable project `AGENTS.md` instruction files from the project root to the working directory.
 - For index files such as `AGENTS.md`, extract referenced file paths and include both the index and referenced files in the registry.
 
 ## LLM-First Skill Criteria

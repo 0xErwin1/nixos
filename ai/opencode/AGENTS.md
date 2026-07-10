@@ -349,7 +349,7 @@ When SDD is chosen — or on any `/sdd-*` command or SDD phase work — load the
 
 ### SDD Workflow & Testing (lazy-loaded)
 
-The detailed SDD procedure, execution-mode selection, per-phase model assignments, and the full testing pipeline are intentionally NOT embedded here, to keep the always-on file thin. The orchestrator role and delegation rules above stay always active.
+The detailed SDD procedure, execution-mode selection, sub-agent bindings, and the full testing pipeline are intentionally NOT embedded here, to keep the always-on file thin. The orchestrator role and delegation rules above stay always active.
 
 Before handling any of the following, read `~/.config/opencode/skills/_shared/sdd-orchestrator-workflow.md` and follow it:
 

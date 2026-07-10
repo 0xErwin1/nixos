@@ -9,7 +9,7 @@ metadata:
 
 ## Activation Contract
 
-Use this skill when creating or updating a reusable AI skill for Pi or another agent runtime.
+Use this skill when creating or updating a reusable OpenCode skill.
 
 Create a skill when:
 - a workflow or convention is reused across sessions;
@@ -69,8 +69,7 @@ metadata:
 ```
 
 6. Write sections in this order: Activation Contract, Hard Rules, Decision Gates, Execution Steps, Output Contract, References.
-7. If this is a packaged `gentle-pi` skill, add it to `scripts/verify-package-files.mjs`.
-8. Refresh or document the skill registry update path.
+7. Refresh or document the skill registry update path.
 
 ## Output Contract
 
@@ -78,7 +77,7 @@ Return:
 - Files created or modified.
 - Whether this created a new skill or updated an existing one.
 - Any supporting `assets/` or `references/` files added.
-- Whether package verification or skill registry refresh is needed.
+- Whether a skill registry refresh is needed.
 
 ## References
 

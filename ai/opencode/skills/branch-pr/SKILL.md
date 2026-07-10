@@ -114,7 +114,7 @@ Unless the repo specifies otherwise, commit messages follow:
 
 Examples:
 ```
-feat(scripts): add Codex support to setup.sh
+feat(scripts): add setup validation
 fix(skills): correct topic key format in sdd-apply
 docs(readme): update multi-model configuration guide
 refactor(skills): extract shared persistence logic
