@@ -284,6 +284,9 @@
       "git rebase *": "ask",
       "git reset --hard *": "ask"
     },
+    "external_directory": {
+      "~/.config/opencode/**": "allow"
+    },
     "read": {
       "*": "allow",
       "**/.env": "deny",
