@@ -2,6 +2,7 @@
 name: sdd-plan-testing
 description: "Plan test cases for a feature based on exploration output. Produces a structured test plan with test cases, priorities, browsers/devices, and visual-diff requirements. The plan is both the spec and the execution manifest for sdd-run-testing."
 mode: subagent
+model: openai/gpt-5.6-terra
 tools:
   edit: false
 ---

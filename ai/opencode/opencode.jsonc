@@ -6,7 +6,7 @@
   ],
   "agent": {
     "sdd-orchestrator": {
-      "model": "openai/gpt-5.5",
+      "model": "openai/gpt-5.6-sol",
       "description": "SDD delegate-only orchestrator",
       "mode": "all",
       "prompt": "{file:/home/iperez/.config/opencode/ORCHESTRATOR.md}",
@@ -32,7 +32,7 @@
     },
     "sdd-apply": {
       // "model": "zai-coding-plan/glm-5.1",
-      "model": "openai/gpt-5.5",
+      "model": "openai/gpt-5.6-terra",
       // "model": "openai/gpt-5.4",
       "description": "Implement code changes from task definitions",
       "hidden": true,
@@ -52,7 +52,7 @@
     },
     "sdd-archive": {
       // "model": "minimax/MiniMax-M2.7",
-      "model": "openai/gpt-5.4-mini",
+      "model": "openai/gpt-5.6-luna",
       "description": "Archive completed change artifacts",
       "hidden": true,
       "mode": "subagent",
@@ -72,7 +72,7 @@
     "sdd-design": {
       // "model": "anthropic/claude-opus-4-6",
       // "model": "zai-coding-plan/glm-5.1",
-      "model": "openai/gpt-5.5",
+      "model": "openai/gpt-5.6-sol",
       "description": "Create technical design from proposals",
       "hidden": true,
       "mode": "subagent",
@@ -92,7 +92,7 @@
     "sdd-explore": {
      // "model": "minimax/MiniMax-M2.7",
       // "model": "zai-coding-plan/glm-5.1",
-      "model": "openai/gpt-5.3-codex",
+      "model": "openai/gpt-5.6-terra",
       "description": "Explore codebase and think through ideas",
       "hidden": true,
       "mode": "subagent",
@@ -111,7 +111,7 @@
     },
     "sdd-init": {
       //"model": "minimax/MiniMax-M2.7",
-      "model": "openai/gpt-5.3-codex",
+      "model": "openai/gpt-5.6-luna",
       // "model": "zai-coding-plan/glm-5.1",
       "description": "Bootstrap SDD context and project configuration",
       "hidden": true,
@@ -130,7 +130,7 @@
       }
     },
     "sdd-propose": {
-      "model": "openai/gpt-5.5",
+      "model": "openai/gpt-5.6-sol",
       // "model": "minimax/MiniMax-M2.7",
       // "model": "zai-coding-plan/glm-5.1",
       "description": "Create change proposals from explorations",
@@ -150,7 +150,7 @@
       }
     },
     "sdd-spec": {
-      "model": "openai/gpt-5.3-codex",
+      "model": "openai/gpt-5.6-terra",
       // "model": "zai-coding-plan/glm-5.1",
       "description": "Write detailed specifications from proposals",
       "hidden": true,
@@ -169,7 +169,7 @@
       }
     },
     "sdd-tasks": {
-      "model": "openai/gpt-5.3-codex",
+      "model": "openai/gpt-5.6-terra",
       // "model": "minimax/MiniMax-M2.7",
       // "model": "zai-coding-plan/glm-5.1",
       "description": "Break down specs and designs into implementation tasks",
@@ -189,7 +189,7 @@
       }
     },
     "sdd-verify": {
-      "model": "openai/gpt-5.5",
+      "model": "openai/gpt-5.6-sol",
       // "model": "zai-coding-plan/glm-5.1",
       "description": "Validate implementation against specs",
       "hidden": true,

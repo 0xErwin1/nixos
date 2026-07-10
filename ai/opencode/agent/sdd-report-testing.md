@@ -2,6 +2,7 @@
 name: sdd-report-testing
 description: "Produce a human-readable test report from raw run results. Summarizes pass/fail by test case and browser/device, surfaces visual-diff findings, and lists actionable follow-up items. Output is conversational — suitable for sharing with Design or PM without developer context."
 mode: subagent
+model: openai/gpt-5.6-luna
 tools:
   edit: false
 ---

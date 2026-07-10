@@ -2,6 +2,7 @@
 name: sdd-run-testing
 description: "Execute the test plan produced by sdd-plan-testing. Dispatches per mode and engine: Playwright or Maestro for browser/mobile cases, project test runner for backend cases, HTTP calls for api cases. Performs structured visual-diff checks only when mode is browser/mobile and a design reference is available. Produces a raw execution log for sdd-report-testing."
 mode: subagent
+model: openai/gpt-5.6-terra
 tools:
   bash: true
 ---
