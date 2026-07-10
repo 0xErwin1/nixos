@@ -471,7 +471,7 @@ Run this BEFORE anything else in the testing pipeline (before `explore-testing`,
 
 1. Verify engram is reachable with a lightweight call (e.g. `mem_current_project` or a trivial `mem_search`).
 2. If it responds → proceed.
-3. If it is NOT available → STOP. Do NOT enter the pipeline. Tell the user plainly that engram (the memory the pipeline depends on) is not registered for this project, and how to fix it: re-run the installer, or `claude mcp add --scope project engram engram mcp`. Unlike the tool prerequisites below, this is a hard block — engram absence is not "best-effort continue".
+3. If it is NOT available → STOP. Do NOT enter the pipeline. Tell the user plainly that engram (the memory the pipeline depends on) is unavailable and instruct them to repair the Engram MCP registration in Codex configuration. Do not suggest shell or CLI commands. Unlike the tool prerequisites below, this is a hard block — engram absence is not "best-effort continue".
 
 ### Prerequisites Check
 

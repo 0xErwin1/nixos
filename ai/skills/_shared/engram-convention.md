@@ -129,7 +129,7 @@ mem_search(query: "sdd/{change-name}/", project: "{project}")
 
 Engram auto-detects the project name from the git remote at MCP startup. The `--project` flag and `ENGRAM_PROJECT` env var can override detection. All project names are normalized to lowercase and trimmed.
 
-If the agent saves a memory under a project name that doesn't match existing observations, engram warns about potential name drift. Use `mem_merge_projects` (MCP tool) or `engram projects consolidate` (CLI) to merge variants.
+If the agent saves a memory under a project name that doesn't match existing observations, engram warns about potential name drift. Use `mem_merge_projects` through the configured Engram tool integration to merge variants. Never use shell commands or the Engram CLI as a fallback for memory operations.
 
 ## Upsert Behavior
 
