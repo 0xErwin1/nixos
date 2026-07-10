@@ -205,6 +205,8 @@ When the user asks “why” something is happening:
 
 ## 15) Atlas task retrieval
 
+- Use only the configured Atlas MCP tools for Atlas operations in OpenCode. If the tools are unavailable or the connection fails, stop the Atlas operation and report that Atlas MCP is unavailable.
+- Never run or recommend a CLI, shell command, socket-server command, direct client, direct HTTP/API/database access, local checkout, MCP registration or repair command, or restart or reconnect command for Atlas. Connection recovery is outside OpenCode's tool surface.
 - When retrieving Atlas tasks for planning, implementation, status, editing, or summary work, treat list/search results as discovery only unless the user explicitly asks for a lightweight list.
 - For each relevant readable task ID, call `atlas_get_task` with `detail: "full"` before reasoning from the task.
 - Also fetch useful related context when available: references, backlinks, checklists, subtasks, activity, linked documents/files/external links, and task attachment metadata via `atlas_list_task_attachments` with `workspace` and `readable_id`.

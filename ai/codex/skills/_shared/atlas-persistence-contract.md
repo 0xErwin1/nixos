@@ -37,7 +37,9 @@ Use Atlas when the user wants information to be visible and durable in an Atlas 
 
 ## MCP Surface
 
-Use the `atlas` MCP server for all Atlas operations. If its tools are unavailable, do not perform Atlas operations in this agent session. It exposes tools and resources; it does not expose prompts.
+Use only the configured Atlas MCP tools for Atlas operations in Codex. If the tools are unavailable or the connection fails, stop the Atlas operation and report that Atlas MCP is unavailable. Never run or recommend a CLI, shell command, socket-server command, direct client, direct HTTP/API/database access, local checkout, MCP registration or repair command, or restart or reconnect command for Atlas. Connection recovery is outside Codex's tool surface.
+
+The Atlas MCP server exposes tools and resources; it does not expose prompts.
 
 ### Resources
 
@@ -71,7 +73,7 @@ atlas:///{workspace}/{slug}
 
 ## MCP Tool Capabilities
 
-Use the tool names available in the MCP host. In Pi they are typically exposed with an `atlas_` prefix.
+In Codex, use the configured Atlas MCP tool names. They are shown below with an `atlas_` prefix.
 
 ### Discovery and reads
 
@@ -152,7 +154,7 @@ These operations affect shared workspace organization. Confirm intent, discover 
 
 ## MCP Coverage Limits
 
-Atlas operations in this contract must be performed through MCP. If the user asks for an Atlas operation that the MCP surface does not expose, stop and explain that the operation is not available through the connected MCP tools; ask whether they want to handle it outside this agent or wait for MCP support. Do not create shell, direct API, direct database, local source checkout, or internal-client fallbacks.
+If the user asks for an Atlas operation that the MCP surface does not expose, stop and explain that the operation is not available through the connected MCP tools. Apply the MCP-only failure policy above.
 
 Common MCP gaps include:
 
@@ -167,7 +169,6 @@ Common MCP gaps include:
 When MCP support is missing:
 
 - Keep the same discovery-first and confirmation rules for future MCP support.
-- Do not invent shell, direct API, direct database, or internal-client workarounds.
 - Do not request Atlas tokens for non-MCP use.
 - Record the requested operation and the missing MCP capability so tool coverage can be added later.
 
@@ -179,17 +180,17 @@ Use Atlas for:
 - workspace knowledge that should be visible in the Atlas web UI;
 - task status, references, assignees, labels, checklists, and subtasks;
 - human-readable documentation when the user names Atlas as the destination;
-- project planning records that should be shared beyond the current Pi session.
+- project planning records that should be shared beyond the current Codex session.
 
 Do not use Atlas for:
 
-- Pi harness runtime configuration;
-- subagent model assignments or `/agents` state;
+- Codex runtime configuration;
+- Codex sub-agent model assignments or agent state;
 - Engram memory observations or lifecycle metadata;
 - Obsidian vault maintenance unless the user asks to import/export or sync with Atlas;
 - OpenSpec/SDD artifacts by default.
 
-For SDD flows, Engram plus Obsidian remain the default Pi Harness persistence path. Atlas may store a copy or public-facing note/task only when explicitly requested by the user or when an SDD task says Atlas is the target backend.
+For SDD flows, Engram plus Obsidian remain the default Codex persistence path. Atlas may store a copy or public-facing note/task only when explicitly requested by the user or when an SDD task says Atlas is the target backend.
 
 When a result is saved to Atlas and is also important future agent context, also save a concise Engram pointer with the Atlas workspace, object type, slug/readable ID, and why it matters.
 

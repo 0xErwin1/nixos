@@ -236,7 +236,6 @@ Any action that cannot be undone with `git checkout` or by deleting a generated 
 
 ## 15) Local environment & tools
 
-- `houlak-cli` (pipx) — institutional CLI; includes AWS, ai-hub, and other commands. `~/.claude/CLAUDE.md` is installed by `houlak-cli ai-hub`; refresh with `houlak-cli ai-hub update`.
 - `gh` — GitHub CLI for PR and issue operations.
 - `aws` — AWS CLI configured with profiles per environment.
 - Common stack: Python, TypeScript/JavaScript, Go; AWS with CDK for IaC; GitHub Actions for CI/CD; PostgreSQL and DynamoDB.
@@ -250,6 +249,8 @@ Any action that cannot be undone with `git checkout` or by deleting a generated 
 
 ## 17) Atlas task retrieval
 
+- Use only the configured Atlas MCP tools for Atlas operations. If the tools are unavailable or the connection fails, stop the Atlas operation and report that Atlas MCP is unavailable.
+- Never run or recommend a CLI, shell command, socket-server command, direct client, direct HTTP/API/database access, local checkout, MCP registration or repair command, or restart or reconnect command for Atlas. Connection recovery is outside the agent's tool surface.
 - When retrieving Atlas tasks for planning, implementation, status, editing, or summary work, treat list/search results as discovery only unless the user explicitly asks for a lightweight list.
 - For each relevant readable task ID, call `atlas_get_task` with `detail: "full"` before reasoning from the task.
 - Also fetch useful related context when available: references, backlinks, checklists, subtasks, activity, linked documents/files/external links, and task attachment metadata via `atlas_list_task_attachments` with `workspace` and `readable_id`.

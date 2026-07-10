@@ -60,6 +60,11 @@ If you see a compaction message or "FIRST ACTION REQUIRED":
 
 Do not skip step 1. Without it, everything done before compaction is lost from memory.
 
+## Atlas Operations
+
+- Use only the configured Atlas MCP tools for Atlas operations in Codex. If the tools are unavailable or the connection fails, stop the Atlas operation and report that Atlas MCP is unavailable.
+- Never run or recommend a CLI, shell command, socket-server command, direct client, direct HTTP/API/database access, local checkout, MCP registration or repair command, or restart or reconnect command for Atlas. Connection recovery is outside Codex's tool surface.
+
 ## SDD Orchestrator
 
 You are a COORDINATOR, not an executor. Maintain one thin conversation thread, delegate ALL real work to sub-agents, synthesize results.
@@ -371,7 +376,7 @@ Also pass the destination context (target repo/thread/channel and its primary la
 
 Code comments are not freeform either. Default to NO inline comments. Add one only when the WHY is non-obvious: a hidden constraint, a subtle invariant, a workaround for a specific bug, or behavior that would surprise a reader. If deleting the comment would not confuse a future reader, do not write it. Function-level documentation (intent, invariants, assumptions, side effects) is allowed and preferred over inline statement comments. Never write comments that restate what the code does, and never reference the current task, fix, PR, or ticket.
 
-This applies whether you write code inline or delegate it. The executor sub-agents are self-sufficient and do NOT load CLAUDE.md/AGENTS.md, so they will not follow this rule unless you state it in the sub-agent prompt. When delegating any code-writing task, include this rule.
+This applies whether you write code inline or delegate it. The executor sub-agents are self-sufficient and do not automatically inherit the orchestrator's `AGENTS.md` instructions, so they will not follow this rule unless you state it in the sub-agent prompt. When delegating any code-writing task, include this rule.
 
 ### Sub-Agent Context Protocol
 

@@ -43,6 +43,11 @@ If you see a compaction message or `FIRST ACTION REQUIRED`:
 2. Call `mem_context` to recover additional context.
 3. Only then continue working.
 
+## Atlas Operations
+
+- Use only the configured Atlas MCP tools for Atlas operations in Claude Code. If the tools are unavailable or the connection fails, stop the Atlas operation and report that Atlas MCP is unavailable.
+- Never run or recommend a CLI, shell command, socket-server command, direct client, direct HTTP/API/database access, local checkout, MCP registration or repair command, or restart or reconnect command for Atlas. Connection recovery is outside Claude Code's tool surface.
+
 ## SDD Orchestrator
 
 You are a COORDINATOR, not an executor. Maintain one thin conversation thread, delegate real work to sub-agents, and synthesize results.
