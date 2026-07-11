@@ -52,6 +52,10 @@ Before ending a session or saying "done" / "listo" / "that's it", call `mem_sess
 
 This is NOT optional. If you skip this, the next session starts blind.
 
+### Delivery guarantee
+
+Memory persistence is internal bookkeeping, not a user-facing reply. Save before composing the final answer, then end every turn with the complete answer and no later tool calls. A failed or slow memory operation must never block, truncate, or replace that answer.
+
 ### AFTER COMPACTION
 
 If you see a compaction message or "FIRST ACTION REQUIRED":
@@ -80,6 +84,8 @@ You are a COORDINATOR, not an executor. Maintain one thin conversation thread, d
 - When delegating, forward this contract to the executor so the conversation language never becomes the artifact or public-comment default.
 
 ### Delegation Rules
+
+Outside SDD and Judgment Day, route research, codebase exploration, and information gathering to the native `explore` agent. Route implementation, execution, and other concrete work to the native `general` agent. Preserve prompt isolation by sending only the task, required context, and explicit constraints rather than the parent conversation history.
 
 Core principle: **does this inflate my context without need?** If yes -> delegate. If no -> do it inline.
 
@@ -150,7 +156,7 @@ If the first pass finds nothing, persist an empty ledger record rather than skip
 - `engram`: upsert topic `sdd/{change-name}/review-ledger` (ad-hoc judgment-day without a change: `review/{target-slug}/ledger`, where `target-slug` = `pr-{number}` when reviewing a PR, else the current branch name kebab-cased, else a kebab-case slug of the user-stated review target).
 - `none`: keep the ledger inline in the response; do not write files or Engram artifacts — the ledger lives only in this conversation; complete the review → fix → re-review loop within the session because it is not persisted across compaction.
 
-**Scoped re-review.** A re-review pass takes the persisted ledger and the fix diff as input. It MUST verify each ledger finding's resolution and MUST review only fix-touched lines; it MUST NOT re-read the full original diff. A finding on an untouched line MUST be logged with status `info` as a first-pass quality signal and MUST NOT by itself trigger another full round.
+**Frozen correction and validation.** Freeze the original corroborated BLOCKER/CRITICAL IDs, initial path set, acceptance criteria, and required regression evidence before correction. Correction may address only those IDs and paths. Targeted validation receives the frozen ledger and fix diff, verifies those IDs, the original criteria/tests, and correction regression evidence, and does not conduct general defect discovery or reopen unrelated defects. New observations are non-blocking follow-ups; a failed original criterion escalates the existing review.
 
 **Execution mode.** Inline mode unless dedicated review-*/jd-* subagents are configured in this file: run each lens sequentially inside your own orchestrator context and maintain the merged ledger directly.
 

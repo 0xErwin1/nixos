@@ -85,6 +85,78 @@ let
       ];
     }
   ];
+  frozenLedgerAssets = [
+    "ai/shared/ORCHESTRATOR.md"
+    "ai/opencode/ORCHESTRATOR.md"
+    "ai/claude/sdd-orchestrator.md"
+    "ai/claude/agents/jd-judge-a.md"
+    "ai/claude/agents/jd-judge-b.md"
+    "ai/claude/agents/review-readability.md"
+    "ai/claude/agents/review-reliability.md"
+    "ai/claude/agents/review-resilience.md"
+    "ai/claude/agents/review-risk.md"
+    "ai/opencode/skills/judgment-day/SKILL.md"
+    "ai/opencode/skills/judgment-day/references/prompts-and-formats.md"
+    "ai/claude/skills/judgment-day/SKILL.md"
+    "ai/claude/skills/judgment-day/references/prompts-and-formats.md"
+  ];
+  trimLine = line:
+    let
+      match = builtins.match "^[[:space:]]*(.*[^[:space:]])[[:space:]]*$" line;
+    in
+    if match == null then "" else builtins.elemAt match 0;
+  jsoncLines = builtins.filter (
+    line: !(flake.inputs.nixpkgs.lib.hasPrefix "//" (trimLine line))
+  ) (flake.inputs.nixpkgs.lib.splitString "\n" (builtins.readFile (flakePath + "/ai/opencode/opencode.jsonc")));
+  normalizedJsoncLines = flake.inputs.nixpkgs.lib.imap0 (
+    index: line:
+    let
+      hasNext = index + 1 < builtins.length jsoncLines;
+      nextLine = if hasNext then trimLine (builtins.elemAt jsoncLines (index + 1)) else "";
+      nextClosesValue =
+        flake.inputs.nixpkgs.lib.hasPrefix "}" nextLine
+        || flake.inputs.nixpkgs.lib.hasPrefix "]" nextLine;
+    in
+    if nextClosesValue then flake.inputs.nixpkgs.lib.removeSuffix "," (trimLine line) else line
+  ) jsoncLines;
+  opencodeConfig = builtins.fromJSON (
+    flake.inputs.nixpkgs.lib.concatStringsSep "\n" normalizedJsoncLines
+  );
+  expectedAgentModels = {
+    sdd-orchestrator = "openai/gpt-5.6-sol";
+    sdd-apply = "openai/gpt-5.6-terra";
+    sdd-archive = "openai/gpt-5.6-luna";
+    sdd-design = "openai/gpt-5.6-sol";
+    sdd-explore = "openai/gpt-5.6-terra";
+    sdd-init = "openai/gpt-5.6-luna";
+    sdd-propose = "openai/gpt-5.6-sol";
+    sdd-spec = "openai/gpt-5.6-terra";
+    sdd-tasks = "openai/gpt-5.6-terra";
+    sdd-verify = "openai/gpt-5.6-sol";
+  };
+  actualAgentModels = flake.inputs.nixpkgs.lib.mapAttrs (
+    _: agent: agent.model or null
+  ) opencodeConfig.agent;
+  expectedNativeTaskPermissions = {
+    "*" = "deny";
+    explore = "allow";
+    general = "allow";
+    sdd-apply = "allow";
+    sdd-archive = "allow";
+    sdd-design = "allow";
+    sdd-explore = "allow";
+    sdd-init = "allow";
+    sdd-propose = "allow";
+    sdd-spec = "allow";
+    sdd-tasks = "allow";
+    sdd-verify = "allow";
+  };
+  multiOverlay = builtins.fromJSON (
+    builtins.readFile (flakePath + "/ai/opencode/sdd-overlay-multi.json")
+  );
+  singleOverlay = builtins.fromJSON (
+    builtins.readFile (flakePath + "/ai/opencode/sdd-overlay-single.json")
+  );
   expectedSecretPaths = builtins.attrValues expectedSecretEnv;
   expectedSecretVars = builtins.attrNames expectedSecretEnv;
   managedFilesToScan = [
@@ -123,6 +195,7 @@ let
   fileContains =
     relativePath: needle:
     builtins.match (".*" + needle + ".*") (builtins.readFile (flakePath + "/" + relativePath)) != null;
+  fileDoesNotContain = relativePath: needle: !(fileContains relativePath needle);
   fileHasTokenLikeAssignment =
     relativePath:
     builtins.match tokenLikeAssignmentPattern (builtins.readFile (flakePath + "/" + relativePath))
@@ -241,6 +314,68 @@ assert builtins.all (
   builtins.all (placeholder: fileContains check.file placeholder) check.placeholders
   && !(fileHasTokenLikeAssignment check.file)
 ) renderedTemplateChecks;
+assert actualAgentModels == expectedAgentModels;
+assert opencodeConfig.agent.sdd-orchestrator.permission.task == expectedNativeTaskPermissions;
+assert multiOverlay.agent.sdd-orchestrator.permission.task.__replace__.general == "allow";
+assert multiOverlay.agent.sdd-orchestrator.permission.task.__replace__.explore == "allow";
+assert singleOverlay.agent.sdd-orchestrator.permission.task.__replace__.general == "allow";
+assert singleOverlay.agent.sdd-orchestrator.permission.task.__replace__.explore == "allow";
+assert builtins.all (
+  relativePath:
+  builtins.all (needle: fileContains relativePath needle) [
+    "BLOCKER/CRITICAL IDs"
+    "initial path set"
+    "acceptance criteria"
+    "regression evidence"
+    "non-blocking follow-ups"
+  ]
+) frozenLedgerAssets;
+assert builtins.all (
+  check: builtins.all (needle: fileContains check.file needle) check.needles
+) [
+  {
+    file = "ai/opencode/ORCHESTRATOR.md";
+    needles = [ "native `explore` agent" "native `general` agent" "non-blocking follow-ups" ];
+  }
+  {
+    file = "ai/shared/ORCHESTRATOR.md";
+    needles = [ "initial path set" "non-blocking follow-ups" ];
+  }
+  {
+    file = "ai/claude/sdd-orchestrator.md";
+    needles = [ "initial path set" "non-blocking follow-ups" ];
+  }
+  {
+    file = "ai/shared/engram-protocol.md";
+    needles = [ "DELIVERY GUARANTEE" "never blocks" ];
+  }
+  {
+    file = "ai/claude/engram-protocol.md";
+    needles = [ "DELIVERY GUARANTEE" "never blocks" ];
+  }
+  {
+    file = "ai/opencode/ORCHESTRATOR.md";
+    needles = [ "Delivery guarantee" "must never block" ];
+  }
+];
+assert builtins.all (
+  relativePath:
+  builtins.all (needle: fileDoesNotContain relativePath needle) [
+    "review-start"
+    "review-resume"
+    "review-validate"
+    "transaction locks"
+    "Git-derived snapshots"
+    "authoritative Engram receipts"
+    "append-only CAS"
+  ]
+) [
+  "ai/shared/ORCHESTRATOR.md"
+  "ai/opencode/ORCHESTRATOR.md"
+  "ai/claude/sdd-orchestrator.md"
+  "ai/opencode/skills/judgment-day/SKILL.md"
+  "ai/claude/skills/judgment-day/SKILL.md"
+];
 assert flake.checks.x86_64-linux ? ai-harness-readiness;
 assert builtins.all validState states;
 {

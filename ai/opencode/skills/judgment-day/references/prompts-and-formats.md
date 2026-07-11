@@ -117,7 +117,7 @@ The Judge Prompt template above embeds the exhaustive first pass, the findings l
 
 **Fix agent execution mode.** This agent is the fix role: it receives confirmed findings from the orchestrator, applies them, and hands control back to the orchestrator, which runs the scoped re-judge against the updated ledger and the fix diff.
 
-**Scoped re-review.** A re-review pass takes the persisted ledger and the fix diff as input. It MUST verify each ledger finding's resolution and MUST review only fix-touched lines; it MUST NOT re-read the full original diff. A finding on an untouched line MUST be logged with status `info` as a first-pass quality signal and MUST NOT by itself trigger another full round.
+**Frozen re-judgment boundary.** Re-judgment verifies only the original corroborated BLOCKER/CRITICAL IDs, immutable initial path set, original acceptance criteria/tests, and correction regression evidence. It does not conduct general defect discovery or reopen unrelated defects. New observations are non-blocking follow-ups; a failed original criterion escalates the existing judgment.
 
 **Execution mode.** Judgment Day runs through OpenCode Task calls: two concurrent, independent `reviewer` calls for the blind judges and one `worker` call for user-approved confirmed fixes. The reviewers emit their own ledger rows and hand them to the orchestrator, which merges both reviewers' rows into the persisted ledger before any fix approval or scoped re-review.
 

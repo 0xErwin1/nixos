@@ -10,6 +10,22 @@
       "description": "SDD delegate-only orchestrator",
       "mode": "all",
       "prompt": "{file:/home/iperez/.config/opencode/ORCHESTRATOR.md}",
+      "permission": {
+        "task": {
+          "*": "deny",
+          "explore": "allow",
+          "general": "allow",
+          "sdd-apply": "allow",
+          "sdd-archive": "allow",
+          "sdd-design": "allow",
+          "sdd-explore": "allow",
+          "sdd-init": "allow",
+          "sdd-propose": "allow",
+          "sdd-spec": "allow",
+          "sdd-tasks": "allow",
+          "sdd-verify": "allow"
+        }
+      },
       "tools": {
         "bash": true,
         "delegate": true,

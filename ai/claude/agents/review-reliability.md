@@ -47,7 +47,7 @@ If the first pass finds nothing, persist an empty ledger record rather than skip
 - `engram`: upsert topic `sdd/{change-name}/review-ledger` (ad-hoc judgment-day without a change: `review/{target-slug}/ledger`, where `target-slug` = `pr-{number}` when reviewing a PR, else the current branch name kebab-cased, else a kebab-case slug of the user-stated review target).
 - `none`: keep the ledger inline in the response; do not write files or Engram artifacts — the ledger lives only in this conversation; complete the review → fix → re-review loop within the session because it is not persisted across compaction.
 
-**Scoped re-review.** A re-review pass takes the persisted ledger and the fix diff as input. It MUST verify each ledger finding's resolution and MUST review only fix-touched lines; it MUST NOT re-read the full original diff. A finding on an untouched line MUST be logged with status `info` as a first-pass quality signal and MUST NOT by itself trigger another full round.
+**Frozen validation boundary.** Targeted validation receives the frozen ledger and fix diff. Verify only the original corroborated BLOCKER/CRITICAL IDs, immutable initial path set, original acceptance criteria/tests, and correction regression evidence. Do not conduct general defect discovery or reopen unrelated defects. Report new observations only as non-blocking follow-ups; a failed original criterion escalates the existing review.
 
 **Execution mode.** This is a subagent-mode review lens: emit your own ledger rows above; the orchestrator merges them into the persisted ledger.
 
