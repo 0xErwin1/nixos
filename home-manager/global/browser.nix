@@ -45,6 +45,7 @@
 
     firefox = {
       enable = true;
+      configPath = ".mozilla/firefox";
     };
 
     zen-browser = {

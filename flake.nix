@@ -68,6 +68,7 @@
             helium = final.callPackage "${self}/pkgs/helium" { };
             engram = final.callPackage "${self}/pkgs/engram" { };
             opencode = final.callPackage "${self}/pkgs/opencode" { };
+            opencode-v2 = final.callPackage "${self}/pkgs/opencode-v2" { };
             tuicr = final.callPackage "${self}/pkgs/tuicr" { };
             codegraph = final.callPackage "${self}/pkgs/codegraph" { };
             maestro-studio = final.callPackage "${self}/pkgs/maestro-studio" { };
@@ -133,16 +134,6 @@
         let
           pkgs = nixpkgs.legacyPackages.x86_64-linux;
 
-          scannedRoots = [
-            ./ai
-            ./home-manager/global/ai-harness.nix
-            ./home-manager/global/ai.nix
-            ./tests/ai-harness-projections.nix
-          ];
-          scannedArgs = nixpkgs.lib.concatMapStringsSep " " (
-            path: nixpkgs.lib.escapeShellArg (toString path)
-          ) scannedRoots;
-
           # The functional tests read the evaluated flake (home configs, inputs,
           # checks) plus the source tree for file-content assertions. Passing them
           # in avoids a self-referential `getFlake`, which pure eval rejects on a
@@ -181,13 +172,13 @@
                   exit 1
                 fi
 
-                if grep -R -F "/.tabularium/AI" ${scannedArgs}; then
+                if grep -R -F "/.tabularium/AI" ${./ai} ${./home-manager/global/ai-harness.nix} ${./home-manager/global/ai.nix} ${./tests/ai-harness-projections.nix}; then
                   echo "Managed AI harness files must not reference Tabularium as the canonical source." >&2
                   exit 1
                 fi
 
                 token_pattern='(Bearer[[:space:]]+[A-Za-z0-9._~+/=-]{20,}|sk-[A-Za-z0-9]{20,}|gh[pousr]_[A-Za-z0-9_]{20,}|xox[baprs]-[A-Za-z0-9-]{20,}|(api[_-]?key|token|secret|password)[[:space:]]*[:=][[:space:]]*"?[A-Za-z0-9_./+-]{16,})'
-                if grep -R -E -i "$token_pattern" ${scannedArgs}; then
+                if grep -R -E -i "$token_pattern" ${./ai} ${./home-manager/global/ai-harness.nix} ${./home-manager/global/ai.nix} ${./tests/ai-harness-projections.nix}; then
                   echo "Token-like literal value detected in managed AI harness files." >&2
                   exit 1
                 fi

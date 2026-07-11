@@ -68,7 +68,7 @@
     },
     "sdd-archive": {
       // "model": "minimax/MiniMax-M2.7",
-      "model": "openai/gpt-5.6-luna",
+      "model": "openai/gpt-5.6-terra",
       "description": "Archive completed change artifacts",
       "hidden": true,
       "mode": "subagent",
@@ -127,7 +127,7 @@
     },
     "sdd-init": {
       //"model": "minimax/MiniMax-M2.7",
-      "model": "openai/gpt-5.6-luna",
+      "model": "openai/gpt-5.6-terra",
       // "model": "zai-coding-plan/glm-5.1",
       "description": "Bootstrap SDD context and project configuration",
       "hidden": true,

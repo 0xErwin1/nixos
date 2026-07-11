@@ -13,7 +13,7 @@
     };
     opencode = {
       enable = true;
-      package = pkgs.opencode;
+      package = pkgs.opencode-v2;
     };
     pi.coding-agent = {
       enable = true;
