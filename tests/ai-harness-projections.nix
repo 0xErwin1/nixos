@@ -134,6 +134,24 @@ let
     sdd-tasks = "openai/gpt-5.6-terra";
     sdd-verify = "openai/gpt-5.6-sol";
   };
+  expectedOpenCodePermissions = [
+    { action = "shell"; resource = "*"; effect = "allow"; }
+    { action = "shell"; resource = "git commit *"; effect = "ask"; }
+    { action = "shell"; resource = "git push"; effect = "ask"; }
+    { action = "shell"; resource = "git push *"; effect = "ask"; }
+    { action = "shell"; resource = "git push --force *"; effect = "ask"; }
+    { action = "shell"; resource = "git rebase *"; effect = "ask"; }
+    { action = "shell"; resource = "git reset --hard *"; effect = "ask"; }
+    { action = "external_directory"; resource = "~/.config/opencode/*"; effect = "allow"; }
+    { action = "read"; resource = "*"; effect = "allow"; }
+    { action = "read"; resource = "~/.config/opencode/*"; effect = "allow"; }
+    { action = "read"; resource = "**/.env"; effect = "deny"; }
+    { action = "read"; resource = "**/.env.*"; effect = "deny"; }
+    { action = "read"; resource = "**/credentials.json"; effect = "deny"; }
+    { action = "read"; resource = "**/secrets/**"; effect = "deny"; }
+    { action = "read"; resource = "*.env"; effect = "deny"; }
+    { action = "read"; resource = "*.env.*"; effect = "deny"; }
+  ];
   actualAgentModels = flake.inputs.nixpkgs.lib.mapAttrs (
     _: agent: agent.model or null
   ) opencodeConfig.agent;
@@ -315,6 +333,7 @@ assert builtins.all (
   && !(fileHasTokenLikeAssignment check.file)
 ) renderedTemplateChecks;
 assert actualAgentModels == expectedAgentModels;
+assert opencodeConfig.permissions == expectedOpenCodePermissions;
 assert opencodeConfig.agent.sdd-orchestrator.permission.task == expectedNativeTaskPermissions;
 assert multiOverlay.agent.sdd-orchestrator.permission.task.__replace__.general == "allow";
 assert multiOverlay.agent.sdd-orchestrator.permission.task.__replace__.explore == "allow";
