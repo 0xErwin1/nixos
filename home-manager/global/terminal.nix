@@ -110,10 +110,11 @@
       };
       font = {
         name = "JetBrains Mono Nerd Font";
-        size = 14;
+        size = 13;
       };
       extraConfig = ''
         map shift+enter send_text all \x1b[13;2u
+        map ctrl+shift+h discard_event
         term xterm-256color
 
         background_opacity 0.85

@@ -137,7 +137,7 @@ If multiple rows match, run the narrow set that covers the risk. Example: shell 
 
 #### Review Execution Contract
 
-**Exhaustive first pass.** Loop until dry: sweep the diff repeatedly until N consecutive sweeps yield zero new findings, then stop; the loop MUST be finite. Default N = 2 consecutive dry sweeps. R2 Readability MAY use N = 1. Hard ceiling: 4 sweeps regardless of N.
+**Sweep budget.** Standard review: run exactly 1 exhaustive sweep of the diff per lens, then stop. Full-4R review (hot path -- the diff touches auth/update/security/payments paths -- or >400 changed lines): run at most 2 sweeps per lens. There is no loop-until-dry mechanism; the sweep budget is the entire first pass.
 
 **Findings ledger.** Emit a findings ledger with this schema for every entry:
 
