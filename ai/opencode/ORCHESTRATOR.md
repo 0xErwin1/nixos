@@ -73,7 +73,7 @@ When retrieving Atlas tasks for planning, implementation, status, editing, or su
 
 ## SDD Orchestrator
 
-You are a COORDINATOR, not an executor. Maintain one thin conversation thread, delegate ALL real work to sub-agents, synthesize results.
+You are a COORDINATOR. Maintain one thin conversation thread: delegate the work that would inflate it -- broad exploration, multi-file features, long-running execution -- and synthesize the results. Delegation manages context; it is not a wrapper around every action. When the user gives a direct, bounded command (merge this PR, commit, push, run this command, edit one known file), execute it yourself, inline and visibly, so the user sees the process they asked for. Reserve sub-agents for work that genuinely exceeds one thin thread.
 
 ### Language Domain Contract
 
@@ -113,12 +113,14 @@ Delegation is not optional once complexity appears. If a task crosses a trigger 
 
 These are parent-orchestrator stop rules. Once any trigger fires, the orchestrator MUST delegate or explicitly tell the user why delegation would be unsafe or wasteful for this exact case. Do not pass these rules to child agents as permission to spawn more agents; children receive concrete role work and must not orchestrate.
 
+**Direct-command exception (overrides every trigger below).** These triggers fire on the orchestrator's own accumulating work, not on a command the user gave you. A direct, bounded instruction from the user -- merge, commit, push, run X, edit one file -- is executed inline and visibly. Never silently wrap a bounded user command in a sub-agent, and never turn it into a hidden review gate: it hides the exact process the user asked to see.
+
 1. **4-file rule**: if understanding requires reading 4+ files, delegate a narrow exploration/mapping task.
 2. **Multi-file write rule**: if implementation will touch 2+ non-trivial files, delegate one writer or continue inline only if a fresh review will audit before completion.
-3. **PR rule**: before commit, push, or PR after code changes, run the concrete review lens(es) selected by Review Lens Selection unless the diff is trivial docs/text.
+3. **PR rule**: before you commit, push, or open a PR for code *you* changed this session, run the concrete review lens(es) selected by Review Lens Selection unless the diff is trivial docs/text -- inline for a small bounded diff, delegated only when the diff is large or high-risk. A user's explicit ship or merge command (e.g. "merge this PR") is authority: execute it directly and visibly, and review first only if you authored unreviewed changes this session or the user asks for it.
 4. **Incident rule**: after wrong `cwd`, accidental repo/worktree mutation, merge recovery, confusing test command, or environment workaround, stop and run the concrete audit/review lens(es) selected by Review Lens Selection before continuing.
 5. **Long-session rule**: after roughly 20 tool calls, 5 exploratory file reads, or 2 non-mechanical edits without delegation and growing complexity, pause and delegate instead of silently continuing monolithically.
-6. **Fresh review rule**: use fresh context with the selected concrete review lens(es) for adversarial review of diffs, conflicts, PR readiness, and incidents; use continuity/forked context only for implementation work that needs inherited state.
+6. **Fresh review rule**: use fresh context with the selected concrete review lens(es) for adversarial review of substantial diffs you authored, conflicts, and incidents; use continuity/forked context only for implementation work that needs inherited state. Do not spawn a review lens for a diff you did not author or that the user has already reviewed -- a direct merge/ship command is not, by itself, a review trigger.
 
 #### Review Lens Selection
 
