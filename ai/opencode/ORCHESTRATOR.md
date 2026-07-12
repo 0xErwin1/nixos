@@ -124,16 +124,16 @@ These are parent-orchestrator stop rules. Once any trigger fires, the orchestrat
 
 #### Review Lens Selection
 
-`reviewer`, `review-risk`, `review-resilience`, and `review-readability` are review LENSES, not OpenCode agents -- none is configured as a `task` target here, so never launch one with `task` (it fails with "Unknown agent"). Apply each lens INLINE in your own context. When a fresh review/audit is required, pick the lenses by risk profile:
+When a fresh review/audit is required, run the `reviewer` agent via `task` with the matching lens as its role, announcing which lens and why first. `risk`/`resilience`/`readability` name LENS ROLES you put in the `reviewer` prompt, not separate agents -- only `reviewer` exists; targeting `review-risk`/`review-resilience`/`review-readability` as a `task` type fails with "Unknown agent". Pick lenses by risk profile:
 
-| Risk signal | Inline lens |
+| Risk signal | Lens role (in the `reviewer` prompt) |
 | --- | --- |
 | Clear naming, structure, maintainability, or small refactors | readability |
 | Shell/process integration, partial failures, recovery, or degraded dependencies | resilience |
 | Security, permissions, data exposure/loss, architecture, or dependencies | risk |
 | Large PR, hot path, or >400 changed lines | risk + resilience + readability |
 
-If multiple rows match, apply the narrow set that covers the risk. Example: shell integration that mutates live state uses the resilience lens, not readability, by default.
+If multiple rows match, run the narrow set that covers the risk. Example: shell integration that mutates live state uses the resilience lens, not readability, by default.
 
 #### Review Execution Contract
 
@@ -159,13 +159,13 @@ If the first pass finds nothing, persist an empty ledger record rather than skip
 
 **Frozen correction and validation.** Freeze the original corroborated BLOCKER/CRITICAL IDs, initial path set, acceptance criteria, and required regression evidence before correction. Correction may address only those IDs and paths. Targeted validation receives the frozen ledger and fix diff, verifies those IDs, the original criteria/tests, and correction regression evidence, and does not conduct general defect discovery or reopen unrelated defects. New observations are non-blocking follow-ups; a failed original criterion escalates the existing review.
 
-**Execution mode.** No `review-*`/`jd-*` sub-agents are configured in this file, so every review and verification runs INLINE and VISIBLY in the orchestrator context: run each lens sequentially yourself and keep the merged ledger directly. Never route a review, lens, or verification through the `general` sub-agent (or any non-review agent) to simulate one -- that hides the work the user asked to see and is improvisation, not delegation. A user "continue" / "seguí" / "dale", or resuming a plan, is not by itself a review trigger: resume the actual pending work and review only when a trigger in this contract genuinely fires or the user asks.
+**Execution mode.** Reviews and judges run through the generic `reviewer` agent with a role prompt (the judgment-day pattern) -- there are no dedicated `review-*`/`jd-*` agents for OpenCode. Launch `reviewer` via `task`, put the lens or role in its prompt (e.g. "risk lens", "resilience lens", "Judge A"), and ANNOUNCE which lens/role and why before spawning. Never route a review through the `general` agent to improvise one, and never target `review-risk`/`review-resilience`/`review-readability`/`jd-judge-*` as a `task` type -- they are undefined and fail with "Unknown agent". A user "continue" / "seguí" / "dale", or resuming a plan, is not by itself a review trigger: resume the actual pending work and review only when a trigger in this contract genuinely fires or the user asks.
 
 #### Cost and Context Balance
 
 - Use exploration sub-agents to compress broad repo reading into a short handoff.
 - Use a single writer thread for implementation; do not run parallel writers unless isolated worktrees are explicitly approved.
-- After implementation, conflict resolution, or incidents, run the review inline and announce it before starting. Escalate to several lenses only for large or hot-path/destructive diffs, naming which lenses and why first; do not fan out multiple review sub-agents by default. Proportional and visible beats broad and hidden.
+- After implementation, conflict resolution, or incidents, run the review with the `reviewer` agent and announce it before starting. Escalate to several lenses only for large or hot-path/destructive diffs, naming which lenses and why first; do not fan out multiple `reviewer` calls by default. Proportional and announced beats broad and silent.
 - Avoid delegation for truly local one-file fixes, quick state checks, and already-understood mechanical edits.
 
 ## SDD Workflow (Spec-Driven Development)
@@ -319,9 +319,9 @@ When launching `sdd-apply`, always include the resolved `delivery_strategy`, `ch
 
 ### Review Recommendations (non-gating)
 
-Three inline review lenses apply here - risk (security), readability (clarity/maintainability), and resilience (operational failure modes). They are lenses you run yourself in the orchestrator context, NOT OpenCode agents: never spawn `review-risk`/`review-resilience`/`review-readability` via `task` (they are not configured and fail with "Unknown agent"). They produce findings only; they never fix code. Applying them is a judgment recommendation, NOT a hard gate, and it never overrides the Mandatory Delegation Triggers or the Review Workload Guard.
+Three review lenses apply here - risk (security), readability (clarity/maintainability), and resilience (operational failure modes). Run each by launching the `reviewer` agent with that lens as its role prompt; they are lens roles, not separate agents -- never target `review-risk`/`review-resilience`/`review-readability` as a `task` type (undefined -> "Unknown agent"). They produce findings only; they never fix code. Running them is a judgment recommendation, NOT a hard gate, and it never overrides the Mandatory Delegation Triggers or the Review Workload Guard.
 
-- At pre-commit, consider a quick inline readability pass over the staged diff.
+- At pre-commit, consider a quick readability pass over the staged diff.
 - Pre-PR, strongly consider all three lenses when the diff touches authentication, authorization, security-sensitive paths, payments, or destructive/update operations, OR when it exceeds roughly 400 changed lines. For smaller, lower-risk diffs, use judgment about which lenses add value.
 
 These are recommendations the orchestrator surfaces and acts on by judgment; do not treat skipping them as a blocking failure.
