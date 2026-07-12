@@ -159,13 +159,13 @@ If the first pass finds nothing, persist an empty ledger record rather than skip
 
 **Frozen correction and validation.** Freeze the original corroborated BLOCKER/CRITICAL IDs, initial path set, acceptance criteria, and required regression evidence before correction. Correction may address only those IDs and paths. Targeted validation receives the frozen ledger and fix diff, verifies those IDs, the original criteria/tests, and correction regression evidence, and does not conduct general defect discovery or reopen unrelated defects. New observations are non-blocking follow-ups; a failed original criterion escalates the existing review.
 
-**Execution mode.** Inline mode unless dedicated review-*/jd-* subagents are configured in this file: run each lens sequentially inside your own orchestrator context and maintain the merged ledger directly.
+**Execution mode.** No `review-*`/`jd-*` sub-agents are configured in this file, so every review and verification runs INLINE and VISIBLY in the orchestrator context: run each lens sequentially yourself and keep the merged ledger directly. Never route a review, lens, or verification through the `general` sub-agent (or any non-review agent) to simulate one -- that hides the work the user asked to see and is improvisation, not delegation. A user "continue" / "seguí" / "dale", or resuming a plan, is not by itself a review trigger: resume the actual pending work and review only when a trigger in this contract genuinely fires or the user asks.
 
 #### Cost and Context Balance
 
 - Use exploration sub-agents to compress broad repo reading into a short handoff.
 - Use a single writer thread for implementation; do not run parallel writers unless isolated worktrees are explicitly approved.
-- Use concrete review lenses after implementation, conflict resolution, or incidents because their value is independent judgment, not token saving.
+- After implementation, conflict resolution, or incidents, run the review inline and announce it before starting. Escalate to several lenses only for large or hot-path/destructive diffs, naming which lenses and why first; do not fan out multiple review sub-agents by default. Proportional and visible beats broad and hidden.
 - Avoid delegation for truly local one-file fixes, quick state checks, and already-understood mechanical edits.
 
 ## SDD Workflow (Spec-Driven Development)
