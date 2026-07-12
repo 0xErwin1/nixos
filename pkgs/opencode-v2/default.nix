@@ -46,6 +46,7 @@ stdenv.mkDerivation {
     install -Dm755 bin/opencode2 "$out/libexec/opencode-v2/bin/opencode2"
     install -Dm644 package.json "$out/libexec/opencode-v2/package.json"
     mkdir -p "$out/bin"
+    ln -s "$out/libexec/opencode-v2/bin/opencode2" "$out/bin/opencode"
     ln -s "$out/libexec/opencode-v2/bin/opencode2" "$out/bin/opencode2"
     patchelf --set-interpreter ${stdenv.cc.bintools.dynamicLinker} "$out/libexec/opencode-v2/bin/opencode2"
 
@@ -56,7 +57,7 @@ stdenv.mkDerivation {
     description = "Open source AI coding agent CLI v2 beta";
     homepage = "https://opencode.ai";
     license = licenses.mit;
-    mainProgram = "opencode2";
+    mainProgram = "opencode";
     platforms = builtins.attrNames sources;
     sourceProvenance = [ sourceTypes.binaryNativeCode ];
   };

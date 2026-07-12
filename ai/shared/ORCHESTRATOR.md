@@ -111,12 +111,11 @@ These are parent-orchestrator stop rules. Once any trigger fires, the orchestrat
 | Risk signal | Review lens |
 | --- | --- |
 | Clear naming, structure, maintainability, or small refactors | `review-readability` |
-| Behavior, state, tests, determinism, or regressions | `review-reliability` |
 | Shell/process integration, partial failures, recovery, or degraded dependencies | `review-resilience` |
 | Security, permissions, data exposure/loss, architecture, or dependencies | `review-risk` |
-| Large PR, hot path, or >400 changed lines | full 4R: `review-risk`, `review-resilience`, `review-readability`, `review-reliability` |
+| Large PR, hot path, or >400 changed lines | `review-risk`, `review-resilience`, `review-readability` |
 
-If multiple rows match, run the narrow set that covers the risk. Example: shell integration that mutates live state should use `review-reliability` plus `review-resilience`, not `review-readability` by default.
+If multiple rows match, run the narrow set that covers the risk. Example: shell integration that mutates live state should use `review-resilience`, not `review-readability` by default.
 
 #### Review Execution Contract
 

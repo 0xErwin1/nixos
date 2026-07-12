@@ -127,12 +127,11 @@ These are parent-orchestrator stop rules. Once any trigger fires, the orchestrat
 | Risk signal | Review lens |
 | --- | --- |
 | Clear naming, structure, maintainability, or small refactors | `review-readability` |
-| Behavior, state, tests, determinism, or regressions | `review-reliability` |
 | Shell/process integration, partial failures, recovery, or degraded dependencies | `review-resilience` |
 | Security, permissions, data exposure/loss, architecture, or dependencies | `review-risk` |
-| Large PR, hot path, or >400 changed lines | full 4R: `review-risk`, `review-resilience`, `review-readability`, `review-reliability` |
+| Large PR, hot path, or >400 changed lines | `review-risk`, `review-resilience`, `review-readability` |
 
-If multiple rows match, run the narrow set that covers the risk. Example: shell integration that mutates live state should use `review-reliability` plus `review-resilience`, not `review-readability` by default.
+If multiple rows match, run the narrow set that covers the risk. Example: shell integration that mutates live state should use `review-resilience`, not `review-readability` by default.
 
 #### Review Execution Contract
 
@@ -316,12 +315,12 @@ Do this even in Automatic mode. Automatic mode does not override reviewer burnou
 
 When launching `sdd-apply`, always include the resolved `delivery_strategy`, `chain_strategy`, and any chosen PR boundary/exception in the prompt.
 
-### 4R Review Recommendations (non-gating)
+### Review Recommendations (non-gating)
 
-Four read-only review sub-agents are available - `review-risk` (security), `review-readability` (clarity/maintainability), `review-reliability` (tests/behavior), and `review-resilience` (operational failure modes). They produce findings only; they never fix code. Using them is an agent-judgment recommendation, NOT a hard gate, and it never overrides the Mandatory Delegation Triggers or the Review Workload Guard.
+Three read-only review sub-agents are available - `review-risk` (security), `review-readability` (clarity/maintainability), and `review-resilience` (operational failure modes). They produce findings only; they never fix code. Using them is an agent-judgment recommendation, NOT a hard gate, and it never overrides the Mandatory Delegation Triggers or the Review Workload Guard.
 
 - At pre-commit, recommend running `review-readability` over the staged diff for a quick clarity pass.
-- Pre-PR, strongly recommend running all four 4R lenses when the diff touches authentication, authorization, security-sensitive paths, payments, or destructive/update operations, OR when the diff exceeds roughly 400 changed lines. For smaller, lower-risk diffs, use judgment about which lenses add value.
+- Pre-PR, strongly recommend running all three lenses when the diff touches authentication, authorization, security-sensitive paths, payments, or destructive/update operations, OR when the diff exceeds roughly 400 changed lines. For smaller, lower-risk diffs, use judgment about which lenses add value.
 
 These are recommendations the orchestrator surfaces and acts on by judgment; do not treat skipping them as a blocking failure.
 

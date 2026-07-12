@@ -103,10 +103,9 @@ These are parent-orchestrator stop rules. Once any trigger fires, the orchestrat
 | Risk signal | Review lens |
 | --- | --- |
 | Clear naming, structure, maintainability, or small refactors | `review-readability` |
-| Behavior, state, tests, determinism, or regressions | `review-reliability` |
 | Shell or process integration, partial failures, recovery, or degraded dependencies | `review-resilience` |
 | Security, permissions, data exposure or loss, architecture, or dependencies | `review-risk` |
-| Large PR, hot path, or more than 400 changed lines | full 4R: `review-risk`, `review-resilience`, `review-readability`, `review-reliability` |
+| Large PR, hot path, or more than 400 changed lines | `review-risk`, `review-resilience`, `review-readability` |
 
 If multiple rows match, run the narrow set that covers the risk.
 

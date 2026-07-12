@@ -92,7 +92,6 @@ let
     "ai/claude/agents/jd-judge-a.md"
     "ai/claude/agents/jd-judge-b.md"
     "ai/claude/agents/review-readability.md"
-    "ai/claude/agents/review-reliability.md"
     "ai/claude/agents/review-resilience.md"
     "ai/claude/agents/review-risk.md"
     "ai/opencode/skills/judgment-day/SKILL.md"
@@ -143,11 +142,15 @@ let
     { action = "shell"; resource = "git rebase *"; effect = "ask"; }
     { action = "shell"; resource = "git reset --hard *"; effect = "ask"; }
     { action = "external_directory"; resource = "~/.config/opencode/*"; effect = "allow"; }
+    { action = "external_directory"; resource = "*"; effect = "allow"; }
     { action = "read"; resource = "*"; effect = "allow"; }
     { action = "read"; resource = "~/.config/opencode/*"; effect = "allow"; }
     { action = "read"; resource = "**/.env"; effect = "deny"; }
     { action = "read"; resource = "**/.env.*"; effect = "deny"; }
     { action = "read"; resource = "**/credentials.json"; effect = "deny"; }
+    { action = "read"; resource = "**/.credentials.json"; effect = "deny"; }
+    { action = "read"; resource = "**/auth.json"; effect = "deny"; }
+    { action = "read"; resource = "**/.auth.json"; effect = "deny"; }
     { action = "read"; resource = "**/secrets/**"; effect = "deny"; }
     { action = "read"; resource = "*.env"; effect = "deny"; }
     { action = "read"; resource = "*.env.*"; effect = "deny"; }

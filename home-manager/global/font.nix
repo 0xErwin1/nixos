@@ -6,7 +6,10 @@
       defaultFonts = {
         serif = [ "LiterationSerif Nerd Font Regular" ];
         sansSerif = [ "LiterationSans Nerd Font Regular" ];
-        monospace = [ "LiterationMono Nerd Font Mono" ];
+        monospace = [
+          "LiterationMono Nerd Font Mono"
+          "Noto Sans Symbols 2"
+        ];
       };
     };
   };

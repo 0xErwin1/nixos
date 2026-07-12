@@ -119,12 +119,11 @@ These are parent-orchestrator stop rules. Once any trigger fires, the orchestrat
 | Risk signal | Review lens |
 | --- | --- |
 | Clear naming, structure, maintainability, or small refactors | `review-readability` |
-| Behavior, state, tests, determinism, or regressions | `review-reliability` |
 | Shell/process integration, partial failures, recovery, or degraded dependencies | `review-resilience` |
 | Security, permissions, data exposure/loss, architecture, or dependencies | `review-risk` |
-| Large PR, hot path, or >400 changed lines | full 4R: `review-risk`, `review-resilience`, `review-readability`, `review-reliability` |
+| Large PR, hot path, or >400 changed lines | `review-risk`, `review-resilience`, `review-readability` |
 
-If multiple rows match, run the narrow set that covers the risk. Example: shell integration that mutates live state should use `review-reliability` plus `review-resilience`, not `review-readability` by default.
+If multiple rows match, run the narrow set that covers the risk. Example: shell integration that mutates live state should use `review-resilience`, not `review-readability` by default.
 
 #### Review Execution Contract
 
@@ -309,13 +308,13 @@ Automatic mode does not override this guard. Always pass the resolved `delivery_
 
 When launching `sdd-apply`, always include the resolved `delivery_strategy`, `chain_strategy`, and any chosen PR boundary/exception in the prompt.
 
-### 4R Review Recommendations (organic, non-gating)
+### Review Recommendations (organic, non-gating)
 
-The four review lenses — readability, reuse, reliability/correctness, and risk/security (the 4R) — are recommendations the orchestrator applies with judgment, not a hard gate. They never block the pipeline on their own; they raise review depth when the diff warrants it.
+The three configured review lenses — readability, resilience, and risk/security — are recommendations the orchestrator applies with judgment, not a hard gate. They never block the pipeline on their own; they raise review depth when the diff warrants it.
 
 Trigger rules:
 - **At pre-commit:** consider a readability review (the review-readability lens) before committing code changes. This is a suggestion, not a requirement — skip it for trivial docs/text or already-reviewed mechanical edits.
-- **At pre-PR (strongly recommended):** when the diff touches authentication, an update/migration path, security-sensitive code, or payments, OR when it exceeds roughly 400 changed lines, strongly recommend running all four 4R lenses before opening the PR.
+- **At pre-PR (strongly recommended):** when the diff touches authentication, an update/migration path, security-sensitive code, or payments, OR when it exceeds roughly 400 changed lines, strongly recommend running all three configured review lenses before opening the PR.
 
 These are agent-judgment recommendations layered on top of the Mandatory Delegation Triggers (especially the PR rule and Fresh review rule) and the Review Workload Guard; they do not replace or relax those. When a recommendation fires, decide whether the depth is warranted for this exact diff and note the decision rather than silently skipping it.
 
