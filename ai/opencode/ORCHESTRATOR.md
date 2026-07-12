@@ -124,16 +124,16 @@ These are parent-orchestrator stop rules. Once any trigger fires, the orchestrat
 
 #### Review Lens Selection
 
-`reviewer` is an intent, not a concrete installed agent. When a fresh review/audit is required, select concrete lenses by risk profile:
+`reviewer`, `review-risk`, `review-resilience`, and `review-readability` are review LENSES, not OpenCode agents -- none is configured as a `task` target here, so never launch one with `task` (it fails with "Unknown agent"). Apply each lens INLINE in your own context. When a fresh review/audit is required, pick the lenses by risk profile:
 
-| Risk signal | Review lens |
+| Risk signal | Inline lens |
 | --- | --- |
-| Clear naming, structure, maintainability, or small refactors | `review-readability` |
-| Shell/process integration, partial failures, recovery, or degraded dependencies | `review-resilience` |
-| Security, permissions, data exposure/loss, architecture, or dependencies | `review-risk` |
-| Large PR, hot path, or >400 changed lines | `review-risk`, `review-resilience`, `review-readability` |
+| Clear naming, structure, maintainability, or small refactors | readability |
+| Shell/process integration, partial failures, recovery, or degraded dependencies | resilience |
+| Security, permissions, data exposure/loss, architecture, or dependencies | risk |
+| Large PR, hot path, or >400 changed lines | risk + resilience + readability |
 
-If multiple rows match, run the narrow set that covers the risk. Example: shell integration that mutates live state should use `review-resilience`, not `review-readability` by default.
+If multiple rows match, apply the narrow set that covers the risk. Example: shell integration that mutates live state uses the resilience lens, not readability, by default.
 
 #### Review Execution Contract
 
@@ -319,10 +319,10 @@ When launching `sdd-apply`, always include the resolved `delivery_strategy`, `ch
 
 ### Review Recommendations (non-gating)
 
-Three read-only review sub-agents are available - `review-risk` (security), `review-readability` (clarity/maintainability), and `review-resilience` (operational failure modes). They produce findings only; they never fix code. Using them is an agent-judgment recommendation, NOT a hard gate, and it never overrides the Mandatory Delegation Triggers or the Review Workload Guard.
+Three inline review lenses apply here - risk (security), readability (clarity/maintainability), and resilience (operational failure modes). They are lenses you run yourself in the orchestrator context, NOT OpenCode agents: never spawn `review-risk`/`review-resilience`/`review-readability` via `task` (they are not configured and fail with "Unknown agent"). They produce findings only; they never fix code. Applying them is a judgment recommendation, NOT a hard gate, and it never overrides the Mandatory Delegation Triggers or the Review Workload Guard.
 
-- At pre-commit, recommend running `review-readability` over the staged diff for a quick clarity pass.
-- Pre-PR, strongly recommend running all three lenses when the diff touches authentication, authorization, security-sensitive paths, payments, or destructive/update operations, OR when the diff exceeds roughly 400 changed lines. For smaller, lower-risk diffs, use judgment about which lenses add value.
+- At pre-commit, consider a quick inline readability pass over the staged diff.
+- Pre-PR, strongly consider all three lenses when the diff touches authentication, authorization, security-sensitive paths, payments, or destructive/update operations, OR when it exceeds roughly 400 changed lines. For smaller, lower-risk diffs, use judgment about which lenses add value.
 
 These are recommendations the orchestrator surfaces and acts on by judgment; do not treat skipping them as a blocking failure.
 
