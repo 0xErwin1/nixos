@@ -133,28 +133,32 @@ let
     sdd-tasks = "openai/gpt-5.6-terra";
     sdd-verify = "openai/gpt-5.6-sol";
   };
-  expectedOpenCodePermissions = [
-    { action = "shell"; resource = "*"; effect = "allow"; }
-    { action = "shell"; resource = "git commit *"; effect = "ask"; }
-    { action = "shell"; resource = "git push"; effect = "ask"; }
-    { action = "shell"; resource = "git push *"; effect = "ask"; }
-    { action = "shell"; resource = "git push --force *"; effect = "ask"; }
-    { action = "shell"; resource = "git rebase *"; effect = "ask"; }
-    { action = "shell"; resource = "git reset --hard *"; effect = "ask"; }
-    { action = "external_directory"; resource = "~/.config/opencode/*"; effect = "allow"; }
-    { action = "external_directory"; resource = "*"; effect = "allow"; }
-    { action = "read"; resource = "*"; effect = "allow"; }
-    { action = "read"; resource = "~/.config/opencode/*"; effect = "allow"; }
-    { action = "read"; resource = "**/.env"; effect = "deny"; }
-    { action = "read"; resource = "**/.env.*"; effect = "deny"; }
-    { action = "read"; resource = "**/credentials.json"; effect = "deny"; }
-    { action = "read"; resource = "**/.credentials.json"; effect = "deny"; }
-    { action = "read"; resource = "**/auth.json"; effect = "deny"; }
-    { action = "read"; resource = "**/.auth.json"; effect = "deny"; }
-    { action = "read"; resource = "**/secrets/**"; effect = "deny"; }
-    { action = "read"; resource = "*.env"; effect = "deny"; }
-    { action = "read"; resource = "*.env.*"; effect = "deny"; }
-  ];
+  expectedOpenCodePermissions = {
+    bash = {
+      "*" = "allow";
+      "git commit *" = "ask";
+      "git push" = "ask";
+      "git push *" = "ask";
+      "git push --force *" = "ask";
+      "git rebase *" = "ask";
+      "git reset --hard *" = "ask";
+    };
+    external_directory = {
+      "**" = "allow";
+      "/nix/store/**" = "allow";
+    };
+    read = {
+      "**/.env" = "deny";
+      "**/.env.*" = "deny";
+      "*.env" = "deny";
+      "*.env.*" = "deny";
+      "**/credentials.json" = "deny";
+      "**/.credentials.json" = "deny";
+      "**/auth.json" = "deny";
+      "**/.auth.json" = "deny";
+      "**/secrets/**" = "deny";
+    };
+  };
   actualAgentModels = flake.inputs.nixpkgs.lib.mapAttrs (
     _: agent: agent.model or null
   ) opencodeConfig.agent;
@@ -162,6 +166,8 @@ let
     "*" = "deny";
     explore = "allow";
     general = "allow";
+    reviewer = "allow";
+    worker = "allow";
     sdd-apply = "allow";
     sdd-archive = "allow";
     sdd-design = "allow";
@@ -336,7 +342,7 @@ assert builtins.all (
   && !(fileHasTokenLikeAssignment check.file)
 ) renderedTemplateChecks;
 assert actualAgentModels == expectedAgentModels;
-assert opencodeConfig.permissions == expectedOpenCodePermissions;
+assert opencodeConfig.permission == expectedOpenCodePermissions;
 assert opencodeConfig.agent.sdd-orchestrator.permission.task == expectedNativeTaskPermissions;
 assert multiOverlay.agent.sdd-orchestrator.permission.task.__replace__.general == "allow";
 assert multiOverlay.agent.sdd-orchestrator.permission.task.__replace__.explore == "allow";
