@@ -68,7 +68,6 @@
             helium = final.callPackage "${self}/pkgs/helium" { };
             engram = final.callPackage "${self}/pkgs/engram" { };
             opencode = final.callPackage "${self}/pkgs/opencode" { };
-            opencode-v2 = final.callPackage "${self}/pkgs/opencode-v2" { };
             tuicr = final.callPackage "${self}/pkgs/tuicr" { };
             codegraph = final.callPackage "${self}/pkgs/codegraph" { };
             maestro-studio = final.callPackage "${self}/pkgs/maestro-studio" { };
