@@ -59,5 +59,7 @@
 
   nix.settings.trusted-users = [ "iperez" ];
 
+  time.timeZone = "America/Montevideo";
+
   system.stateVersion = "26.05";
 }

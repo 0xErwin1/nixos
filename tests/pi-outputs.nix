@@ -19,6 +19,7 @@ assert piSystem == "aarch64-linux";
 assert piHome.pkgs.stdenv.hostPlatform.system == "aarch64-linux";
 assert piOptions.networking.hostName == "pi";
 assert piOptions.system.stateVersion == "26.05";
+assert piOptions.time.timeZone == "America/Montevideo";
 assert piOptions.boot.kernelPackages.kernel.version == pi.pkgs.linuxPackages_latest.kernel.version;
 assert builtins.elem "nvme" piOptions.boot.initrd.availableKernelModules;
 assert piOptions.fileSystems."/".device == "/dev/disk/by-uuid/88e0bafc-fda9-4bb1-8a72-8847b784a016";
