@@ -109,7 +109,9 @@ assert piOptions.users.users.iperez.openssh.authorizedKeys.keys == [
   "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCWZRjt2GVSLcoBvSOS9AlxAxdQ/vvvFHLeT8m9KN3LEIEDB3ZiioX3sHt2xuIq5iKSZw+Co2iv3N0XYDmJ5ktElp2allK78xeQJ35BQmpNwPZCbiBHVDmJxeLLmRNilLz6NHWkjO+4qgyJGEgRJaUYDz8wg3RSPocDsVNIJhQ8TjmcPzAXTeb0v+tNR6CrvgQ0rux8XK6XQbpdJgv5Xi5Qi3ULTwRPR0v3fvYNJMKl6O9R7BsWUNGkN3/wlkeUfFPCMGU2+XCna6RQtLTGqyJ9o++yIxEcHVuWKNj8/32SnAuu1M0ZiJIo9TN48bN59MZ5msCFW0TmJoaNsIasZYvh"
 ];
 assert builtins.elem "wheel" piOptions.users.users.iperez.extraGroups;
+assert piOptions.users.users.iperez.shell == pi.pkgs.zsh;
 assert builtins.elem "iperez" piOptions.nix.settings.trusted-users;
+assert piOptions.programs.zsh.enable;
 assert piOptions.virtualisation.podman.enable;
 assert piOptions.virtualisation.libvirtd.enable == false;
 assert piOptions.services.postgresql.enable == false;
