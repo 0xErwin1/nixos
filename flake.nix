@@ -112,7 +112,6 @@
           pi-host-bootstrap = {
             hostname = "10.42.0.2";
             sshUser = "iperez";
-            interactiveSudo = true;
             remoteBuild = true;
             autoRollback = true;
             magicRollback = true;
@@ -120,10 +119,12 @@
             profiles = {
               system = {
                 user = "root";
+                interactiveSudo = true;
                 path = deploy-rs.lib.aarch64-linux.activate.nixos self.nixosConfigurations.pi;
               };
               home = {
                 user = "iperez";
+                profilePath = "/home/iperez/.local/state/nix/profiles/home-manager";
                 path = deploy-rs.lib.aarch64-linux.activate.home-manager self.homeConfigurations."iperez@pi";
               };
             };
@@ -132,7 +133,6 @@
           pi-host = {
             hostname = "10.0.0.2";
             sshUser = "iperez";
-            interactiveSudo = true;
             remoteBuild = true;
             autoRollback = true;
             magicRollback = true;
@@ -140,10 +140,12 @@
             profiles = {
               system = {
                 user = "root";
+                interactiveSudo = true;
                 path = deploy-rs.lib.aarch64-linux.activate.nixos self.nixosConfigurations.pi;
               };
               home = {
                 user = "iperez";
+                profilePath = "/home/iperez/.local/state/nix/profiles/home-manager";
                 path = deploy-rs.lib.aarch64-linux.activate.home-manager self.homeConfigurations."iperez@pi";
               };
             };
