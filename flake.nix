@@ -314,6 +314,7 @@
         // deploy-rs.lib.x86_64-linux.deployChecks self.deploy;
 
       devShells.x86_64-linux.default = nixpkgs.legacyPackages.x86_64-linux.mkShell {
+        DEVENV_TUI = "false";
         packages = with nixpkgs.legacyPackages.x86_64-linux; [
           nixpkgs.legacyPackages.x86_64-linux.deploy-rs
           devenv
