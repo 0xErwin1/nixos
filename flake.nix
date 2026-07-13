@@ -42,6 +42,12 @@
     };
 
     nix-flatpak.url = "github:gmodena/nix-flatpak";
+
+    deploy-rs = {
+      url = "github:serokell/deploy-rs";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
   };
 
   outputs =
@@ -50,6 +56,7 @@
       nixpkgs,
       home-manager,
       nix-flatpak,
+      deploy-rs,
       ...
     }@inputs:
     let
@@ -99,6 +106,48 @@
     in
     {
       inherit overlays pkgsPi;
+
+      deploy = {
+        nodes = {
+          pi-host-bootstrap = {
+            hostname = "10.42.0.2";
+            sshUser = "iperez";
+            user = "root";
+            sshOpts = [ "-tt" ];
+            interactiveSudo = true;
+            remoteBuild = true;
+            autoRollback = true;
+            magicRollback = true;
+            profilesOrder = [ "system" "home" ];
+            profiles = {
+              system.path = deploy-rs.lib.aarch64-linux.activate.nixos self.nixosConfigurations.pi;
+              home = {
+                user = "iperez";
+                path = deploy-rs.lib.aarch64-linux.activate.home-manager self.homeConfigurations."iperez@pi";
+              };
+            };
+          };
+
+          pi-host = {
+            hostname = "10.0.0.2";
+            sshUser = "iperez";
+            user = "root";
+            sshOpts = [ "-tt" ];
+            interactiveSudo = true;
+            remoteBuild = true;
+            autoRollback = true;
+            magicRollback = true;
+            profilesOrder = [ "system" "home" ];
+            profiles = {
+              system.path = deploy-rs.lib.aarch64-linux.activate.nixos self.nixosConfigurations.pi;
+              home = {
+                user = "iperez";
+                path = deploy-rs.lib.aarch64-linux.activate.home-manager self.homeConfigurations."iperez@pi";
+              };
+            };
+          };
+        };
+      };
 
       nixosConfigurations = {
         epsilon = nixpkgs.lib.nixosSystem {
@@ -261,7 +310,8 @@
             };
             flakePath = self.outPath;
           };
-        };
+        }
+        // deploy-rs.lib.x86_64-linux.deployChecks self.deploy;
 
       devShells.x86_64-linux.default = nixpkgs.legacyPackages.x86_64-linux.mkShell {
         packages = with nixpkgs.legacyPackages.x86_64-linux; [

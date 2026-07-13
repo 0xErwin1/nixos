@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+set -euo pipefail
+scripts/pi/key-inject
+scripts/pi/deploy

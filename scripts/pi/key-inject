@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+set -euo pipefail
+export SECRETSPEC_REASON="Inject the Pi WireGuard key"
+key_path="$(secretspec get --profile pi PI_WIREGUARD_PRIVATE_KEY)"
+cleanup() { rm -f -- "$key_path"; }
+trap cleanup EXIT HUP INT TERM
+wg pubkey < "$key_path" >/dev/null
+ssh -T iperez@10.42.0.2 sudo /run/current-system/sw/bin/pi-wireguard-key-install < "$key_path"
+rm -f -- "$key_path"
+trap - EXIT

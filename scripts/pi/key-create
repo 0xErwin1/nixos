@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+set -euo pipefail
+export SECRETSPEC_REASON="Initialize the Pi WireGuard key"
+secretspec check --profile pi
+key_path="$(secretspec get --profile pi PI_WIREGUARD_PRIVATE_KEY)"
+cleanup() { rm -f -- "$key_path"; }
+trap cleanup EXIT HUP INT TERM
+wg pubkey < "$key_path" >/dev/null

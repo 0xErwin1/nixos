@@ -1,4 +1,5 @@
 .direnv
+.devenv/
 result
 thoughts/
 .logs
