@@ -113,7 +113,6 @@
             hostname = "10.42.0.2";
             sshUser = "iperez";
             user = "root";
-            sshOpts = [ "-tt" ];
             interactiveSudo = true;
             remoteBuild = true;
             autoRollback = true;
@@ -132,7 +131,6 @@
             hostname = "10.0.0.2";
             sshUser = "iperez";
             user = "root";
-            sshOpts = [ "-tt" ];
             interactiveSudo = true;
             remoteBuild = true;
             autoRollback = true;
