@@ -142,15 +142,7 @@
         "iperez@pi" = home-manager.lib.homeManagerConfiguration {
           pkgs = pkgsPi;
           extraSpecialArgs = { inherit inputs outputs; };
-          modules = [
-            {
-              home = {
-                username = "iperez";
-                homeDirectory = "/home/iperez";
-                stateVersion = "26.05";
-              };
-            }
-          ];
+          modules = [ ./home-manager/pi ];
         };
       };
 

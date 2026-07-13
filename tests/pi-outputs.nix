@@ -3,6 +3,8 @@
 let
   pi = flake.nixosConfigurations.pi;
   piHome = flake.homeConfigurations."iperez@pi";
+  piHomeOptions = piHome.config;
+  piPackageNames = map (package: package.name or "") piHomeOptions.home.packages;
   source = builtins.readFile (flakePath + "/flake.nix");
   piSystem = pi.pkgs.stdenv.hostPlatform.system;
   piOptions = pi.config;
@@ -17,6 +19,63 @@ assert flake ? nixosConfigurations;
 assert flake ? homeConfigurations;
 assert piSystem == "aarch64-linux";
 assert piHome.pkgs.stdenv.hostPlatform.system == "aarch64-linux";
+assert piHomeOptions.home.username == "iperez";
+assert piHomeOptions.home.homeDirectory == "/home/iperez";
+assert piHomeOptions.home.stateVersion == "26.05";
+assert piHomeOptions.programs.zsh.enable;
+assert piHomeOptions.programs.git.enable;
+assert piHomeOptions.programs.tmux.enable;
+assert piHomeOptions.programs.direnv.enable;
+assert piHomeOptions.programs.uv.enable;
+assert piHomeOptions.programs.go.enable;
+assert piHomeOptions.programs.awscli.enable;
+assert piHomeOptions.programs.delta.enable;
+assert piHomeOptions.programs.fd.enable;
+assert piHomeOptions.programs.fastfetch.enable;
+assert piHomeOptions.programs.nh.enable;
+assert piHomeOptions.programs.codex.enable;
+assert piHomeOptions.programs.claude-code.enable;
+assert piHomeOptions.programs.opencode.enable;
+assert piHomeOptions.programs.pi.coding-agent.enable;
+assert builtins.any (name: builtins.match "gh-.*" name != null) piPackageNames;
+assert builtins.any (name: builtins.match "glab-.*" name != null) piPackageNames;
+assert builtins.any (name: builtins.match "nodejs-.*" name != null) piPackageNames;
+assert builtins.any (name: builtins.match "pnpm-.*" name != null) piPackageNames;
+assert builtins.any (name: builtins.match "python3-.*" name != null) piPackageNames;
+assert builtins.any (name: builtins.match "openssl-.*" name != null) piPackageNames;
+assert builtins.any (name: builtins.match "curl-.*" name != null) piPackageNames;
+assert builtins.any (name: builtins.match "wget-.*" name != null) piPackageNames;
+assert builtins.all (name: builtins.all (pattern: builtins.match pattern name == null) [
+  ".*claude-desktop.*"
+  ".*maestro-studio.*"
+  ".*warp-terminal.*"
+  ".*obsidian.*"
+  ".*postman.*"
+  ".*cartero.*"
+  ".*dbeaver.*"
+]) piPackageNames;
+assert piHomeOptions.services.udiskie.enable == false;
+assert piHomeOptions.services.syncthing.enable == false;
+assert piHomeOptions.xdg.configFile."systemd/user/build.slice".text == ''
+  [Unit]
+  Description=CPU-capped slice for headless builds
+
+  [Slice]
+  CPUQuota=600%
+  CPUWeight=50
+  IOWeight=50
+  TasksMax=infinity
+'';
+assert piHomeOptions.xdg.configFile."systemd/user/background.slice".text == ''
+  [Unit]
+  Description=Low-priority slice for headless background services
+
+  [Slice]
+  CPUWeight=25
+  IOWeight=25
+  TasksMax=infinity
+'';
+assert !(piHomeOptions.xdg.configFile ? "systemd/user/app.slice.d/priority.conf");
 assert piOptions.networking.hostName == "pi";
 assert piOptions.system.stateVersion == "26.05";
 assert piOptions.time.timeZone == "America/Montevideo";
