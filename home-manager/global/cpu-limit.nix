@@ -30,6 +30,16 @@
     TasksMax=infinity
   '';
 
+  xdg.configFile."systemd/user/background.slice".text = ''
+    [Unit]
+    Description=Low-priority slice for background services
+
+    [Slice]
+    CPUWeight=25
+    IOWeight=25
+    TasksMax=infinity
+  '';
+
   # Give interactive apps higher scheduler priority than background builds.
   # Default CPUWeight is 100; build.slice is 50, app.slice becomes 300.
   xdg.configFile."systemd/user/app.slice.d/priority.conf".text = ''

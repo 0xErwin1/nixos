@@ -48,4 +48,6 @@
       ];
     };
   };
+
+  systemd.user.services.syncthing.Service.Slice = "background.slice";
 }
