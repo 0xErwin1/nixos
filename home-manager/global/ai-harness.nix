@@ -1,7 +1,10 @@
 { config, lib, pkgs, ... }:
 
 let
-  canonicalRoot = ../../ai;
+  canonicalRoot = builtins.path {
+    path = ../../ai;
+    name = "ai-harness";
+  };
   homeDirectory = config.home.homeDirectory;
 
   projectedResources = [
