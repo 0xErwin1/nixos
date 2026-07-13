@@ -315,6 +315,14 @@
 
       devShells.x86_64-linux.default = nixpkgs.legacyPackages.x86_64-linux.mkShell {
         packages = with nixpkgs.legacyPackages.x86_64-linux; [
+          nixpkgs.legacyPackages.x86_64-linux.deploy-rs
+          devenv
+          secretspec
+          wireguard-tools
+          openssh
+          nix
+          nixpkgs.legacyPackages.x86_64-linux.home-manager
+          git
           nil
           nixfmt-rfc-style
         ];
