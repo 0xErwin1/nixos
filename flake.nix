@@ -86,13 +86,19 @@
         overlays = [ overlays.default ];
       };
 
+      pkgsPi = import nixpkgs {
+        system = "aarch64-linux";
+        config.allowUnfree = true;
+        overlays = [ overlays.default ];
+      };
+
       # Read wireguard local config at flake evaluation time (requires --impure).
       # Returns {} if the file does not exist, so builds work on machines without it.
       wireguardLocalPath = "/home/iperez/.ssh/wireguard/default.nix";
       wireguardLocal = if builtins.pathExists wireguardLocalPath then import wireguardLocalPath else { };
     in
     {
-      inherit overlays;
+      inherit overlays pkgsPi;
 
       nixosConfigurations = {
         epsilon = nixpkgs.lib.nixosSystem {
@@ -106,6 +112,11 @@
         zeta = nixpkgs.lib.nixosSystem {
           specialArgs = { inherit inputs outputs wireguardLocal; };
           modules = [ ./hosts/zeta ];
+        };
+
+        pi = nixpkgs.lib.nixosSystem {
+          specialArgs = { inherit inputs outputs wireguardLocal; };
+          modules = [ ./hosts/pi ];
         };
       };
 
@@ -126,6 +137,20 @@
           pkgs = pkgszeta;
           extraSpecialArgs = { inherit inputs outputs; };
           modules = [ ./home-manager/zeta ];
+        };
+
+        "iperez@pi" = home-manager.lib.homeManagerConfiguration {
+          pkgs = pkgsPi;
+          extraSpecialArgs = { inherit inputs outputs; };
+          modules = [
+            {
+              home = {
+                username = "iperez";
+                homeDirectory = "/home/iperez";
+                stateVersion = "26.05";
+              };
+            }
+          ];
         };
       };
 
@@ -155,7 +180,13 @@
         in
         {
           ai-harness-readiness =
-            pkgs.runCommandLocal "ai-harness-readiness" { nativeBuildInputs = [ pkgs.gnugrep pkgs.python3 ]; }
+            pkgs.runCommandLocal "ai-harness-readiness"
+              {
+                nativeBuildInputs = [
+                  pkgs.gnugrep
+                  pkgs.python3
+                ];
+              }
               ''
                 set -eu
 
@@ -231,6 +262,13 @@
                 flake = flakeView;
                 flakePath = self.outPath;
               };
+
+          pi-outputs = functionalCheck "pi-outputs" ./tests/pi-outputs.nix {
+            flake = self // {
+              inherit pkgsPi;
+            };
+            flakePath = self.outPath;
+          };
         };
 
       devShells.x86_64-linux.default = nixpkgs.legacyPackages.x86_64-linux.mkShell {
