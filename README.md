@@ -9,6 +9,7 @@ Personal dotfiles managed with Nix flakes.
 | `epsilon` | NixOS | ThinkPad - Hyprland (Wayland) |
 | `zeta` | NixOS | ThinkPad x13 - Full-lite + thin (RDP) |
 | `delta` | Arch Linux | Standalone Home Manager |
+| `pi` | NixOS | Orange Pi 5 Plus - headless development host ([operations](docs/pi-operations.md)) |
 
 ## Usage
 
