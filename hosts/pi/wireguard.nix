@@ -58,6 +58,8 @@ in
     }];
   };
 
+  networking.firewall.trustedInterfaces = [ "wg0" ];
+
   systemd.services.wg-quick-wg0.unitConfig.ConditionPathExists =
     "/var/lib/wireguard/pi-host-private.key";
 }

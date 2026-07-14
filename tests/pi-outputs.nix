@@ -114,6 +114,7 @@ assert builtins.elem "iperez" piOptions.nix.settings.trusted-users;
 assert piOptions.programs.zsh.enable;
 assert piOptions.virtualisation.podman.enable;
 assert piOptions.virtualisation.libvirtd.enable == false;
+assert builtins.elem "wg0" piOptions.networking.firewall.trustedInterfaces;
 assert piOptions.services.postgresql.enable == false;
 assert piOptions.services.mysql.enable == false;
 assert piOptions.services.xserver.enable == false;

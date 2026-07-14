@@ -300,6 +300,40 @@ The `wg-quick-wg0` unit has a `ConditionPathExists` check for this path. A fresh
 system can therefore activate before enrollment without leaving a failed
 WireGuard unit.
 
+## Development Service Ports
+
+The NixOS firewall trusts `wg0`. Any authenticated peer routed through the
+WireGuard hub can therefore reach any TCP or UDP port exposed by the Pi, while
+the same ports remain subject to the firewall on the LAN and other interfaces.
+This supports project-managed databases, backends, frontend development
+servers, and container-published ports without adding a NixOS firewall rule for
+every project.
+
+A service must listen on `0.0.0.0`, `::`, or `10.0.0.2` to be reachable from
+another WireGuard peer. A process bound only to `127.0.0.1` remains local. For
+example:
+
+```bash
+# Pi: inspect listening addresses and ports
+ss -lntup
+
+# Workstation: verify an HTTP development server over WireGuard
+curl --fail http://10.0.0.2:8080/
+```
+
+For containers, publish the port through Podman and prefer binding it to the
+WireGuard address when the service should not also listen on LAN:
+
+```bash
+# Pi: VPN-only publication example
+podman run --rm -p 10.0.0.2:8080:8080 example/image:tag
+```
+
+Trusting `wg0` means every peer admitted to this WireGuard network can attempt
+to connect to every service listening on the Pi. Treat hub peer enrollment as
+the access-control boundary, remove obsolete peers promptly, and keep
+application authentication enabled for sensitive databases and admin APIs.
+
 ## Key Rotation
 
 Never rotate only through the tunnel whose key is being replaced. Keep the LAN
