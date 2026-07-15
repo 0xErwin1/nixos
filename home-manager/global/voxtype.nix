@@ -118,8 +118,19 @@ in
       enabled = true
       frontend = "native"
 
+      # paste mode copies the transcript to the clipboard and then fires the paste
+      # keystroke. If a text field is focused the text lands there; if not, it
+      # stays on the clipboard to paste by hand. type mode would silently drop the
+      # text with no focus, because wtype "succeeds" sending keys into the void and
+      # the clipboard fallback never triggers. restore_clipboard = false keeps the
+      # transcript on the clipboard instead of restoring the previous contents, so
+      # it survives either way. paste_keys uses ctrl+shift+v: that pastes in kitty
+      # (where the agents run) and in browsers; a plain GTK entry may ignore it,
+      # but then the clipboard still holds the text.
       [output]
-      mode = "type"
+      mode = "paste"
+      paste_keys = "ctrl+shift+v"
+      restore_clipboard = false
       fallback_to_clipboard = true
 
       [output.notification]
