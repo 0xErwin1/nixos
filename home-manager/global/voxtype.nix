@@ -145,11 +145,12 @@ in
         threshold = 0.7
         min_speech_duration_ms = 250
 
-        # Floating waveform overlay shown while recording — the recording indicator
-        # that toggle mode needs. frontend = native is the SCTK + wgpu build wired
-        # up above; the gtk4 default is not built.
+        # Floating waveform overlay disabled: the Astal bar (home-manager/global/bar)
+        # now shows the recording indicator, elapsed counter and waveform, so the
+        # native wgpu OSD is redundant. frontend = native stays set (the SCTK + wgpu
+        # build is still wired up above) so re-enabling is a one-line flip.
         [osd]
-        enabled = true
+        enabled = false
         frontend = "native"
 
         # paste mode copies the transcript to the clipboard and then fires the paste

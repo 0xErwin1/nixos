@@ -5,7 +5,6 @@ in
   imports = [
     ./dependencies.nix
     ../../wayland/wofi
-    ../../eww
     ./hyprlock.nix
     ./hyprpaper.nix
   ];
@@ -23,11 +22,6 @@ in
         adjustment-method = "wayland";
       };
     };
-  };
-
-  xdg.configFile."hypr/eww" = {
-    source = ../../../../dotfiles/.config/hypr/eww;
-    recursive = true;
   };
 
   # xdg-desktop-portal-hyprland config. On the hybrid Intel + NVIDIA setup the
@@ -92,7 +86,6 @@ in
         "systemctl --user import-environment WAYLAND_DISPLAY XDG_CURRENT_DESKTOP"
         "hyprctl setcursor Bibata-Modern-Classic 16"
         "tmux setenv -g HYPRLAND_INSTANCE_SIGNATURE \"$HYPRLAND_INSTANCE_SIGNATURE\""
-        "sleep 2 && eww -c \"$HOME/.config/hypr/eww\" --force-wayland open-many laptop monitor-DP-0"
         "nm-applet &"
         "blueman-adapters &"
         "udiskie -t &"

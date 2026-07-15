@@ -1,0 +1,254 @@
+// Ayu Dark palette.
+$background: #0a0e14;
+$foreground: #bfbab0;
+$grey: #151720;
+$yellow: #ffb454;
+$yellow-lite: #ffd580;
+$orange: #ff8f40;
+$blue: #73d0ff;
+$green: #bae67e;
+$red: #ff3333;
+$cyan: #95e6cb;
+$nix: #5277c3;
+
+$font: "LiterationMono Nerd Font";
+
+// The window and the centerbox are transparent: each group is its own opaque
+// rounded "island" that floats over the desktop with gaps between them.
+.bar-window {
+  background: transparent;
+}
+
+.bar {
+  background: transparent;
+  font-family: $font;
+  font-size: 1rem;
+}
+
+// One uniform inset for every island so content keeps equal breathing room
+// from the rounded edge regardless of the island's overall size.
+.island {
+  background-color: $background;
+  color: $foreground;
+  border-radius: 14px;
+}
+
+// min-height (horizontal) / min-width (vertical) makes every island the same
+// size along the bar's cross axis, so short-content islands (tray, clock) match
+// the taller ones (workspaces, controls) instead of shrinking to fit.
+.bar.horizontal .island {
+  padding: 0.2rem 0.7rem;
+  margin: 0 0.25rem;
+  min-height: 1.85rem;
+}
+
+.bar.vertical .island {
+  padding: 0.9rem 0.25rem;
+  margin: 0.25rem 0;
+  min-width: 1.9rem;
+}
+
+.os-icon {
+  color: $nix;
+  font-size: 1.35rem;
+}
+
+// Workspaces
+.workspaces button {
+  all: unset;
+  min-width: 1.5rem;  padding: 0 0.3rem;
+  color: $foreground;
+  font-weight: bold;
+  transition: color 150ms ease;
+}
+
+.workspaces button.current {
+  color: $yellow;
+}
+
+.workspaces button.occupied {
+  color: $blue;
+}
+
+.workspaces button.empty {
+  color: $foreground;
+}
+
+// Active-workspace state: window count + fullscreen indicator.
+.window-icon {
+  color: $yellow;
+  font-size: 1.05rem;
+}
+
+.window-count {
+  margin: 0 0.25rem;
+  font-weight: bold;
+  font-size: 1.15rem;
+}
+
+.fullscreen-state {
+  color: $yellow;
+  margin-left: 0.2rem;
+}
+
+// Subtle vertical dividers, used only between the left island's sub-groups.
+.separator {
+  color: $foreground;
+  opacity: 0.35;
+  font-size: 1rem;
+  margin: 0 0.15rem;
+}
+
+// Tray items are icon-only: no background, border or shadow on the buttons.
+.tray-item,
+.tray-item button {
+  all: unset;
+  background: none;
+  border: none;
+  box-shadow: none;
+  outline: none;
+  min-height: 0;
+  min-width: 0;
+  padding: 0 0.1rem;
+}
+
+.tray-item:hover button {
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 8px;
+}
+
+.tray-item image {
+  -gtk-icon-size: 20px;
+}
+
+// Control cluster: icons and percentages sit on one centered row via valign.
+.control-icon {
+  font-size: 1.05rem;
+}
+
+.control-percent {
+  margin-left: 0.5rem;
+  font-size: 0.85rem;
+  font-weight: bold;
+}
+
+.brightness {
+  color: $yellow;
+}
+
+.battery {
+  color: $green;
+}
+
+.volume {
+  color: $blue;
+}
+
+.wifi-icon {
+  color: $orange;
+}
+
+// Nerd Font wifi glyph has a small right bearing; add breathing room so it is
+// not flush against the controls island's right edge (horizontal layout only).
+.bar.horizontal .wifi {
+  margin-right: 0.35rem;
+}
+
+.microphone-active {
+  color: $green;
+}
+
+.microphone-muted {
+  color: $red;
+}
+
+// Voxtype recording island: revealed only while recording/transcribing.
+.vox-icon {
+  font-size: 1.05rem;
+}
+
+.voxtype.recording .vox-icon {
+  color: $red;
+  animation: vox-blink 1.2s ease-in-out infinite;
+}
+
+.voxtype.transcribing .vox-icon {
+  color: $cyan;
+}
+
+.vox-elapsed {
+  font-weight: bold;
+  font-size: 0.9rem;
+  color: $foreground;
+}
+
+.vox-bar {
+  min-width: 3px;
+  min-height: 4px;
+  margin: 0 1px;
+  border-radius: 2px;
+  background-color: $red;
+  animation: vox-pulse 900ms ease-in-out infinite;
+}
+
+.voxtype.transcribing .vox-bar {
+  background-color: $cyan;
+}
+
+.vox-bar-0 {
+  animation-delay: 0ms;
+}
+.vox-bar-1 {
+  animation-delay: 110ms;
+}
+.vox-bar-2 {
+  animation-delay: 220ms;
+}
+.vox-bar-3 {
+  animation-delay: 330ms;
+}
+.vox-bar-4 {
+  animation-delay: 220ms;
+}
+.vox-bar-5 {
+  animation-delay: 110ms;
+}
+.vox-bar-6 {
+  animation-delay: 0ms;
+}
+
+@keyframes vox-pulse {
+  0%,
+  100% {
+    min-height: 4px;
+    opacity: 0.55;
+  }
+  50% {
+    min-height: 16px;
+    opacity: 1;
+  }
+}
+
+@keyframes vox-blink {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.45;
+  }
+}
+
+// Clock / date island
+.date {
+  color: $foreground;
+  font-weight: bold;
+}
+
+.date .time {
+  font-size: 1rem;
+}
+
+.date-vertical .time {
+  font-size: 1rem;
+}
