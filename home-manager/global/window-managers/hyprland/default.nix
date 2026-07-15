@@ -194,7 +194,7 @@ in
       ];
 
       "$mod" = "SUPER";
-      "$terminal" = "alacritty";
+      "$terminal" = "kitty";
       "$fileManager" = "pcmanfm";
       "$menu" = "wofi --show drun";
       "$menuWindow" = "wofi --show window";
