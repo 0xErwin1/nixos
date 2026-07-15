@@ -62,6 +62,7 @@
 
   home.packages = with pkgs; [
     ccstatusline
+    codegraph
     engram
     pi-coding-agent
     tuicr

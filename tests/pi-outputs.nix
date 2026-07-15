@@ -50,44 +50,52 @@ assert builtins.any (name: builtins.match "openssl-.*" name != null) piPackageNa
 assert builtins.any (name: builtins.match "curl-.*" name != null) piPackageNames;
 assert builtins.any (name: builtins.match "wget-.*" name != null) piPackageNames;
 assert builtins.any (name: builtins.match "kalker-.*" name != null) piPackageNames;
+assert builtins.any (name: builtins.match "codegraph-.*" name != null) piPackageNames;
 assert builtins.any (name: builtins.match "chromium-.*" name != null) piPackageNames;
-assert builtins.all (name: builtins.all (pattern: builtins.match pattern name == null) [
-  ".*claude-desktop.*"
-  ".*maestro-studio.*"
-  ".*warp-terminal.*"
-  ".*obsidian.*"
-  ".*postman.*"
-  ".*cartero.*"
-  ".*dbeaver.*"
-]) piPackageNames;
+assert builtins.all (
+  name:
+  builtins.all (pattern: builtins.match pattern name == null) [
+    ".*claude-desktop.*"
+    ".*maestro-studio.*"
+    ".*warp-terminal.*"
+    ".*obsidian.*"
+    ".*postman.*"
+    ".*cartero.*"
+    ".*dbeaver.*"
+  ]
+) piPackageNames;
 assert piHomeOptions.services.udiskie.enable == false;
 assert piHomeOptions.services.syncthing.enable == false;
-assert piHomeOptions.xdg.configFile."systemd/user/build.slice".text == ''
-  [Unit]
-  Description=CPU-capped slice for headless builds
+assert
+  piHomeOptions.xdg.configFile."systemd/user/build.slice".text == ''
+    [Unit]
+    Description=CPU-capped slice for headless builds
 
-  [Slice]
-  CPUQuota=600%
-  CPUWeight=50
-  IOWeight=50
-  TasksMax=infinity
-'';
-assert piHomeOptions.xdg.configFile."systemd/user/background.slice".text == ''
-  [Unit]
-  Description=Low-priority slice for headless background services
+    [Slice]
+    CPUQuota=600%
+    CPUWeight=50
+    IOWeight=50
+    TasksMax=infinity
+  '';
+assert
+  piHomeOptions.xdg.configFile."systemd/user/background.slice".text == ''
+    [Unit]
+    Description=Low-priority slice for headless background services
 
-  [Slice]
-  CPUWeight=25
-  IOWeight=25
-  TasksMax=infinity
-'';
+    [Slice]
+    CPUWeight=25
+    IOWeight=25
+    TasksMax=infinity
+  '';
 assert !(piHomeOptions.xdg.configFile ? "systemd/user/app.slice.d/priority.conf");
 assert piHerdrServer.Install.WantedBy == [ "default.target" ];
 assert builtins.match ".*/bin/herdr server" piHerdrExecStart != null;
 assert !(piHerdrServer.Service ? Slice);
 assert piChromiumCdp.Install.WantedBy == [ "default.target" ];
 assert piChromiumCdp.Service.Slice == "background.slice";
-assert builtins.match ".*--remote-debugging-address=127\\.0\\.0\\.1 --remote-debugging-port=9222.*" piChromiumExecStart != null;
+assert
+  builtins.match ".*--remote-debugging-address=127\\.0\\.0\\.1 --remote-debugging-port=9222.*" piChromiumExecStart
+  != null;
 assert builtins.match ".*(0\\.0\\.0\\.0|--no-sandbox).*" piChromiumExecStart == null;
 assert piOptions.networking.hostName == "pi";
 assert piOptions.system.stateVersion == "26.05";
@@ -121,9 +129,10 @@ assert piOptions.services.openssh.settings.X11Forwarding;
 assert piOptions.programs.ssh.setXAuthLocation;
 assert piOptions.users.users.iperez.linger == true;
 assert builtins.length piOptions.users.users.iperez.openssh.authorizedKeys.keys > 0;
-assert piOptions.users.users.iperez.openssh.authorizedKeys.keys == [
-  "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCWZRjt2GVSLcoBvSOS9AlxAxdQ/vvvFHLeT8m9KN3LEIEDB3ZiioX3sHt2xuIq5iKSZw+Co2iv3N0XYDmJ5ktElp2allK78xeQJ35BQmpNwPZCbiBHVDmJxeLLmRNilLz6NHWkjO+4qgyJGEgRJaUYDz8wg3RSPocDsVNIJhQ8TjmcPzAXTeb0v+tNR6CrvgQ0rux8XK6XQbpdJgv5Xi5Qi3ULTwRPR0v3fvYNJMKl6O9R7BsWUNGkN3/wlkeUfFPCMGU2+XCna6RQtLTGqyJ9o++yIxEcHVuWKNj8/32SnAuu1M0ZiJIo9TN48bN59MZ5msCFW0TmJoaNsIasZYvh"
-];
+assert
+  piOptions.users.users.iperez.openssh.authorizedKeys.keys == [
+    "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCWZRjt2GVSLcoBvSOS9AlxAxdQ/vvvFHLeT8m9KN3LEIEDB3ZiioX3sHt2xuIq5iKSZw+Co2iv3N0XYDmJ5ktElp2allK78xeQJ35BQmpNwPZCbiBHVDmJxeLLmRNilLz6NHWkjO+4qgyJGEgRJaUYDz8wg3RSPocDsVNIJhQ8TjmcPzAXTeb0v+tNR6CrvgQ0rux8XK6XQbpdJgv5Xi5Qi3ULTwRPR0v3fvYNJMKl6O9R7BsWUNGkN3/wlkeUfFPCMGU2+XCna6RQtLTGqyJ9o++yIxEcHVuWKNj8/32SnAuu1M0ZiJIo9TN48bN59MZ5msCFW0TmJoaNsIasZYvh"
+  ];
 assert builtins.elem "wheel" piOptions.users.users.iperez.extraGroups;
 assert piOptions.users.users.iperez.shell == pi.pkgs.zsh;
 assert builtins.elem "iperez" piOptions.nix.settings.trusted-users;

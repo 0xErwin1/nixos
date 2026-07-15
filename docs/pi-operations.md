@@ -540,7 +540,6 @@ nix build .#checks.x86_64-linux.deploy-schema --no-link --no-write-lock-file
 | AI render reports a missing variable | Add the named non-empty variable to the appropriate local env file. Current templates require `ATLAS_TOKEN`, `CONTEXT7_API_KEY`, and `PENPOT_API_KEY`. Never put the value in Nix or Git. |
 | Remote Home Manager activation cannot find an AI source template | `home-manager/global/ai-harness.nix` must keep the complete `ai/` tree in a `builtins.path` closure. Referencing only individual projections previously omitted activation-time templates from the remote closure. |
 | First activation times out reloading D-Bus | The initial `dbus-daemon` to `dbus-broker` transition can inhibit or time out activation. Reboot cleanly through LAN, reconnect, and rerun the LAN deployment. |
-| `codegraph` is absent on Pi | This is intentional. An uncached ARM npm dependency blocked bootstrap, so CodeGraph was deferred until its aarch64 dependency path is cacheable/buildable. |
 | VPN succeeds but interactive SSH is slow | The current hub route is operational but has observed elevated latency. Compare LAN and VPN `ping`, inspect latest handshakes, and use LAN for recovery; tune the hub route separately. |
 | Deployment disconnected or rolled back | Check the current system and Home Manager profile links and list generations before retrying. Auto/magic rollback may have restored the prior generation. Do not run garbage collection while diagnosing, because it can remove a generation needed for recovery. |
 
