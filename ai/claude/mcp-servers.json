@@ -1,7 +1,9 @@
 {
   "aws": {
     "command": "uvx",
-    "args": ["awslabs.aws-documentation-mcp-server@latest"],
+    "args": [
+      "awslabs.aws-documentation-mcp-server@latest"
+    ],
     "env": {
       "AWS_DOCUMENTATION_PARTITION": "aws",
       "FASTMCP_LOG_LEVEL": "ERROR"
@@ -20,15 +22,32 @@
   },
   "dbflux": {
     "command": "dbflux",
-    "args": ["mcp", "--client-id", "claude"]
+    "args": [
+      "mcp",
+      "--client-id",
+      "claude"
+    ]
   },
   "obsidian": {
     "command": "pnpx",
-    "args": ["@mauricio.wolff/mcp-obsidian@latest", "/home/iperez/Atlas"]
+    "args": [
+      "@mauricio.wolff/mcp-obsidian@latest",
+      "/home/iperez/Atlas"
+    ]
   },
   "atlas": {
     "type": "http",
     "url": "https://atlas.iperez.dev/mcp",
-    "headers": { "Authorization": "Bearer @ATLAS_TOKEN@" }
+    "headers": {
+      "Authorization": "Bearer @ATLAS_TOKEN@"
+    }
+  },
+  "clickup": {
+    "command": "npx",
+    "args": [
+      "-y",
+      "mcp-remote",
+      "https://mcp.clickup.com/mcp"
+    ]
   }
 }
