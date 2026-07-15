@@ -53,11 +53,18 @@ let
       ags bundle app.ts $out/bin/epsilon-bar
     '';
 
-    # brightnessctl is invoked at runtime for the brightness widget (Astal has
-    # no brightness service).
+    # Runtime CLIs the bar shells out to: brightnessctl (brightness widget, no
+    # Astal service) and pactl (bluetooth A2DP/HFP profile switching — wpctl does
+    # not cleanly enumerate bluez card profiles, and pactl is otherwise absent on
+    # this host).
     preFixup = ''
       gappsWrapperArgs+=(
-        --prefix PATH : ${pkgs.lib.makeBinPath [ pkgs.brightnessctl ]}
+        --prefix PATH : ${
+          pkgs.lib.makeBinPath [
+            pkgs.brightnessctl
+            pkgs.pulseaudio
+          ]
+        }
       )
     '';
   };

@@ -27,6 +27,33 @@ export const WIFI_ETHERNET = "\u{f0200}";
 export const WIFI_WIFI = "\u{f1eb}";
 export const WIFI_DISCONNECTED = "\u{f16b5}";
 
+// Wi-Fi dashboard panel glyphs.
+export const WIFI_LOCK = "\u{f033e}";
+export const WIFI_ACTIVE = "\u{f012c}";
+export const WIFI_REFRESH = "\u{f0450}";
+
+export function wifiSignalGlyph(strength: number): string {
+  if (strength >= 75) return "\u{f0928}"; // wifi-strength-4
+  if (strength >= 50) return "\u{f0925}"; // wifi-strength-3
+  if (strength >= 25) return "\u{f0922}"; // wifi-strength-2
+  if (strength > 0) return "\u{f091f}"; // wifi-strength-1
+  return "\u{f092f}"; // wifi-strength-off-outline
+}
+
+// Bluetooth + dashboard glyphs.
+export const BT_ON = "\u{f00af}"; // bluetooth
+export const BT_CONNECTED = "\u{f00b1}"; // bluetooth-connect
+export const BT_OFF = "\u{f00b2}"; // bluetooth-off
+export const CLOSE_GLYPH = "\u{f0156}"; // close
+export const TRUST_GLYPH = "\u{f012c}"; // check
+export const FORGET_GLYPH = "\u{f0a7a}"; // delete-outline
+
+export function btStateGlyph(powered: boolean, connected: boolean): string {
+  if (!powered) return BT_OFF;
+  if (connected) return BT_CONNECTED;
+  return BT_ON;
+}
+
 export function batteryGlyph(percent: number, charging: boolean): string {
   if (charging) return "\u{e00a}";
   if (percent >= 90) return "\u{f240}";

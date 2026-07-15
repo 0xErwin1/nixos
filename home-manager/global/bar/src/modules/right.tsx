@@ -1,6 +1,5 @@
 import GLib from "gi://GLib";
 import AstalWp from "gi://AstalWp";
-import AstalNetwork from "gi://AstalNetwork";
 import { createBinding, createComputed, With } from "ags";
 import { Gtk } from "ags/gtk4";
 import { createPoll } from "ags/time";
@@ -12,11 +11,10 @@ import {
   brightnessGlyph,
   MIC_MUTED,
   MIC_UNMUTED,
-  WIFI_ETHERNET,
-  WIFI_WIFI,
-  WIFI_DISCONNECTED,
 } from "../glyphs";
 import Voxtype from "./voxtype";
+import { WifiTrigger } from "./wifi";
+import { BluetoothTrigger } from "./bluetooth";
 
 interface Props {
   vertical: boolean;
@@ -196,38 +194,6 @@ function Microphone() {
   );
 }
 
-function Wifi() {
-  const network = AstalNetwork.get_default();
-  const state = createBinding(network, "state");
-
-  const glyph = state(() => {
-    if (network.primary === AstalNetwork.Primary.WIRED) return WIFI_ETHERNET;
-    if (network.primary === AstalNetwork.Primary.WIFI || network.wifi)
-      return WIFI_WIFI;
-    return WIFI_DISCONNECTED;
-  });
-
-  const tooltip = state(() => {
-    if (network.primary === AstalNetwork.Primary.WIRED) return "Wired";
-    const ssid = network.wifi?.ssid;
-    return ssid ? `Connected to ${ssid}` : "Disconnected";
-  });
-
-  return (
-    <box
-      cssClasses={["control-item", "wifi"]}
-      tooltipText={tooltip}
-      valign={Gtk.Align.CENTER}
-    >
-      <label
-        cssClasses={["control-icon", "wifi-icon"]}
-        label={glyph}
-        valign={Gtk.Align.CENTER}
-      />
-    </box>
-  );
-}
-
 function Clock({ vertical }: Props) {
   if (vertical) {
     const hh = createPoll(
@@ -285,14 +251,15 @@ export default function Right({ vertical }: Props) {
       <box
         cssClasses={["island", "controls"]}
         orientation={orientation}
-        spacing={vertical ? 6 : 12}
+        spacing={vertical ? 6 : 10}
         valign={Gtk.Align.CENTER}
       >
         <Brightness vertical={vertical} />
         <Battery vertical={vertical} />
         <Volume vertical={vertical} />
         <Microphone />
-        <Wifi />
+        <BluetoothTrigger />
+        <WifiTrigger />
       </box>
       <box
         cssClasses={["island", "clock-island"]}

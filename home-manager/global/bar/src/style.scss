@@ -11,7 +11,7 @@ $red: #ff3333;
 $cyan: #95e6cb;
 $nix: #5277c3;
 
-$font: "LiterationMono Nerd Font";
+$font: "JetBrainsMono Nerd Font";
 
 // The window and the centerbox are transparent: each group is its own opaque
 // rounded "island" that floats over the desktop with gaps between them.
@@ -150,10 +150,30 @@ $font: "LiterationMono Nerd Font";
   color: $orange;
 }
 
-// Nerd Font wifi glyph has a small right bearing; add breathing room so it is
-// not flush against the controls island's right edge (horizontal layout only).
-.bar.horizontal .wifi {
-  margin-right: 0.35rem;
+.bt-icon.bt-connected {
+  color: $blue;
+}
+
+.bt-icon.bt-on {
+  color: $foreground;
+}
+
+.bt-icon.bt-off {
+  color: $foreground;
+  opacity: 0.4;
+}
+
+// The wifi/bluetooth controls are buttons that open the dashboard: strip the
+// default button chrome so they look like the other control icons, but keep a
+// comfortable padded hitbox around the glyph (the icon itself is unchanged).
+.dash-trigger {
+  all: unset;
+  padding: 0.15rem 0.35rem;
+  border-radius: 8px;
+}
+
+.dash-trigger:hover {
+  background: rgba(255, 255, 255, 0.06);
 }
 
 .microphone-active {
@@ -253,4 +273,322 @@ $font: "LiterationMono Nerd Font";
 
 .date-vertical .time {
   font-size: 1rem;
+}
+
+// ── Connectivity dashboard (top-right dropdown OVERLAY window) ─────────────────
+.dashboard-window {
+  background: transparent;
+}
+
+// Fully transparent full-screen catcher: closes on outside click without
+// dimming the screen (dropdown feel, not modal).
+.dashboard-backdrop {
+  all: unset;
+  background-color: transparent;
+}
+
+// Drops down from under the bar, aligned to the right (near the wifi/bt icons).
+// Fixed portrait size: identical in every state (off, empty, few, many). The
+// list scrolledwindow vexpands into the remaining height and scrolls internally
+// when the rows overflow, so the card itself never changes size (min == max
+// here because the fixed header/focus/actions plus a non-propagating
+// scrolledwindow never request more than min-height).
+.dashboard-card {
+  background-color: $background;
+  color: $foreground;
+  border: 1px solid $grey;
+  border-radius: 18px;
+  padding: 1.4rem;
+  margin: 42px 8px 0 0;
+  min-width: 34rem;
+  min-height: 40rem;
+  font-family: $font;
+}
+
+.dash-header {
+  margin-bottom: 0.2rem;
+}
+
+// Centered tab switcher (close lives in the header top-right).
+.dashboard-tabs {
+  margin-top: 0.4rem;
+}
+
+.dash-tab {
+  all: unset;
+  padding: 0.4rem 0.9rem;
+  border-radius: 999px;
+  color: $foreground;
+  opacity: 0.7;
+  transition: all 150ms ease;
+}
+
+.dash-tab:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.dash-tab.active {
+  background-color: $grey;
+  color: $yellow;
+  opacity: 1;
+}
+
+.dash-tab-glyph {
+  font-size: 1.05rem;
+  margin-right: 0.15rem;
+}
+
+.dash-close {
+  all: unset;
+  padding: 0.3rem 0.55rem;
+  border-radius: 999px;
+  color: $foreground;
+  opacity: 0.7;
+  font-size: 1.1rem;
+}
+
+.dash-close:hover {
+  background: rgba(255, 51, 51, 0.18);
+  color: $red;
+  opacity: 1;
+}
+
+// ── Shared Ayu control styling (buttons / switch / entry) ─────────────────────
+// One button language for every dashboard action (Scan is the reference look).
+.dash-btn {
+  all: unset;
+  padding: 0.35rem 0.85rem;
+  border-radius: 999px;
+  background-color: $grey;
+  color: $foreground;
+  transition: all 120ms ease;
+}
+
+.dash-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.dash-btn:disabled {
+  opacity: 0.4;
+}
+
+.dash-btn.icon-btn {
+  padding: 0.35rem 0.5rem;
+  opacity: 0.7;
+}
+
+.dash-btn.accent {
+  background-color: $blue;
+  color: $background;
+}
+
+.dash-btn.accent:hover {
+  background-color: $cyan;
+}
+
+.dash-btn.danger:hover {
+  background: rgba(255, 51, 51, 0.18);
+  color: $red;
+}
+
+.dash-btn.active {
+  background-color: $yellow;
+  color: $background;
+}
+
+.dash-btn.active:hover {
+  background-color: $yellow-lite;
+}
+
+// GtkSwitch → Ayu (no default GNOME blue).
+switch {
+  background-color: $grey;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 999px;
+  min-width: 2.6rem;
+  min-height: 1.4rem;
+}
+
+switch:checked {
+  background-color: $yellow;
+  border-color: $yellow;
+}
+
+switch > slider {
+  background-color: $foreground;
+  border-radius: 999px;
+  min-width: 1.1rem;
+  min-height: 1.1rem;
+  margin: 1px;
+}
+
+switch:checked > slider {
+  background-color: $background;
+}
+
+// Text entry (wifi password) → Ayu dark.
+entry {
+  background-color: $grey;
+  color: $foreground;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 0.35rem 0.55rem;
+  min-height: 0;
+}
+
+entry:focus,
+entry:focus-within {
+  border-color: $blue;
+}
+
+entry placeholder {
+  color: $foreground;
+  opacity: 0.4;
+}
+
+// Focus card: the prominent central status block on each tab.
+.focus-card {
+  background-color: $grey;
+  border-radius: 14px;
+  padding: 1.2rem;
+}
+
+.focus-glyph {
+  font-size: 2.6rem;
+}
+
+.wifi-focus-glyph {
+  color: $blue;
+}
+
+.bt-focus-glyph {
+  color: $blue;
+}
+
+.focus-title {
+  font-size: 1.2rem;
+  font-weight: bold;
+  margin-top: 0.3rem;
+}
+
+.focus-subtitle {
+  color: $green;
+  font-size: 0.9rem;
+}
+
+.focus-meta {
+  margin-top: 0.6rem;
+  opacity: 0.8;
+  font-size: 0.85rem;
+}
+
+.focus-meta label {
+  margin: 0.05rem 0;
+}
+
+// Actions row: toggle + scan.
+.action-toggle {
+  padding: 0.2rem 0.4rem;
+}
+
+.scan-indicator {
+  font-size: 0.85rem;
+  opacity: 0.7;
+}
+
+// Bluetooth audio-profile switcher (A2DP / HFP).
+.profile-control {
+  margin-top: 0.7rem;
+}
+
+.profile-label {
+  font-size: 0.85rem;
+  opacity: 0.85;
+  margin-bottom: 0.4rem;
+}
+
+.profile-btn {
+  font-size: 0.85rem;
+}
+
+// The list area fills the fixed card's remaining height; the scrolledwindow
+// scrolls its rows internally when they overflow.
+.list-area {
+  margin-top: 0.2rem;
+}
+
+// Empty/off placeholder, centered in the fixed list area, subtle.
+.list-empty {
+  opacity: 0.6;
+}
+
+.list-row {
+  border-radius: 10px;
+}
+
+.list-row:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.bt-row-main,
+.wifi-row {
+  all: unset;
+  padding: 0.45rem 0.5rem;
+  border-radius: 10px;
+}
+
+.bt-row-main:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.wifi-signal {
+  color: $blue;
+  font-size: 1.15rem;
+}
+
+.wifi-lock {
+  color: $foreground;
+  opacity: 0.7;
+  font-size: 1rem;
+}
+
+.wifi-check {
+  color: $green;
+  font-size: 1.1rem;
+}
+
+.wifi-active-row {
+  margin: 0.2rem 0;
+}
+
+.wifi-active-ssid {
+  font-weight: bold;
+}
+
+.bt-dev-icon {
+  font-size: 1.3rem;
+}
+
+.bt-dev-icon.bt-connected {
+  color: $blue;
+}
+
+.bt-dev-name {
+  font-weight: bold;
+}
+
+.bt-dev-sub {
+  font-size: 0.8rem;
+  opacity: 0.7;
+}
+
+.empty-label,
+.statusline {
+  font-size: 0.85rem;
+  opacity: 0.7;
+  margin: 0.2rem 0;
+}
+
+.wifi-password {
+  margin-top: 0.3rem;
 }
