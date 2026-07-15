@@ -20,7 +20,7 @@ Two upstream sources participate:
 
 **`@ai` (`/home/iperez/.config/home-manager/ai/`) is the single source of truth.** It is git-tracked inside the Home Manager repository. Every sync write lands here and nowhere else.
 
-**The old `~/.tabularium/AI` hub is dead.** That path is now only Obsidian notes (`NOTES_DIR`), not a harness hub. Never sync harness assets into it and never treat it as a client tree.
+**The old Tabularium AI hub is dead.** The Tabularium notes dir (`NOTES_DIR`) is now only Obsidian notes, not a harness hub. Never sync harness assets into it and never treat it as a client tree.
 
 **Runtime install is by Nix projection, NOT by this skill.** Home Manager (`home-manager/global/ai-harness.nix`) is the authoritative projection map: it symlinks each `ai/<...>` source to its runtime location from `/nix/store`, or renders secret templates at activation. This skill edits `@ai` sources only; `home-manager switch` deploys them.
 

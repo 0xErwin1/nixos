@@ -19,7 +19,7 @@ The single source of truth is the git-tracked Home Manager tree `@ai`. All sync 
 | gentle-ai upstream cache | `/home/iperez/.cache/tabularium-ai/upstream-ai-toolkit` |
 | gentle-pi upstream cache | `/home/iperez/.cache/tabularium-ai/gentle-pi` |
 
-`~/.tabularium/AI` is no longer a harness hub; it is Obsidian notes (`NOTES_DIR`) only. Do not write harness assets there.
+The old Tabularium AI hub is no longer active; the Tabularium notes dir (`NOTES_DIR`) is Obsidian notes only. Do not write harness assets there.
 
 Never keep an upstream git checkout under `@ai`; the upstream lives in the caches above.
 
