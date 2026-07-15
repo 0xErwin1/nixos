@@ -108,7 +108,18 @@ in
         [audio]
         device = "default"
         sample_rate = 16000
-        max_duration_secs = 60
+        # Safety cap for a recording left running (toggle mode has no auto-stop).
+        # Raised from 60 s so long dictations are not cut off; note a clip this
+        # long also takes proportionally long to transcribe.
+        max_duration_secs = 300
+
+        # Beep on start/stop so there is an audible cue for when capture began
+        # without watching the OSD. With the XM5 the A2DP->HFP switch adds ~1 s
+        # before the headset mic is actually live, so the beep is a rough "go",
+        # not exact; the internal mic has no switch and is instant.
+        [audio.feedback]
+        enabled = true
+        theme = "subtle"
 
         # Multilingual with auto language detection: dictation is mostly Spanish but
         # sometimes English (talking to an AI), and "auto" transcribes each utterance
@@ -157,6 +168,7 @@ in
         fallback_to_clipboard = true
 
         [output.notification]
+        on_recording_start = true
         on_transcription = true
       '';
     };
