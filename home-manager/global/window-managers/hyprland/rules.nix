@@ -44,7 +44,7 @@ let
   communication =
     "TelegramDesktop" + "Thunderbird" + "zoom" + "Zoom Cloud Meetings" + "fluent-reader" + "discord";
 
-  multimedia = "Spotify" + "Pulseaudio-equalizer-gtk" + "Pavucontrol" + "easyeffects";
+  multimedia = "Spotify" + "Pulseaudio-equalizer-gtk" + "Pavucontrol";
 
   slack = "Slack";
 in
