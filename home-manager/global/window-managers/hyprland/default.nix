@@ -149,6 +149,7 @@ in
       misc = {
         force_default_wallpaper = 1;
         disable_hyprland_logo = false;
+        disable_splash_rendering = true;
       };
 
       # Hybrid Intel (primary) + NVIDIA setup: the external monitor is driven by
