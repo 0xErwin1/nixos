@@ -5,6 +5,10 @@ let
   piHome = flake.homeConfigurations."iperez@pi";
   piHomeOptions = piHome.config;
   piPackageNames = map (package: package.name or "") piHomeOptions.home.packages;
+  piHerdrServer = piHomeOptions.systemd.user.services.herdr-server;
+  piChromiumCdp = piHomeOptions.systemd.user.services.chromium-cdp;
+  piHerdrExecStart = builtins.concatStringsSep " " piHerdrServer.Service.ExecStart;
+  piChromiumExecStart = builtins.concatStringsSep " " piChromiumCdp.Service.ExecStart;
   source = builtins.readFile (flakePath + "/flake.nix");
   piSystem = pi.pkgs.stdenv.hostPlatform.system;
   piOptions = pi.config;
@@ -45,6 +49,8 @@ assert builtins.any (name: builtins.match "python3-.*" name != null) piPackageNa
 assert builtins.any (name: builtins.match "openssl-.*" name != null) piPackageNames;
 assert builtins.any (name: builtins.match "curl-.*" name != null) piPackageNames;
 assert builtins.any (name: builtins.match "wget-.*" name != null) piPackageNames;
+assert builtins.any (name: builtins.match "kalker-.*" name != null) piPackageNames;
+assert builtins.any (name: builtins.match "chromium-.*" name != null) piPackageNames;
 assert builtins.all (name: builtins.all (pattern: builtins.match pattern name == null) [
   ".*claude-desktop.*"
   ".*maestro-studio.*"
@@ -76,6 +82,13 @@ assert piHomeOptions.xdg.configFile."systemd/user/background.slice".text == ''
   TasksMax=infinity
 '';
 assert !(piHomeOptions.xdg.configFile ? "systemd/user/app.slice.d/priority.conf");
+assert piHerdrServer.Install.WantedBy == [ "default.target" ];
+assert builtins.match ".*/bin/herdr server" piHerdrExecStart != null;
+assert !(piHerdrServer.Service ? Slice);
+assert piChromiumCdp.Install.WantedBy == [ "default.target" ];
+assert piChromiumCdp.Service.Slice == "background.slice";
+assert builtins.match ".*--remote-debugging-address=127\\.0\\.0\\.1 --remote-debugging-port=9222.*" piChromiumExecStart != null;
+assert builtins.match ".*(0\\.0\\.0\\.0|--no-sandbox).*" piChromiumExecStart == null;
 assert piOptions.networking.hostName == "pi";
 assert piOptions.system.stateVersion == "26.05";
 assert piOptions.time.timeZone == "America/Montevideo";
@@ -104,6 +117,9 @@ assert piOptions.services.openssh.enable;
 assert piOptions.services.openssh.settings.PasswordAuthentication == false;
 assert piOptions.services.openssh.settings.KbdInteractiveAuthentication == false;
 assert piOptions.services.openssh.settings.PermitRootLogin == "no";
+assert piOptions.services.openssh.settings.X11Forwarding;
+assert piOptions.programs.ssh.setXAuthLocation;
+assert piOptions.users.users.iperez.linger == true;
 assert builtins.length piOptions.users.users.iperez.openssh.authorizedKeys.keys > 0;
 assert piOptions.users.users.iperez.openssh.authorizedKeys.keys == [
   "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCWZRjt2GVSLcoBvSOS9AlxAxdQ/vvvFHLeT8m9KN3LEIEDB3ZiioX3sHt2xuIq5iKSZw+Co2iv3N0XYDmJ5ktElp2allK78xeQJ35BQmpNwPZCbiBHVDmJxeLLmRNilLz6NHWkjO+4qgyJGEgRJaUYDz8wg3RSPocDsVNIJhQ8TjmcPzAXTeb0v+tNR6CrvgQ0rux8XK6XQbpdJgv5Xi5Qi3ULTwRPR0v3fvYNJMKl6O9R7BsWUNGkN3/wlkeUfFPCMGU2+XCna6RQtLTGqyJ9o++yIxEcHVuWKNj8/32SnAuu1M0ZiJIo9TN48bN59MZ5msCFW0TmJoaNsIasZYvh"

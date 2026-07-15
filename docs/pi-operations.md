@@ -334,6 +334,76 @@ to connect to every service listening on the Pi. Treat hub peer enrollment as
 the access-control boundary, remove obsolete peers promptly, and keep
 application authentication enabled for sensitive databases and admin APIs.
 
+## Headless User Services
+
+Home Manager owns two long-running user services on the Pi:
+
+| Unit | Purpose | Resource policy |
+|---|---|---|
+| `herdr-server.service` | Headless Herdr server hosting the agent panes | Default weight; not slice-pinned, its panes are interactive |
+| `chromium-cdp.service` | Headless Chromium exposing a DevTools Protocol endpoint | `background.slice` |
+
+`users.users.iperez.linger = true` in `hosts/pi/default.nix` is what keeps the
+`iperez` systemd user manager running without a login session. Without it both
+units would only exist while an SSH session was open and would die on logout.
+
+```bash
+# Pi: confirm lingering and unit state
+loginctl show-user iperez --property=Linger
+systemctl --user status herdr-server chromium-cdp
+```
+
+### Herdr
+
+The Pi runs `herdr server`; clients attach to it over SSH. No tmux and no
+persistent session on the Pi are involved:
+
+```bash
+# Workstation, VPN
+herdr --remote ssh://iperez@10.0.0.2
+
+# Workstation, LAN
+herdr --remote ssh://iperez@10.42.0.2
+```
+
+The unit's `ExecStop` is `herdr server stop`, which shuts the server down
+through its API socket. `systemctl --user restart herdr-server` therefore
+terminates the running agent panes; restart it only when that is acceptable.
+
+### Chromium DevTools Protocol
+
+`chromium-cdp.service` listens on `127.0.0.1:9222` only. The DevTools Protocol
+has no authentication: whoever reaches that port gets arbitrary code execution
+and full access to the browser profile. The endpoint must never be bound to
+`0.0.0.0` or to the WireGuard address, and it must never be published through
+the firewall, even though `wg0` is trusted.
+
+Remote access is an SSH tunnel, which keeps authentication on SSH:
+
+```bash
+# Workstation: forward the endpoint, then drive it locally
+ssh -N -L 9222:127.0.0.1:9222 iperez@10.0.0.2
+
+# Workstation, in another shell
+curl --fail http://127.0.0.1:9222/json/version
+```
+
+The browser profile lives at `/home/iperez/.local/state/chromium-cdp` and is
+runtime-owned state, not Home Manager state.
+
+### X11 forwarding
+
+`services.openssh.settings.X11Forwarding = true` allows a graphical program run
+on the Pi to display on the workstation. The Pi keeps `services.xserver.enable
+= false`: forwarding needs `xauth` on the server, not a local X server, and
+NixOS wires `XAuthLocation` into `sshd_config` automatically when forwarding is
+enabled. The workstation supplies the X display:
+
+```bash
+# Workstation, with a running X or XWayland display
+ssh -X iperez@10.0.0.2 xterm
+```
+
 ## Key Rotation
 
 Never rotate only through the tunnel whose key is being replaced. Keep the LAN
@@ -521,6 +591,8 @@ until both system and Home Manager are confirmed healthy.
 - [ ] `/var/lib/wireguard` is root-only and the Pi key is `root:root` `0600`.
 - [ ] The WireGuard installer remains fixed, argument-free, stdin-only, and
       restricted by the exact sudo rule.
+- [ ] The Chromium DevTools endpoint listens only on `127.0.0.1:9222`, and remote
+      use goes through an SSH tunnel.
 - [ ] The hub has one active Pi peer owning `10.0.0.2/32`.
 - [ ] LAN recovery is retained before boot, SSH, deploy, or WireGuard changes.
 - [ ] Focused checks pass before risky Pi edits.
@@ -531,15 +603,17 @@ until both system and Home Manager are confirmed healthy.
 |---|---|
 | `flake.nix` | Defines aarch64 packages, `nixosConfigurations.pi`, `homeConfigurations."iperez@pi"`, both deploy-rs nodes/profiles, focused checks, and the flake development shell. |
 | `flake.lock` | Pins inputs, including deploy-rs and Pi harness dependencies; unrelated local changes must be preserved. |
-| `hosts/pi/default.nix` | NixOS host identity, static LAN, gateway/DNS, SSH policy and authorized key, `iperez`, Zsh, boot loader, timezone, and module imports. |
+| `hosts/pi/default.nix` | NixOS host identity, static LAN, gateway/DNS, SSH policy (including X11 forwarding) and authorized key, `iperez` with lingering enabled, Zsh, boot loader, timezone, and module imports. |
 | `hosts/pi/hardware-configuration.nix` | NVMe initrd support, ext4 root, vfat ESP, and aarch64 platform declaration. Regenerate/review if the disk layout changes. |
 | `hosts/pi/virtualisation.nix` | Enables Podman and keeps libvirtd disabled. |
 | `hosts/pi/wireguard.nix` | Defines the fixed atomic key installer, exact sudo permission, `wg0`, hub peer, and key-file systemd condition. |
 | `home-manager/pi/default.nix` | Standalone `iperez` Home Manager identity, state version, editor, and headless import. |
-| `home-manager/headless/default.nix` | Curated non-GUI composition: shell, Git, tmux, direnv, Herdr, Neovim, AI tools, utilities, and CPU slices. |
+| `home-manager/headless/default.nix` | Curated non-GUI composition: shell, Git, tmux, direnv, Herdr, Neovim, AI tools, utilities, CPU slices, and the headless user services. |
+| `home-manager/headless/herdr-server.nix` | Declares `herdr-server.service`, the lingering Herdr headless server that `herdr --remote` attaches to. |
+| `home-manager/headless/browserless.nix` | Declares `chromium-cdp.service`, headless Chromium with a loopback-only DevTools Protocol endpoint on `127.0.0.1:9222`. |
 | `home-manager/global/ai-headless.nix` | Enables Pi, OpenCode, Claude Code, and Codex packages plus upstream Pi harness assets. |
 | `home-manager/global/ai-harness.nix` | Captures the canonical `ai/` closure, projects static resources, checks external env files, and renders/merges runtime credential configs. |
-| `home-manager/global/headless-utilities.nix` | Development CLI and language tooling, including Go, Python/uv, Node/pnpm, AWS CLI, GitLab CLI, and `nh`. |
+| `home-manager/global/headless-utilities.nix` | Development CLI and language tooling, including Go, Python/uv, Node/pnpm, AWS CLI, GitLab CLI, `kalker`, and `nh`. |
 | `home-manager/global/headless-cpu-slices.nix` | Defines user `build.slice` and `background.slice` resource policies. |
 | `ai/` | Canonical tracked, secret-free agent assets and credential placeholders. |
 | `ai/support/secrets-env-contract.md` | Canonical AI credential file and variable-name contract. |

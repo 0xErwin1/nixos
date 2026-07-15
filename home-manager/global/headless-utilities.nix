@@ -25,6 +25,7 @@
     curl
     glab
     gnupg
+    kalker
     ncdu
     nodejs
     onefetch
