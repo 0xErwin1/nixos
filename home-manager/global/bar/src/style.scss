@@ -56,8 +56,10 @@ $font: "LiterationMono Nerd Font";
 // Workspaces
 .workspaces button {
   all: unset;
-  min-width: 1.5rem;  padding: 0 0.3rem;
+  min-width: 1.5rem;
+  padding: 0 0.3rem;
   color: $foreground;
+  font-size: 1rem;
   font-weight: bold;
   transition: color 150ms ease;
 }

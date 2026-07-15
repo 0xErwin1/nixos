@@ -14,7 +14,7 @@ import Right from "./modules/right";
 const EDGE = (GLib.getenv("BAR_EDGE") || "top").toLowerCase();
 const VERTICAL = EDGE === "left" || EDGE === "right";
 
-const EDGE_GAP = 8;
+const EDGE_GAP = 4;
 const LONG_AXIS_FRACTION = 0.025;
 
 function anchorFor(edge: string): number {
