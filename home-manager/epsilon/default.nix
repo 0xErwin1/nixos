@@ -18,6 +18,7 @@
     ../global/neovim.nix
     ../global/zathura.nix
     ../global/music.nix
+    ../global/voxtype.nix
     #../global/x11
     #./x11.nix
     #./monitor.nix

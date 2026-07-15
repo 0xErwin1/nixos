@@ -87,6 +87,8 @@ let
     "$mod Control, L, exec, hyprlock"
 
     "$mod ALT, B, exec, bt-menu"
+
+    "$mod, D, exec, voxtype record toggle"
   ];
 
   bindm = mouseBind;
