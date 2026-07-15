@@ -51,4 +51,8 @@
   };
 
   systemd.user.services.syncthing.Service.Slice = "background.slice";
+
+  # Intel iGPU enumerates as Vulkan device 0, the discrete NVIDIA as 1; whisper
+  # would otherwise transcribe on the slow iGPU.
+  local.voxtype.gpuDevice = 1;
 }

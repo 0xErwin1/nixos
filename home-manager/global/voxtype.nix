@@ -1,4 +1,9 @@
-{ pkgs, ... }:
+{
+  pkgs,
+  lib,
+  config,
+  ...
+}:
 # Voice-to-text dictation daemon.
 #
 #   - `hotkey.enabled` stays false: voxtype's built-in hotkey uses evdev, which
@@ -59,107 +64,126 @@ let
   };
 in
 {
-  home.packages = [
-    voxtype-gpu
-    pkgs.wtype
-  ];
-
-  xdg.dataFile = {
-    "voxtype/models/ggml-small.bin".source = whisperModel;
-    "voxtype/models/ggml-silero-vad.bin".source = vadModel;
-  };
-
-  xdg.configFile."voxtype/config.toml" = {
-    force = true;
-    text = ''
-      state_file = "auto"
-
-      [hotkey]
-      enabled = false
-
-      # "default" follows PipeWire's default source. When the XM5 is connected
-      # that is its mic, so recording triggers the WirePlumber autoswitch to HFP
-      # and dictation is captured through the headset (mSBC gives it 16 kHz, see
-      # hosts/globals/pipewire.nix). With only the wired FiiO (no mic) or nothing
-      # connected, the default source is the internal ThinkPad array instead.
-      #
-      # max_duration_secs has no default in the parser: omitting it makes the
-      # whole config fail to load.
-      [audio]
-      device = "default"
-      sample_rate = 16000
-      max_duration_secs = 60
-
-      # Multilingual with auto language detection: dictation is mostly Spanish but
-      # sometimes English (talking to an AI), and "auto" transcribes each utterance
-      # in whichever language it was spoken. `small` is the accuracy/latency choice
-      # for this GPU: it transcribes a ~6 s clip in ~8 s (base is ~3 s but coarser,
-      # medium ~23 s and large-v3-turbo ~40 s are unusable via the Vulkan backend).
-      [whisper]
-      model = "small"
-      language = "auto"
-      context_window_optimization = true
-
-      # Without voice-activity detection Whisper hallucinates a stock phrase from
-      # near-silence (it will "transcribe" a recording with no speech). Silero VAD
-      # gates transcription on actual speech. threshold is raised above the 0.5
-      # default so ambient room noise does not read as speech, and a minimum
-      # speech duration rejects short blips.
-      [vad]
-      enabled = true
-      backend = "whisper"
-      threshold = 0.7
-      min_speech_duration_ms = 250
-
-      # Floating waveform overlay shown while recording — the recording indicator
-      # that toggle mode needs. frontend = native is the SCTK + wgpu build wired
-      # up above; the gtk4 default is not built.
-      [osd]
-      enabled = true
-      frontend = "native"
-
-      # paste mode copies the transcript to the clipboard and then fires the paste
-      # keystroke. If a text field is focused the text lands there; if not, it
-      # stays on the clipboard to paste by hand. type mode would silently drop the
-      # text with no focus, because wtype "succeeds" sending keys into the void and
-      # the clipboard fallback never triggers. restore_clipboard = false keeps the
-      # transcript on the clipboard instead of restoring the previous contents, so
-      # it survives either way. paste_keys uses ctrl+shift+v: that pastes in kitty
-      # (where the agents run) and in browsers; a plain GTK entry may ignore it,
-      # but then the clipboard still holds the text.
-      [output]
-      mode = "paste"
-      paste_keys = "ctrl+shift+v"
-      restore_clipboard = false
-      fallback_to_clipboard = true
-
-      [output.notification]
-      on_transcription = true
+  options.local.voxtype.gpuDevice = lib.mkOption {
+    type = lib.types.int;
+    default = 0;
+    example = 1;
+    description = ''
+      Vulkan device index whisper transcribes on. whisper.cpp always picks
+      device 0, which on a hybrid laptop is the integrated GPU — much slower for
+      inference. On epsilon the Intel iGPU enumerates as 0 and the discrete
+      NVIDIA as 1, so epsilon sets this to 1; single-GPU hosts keep 0. The index
+      is enumeration-order dependent (`ggml_vulkan` logs the device list on
+      startup), so re-check it if the GPU set changes.
     '';
   };
 
-  # The daemon opens the capture device on startup, so PipeWire has to be up
-  # first or it binds to no source and every recording comes back empty.
-  systemd.user.services.voxtype = {
-    Unit = {
-      Description = "Voxtype voice-to-text daemon";
-      After = [
-        "pipewire.service"
-        "pipewire-pulse.service"
-        "graphical-session.target"
-      ];
-      Wants = [
-        "pipewire.service"
-        "pipewire-pulse.service"
-      ];
-      PartOf = [ "graphical-session.target" ];
+  config = {
+    home.packages = [
+      voxtype-gpu
+      pkgs.wtype
+    ];
+
+    xdg.dataFile = {
+      "voxtype/models/ggml-small.bin".source = whisperModel;
+      "voxtype/models/ggml-silero-vad.bin".source = vadModel;
     };
 
-    Service = {
-      ExecStart = "${voxtype-gpu}/bin/voxtype daemon";
-      Restart = "on-failure";
+    xdg.configFile."voxtype/config.toml" = {
+      force = true;
+      text = ''
+        state_file = "auto"
+
+        [hotkey]
+        enabled = false
+
+        # "default" follows PipeWire's default source. When the XM5 is connected
+        # that is its mic, so recording triggers the WirePlumber autoswitch to HFP
+        # and dictation is captured through the headset (mSBC gives it 16 kHz, see
+        # hosts/globals/pipewire.nix). With only the wired FiiO (no mic) or nothing
+        # connected, the default source is the internal ThinkPad array instead.
+        #
+        # max_duration_secs has no default in the parser: omitting it makes the
+        # whole config fail to load.
+        [audio]
+        device = "default"
+        sample_rate = 16000
+        max_duration_secs = 60
+
+        # Multilingual with auto language detection: dictation is mostly Spanish but
+        # sometimes English (talking to an AI), and "auto" transcribes each utterance
+        # in whichever language it was spoken. `small` is the accuracy/latency choice
+        # on the NVIDIA (~7 s warm for a ~6 s clip; base is faster but coarser,
+        # medium and large-v3-turbo are unusable via the Vulkan backend). gpu_device
+        # selects which Vulkan device runs inference (see the option above); without
+        # it whisper would sit on the slow integrated GPU.
+        [whisper]
+        model = "small"
+        language = "auto"
+        context_window_optimization = true
+        gpu_device = ${toString config.local.voxtype.gpuDevice}
+
+        # Without voice-activity detection Whisper hallucinates a stock phrase from
+        # near-silence (it will "transcribe" a recording with no speech). Silero VAD
+        # gates transcription on actual speech. threshold is raised above the 0.5
+        # default so ambient room noise does not read as speech, and a minimum
+        # speech duration rejects short blips.
+        [vad]
+        enabled = true
+        backend = "whisper"
+        threshold = 0.7
+        min_speech_duration_ms = 250
+
+        # Floating waveform overlay shown while recording — the recording indicator
+        # that toggle mode needs. frontend = native is the SCTK + wgpu build wired
+        # up above; the gtk4 default is not built.
+        [osd]
+        enabled = true
+        frontend = "native"
+
+        # paste mode copies the transcript to the clipboard and then fires the paste
+        # keystroke. If a text field is focused the text lands there; if not, it
+        # stays on the clipboard to paste by hand. type mode would silently drop the
+        # text with no focus, because wtype "succeeds" sending keys into the void and
+        # the clipboard fallback never triggers. restore_clipboard = false keeps the
+        # transcript on the clipboard instead of restoring the previous contents, so
+        # it survives either way. paste_keys uses ctrl+shift+v: that pastes in kitty
+        # (where the agents run) and in browsers; a plain GTK entry may ignore it,
+        # but then the clipboard still holds the text.
+        [output]
+        mode = "paste"
+        paste_keys = "ctrl+shift+v"
+        restore_clipboard = false
+        fallback_to_clipboard = true
+
+        [output.notification]
+        on_transcription = true
+      '';
     };
 
-    Install.WantedBy = [ "graphical-session.target" ];
+    # The daemon opens the capture device on startup, so PipeWire has to be up
+    # first or it binds to no source and every recording comes back empty.
+    systemd.user.services.voxtype = {
+      Unit = {
+        Description = "Voxtype voice-to-text daemon";
+        After = [
+          "pipewire.service"
+          "pipewire-pulse.service"
+          "graphical-session.target"
+        ];
+        Wants = [
+          "pipewire.service"
+          "pipewire-pulse.service"
+        ];
+        PartOf = [ "graphical-session.target" ];
+      };
+
+      Service = {
+        ExecStart = "${voxtype-gpu}/bin/voxtype daemon";
+        Restart = "on-failure";
+      };
+
+      Install.WantedBy = [ "graphical-session.target" ];
+    };
   };
 }
