@@ -99,22 +99,24 @@ let
     "ai/claude/skills/judgment-day/SKILL.md"
     "ai/claude/skills/judgment-day/references/prompts-and-formats.md"
   ];
-  trimLine = line:
+  trimLine =
+    line:
     let
       match = builtins.match "^[[:space:]]*(.*[^[:space:]])[[:space:]]*$" line;
     in
     if match == null then "" else builtins.elemAt match 0;
-  jsoncLines = builtins.filter (
-    line: !(flake.inputs.nixpkgs.lib.hasPrefix "//" (trimLine line))
-  ) (flake.inputs.nixpkgs.lib.splitString "\n" (builtins.readFile (flakePath + "/ai/opencode/opencode.jsonc")));
+  jsoncLines = builtins.filter (line: !(flake.inputs.nixpkgs.lib.hasPrefix "//" (trimLine line))) (
+    flake.inputs.nixpkgs.lib.splitString "\n" (
+      builtins.readFile (flakePath + "/ai/opencode/opencode.jsonc")
+    )
+  );
   normalizedJsoncLines = flake.inputs.nixpkgs.lib.imap0 (
     index: line:
     let
       hasNext = index + 1 < builtins.length jsoncLines;
       nextLine = if hasNext then trimLine (builtins.elemAt jsoncLines (index + 1)) else "";
       nextClosesValue =
-        flake.inputs.nixpkgs.lib.hasPrefix "}" nextLine
-        || flake.inputs.nixpkgs.lib.hasPrefix "]" nextLine;
+        flake.inputs.nixpkgs.lib.hasPrefix "}" nextLine || flake.inputs.nixpkgs.lib.hasPrefix "]" nextLine;
     in
     if nextClosesValue then flake.inputs.nixpkgs.lib.removeSuffix "," (trimLine line) else line
   ) jsoncLines;
@@ -258,7 +260,13 @@ let
       targetsAvoidForbiddenState = builtins.all (
         target: !(builtins.elem target forbiddenTargets)
       ) targets;
-      canonicalSources = builtins.filter (source: builtins.match (".*/ai/.*") source != null) sources;
+      # Canonical projection sources are materialized from the managed asset tree,
+      # whose store path is named `ai-harness` (see ai-harness.nix). Match that,
+      # not a literal `/ai/` segment, which a /nix/store/<hash>-ai-harness path
+      # never contains. This excludes the pi-harness input's own `-source` assets.
+      canonicalSources = builtins.filter (
+        source: builtins.match ".*-ai-harness/.*" source != null
+      ) sources;
       sourcesAvoidTabularium = builtins.all (
         source: builtins.match ".*/\\.tabularium/.*" source == null
       ) sources;
@@ -358,52 +366,71 @@ assert builtins.all (
     "non-blocking follow-ups"
   ]
 ) frozenLedgerAssets;
-assert builtins.all (
-  check: builtins.all (needle: fileContains check.file needle) check.needles
-) [
+assert builtins.all (check: builtins.all (needle: fileContains check.file needle) check.needles) [
   {
     file = "ai/opencode/ORCHESTRATOR.md";
-    needles = [ "native `explore` agent" "native `general` agent" "non-blocking follow-ups" ];
+    needles = [
+      "native `explore` agent"
+      "native `general` agent"
+      "non-blocking follow-ups"
+    ];
   }
   {
     file = "ai/shared/ORCHESTRATOR.md";
-    needles = [ "initial path set" "non-blocking follow-ups" ];
+    needles = [
+      "initial path set"
+      "non-blocking follow-ups"
+    ];
   }
   {
     file = "ai/claude/sdd-orchestrator.md";
-    needles = [ "initial path set" "non-blocking follow-ups" ];
+    needles = [
+      "initial path set"
+      "non-blocking follow-ups"
+    ];
   }
   {
     file = "ai/shared/engram-protocol.md";
-    needles = [ "DELIVERY GUARANTEE" "never blocks" ];
+    needles = [
+      "DELIVERY GUARANTEE"
+      "never blocks"
+    ];
   }
   {
     file = "ai/claude/engram-protocol.md";
-    needles = [ "DELIVERY GUARANTEE" "never blocks" ];
+    needles = [
+      "DELIVERY GUARANTEE"
+      "never blocks"
+    ];
   }
   {
     file = "ai/opencode/ORCHESTRATOR.md";
-    needles = [ "Delivery guarantee" "must never block" ];
+    needles = [
+      "Delivery guarantee"
+      "must never block"
+    ];
   }
 ];
-assert builtins.all (
-  relativePath:
-  builtins.all (needle: fileDoesNotContain relativePath needle) [
-    "review-start"
-    "review-resume"
-    "review-validate"
-    "transaction locks"
-    "Git-derived snapshots"
-    "authoritative Engram receipts"
-    "append-only CAS"
-  ]
-) [
-  "ai/shared/ORCHESTRATOR.md"
-  "ai/opencode/ORCHESTRATOR.md"
-  "ai/claude/sdd-orchestrator.md"
-  "ai/opencode/skills/judgment-day/SKILL.md"
-  "ai/claude/skills/judgment-day/SKILL.md"
-];
+assert builtins.all
+  (
+    relativePath:
+    builtins.all (needle: fileDoesNotContain relativePath needle) [
+      "review-start"
+      "review-resume"
+      "review-validate"
+      "transaction locks"
+      "Git-derived snapshots"
+      "authoritative Engram receipts"
+      "append-only CAS"
+    ]
+  )
+  [
+    "ai/shared/ORCHESTRATOR.md"
+    "ai/opencode/ORCHESTRATOR.md"
+    "ai/claude/sdd-orchestrator.md"
+    "ai/opencode/skills/judgment-day/SKILL.md"
+    "ai/claude/skills/judgment-day/SKILL.md"
+  ];
 assert flake.checks.x86_64-linux ? ai-harness-readiness;
 assert builtins.all validState states;
 {
