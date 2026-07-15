@@ -13,6 +13,7 @@
     ../global/neovim.nix
     ../global/zathura.nix
     ../global/music.nix
+    ../global/voxtype.nix
     ../global/communication.nix
     ../global/database.nix
     ../global/x11
