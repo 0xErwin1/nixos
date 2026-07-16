@@ -1192,3 +1192,198 @@ scale slider {
 .cc-power-glyph {
   font-size: 1.2rem;
 }
+
+// ── Media player (MPRIS: compact island + full panel) ──────────────────────────
+.media-title {
+  font-size: 0.85rem;
+  font-weight: bold;
+}
+
+.media-time {
+  font-size: 0.7rem;
+  opacity: 0.6;
+  margin-top: -0.1rem;
+}
+
+// Cover art: a rounded box with overflow HIDDEN (set in the widget) clips the
+// square image inside to a circle.
+.media-cover-sm {
+  min-width: 22px;
+  min-height: 22px;
+  border-radius: 999px;
+  background-color: $grey;
+}
+
+.media-cover-lg {
+  min-width: 150px;
+  min-height: 150px;
+  border-radius: 999px;
+  background-color: $grey;
+}
+
+.media-cover-fallback {
+  color: $green;
+}
+
+.media-cover-sm .media-cover-fallback {
+  font-size: 0.95rem;
+}
+
+.media-cover-lg .media-cover-fallback {
+  font-size: 3.4rem;
+}
+
+.media-btn {
+  all: unset;
+  padding: 0.1rem 0.3rem;
+  border-radius: 999px;
+  color: $foreground;
+  transition: background-color 120ms ease;
+}
+
+.media-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.media-btn:disabled {
+  opacity: 0.3;
+}
+
+.media-btn-sm label {
+  font-size: 0.95rem;
+}
+
+.media-btn-lg {
+  padding: 0.3rem 0.5rem;
+}
+
+.media-btn-lg label {
+  font-size: 1.5rem;
+}
+
+.media-playpause label {
+  color: $blue;
+}
+
+// ── Panel ──
+.media-window {
+  background: transparent;
+}
+
+.media-backdrop {
+  all: unset;
+  background-color: transparent;
+}
+
+// Top/left margins are set from the widget (marginTop/marginStart) so the panel
+// drops under the measured island position, not a fixed corner.
+.media-card {
+  background-color: $background;
+  color: $foreground;
+  border: 1px solid $grey;
+  border-radius: 18px;
+  padding: 1.4rem;
+  min-width: 34rem;
+  font-family: $font;
+}
+
+// Manual source picker (only when >1 player).
+.media-sources {
+  margin-bottom: 0.2rem;
+}
+
+.media-src {
+  all: unset;
+  padding: 0.3rem 0.7rem;
+  border-radius: 999px;
+  background-color: $grey;
+  color: $foreground;
+  opacity: 0.7;
+  font-size: 0.82rem;
+  transition: all 120ms ease;
+}
+
+.media-src:hover {
+  opacity: 1;
+}
+
+.media-src.active {
+  background-color: $blue;
+  color: $background;
+  opacity: 1;
+}
+
+.media-src-dot {
+  min-width: 7px;
+  min-height: 7px;
+  border-radius: 999px;
+  background-color: rgba(191, 186, 176, 0.4);
+}
+
+.media-src-dot.playing {
+  background-color: $green;
+}
+
+.media-close {
+  all: unset;
+  padding: 0.2rem 0.5rem;
+  border-radius: 999px;
+  color: $foreground;
+  opacity: 0.7;
+  font-size: 1.1rem;
+}
+
+.media-close:hover {
+  background: rgba(255, 51, 51, 0.18);
+  color: $red;
+  opacity: 1;
+}
+
+.media-panel-title {
+  font-size: 1.4rem;
+  font-weight: bold;
+}
+
+.media-panel-artist {
+  opacity: 0.7;
+  font-size: 0.95rem;
+}
+
+.media-chip-row {
+  margin: 0.2rem 0;
+}
+
+.media-chip {
+  background-color: $grey;
+  border-radius: 999px;
+  padding: 0.2rem 0.6rem;
+}
+
+.media-chip-glyph {
+  color: $blue;
+  font-size: 0.95rem;
+}
+
+.media-chip-label {
+  font-size: 0.82rem;
+}
+
+.media-via {
+  font-size: 0.82rem;
+  font-style: italic;
+  opacity: 0.6;
+}
+
+.media-seek {
+  margin-top: 0.4rem;
+}
+
+.media-seek-time {
+  font-size: 0.78rem;
+  opacity: 0.7;
+}
+
+.media-empty {
+  opacity: 0.5;
+  font-size: 1rem;
+}

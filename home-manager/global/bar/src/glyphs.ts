@@ -121,3 +121,10 @@ export function weatherGlyph(code: number, isNight: boolean): string {
 // Calendar navigation.
 export const CHEVRON_LEFT = "\u{f0141}";
 export const CHEVRON_RIGHT = "\u{f0142}";
+
+// Media (MPRIS) player controls.
+export const MEDIA_MUSIC = "\u{f075a}"; // music
+export const MEDIA_PLAY = "\u{f040a}"; // play
+export const MEDIA_PAUSE = "\u{f03e4}"; // pause
+export const MEDIA_PREV = "\u{f04ae}"; // skip-previous
+export const MEDIA_NEXT = "\u{f04ad}"; // skip-next

@@ -6,6 +6,7 @@ import { For, createBinding, onCleanup } from "ags";
 import Left from "./modules/left";
 import Center from "./modules/center";
 import Right from "./modules/right";
+import Media from "./modules/media";
 
 // Bar edge is chosen at startup via the BAR_EDGE env var so the position can be
 // tried without rebuilding. "top"/"bottom" produce a horizontal bar spanning
@@ -72,6 +73,7 @@ function Bar({ gdkmonitor }: { gdkmonitor: Gdk.Monitor }) {
       >
         <box $type="start" cssClasses={["group", "group-start"]}>
           <Left vertical={VERTICAL} />
+          <Media vertical={VERTICAL} />
         </box>
         <box $type="center" cssClasses={["group", "group-center"]}>
           <Center vertical={VERTICAL} />

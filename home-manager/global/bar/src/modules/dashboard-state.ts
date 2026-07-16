@@ -8,14 +8,21 @@ export type DashboardTab = "wifi" | "bluetooth";
 export const [dashboardVisible, setDashboardVisible] = createState(false);
 export const [activeTab, setActiveTab] = createState<DashboardTab>("wifi");
 
-// Calendar panel visibility (opened from the center date island). Kept here so
-// the two panels can be mutually exclusive without a circular import: opening
-// one closes the other.
+// Calendar panel visibility (opened from the center date island) and media
+// panel visibility (opened from the media island). Kept here so all panels can
+// be mutually exclusive without a circular import: opening one closes the rest.
 export const [calendarVisible, setCalendarVisible] = createState(false);
+export const [mediaVisible, setMediaVisible] = createState(false);
+
+function closeOthers(keep: "dashboard" | "calendar" | "media"): void {
+  if (keep !== "dashboard") setDashboardVisible(false);
+  if (keep !== "calendar") setCalendarVisible(false);
+  if (keep !== "media") setMediaVisible(false);
+}
 
 export function openDashboard(tab: DashboardTab): void {
   setActiveTab(tab);
-  setCalendarVisible(false);
+  closeOthers("dashboard");
   setDashboardVisible(true);
 }
 
@@ -25,10 +32,20 @@ export function closeDashboard(): void {
 
 export function toggleCalendar(): void {
   const next = !calendarVisible.get();
-  if (next) setDashboardVisible(false);
+  if (next) closeOthers("calendar");
   setCalendarVisible(next);
 }
 
 export function closeCalendar(): void {
   setCalendarVisible(false);
+}
+
+export function toggleMedia(): void {
+  const next = !mediaVisible.get();
+  if (next) closeOthers("media");
+  setMediaVisible(next);
+}
+
+export function closeMedia(): void {
+  setMediaVisible(false);
 }

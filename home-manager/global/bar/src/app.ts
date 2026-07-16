@@ -3,6 +3,7 @@ import style from "./style.scss";
 import Bar from "./Bar";
 import Dashboard from "./modules/dashboard";
 import Calendar from "./modules/calendar";
+import { MediaPanel } from "./modules/media";
 import { NotificationPopups, NotificationCenter } from "./modules/notifications";
 
 app.start({
@@ -15,6 +16,7 @@ app.start({
     // arrives); instantiating them registers them with the application.
     Dashboard();
     Calendar();
+    MediaPanel();
     NotificationPopups();
     NotificationCenter();
     return Bar();
