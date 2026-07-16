@@ -11,8 +11,11 @@ import {
   FULLSCREEN_ICON,
 } from "../glyphs";
 import { Separator } from "./common";
+import { openExtrasFrom } from "./extras";
 
 const hypr = AstalHyprland.get_default();
+
+let osIslandWidget: Gtk.Widget | null = null;
 
 const WORKSPACE_IDS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
 
@@ -117,7 +120,12 @@ export default function Left({ vertical }: Props) {
   // its own, then the workspaces + ws-state (keeping their internal separator).
   return (
     <box orientation={orientation} valign={Gtk.Align.CENTER}>
-      <box cssClasses={["island", "os-island"]} valign={Gtk.Align.CENTER}>
+      <box
+        $={(self) => (osIslandWidget = self)}
+        cssClasses={["island", "os-island"]}
+        valign={Gtk.Align.CENTER}
+      >
+        <Gtk.GestureClick onPressed={() => openExtrasFrom(osIslandWidget)} />
         <OsIcon />
       </box>
       <box

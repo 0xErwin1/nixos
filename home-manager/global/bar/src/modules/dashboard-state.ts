@@ -13,11 +13,15 @@ export const [activeTab, setActiveTab] = createState<DashboardTab>("wifi");
 // be mutually exclusive without a circular import: opening one closes the rest.
 export const [calendarVisible, setCalendarVisible] = createState(false);
 export const [mediaVisible, setMediaVisible] = createState(false);
+export const [extrasVisible, setExtrasVisible] = createState(false);
 
-function closeOthers(keep: "dashboard" | "calendar" | "media"): void {
+type Panel = "dashboard" | "calendar" | "media" | "extras";
+
+function closeOthers(keep: Panel): void {
   if (keep !== "dashboard") setDashboardVisible(false);
   if (keep !== "calendar") setCalendarVisible(false);
   if (keep !== "media") setMediaVisible(false);
+  if (keep !== "extras") setExtrasVisible(false);
 }
 
 export function openDashboard(tab: DashboardTab): void {
@@ -48,4 +52,14 @@ export function toggleMedia(): void {
 
 export function closeMedia(): void {
   setMediaVisible(false);
+}
+
+export function toggleExtras(): void {
+  const next = !extrasVisible.get();
+  if (next) closeOthers("extras");
+  setExtrasVisible(next);
+}
+
+export function closeExtras(): void {
+  setExtrasVisible(false);
 }

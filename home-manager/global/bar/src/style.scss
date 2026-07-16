@@ -685,6 +685,9 @@ entry placeholder {
   border-left: 4px solid $blue;
   border-radius: 12px;
   padding: 0.6rem 0.75rem;
+  // Keep the bar font but chain a colour-emoji fallback so emoji in message
+  // bodies render in colour instead of tofu/monochrome.
+  font-family: $font, "Noto Color Emoji";
 }
 
 .notif-card.notif-critical {
@@ -697,7 +700,7 @@ entry placeholder {
 }
 
 .notif-card.notif-popup {
-  min-width: 22rem;
+  min-width: 26rem;
 }
 
 // Small app icon = identity without a big logo. Coloured dot fallback.
@@ -1401,4 +1404,141 @@ scale slider {
 .media-empty {
   opacity: 0.5;
   font-size: 1rem;
+}
+
+// ── Extras panel (AI usage: Claude + Codex, opened from the OS icon) ────────────
+.extras-window {
+  background: transparent;
+}
+
+.extras-backdrop {
+  all: unset;
+  background-color: transparent;
+}
+
+// Top/left margins are set from the widget (marginTop/marginStart) so the panel
+// drops under the measured OS-icon position, not a fixed corner.
+.extras-card {
+  background-color: $background;
+  color: $foreground;
+  border: 1px solid $grey;
+  border-radius: 18px;
+  padding: 1.2rem;
+  min-width: 24rem;
+  font-family: $font;
+}
+
+.ai-header {
+  margin-bottom: 0.1rem;
+}
+
+.ai-title-glyph {
+  color: $nix;
+  font-size: 1.3rem;
+}
+
+.ai-title {
+  font-weight: bold;
+  font-size: 1.1rem;
+}
+
+.ai-icon-btn {
+  all: unset;
+  padding: 0.2rem 0.45rem;
+  border-radius: 999px;
+  color: $foreground;
+  opacity: 0.7;
+  font-size: 1.05rem;
+}
+
+.ai-icon-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  opacity: 1;
+}
+
+.ai-card {
+  padding: 0.9rem 1rem;
+}
+
+.ai-name {
+  font-weight: bold;
+  font-size: 1.05rem;
+}
+
+.ai-plan {
+  background-color: $background;
+  color: $foreground;
+  opacity: 0.85;
+  border-radius: 999px;
+  padding: 0.1rem 0.55rem;
+  font-size: 0.75rem;
+  font-weight: bold;
+}
+
+.ai-window-label {
+  font-size: 0.85rem;
+  opacity: 0.85;
+}
+
+.ai-window-pct {
+  font-size: 0.85rem;
+  font-weight: bold;
+}
+
+.ai-window-reset {
+  font-size: 0.75rem;
+  opacity: 0.55;
+}
+
+.ai-bar trough {
+  min-height: 0.45rem;
+  background-color: $background;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 999px;
+}
+
+.ai-bar progress {
+  min-height: 0.45rem;
+  border-radius: 999px;
+  background-color: $green;
+}
+
+.ai-bar-warn progress {
+  background-color: $yellow;
+}
+
+.ai-bar-crit progress {
+  background-color: $red;
+}
+
+.ai-unavailable {
+  font-size: 0.85rem;
+  opacity: 0.6;
+}
+
+.ai-empty {
+  opacity: 0.5;
+  font-size: 0.9rem;
+}
+
+// The OS icon opens the extras panel: subtle hover to signal it is clickable.
+.os-island:hover {
+  background-color: #11161f;
+}
+
+// Extra stats under a provider's usage bars (overage spend, reset credits…).
+.ai-notes {
+  margin-top: 0.2rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  padding-top: 0.45rem;
+}
+
+.ai-note-label {
+  font-size: 0.8rem;
+  opacity: 0.7;
+}
+
+.ai-note-value {
+  font-size: 0.8rem;
+  font-weight: bold;
 }

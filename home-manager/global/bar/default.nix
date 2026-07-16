@@ -17,6 +17,24 @@ let
   agsPackage = inputs.ags.packages.${system}.default;
   astalPkgs = inputs.astal.packages.${system};
 
+  # Provider-agnostic AI usage fetcher (Claude + Codex) for the "extras" panel.
+  # Pure Go stdlib (HTTP/TLS/JSON/atomic file writes), so no vendored deps. The
+  # wrapper pins SSL_CERT_FILE so TLS verification works regardless of the
+  # ambient environment the bar service runs in.
+  ai-usage = pkgs.buildGoModule {
+    pname = "epsilon-ai-usage";
+    version = "0.1";
+    src = ./ai-usage;
+    vendorHash = null;
+  };
+
+  ai-usage-wrapped = pkgs.runCommandLocal "epsilon-ai-usage" {
+    nativeBuildInputs = [ pkgs.makeWrapper ];
+  } ''
+    makeWrapper ${ai-usage}/bin/epsilon-ai-usage $out/bin/epsilon-ai-usage \
+      --set SSL_CERT_FILE ${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt
+  '';
+
   epsilon-bar = pkgs.stdenv.mkDerivation {
     pname = "epsilon-bar";
     version = "0.1";
@@ -56,8 +74,9 @@ let
     # Runtime CLIs the bar shells out to: brightnessctl (brightness widget, no
     # Astal service), pactl (bluetooth A2DP/HFP profile switching — wpctl does
     # not cleanly enumerate bluez card profiles, and pactl is otherwise absent on
-    # this host), curl (Open-Meteo weather + geocoding) and khal (calendar
-    # events for the calendar panel).
+    # this host), curl (Open-Meteo weather + geocoding), khal (calendar events
+    # for the calendar panel) and epsilon-ai-usage (AI usage for the extras
+    # panel).
     preFixup = ''
       gappsWrapperArgs+=(
         --prefix PATH : ${
@@ -67,6 +86,7 @@ let
             pkgs.wireplumber
             pkgs.curl
             pkgs.khal
+            ai-usage-wrapped
           ]
         }
       )
@@ -74,7 +94,10 @@ let
   };
 in
 {
-  home.packages = [ epsilon-bar ];
+  home.packages = [
+    epsilon-bar
+    ai-usage-wrapped
+  ];
 
   # Autostart the bar on the graphical session. Modeled after the voxtype
   # service: the layer-shell surface needs WAYLAND_DISPLAY, which Hyprland

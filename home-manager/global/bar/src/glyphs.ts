@@ -122,6 +122,10 @@ export function weatherGlyph(code: number, isNight: boolean): string {
 export const CHEVRON_LEFT = "\u{f0141}";
 export const CHEVRON_RIGHT = "\u{f0142}";
 
+// Extras panel (AI usage).
+export const AI_GLYPH = "\u{f06a9}"; // robot
+export const REFRESH_GLYPH = "\u{f0450}"; // refresh
+
 // Media (MPRIS) player controls.
 export const MEDIA_MUSIC = "\u{f075a}"; // music
 export const MEDIA_PLAY = "\u{f040a}"; // play

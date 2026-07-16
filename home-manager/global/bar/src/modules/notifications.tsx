@@ -153,7 +153,7 @@ function NotificationCard({
                 label={summary}
                 xalign={0}
                 wrap
-                maxWidthChars={30}
+                maxWidthChars={40}
               />
             ) : (
               <box visible={false} />
@@ -170,7 +170,7 @@ function NotificationCard({
                 useMarkup
                 xalign={0}
                 wrap
-                maxWidthChars={34}
+                maxWidthChars={44}
               />
             ) : (
               <box visible={false} />

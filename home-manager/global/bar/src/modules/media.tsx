@@ -17,43 +17,16 @@ import {
   CLOSE_GLYPH,
 } from "../glyphs";
 import { mediaVisible, toggleMedia, closeMedia } from "./dashboard-state";
+import { measureIslandX } from "./panel-position";
 
 const mpris = AstalMpris.get_default();
 
 // The panel is a separate full-monitor layer window, so it cannot auto-anchor to
 // the island widget. Instead, measure the island's x on the monitor when it is
-// clicked and feed it to the panel card's left margin, so the panel drops right
-// under the island. Defaults until the first open.
+// clicked (measureIslandX) and feed it to the panel card's left margin, so the
+// panel drops right under the island. Defaults until the first open.
 const [panelX, setPanelX] = createState(8);
 let islandWidget: Gtk.Widget | null = null;
-
-// LONG_AXIS_FRACTION from Bar.tsx: the bar window's own left margin, which sits
-// between the monitor edge and the island's root-relative x.
-const BAR_LEFT_FRACTION = 0.0125;
-
-function measureIslandX(island: Gtk.Widget): number {
-  try {
-    const root = island.get_root() as Gtk.Widget | null;
-    if (!root) return 8;
-
-    const [ok, rect] = island.compute_bounds(root);
-    if (!ok) return 8;
-
-    let barLeftMargin = 0;
-    const surface = island.get_native()?.get_surface?.();
-    const display = island.get_display();
-    if (surface && display) {
-      const monitor = display.get_monitor_at_surface(surface);
-      if (monitor) {
-        barLeftMargin = Math.round(monitor.get_geometry().width * BAR_LEFT_FRACTION);
-      }
-    }
-
-    return Math.round(rect.get_x()) + barLeftMargin;
-  } catch {
-    return 8;
-  }
-}
 
 const LIVE_LENGTH_THRESHOLD_SECONDS = 7 * 24 * 60 * 60;
 

@@ -4,6 +4,7 @@ import Bar from "./Bar";
 import Dashboard from "./modules/dashboard";
 import Calendar from "./modules/calendar";
 import { MediaPanel } from "./modules/media";
+import { ExtrasPanel } from "./modules/extras";
 import { NotificationPopups, NotificationCenter } from "./modules/notifications";
 
 app.start({
@@ -17,6 +18,7 @@ app.start({
     Dashboard();
     Calendar();
     MediaPanel();
+    ExtrasPanel();
     NotificationPopups();
     NotificationCenter();
     return Bar();
