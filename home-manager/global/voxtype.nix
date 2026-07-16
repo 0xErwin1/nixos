@@ -14,44 +14,17 @@
 #     They are pinned here with fetchurl and linked into that directory so the
 #     model set is reproducible and part of the closure instead of hand-downloaded.
 let
-  # Runtime libraries the OSD frontend dlopen's: smithay-client-toolkit loads
-  # libwayland-client at runtime, and wgpu loads libvulkan/libGL. None are in
-  # the binary's DT_NEEDED, so they have to be forced onto its library path.
-  osdRuntimeLibs = with pkgs; [
-    wayland
-    libxkbcommon
-    libGL
-    vulkan-loader
-  ];
-
-  # nixpkgs builds voxtype CPU-only and without any OSD frontend. This override:
-  #   - vulkanSupport: whisper offloads to the GTX 1650 Ti instead of the CPU
-  #     (~7x real time on CPU).
-  #   - osd-native: builds the SCTK + wgpu + egui waveform overlay. nixpkgs does
-  #     not expose it. The feature must be forced onto BOTH cargoBuildFeatures and
-  #     cargoCheckFeatures directly: buildRustPackage derives those from the
-  #     original buildFeatures before overrideAttrs runs, so setting buildFeatures
-  #     alone silently leaves the frontend out of the cargo invocation.
-  #   - postInstall: buildRustPackage's installer only copies binaries it sees
-  #     without the feature enabled, so voxtype-osd-native has to be installed and
-  #     wrapped by hand.
-  voxtype-gpu = (pkgs.voxtype.override { vulkanSupport = true; }).overrideAttrs (old: {
-    buildFeatures = (old.buildFeatures or [ ]) ++ [ "osd-native" ];
-    cargoBuildFeatures = [
-      "gpu-vulkan"
-      "osd-native"
-    ];
-    cargoCheckFeatures = [
-      "gpu-vulkan"
-      "osd-native"
-    ];
-    buildInputs = old.buildInputs ++ osdRuntimeLibs ++ [ pkgs.wayland-protocols ];
-    postInstall = (old.postInstall or "") + ''
-      install -Dm755 "$(ls target/*/release/voxtype-osd-native)" $out/bin/voxtype-osd-native
-      wrapProgram $out/bin/voxtype-osd-native \
-        --prefix LD_LIBRARY_PATH : ${pkgs.lib.makeLibraryPath osdRuntimeLibs}
-    '';
-  });
+  # GPU transcription via Vulkan: whisper offloads to the GTX 1650 Ti instead of
+  # the CPU (~7x real time on CPU). vulkanSupport is the nixpkgs-blessed way to
+  # get the gpu-vulkan feature and its runtime deps.
+  #
+  # The native wgpu waveform OSD is intentionally NOT built: the Astal bar
+  # (home-manager/global/bar) shows the recording indicator/waveform, so the
+  # floating overlay is redundant. voxtype 0.7.2 has no config or CLI switch for
+  # the OSD — the daemon always spawns voxtype-osd-native when the osd-native
+  # feature is compiled in, so the only way to suppress the overlay is to leave
+  # the feature out of the build entirely.
+  voxtype-gpu = pkgs.voxtype.override { vulkanSupport = true; };
 
   whisperModel = pkgs.fetchurl {
     url = "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-small.bin";
@@ -145,13 +118,10 @@ in
         threshold = 0.7
         min_speech_duration_ms = 250
 
-        # Floating waveform overlay disabled: the Astal bar (home-manager/global/bar)
-        # now shows the recording indicator, elapsed counter and waveform, so the
-        # native wgpu OSD is redundant. frontend = native stays set (the SCTK + wgpu
-        # build is still wired up above) so re-enabling is a one-line flip.
-        [osd]
-        enabled = false
-        frontend = "native"
+        # The native waveform OSD is disabled at the build level (the osd-native
+        # feature is left out — see voxtype-gpu above), since the Astal bar shows
+        # the recording indicator. voxtype 0.7.2 has no [osd] config option, so
+        # there is nothing to set here.
 
         # paste mode copies the transcript to the clipboard and then fires the paste
         # keystroke. If a text field is focused the text lands there; if not, it
