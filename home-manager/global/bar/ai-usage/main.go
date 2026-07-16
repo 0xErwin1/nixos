@@ -26,14 +26,18 @@
 package main
 
 import (
+	"bufio"
 	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
+	"io/fs"
 	"math"
 	"net/http"
 	"os"
 	"path/filepath"
+	"sort"
+	"strings"
 	"time"
 )
 
@@ -70,14 +74,28 @@ type note struct {
 	Value string `json:"value"`
 }
 
+// Daily token/cost usage estimated from local session logs.
+type dayCost struct {
+	Date   string  `json:"date"`
+	Tokens int64   `json:"tokens"`
+	EstUsd float64 `json:"estUsd"`
+}
+
+type costSummary struct {
+	Today dayCost   `json:"today"`
+	Week  dayCost   `json:"week"`
+	Days  []dayCost `json:"days"`
+}
+
 type provider struct {
-	ID        string   `json:"id"`
-	Name      string   `json:"name"`
-	Plan      *string  `json:"plan"`
-	Available bool     `json:"available"`
-	Reason    *string  `json:"reason"`
-	Windows   []window `json:"windows"`
-	Notes     []note   `json:"notes"`
+	ID        string       `json:"id"`
+	Name      string       `json:"name"`
+	Plan      *string      `json:"plan"`
+	Available bool         `json:"available"`
+	Reason    *string      `json:"reason"`
+	Windows   []window     `json:"windows"`
+	Notes     []note       `json:"notes"`
+	Cost      *costSummary `json:"cost"`
 }
 
 type output struct {
@@ -356,6 +374,7 @@ func claudeProvider() provider {
 	p.Available = true
 	p.Windows = claudeWindows(data)
 	p.Notes = claudeNotes(data)
+	p.Cost = claudeCost()
 	return p
 }
 
@@ -517,6 +536,162 @@ func codexProvider() provider {
 	p.Windows = codexWindows(data)
 	p.Notes = codexNotes(data)
 	return p
+}
+
+// ── Claude local cost/token scan ────────────────────────────────────────────
+
+const (
+	costWindowDays    = 7
+	scanFileMaxAgeDays = 8
+)
+
+// Anthropic API prices per 1M tokens (USD). Subscription usage is flat-rate, so
+// this is only an ESTIMATE of what the same tokens would cost on the API. Priced
+// by model-tier keyword; unrecognized models fall back to the sonnet tier.
+type price struct {
+	in, out, cacheWrite, cacheRead float64
+}
+
+func priceFor(model string) price {
+	m := strings.ToLower(model)
+	switch {
+	case strings.Contains(m, "opus"):
+		return price{15, 75, 18.75, 1.5}
+	case strings.Contains(m, "haiku"):
+		return price{0.8, 4, 1.0, 0.08}
+	default:
+		return price{3, 15, 3.75, 0.30}
+	}
+}
+
+type claudeLine struct {
+	Type      string `json:"type"`
+	Timestamp string `json:"timestamp"`
+	RequestID string `json:"requestId"`
+	Message   struct {
+		ID    string `json:"id"`
+		Model string `json:"model"`
+		Usage *struct {
+			InputTokens   int64 `json:"input_tokens"`
+			OutputTokens  int64 `json:"output_tokens"`
+			CacheCreation int64 `json:"cache_creation_input_tokens"`
+			CacheRead     int64 `json:"cache_read_input_tokens"`
+		} `json:"usage"`
+	} `json:"message"`
+}
+
+func accumulateClaudeLine(line []byte, dayCutoff string, seen map[string]bool, perDay map[string]*dayCost) {
+	var cl claudeLine
+	if json.Unmarshal(line, &cl) != nil {
+		return
+	}
+	if cl.Type != "assistant" || cl.Message.Usage == nil {
+		return
+	}
+
+	key := cl.Message.ID + "|" + cl.RequestID
+	if key != "|" {
+		if seen[key] {
+			return
+		}
+		seen[key] = true
+	}
+
+	t, err := time.Parse(time.RFC3339, cl.Timestamp)
+	if err != nil {
+		return
+	}
+	date := t.Local().Format("2006-01-02")
+	if date < dayCutoff {
+		return
+	}
+
+	u := cl.Message.Usage
+	p := priceFor(cl.Message.Model)
+	tokens := u.InputTokens + u.OutputTokens + u.CacheCreation + u.CacheRead
+	usd := (float64(u.InputTokens)*p.in +
+		float64(u.OutputTokens)*p.out +
+		float64(u.CacheCreation)*p.cacheWrite +
+		float64(u.CacheRead)*p.cacheRead) / 1e6
+
+	dc := perDay[date]
+	if dc == nil {
+		dc = &dayCost{Date: date}
+		perDay[date] = dc
+	}
+	dc.Tokens += tokens
+	dc.EstUsd += usd
+}
+
+func scanClaudeFile(path, dayCutoff string, seen map[string]bool, perDay map[string]*dayCost) {
+	f, err := os.Open(path)
+	if err != nil {
+		return
+	}
+	defer f.Close()
+
+	reader := bufio.NewReader(f)
+	for {
+		// ReadBytes grows to fit lines of any length (transcript lines can be
+		// far larger than bufio.Scanner's cap).
+		line, err := reader.ReadBytes('\n')
+		if len(line) > 0 {
+			accumulateClaudeLine(line, dayCutoff, seen, perDay)
+		}
+		if err != nil {
+			return
+		}
+	}
+}
+
+// claudeCost aggregates per-day token totals + estimated cost over the last
+// costWindowDays from the Claude Code transcripts, deduplicating assistant turns
+// by message id + request id. Only recently-touched files are read so the scan
+// stays cheap on every refresh.
+func claudeCost() *costSummary {
+	root := homePath(".claude/projects")
+	if _, err := os.Stat(root); err != nil {
+		return nil
+	}
+
+	cutoff := time.Now().AddDate(0, 0, -scanFileMaxAgeDays)
+	dayCutoff := time.Now().AddDate(0, 0, -(costWindowDays - 1)).Format("2006-01-02")
+
+	seen := map[string]bool{}
+	perDay := map[string]*dayCost{}
+
+	_ = filepath.WalkDir(root, func(path string, d fs.DirEntry, err error) error {
+		if err != nil || d.IsDir() || !strings.HasSuffix(path, ".jsonl") {
+			return nil
+		}
+		if info, err := d.Info(); err != nil || info.ModTime().Before(cutoff) {
+			return nil
+		}
+		scanClaudeFile(path, dayCutoff, seen, perDay)
+		return nil
+	})
+
+	if len(perDay) == 0 {
+		return nil
+	}
+
+	summary := &costSummary{}
+	today := time.Now().Format("2006-01-02")
+	summary.Today.Date = today
+	summary.Week.Date = fmt.Sprintf("%dd", costWindowDays)
+
+	for _, dc := range perDay {
+		summary.Days = append(summary.Days, *dc)
+		summary.Week.Tokens += dc.Tokens
+		summary.Week.EstUsd += dc.EstUsd
+		if dc.Date == today {
+			summary.Today = *dc
+		}
+	}
+	sort.Slice(summary.Days, func(i, j int) bool {
+		return summary.Days[i].Date > summary.Days[j].Date
+	})
+	return summary
 }
 
 func main() {

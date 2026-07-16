@@ -19,6 +19,18 @@ interface UsageNote {
   value: string;
 }
 
+interface UsageDayCost {
+  date: string;
+  tokens: number;
+  estUsd: number;
+}
+
+interface UsageCost {
+  today: UsageDayCost;
+  week: UsageDayCost;
+  days: UsageDayCost[];
+}
+
 interface UsageProvider {
   id: string;
   name: string;
@@ -27,6 +39,7 @@ interface UsageProvider {
   reason: string | null;
   windows: UsageWindow[];
   notes: UsageNote[] | null;
+  cost: UsageCost | null;
 }
 
 interface UsageData {
@@ -35,7 +48,7 @@ interface UsageData {
 }
 
 const CACHE_SECONDS = 30;
-const BACKGROUND_SECONDS = 120;
+const BACKGROUND_SECONDS = 300;
 
 const [usage, setUsage] = createState<UsageData | null>(null);
 const [loading, setLoading] = createState(false);
@@ -116,6 +129,67 @@ function resetLabel(iso: string | null): string {
   return `resets ${dt.to_local().format("%b %d, %H:%M") ?? ""}`;
 }
 
+function fmtTokens(n: number): string {
+  if (n >= 1e9) return `${(n / 1e9).toFixed(1)}B`;
+  if (n >= 1e6) return `${Math.round(n / 1e6)}M`;
+  if (n >= 1e3) return `${Math.round(n / 1e3)}k`;
+  return `${n}`;
+}
+
+function fmtUsd(n: number): string {
+  return n >= 100 ? `$${Math.round(n)}` : `$${n.toFixed(2)}`;
+}
+
+function fmtDay(iso: string, today: string): string {
+  if (iso === today) return "Today";
+  const dt = GLib.DateTime.new_from_iso8601(`${iso}T12:00:00Z`, null);
+  return dt ? (dt.format("%a %d") ?? iso) : iso;
+}
+
+function CostRow({
+  label,
+  cost,
+  total,
+  today,
+}: {
+  label: string;
+  cost: UsageDayCost;
+  total: boolean;
+  today: string;
+}) {
+  return (
+    <box
+      cssClasses={total ? ["ai-cost-row", "ai-cost-total"] : ["ai-cost-row"]}
+      valign={Gtk.Align.CENTER}
+    >
+      <label
+        cssClasses={["ai-cost-day", label === "Today" ? "today" : ""]}
+        label={label}
+        halign={Gtk.Align.START}
+        hexpand
+      />
+      <label cssClasses={["ai-cost-tokens"]} label={fmtTokens(cost.tokens)} />
+      <label cssClasses={["ai-cost-usd"]} label={`~${fmtUsd(cost.estUsd)}`} />
+    </box>
+  );
+}
+
+function CostSection({ cost }: { cost: UsageCost }) {
+  return (
+    <box cssClasses={["ai-cost"]} orientation={Gtk.Orientation.VERTICAL} spacing={3}>
+      <label
+        cssClasses={["ai-cost-title"]}
+        label="Usage · est. API cost"
+        halign={Gtk.Align.START}
+      />
+      {cost.days.map((d) => (
+        <CostRow label={fmtDay(d.date, cost.today.date)} cost={d} total={false} today={cost.today.date} />
+      ))}
+      <CostRow label="7-day total" cost={cost.week} total today={cost.today.date} />
+    </box>
+  );
+}
+
 function WindowRow({ w }: { w: UsageWindow }) {
   return (
     <box cssClasses={["ai-window"]} orientation={Gtk.Orientation.VERTICAL} spacing={3}>
@@ -168,6 +242,7 @@ function ProviderCard({ p }: { p: UsageProvider }) {
           ) : (
             <box />
           )}
+          {p.cost ? <CostSection cost={p.cost} /> : <box />}
         </box>
       ) : (
         <label
