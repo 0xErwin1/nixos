@@ -162,6 +162,7 @@
   '';
 
   home.packages = with pkgs; [
+    kopuz
     mpc
   ];
 }
