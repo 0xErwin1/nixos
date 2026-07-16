@@ -182,6 +182,10 @@ If the first pass finds nothing, persist an empty ledger record rather than skip
 
 SDD is the structured planning layer for substantial changes.
 
+### Scope Proportionality (LOCAL POLICY, load-bearing)
+
+The design/spec MUST be proportional to the request. Do NOT expand a bounded feature into infrastructure the user did not ask for. Adding a background reconciler, retention/pruning jobs, idempotency-token schemes, distributed lifecycle/state machines, tombstoning ledgers, or exactly-once guarantees to a simple feature ("attach a file to a comment", "add a filter", "show a badge") is over-engineering and is BANNED unless the requirement explicitly calls for that guarantee or the user asks. Pick the smallest design that satisfies the stated requirement; surface any heavier option as an explicit "do you also want X?" question instead of silently building it. When delegating `sdd-propose` / `sdd-design`, forward this rule. A right-sized spec is the single biggest lever on delivery time -- an inflated spec generates real-but-unrequested work (extra tasks, extra review findings, extra test surface) that no loop guardrail can shrink after the fact.
+
 ### Artifact Store Policy
 
 - `engram` -> default when available; persistent memory across sessions
@@ -345,12 +349,21 @@ Three review lenses apply here - risk (security), readability (clarity/maintaina
 
 These are recommendations the orchestrator surfaces and acts on by judgment; do not treat skipping them as a blocking failure.
 
-<!-- tabularium-ai:sdd-model-assignments -->
+### Reviews & Ship Commands Are Opt-In (LOCAL POLICY, load-bearing)
+
+This OVERRIDES any auto-review behavior in the Mandatory Delegation Triggers (PR rule, Fresh review rule), the Review Recommendations, and the Batched Apply-Verify cycle. Reviews add value but are not free, and an unrequested review inserted in front of a direct command is exactly the ceremony this policy removes. NEVER strip it on upstream sync.
+
+- **Automated review is recommend-only, never auto-run.** Concrete review lenses (risk/readability/resilience), a full-4R sweep, and any adversarial/refuter pass are RECOMMENDED, not executed by default. The orchestrator may surface a one-line recommendation ("this diff is large / security-sensitive -- want a review?") and then proceed. It does NOT launch a review on its own judgment.
+- **Full-4R / adversarial review is explicit opt-in, like Judgment Day.** Run it ONLY when the user explicitly asks ("review this", "corré un 4R", "juicio"). Never fire it speculatively, and never fire it a second time on a phase that already passed its gate.
+- **A direct user command executes directly -- never wrapped in a review.** When the user says commit, push, open a PR, merge, "hacé el commit y el PR", or any bounded ship/execute command, DO exactly that, inline and visibly. Do NOT insert a review, adversarial pass, or size gate before it. You MAY add a one-line review recommendation AFTER completing the requested action, but the action comes first and is never blocked by an unrequested review.
+- **Post-gate quiet.** Once `sdd-verify` returns PASS, the phase is done. Do not launch an additional review/refuter round to "double-check" unless the user asks. A passed gate is the stopping point, not a trigger for more review.
+
+<!-- gentle-ai:sdd-model-assignments -->
 ## OpenCode Agent Bindings
 
 Launch the Task tool with `subagent_type`. Each OpenCode sub-agent's model is statically configured by the runtime; do not read or cache `opencode.json` or `opencode.jsonc`, and do not pass a model or model alias in a Task call. A distinct model requires a separately configured sub-agent type; do not invent one at runtime.
 
-<!-- /tabularium-ai:sdd-model-assignments -->
+<!-- /gentle-ai:sdd-model-assignments -->
 
 ### Sub-Agent Launch Deduplication (MANDATORY)
 
@@ -484,6 +497,8 @@ Long or many-step changes are risky to apply in one shot: a single `sdd-apply` a
 
 **Composition.** Composes with the cached `delivery_strategy` / `Review Workload Guard` (batch boundaries may align with chained-PR slices). Batching governs apply EXECUTION checkpoints; PR delivery is a separate decision.
 
+**Test scope & timeout.** Per-batch verify runs ONLY the focused suites for that batch's changed files; the FULL workspace suite runs ONCE, at the final consolidated verify -- not after every batch. Do not inject "run the full `just verify` / whole test suite" into each batch's apply/verify prompt. When a full-suite command IS run, give it a timeout matched to the suite's real duration (many suites take 10-15+ minutes); never cap it at a short default (e.g. 120s), which only produces wasted incomplete runs that must be re-run.
+
 #### Engram Topic Key Format
 
 | Artifact | Topic Key |
@@ -498,7 +513,7 @@ Long or many-step changes are risky to apply in one shot: a single `sdd-apply` a
 | Verify report | `sdd/{change-name}/verify-report` |
 | Archive report | `sdd/{change-name}/archive-report` |
 
-## Local Tabularium Policy
+## Local Policy
 
 - Maintain a neutral technical personality. Do not use branded personas or product identity wording in behavior instructions.
 - Use Obsidian and Engram as the persistent stores for planning, specs, notes, and long-running work. Do not write OpenSpec artifacts into a normal repository tree unless the user explicitly asks.

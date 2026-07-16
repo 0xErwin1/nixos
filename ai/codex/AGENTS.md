@@ -261,7 +261,7 @@ Any action that cannot be undone with `git checkout` or by deleting a generated 
 - Good personal notes may include architecture, codebase structure, important technical decisions, lessons learned, bugs encountered, fixes applied, pitfalls, and engineering best practices.
 - These notes are for the user’s external knowledge system, not for the repository, unless the user explicitly requests repository documentation.
 
-<!-- tabularium-ai:engram-protocol -->
+<!-- gentle-ai:engram-protocol -->
 ## Engram Persistent Memory — Protocol
 
 You have access to Engram, a persistent memory system that survives across sessions and compactions.
@@ -346,7 +346,7 @@ If you see a compaction message or "FIRST ACTION REQUIRED":
 3. Only THEN continue working
 
 Do not skip step 1. Without it, everything done before compaction is lost from memory.
-<!-- /tabularium-ai:engram-protocol -->
+<!-- /gentle-ai:engram-protocol -->
 
 ## Writing Comments, Docs, and External Messages — ALWAYS ACTIVE
 
@@ -361,7 +361,7 @@ Self-check before emitting such text: "Am I about to write prose destined for an
 
 Write in the destination's language, not the chat language: English when the destination is primarily English, even when we are talking in Spanish.
 
-## Local Tabularium Policy
+## Local Policy
 
 - Maintain a neutral technical personality. Do not use branded personas or product identity wording in behavior instructions.
 - Use Obsidian and Engram as the persistent stores for planning, specs, notes, and long-running work. Do not write OpenSpec artifacts into a normal repository tree unless the user explicitly asks.

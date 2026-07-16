@@ -10,6 +10,10 @@ The orchestrator role and Delegation Rules defined in the always-on orchestrator
 
 SDD is the structured planning layer for substantial changes.
 
+### Scope Proportionality (LOCAL POLICY, load-bearing)
+
+The design/spec MUST be proportional to the request. Do NOT expand a bounded feature into infrastructure the user did not ask for. Adding a background reconciler, retention/pruning jobs, idempotency-token schemes, distributed lifecycle/state machines, tombstoning ledgers, or exactly-once guarantees to a simple feature ("attach a file to a comment", "add a filter", "show a badge") is over-engineering and is BANNED unless the requirement explicitly calls for that guarantee or the user asks. Pick the smallest design that satisfies the stated requirement; surface any heavier option as an explicit "do you also want X?" question instead of silently building it. When delegating `sdd-propose` / `sdd-design`, forward this rule. A right-sized spec is the single biggest lever on delivery time -- an inflated spec generates real-but-unrequested work (extra tasks, extra review findings, extra test surface) that no loop guardrail can shrink after the fact.
+
 ### Artifact Store Policy
 
 - `engram` -- default when available; persistent memory across sessions
@@ -110,6 +114,15 @@ This binds the Precision gate, Severity floor, and Convergence budget from the R
 - **No re-litigation of frozen decisions.** Once a contract decision (an HTTP status, an ID-allocation strategy, an error shape) is frozen by a passed gate or by the user, a later gate MUST NOT re-open it. If new evidence genuinely invalidates a frozen decision, surface it explicitly as a scope change for the user to decide -- never silently loop back through design.
 - **Executors resolve trivial gaps locally.** "Do not invent APIs" bans inventing NEW public contracts, not naming an obvious internal detail. When an apply executor hits a bounded, low-risk local decision (a route name, a DTO field, an internal helper) that the design implies but does not spell out, it makes the reasonable choice, records it in `apply-progress`, and continues -- it does NOT bounce the whole work item back to design. Reserve the bounce for a genuine missing public contract.
 
+### Reviews & Ship Commands Are Opt-In (LOCAL POLICY, load-bearing)
+
+This OVERRIDES any auto-review behavior in the Mandatory Delegation Triggers (PR rule, Fresh review rule), the Review Recommendations, and the Batched Apply-Verify cycle. Reviews add value but are not free, and an unrequested review inserted in front of a direct command is exactly the ceremony this policy removes. NEVER strip it on upstream sync.
+
+- **Automated review is recommend-only, never auto-run.** Concrete review lenses (risk/readability/resilience), a full-4R sweep, and any adversarial/refuter pass are RECOMMENDED, not executed by default. The orchestrator may surface a one-line recommendation ("this diff is large / security-sensitive -- want a review?") and then proceed. It does NOT launch a review on its own judgment.
+- **Full-4R / adversarial review is explicit opt-in, like Judgment Day.** Run it ONLY when the user explicitly asks ("review this", "corré un 4R", "juicio"). Never fire it speculatively, and never fire it a second time on a phase that already passed its gate.
+- **A direct user command executes directly -- never wrapped in a review.** When the user says commit, push, open a PR, merge, "hacé el commit y el PR", or any bounded ship/execute command, DO exactly that, inline and visibly. Do NOT insert a review, adversarial pass, or size gate before it. You MAY add a one-line review recommendation AFTER completing the requested action, but the action comes first and is never blocked by an unrequested review.
+- **Post-gate quiet.** Once `sdd-verify` returns PASS, the phase is done. Do not launch an additional review/refuter round to "double-check" unless the user asks. A passed gate is the stopping point, not a trigger for more review.
+
 ### Artifact Store Mode
 
 When the user invokes `/sdd-new`, `/sdd-ff`, or `/sdd-continue` for the first time in a session, ALSO ASK which artifact store they want for this change:
@@ -159,7 +172,7 @@ If it says `Chained PRs recommended: Yes`, `400-line budget risk: High`, estimat
 
 Automatic mode does not override this guard. Always pass the resolved delivery strategy to `sdd-apply`.
 
-<!-- tabularium-ai:sdd-model-assignments -->
+<!-- gentle-ai:sdd-model-assignments -->
 ## Model Assignments
 
 Read this table at session start (or before first delegation), cache it for the session, and pass the mapped alias in every Agent tool call via the `model` parameter. If a phase is missing, use the `default` row. If you lack access to the assigned model, substitute `sonnet` and continue.
@@ -183,7 +196,7 @@ Read this table at session start (or before first delegation), cache it for the 
 | sdd-report-testing | sonnet | Structured writing |
 | default | sonnet | Non-SDD general delegation |
 
-<!-- /tabularium-ai:sdd-model-assignments -->
+<!-- /gentle-ai:sdd-model-assignments -->
 
 **Conditional model for `sdd-run-testing`:** the orchestrator resolves the sub-agent model AFTER `plan-testing` returns, based on the plan contents:
 - If the plan contains at least one case with `visual diff: yes`, launch `sdd-run-testing` with `opus` — interpreting captured screenshots against the design reference benefits most from the strongest vision model. This holds for all supported UI engines: a `chrome-extension` visual run reads computed styles and screenshots from a real Chrome session, a `playwright` visual run captures them via the CLI, and a `maestro` visual run captures device/browser evidence through Maestro MCP or CLI.
@@ -370,6 +383,8 @@ Long or many-step changes are risky to apply in one shot: a single `sdd-apply` a
 Proceed to the next batch only after the current one's verify and report are done. After the last batch, run a final consolidated verify; archive only once all batches are complete and the **Task Completion Gate** passes.
 
 **Composition.** This composes with the **Visual-Aware Apply Split** (a batch that contains design/visual tasks still routes that slice to `opus`; the model rule applies per slice within a batch) and with the cached `delivery_strategy` / `Review Workload Guard` (batch boundaries may align with chained-PR slices). Batching governs apply EXECUTION checkpoints; PR delivery strategy is a separate decision.
+
+**Test scope & timeout.** Per-batch verify runs ONLY the focused suites for that batch's changed files; the FULL workspace suite runs ONCE, at the final consolidated verify -- not after every batch. Do not inject "run the full `just verify` / whole test suite" into each batch's apply/verify prompt. When a full-suite command IS run, give it a timeout matched to the suite's real duration (many suites take 10-15+ minutes); never cap it at a short default (e.g. 120s), which only produces wasted incomplete runs that must be re-run.
 
 #### Engram Topic Key Format
 

@@ -117,7 +117,7 @@ If it says `Chained PRs recommended: Yes`, `400-line budget risk: High`, estimat
 
 Automatic mode does not override this guard. Always pass the resolved delivery strategy to `sdd-apply`.
 
-<!-- tabularium-ai:sdd-model-assignments -->
+<!-- gentle-ai:sdd-model-assignments -->
 ## Model Assignments
 
 Read this table at session start (or before first delegation), cache it for the session, and pass the mapped alias in every Agent tool call via the `model` parameter. If a phase is missing, use the `default` row. If you lack access to the assigned model, substitute `sonnet` and continue.
@@ -141,7 +141,7 @@ Read this table at session start (or before first delegation), cache it for the 
 | sdd-report-testing | sonnet | Structured writing |
 | default | sonnet | Non-SDD general delegation |
 
-<!-- /tabularium-ai:sdd-model-assignments -->
+<!-- /gentle-ai:sdd-model-assignments -->
 
 **Conditional model for `sdd-run-testing`:** the orchestrator resolves the sub-agent model AFTER `plan-testing` returns, based on the plan contents:
 - If the plan contains at least one case with `visual diff: yes`, launch `sdd-run-testing` with `opus` — interpreting captured screenshots against the design reference benefits most from the strongest vision model. This holds for both user-facing UI engines here: a `playwright` visual run captures styles and screenshots via the CLI, and a `maestro` visual run captures device/browser evidence through Maestro MCP or CLI.

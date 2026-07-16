@@ -162,6 +162,15 @@ This binds the Precision gate, Severity floor, and Convergence budget above to t
 - **No re-litigation of frozen decisions.** Once a contract decision (an HTTP status, an ID-allocation strategy, an error shape) is frozen by a passed gate or by the user, a later gate MUST NOT re-open it. If new evidence genuinely invalidates a frozen decision, surface it explicitly as a scope change for the user to decide -- never silently loop back through design.
 - **Executors resolve trivial gaps locally.** "Do not invent APIs" bans inventing NEW public contracts, not naming an obvious internal detail. When an apply executor hits a bounded, low-risk local decision (a route name, a DTO field, an internal helper) that the design implies but does not spell out, it makes the reasonable choice, records it in `apply-progress`, and continues -- it does NOT bounce the whole work item back to design. Reserve the bounce for a genuine missing public contract.
 
+### Reviews & Ship Commands Are Opt-In (LOCAL POLICY, load-bearing)
+
+This OVERRIDES any auto-review behavior in the Mandatory Delegation Triggers (PR rule, Fresh review rule), the Review Recommendations, and the Batched Apply-Verify cycle. Reviews add value but are not free, and an unrequested review inserted in front of a direct command is exactly the ceremony this policy removes. NEVER strip it on upstream sync.
+
+- **Automated review is recommend-only, never auto-run.** Concrete review lenses (risk/readability/resilience), a full-4R sweep, and any adversarial/refuter pass are RECOMMENDED, not executed by default. The orchestrator may surface a one-line recommendation ("this diff is large / security-sensitive -- want a review?") and then proceed. It does NOT launch a review on its own judgment.
+- **Full-4R / adversarial review is explicit opt-in, like Judgment Day.** Run it ONLY when the user explicitly asks ("review this", "corré un 4R", "juicio"). Never fire it speculatively, and never fire it a second time on a phase that already passed its gate.
+- **A direct user command executes directly -- never wrapped in a review.** When the user says commit, push, open a PR, merge, "hacé el commit y el PR", or any bounded ship/execute command, DO exactly that, inline and visibly. Do NOT insert a review, adversarial pass, or size gate before it. You MAY add a one-line review recommendation AFTER completing the requested action, but the action comes first and is never blocked by an unrequested review.
+- **Post-gate quiet.** Once `sdd-verify` returns PASS, the phase is done. Do not launch an additional review/refuter round to "double-check" unless the user asks. A passed gate is the stopping point, not a trigger for more review.
+
 #### Cost and Context Balance
 
 - Use exploration sub-agents to compress broad repo reading into a short handoff.
@@ -172,6 +181,10 @@ This binds the Precision gate, Severity floor, and Convergence budget above to t
 ## SDD Workflow (Spec-Driven Development)
 
 SDD is the structured planning layer for substantial changes.
+
+### Scope Proportionality (LOCAL POLICY, load-bearing)
+
+The design/spec MUST be proportional to the request. Do NOT expand a bounded feature into infrastructure the user did not ask for. Adding a background reconciler, retention/pruning jobs, idempotency-token schemes, distributed lifecycle/state machines, tombstoning ledgers, or exactly-once guarantees to a simple feature ("attach a file to a comment", "add a filter", "show a badge") is over-engineering and is BANNED unless the requirement explicitly calls for that guarantee or the user asks. Pick the smallest design that satisfies the stated requirement; surface any heavier option as an explicit "do you also want X?" question instead of silently building it. When delegating `sdd-propose` / `sdd-design`, forward this rule. A right-sized spec is the single biggest lever on delivery time -- an inflated spec generates real-but-unrequested work (extra tasks, extra review findings, extra test surface) that no loop guardrail can shrink after the fact.
 
 ### Artifact Store Policy
 
@@ -281,7 +294,7 @@ Do this even in Automatic mode. Automatic mode does not override reviewer burnou
 
 When launching `sdd-apply`, include the resolved `delivery_strategy`, `chain_strategy`, and any chosen PR boundary/exception in the prompt.
 
-<!-- tabularium-ai:sdd-model-assignments -->
+<!-- gentle-ai:sdd-model-assignments -->
 ## Model Assignments
 
 Read this table at session start (or before first delegation), cache it for the session, and pass the mapped alias in every Agent tool call via the `model` parameter. If a phase is missing, use the `default` row. If you lack access to the assigned model, substitute `sonnet` and continue.
@@ -299,7 +312,7 @@ Read this table at session start (or before first delegation), cache it for the 
 | sdd-archive | haiku | Copy and close |
 | default | sonnet | Non-SDD general delegation |
 
-<!-- /tabularium-ai:sdd-model-assignments -->
+<!-- /gentle-ai:sdd-model-assignments -->
 
 ### Sub-Agent Launch Deduplication (MANDATORY)
 
@@ -439,7 +452,7 @@ Convention files under the agent's global skills directory (global) or `.agent/s
 - `openspec` -> read `openspec/changes/*/state.yaml`
 - `none` -> state not persisted -- explain to user
 
-## Local Tabularium Policy
+## Local Policy
 
 - Maintain a neutral technical personality. Do not use branded personas or product identity wording in behavior instructions.
 - Use Obsidian and Engram as the persistent stores for planning, specs, notes, and long-running work. Do not write OpenSpec artifacts into a normal repository tree unless the user explicitly asks.

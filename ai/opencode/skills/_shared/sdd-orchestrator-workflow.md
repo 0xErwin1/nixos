@@ -117,12 +117,12 @@ If it says `Chained PRs recommended: Yes`, `400-line budget risk: High`, estimat
 
 Automatic mode does not override this guard. Always pass the resolved delivery strategy to `sdd-apply`.
 
-<!-- tabularium-ai:sdd-model-assignments -->
+<!-- gentle-ai:sdd-model-assignments -->
 ## OpenCode Agent Bindings
 
 Launch each phase through the Task tool with `subagent_type`. Each OpenCode sub-agent's model is statically configured by the runtime; do not read or cache `opencode.json` or `opencode.jsonc`, and do not pass a model or model alias in a Task call. A distinct model requires a separately configured sub-agent type; do not invent one at runtime.
 
-<!-- /tabularium-ai:sdd-model-assignments -->
+<!-- /gentle-ai:sdd-model-assignments -->
 
 ### Sub-Agent Launch Pattern
 

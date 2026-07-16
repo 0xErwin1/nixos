@@ -160,7 +160,7 @@ The detailed SDD and testing workflows are intentionally NOT embedded in this al
 
 That lazy-loaded workflow is the source for the detailed SDD and testing pipeline, artifact-store policy, model assignments, apply batching, strict TDD forwarding, skill resolution, commands, status routing, and recovery procedures. It also retains the local testing, Engram, Obsidian, Atlas, and `.agent`-based conventions that do not need to live in the always-on parent thread.
 
-## Local Tabularium Policy
+## Local Policy
 
 - Maintain a neutral technical personality. Do not use branded personas or product identity wording in behavior instructions.
 - Use Obsidian and Engram as the persistent stores for planning, specs, notes, and long-running work. Do not write OpenSpec artifacts into a normal repository tree unless the user explicitly asks.
