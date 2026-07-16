@@ -54,6 +54,18 @@ export function btStateGlyph(powered: boolean, connected: boolean): string {
   return BT_ON;
 }
 
+// Notification bell glyphs.
+export const BELL = "\u{f009a}"; // bell
+export const BELL_ACTIVE = "\u{f009c}"; // bell-ring
+export const BELL_DND = "\u{f009b}"; // bell-off
+
+// Control-center power glyphs.
+export const LOCK_GLYPH = "\u{f033e}"; // lock
+export const SUSPEND_GLYPH = "\u{f0904}"; // power-sleep
+export const LOGOUT_GLYPH = "\u{f0343}"; // logout
+export const RESTART_GLYPH = "\u{f0454}"; // restart
+export const SHUTDOWN_GLYPH = "\u{f0425}"; // power
+
 export function batteryGlyph(percent: number, charging: boolean): string {
   if (charging) return "\u{e00a}";
   if (percent >= 90) return "\u{f240}";

@@ -13,7 +13,6 @@
     ../global/audio.nix
     ../global/themes.nix
     ../global/communication.nix
-    ../global/notify.nix
     ../global/database.nix
     ../global/neovim.nix
     ../global/zathura.nix

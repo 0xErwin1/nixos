@@ -2,6 +2,7 @@ import app from "ags/gtk4/app";
 import style from "./style.scss";
 import Bar from "./Bar";
 import Dashboard from "./modules/dashboard";
+import { NotificationPopups, NotificationCenter } from "./modules/notifications";
 
 app.start({
   css: style,
@@ -9,9 +10,11 @@ app.start({
   // user's GTK theme (their palenight theme ships no GTK4 variant).
   gtkTheme: "Adwaita",
   main() {
-    // The dashboard is a separate OVERLAY window (hidden until a bar trigger
-    // opens it); instantiating it registers it with the application.
+    // Separate OVERLAY windows (hidden until opened / until a notification
+    // arrives); instantiating them registers them with the application.
     Dashboard();
+    NotificationPopups();
+    NotificationCenter();
     return Bar();
   },
 });

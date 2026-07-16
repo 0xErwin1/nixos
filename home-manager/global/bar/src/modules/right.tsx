@@ -15,6 +15,7 @@ import {
 import Voxtype from "./voxtype";
 import { WifiTrigger } from "./wifi";
 import { BluetoothTrigger } from "./bluetooth";
+import { NotificationBell } from "./notifications";
 
 interface Props {
   vertical: boolean;
@@ -251,7 +252,7 @@ export default function Right({ vertical }: Props) {
       <box
         cssClasses={["island", "controls"]}
         orientation={orientation}
-        spacing={vertical ? 6 : 10}
+        spacing={vertical ? 6 : 9}
         valign={Gtk.Align.CENTER}
       >
         <Brightness vertical={vertical} />
@@ -260,6 +261,7 @@ export default function Right({ vertical }: Props) {
         <Microphone />
         <BluetoothTrigger />
         <WifiTrigger />
+        <NotificationBell />
       </box>
       <box
         cssClasses={["island", "clock-island"]}

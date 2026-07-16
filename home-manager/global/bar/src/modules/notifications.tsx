@@ -1,0 +1,514 @@
+import app from "ags/gtk4/app";
+import GLib from "gi://GLib";
+import AstalNotifd from "gi://AstalNotifd";
+import AstalWp from "gi://AstalWp";
+import Pango from "gi://Pango";
+import { Astal, Gdk, Gtk } from "ags/gtk4";
+import { For, With, createBinding, createComputed } from "ags";
+import { createPoll } from "ags/time";
+import { exec, execAsync } from "ags/process";
+
+import {
+  BELL,
+  BELL_ACTIVE,
+  BELL_DND,
+  CLOSE_GLYPH,
+  LOCK_GLYPH,
+  SUSPEND_GLYPH,
+  LOGOUT_GLYPH,
+  RESTART_GLYPH,
+  SHUTDOWN_GLYPH,
+  volumeGlyph,
+  brightnessGlyph,
+} from "../glyphs";
+import {
+  notifd,
+  popupIds,
+  centerVisible,
+  closeCenter,
+  toggleCenter,
+  dismissPopup,
+} from "./notify-state";
+
+// ── Notification card ─────────────────────────────────────────────────────────
+function urgencyClass(urgency: AstalNotifd.Urgency): string {
+  if (urgency === AstalNotifd.Urgency.CRITICAL) return "critical";
+  if (urgency === AstalNotifd.Urgency.LOW) return "low";
+  return "normal";
+}
+
+function relativeTime(unix: number): string {
+  const diff = Math.max(0, Math.floor(Date.now() / 1000) - unix);
+  if (diff < 60) return "now";
+  if (diff < 3600) return `${Math.floor(diff / 60)}m`;
+  if (diff < 86400) return `${Math.floor(diff / 3600)}h`;
+  return `${Math.floor(diff / 86400)}d`;
+}
+
+// The "default" action routes the app to the relevant place (Slack -> chat,
+// etc.) — only if the app supplies it; otherwise fall back to the first action.
+function defaultActionId(notification: AstalNotifd.Notification): string | null {
+  const actions = notification.actions;
+  const def = actions.find((a) => a.id === "default");
+  if (def) return def.id;
+  return actions.length > 0 ? actions[0].id : null;
+}
+
+function ImageFor({ src, size, css }: { src: string; size: number; css: string }) {
+  const isPath = src.startsWith("/") || src.startsWith("file://");
+  const file = src.replace("file://", "");
+  return isPath ? (
+    <image cssClasses={[css]} file={file} pixelSize={size} />
+  ) : (
+    <image cssClasses={[css]} iconName={src} pixelSize={size} />
+  );
+}
+
+function NotificationCard({
+  id,
+  variant,
+  onClose,
+}: {
+  id: number;
+  variant: "popup" | "center";
+  onClose: () => void;
+}) {
+  const notification = notifd.get_notification(id);
+  if (!notification) return <box visible={false} />;
+
+  const actions = notification.actions;
+  const defaultId = defaultActionId(notification);
+
+  const summary = notification.summary ?? "";
+  const appName = notification.appName || "Notification";
+  const appIcon = notification.appIcon || "";
+  // Avoid the triple-identity (app name in header + big logo + summary == app
+  // name): only show the summary when it adds information over the app name.
+  const showSummary =
+    summary.length > 0 && summary.toLowerCase() !== appName.toLowerCase();
+
+  // Only treat `image` as real content (a screenshot/photo thumbnail) when it is
+  // an actual file path — never render the app icon/logo big in the body.
+  const contentImage =
+    notification.image &&
+    (notification.image.startsWith("/") ||
+      notification.image.startsWith("file://"))
+      ? notification.image
+      : "";
+
+  // Clicking the card body invokes the default action (if any) and removes the
+  // notification entirely — you engaged with it.
+  const activate = () => {
+    if (defaultId) notification.invoke(defaultId);
+    notification.dismiss();
+  };
+
+  return (
+    <box
+      cssClasses={[
+        "notif-card",
+        `notif-${urgencyClass(notification.urgency)}`,
+        `notif-${variant}`,
+      ]}
+      spacing={10}
+    >
+      {appIcon ? (
+        <ImageFor src={appIcon} size={24} css="notif-app-icon" />
+      ) : (
+        <box cssClasses={["notif-app-dot"]} valign={Gtk.Align.START} />
+      )}
+
+      <box orientation={Gtk.Orientation.VERTICAL} hexpand spacing={3}>
+        <box cssClasses={["notif-header"]} spacing={6}>
+          <label
+            cssClasses={["notif-app"]}
+            label={appName}
+            hexpand
+            xalign={0}
+            ellipsize={Pango.EllipsizeMode.END}
+          />
+          <label cssClasses={["notif-time"]} label={relativeTime(notification.time)} />
+          <button cssClasses={["notif-close"]} valign={Gtk.Align.CENTER} onClicked={onClose}>
+            <label label={CLOSE_GLYPH} />
+          </button>
+        </box>
+
+        <button cssClasses={["notif-body-btn"]} onClicked={activate}>
+          <box orientation={Gtk.Orientation.VERTICAL} spacing={3}>
+            {showSummary ? (
+              <label
+                cssClasses={["notif-summary"]}
+                label={summary}
+                xalign={0}
+                wrap
+                maxWidthChars={30}
+              />
+            ) : (
+              <box visible={false} />
+            )}
+            {contentImage ? (
+              <ImageFor src={contentImage} size={56} css="notif-image" />
+            ) : (
+              <box visible={false} />
+            )}
+            {notification.body ? (
+              <label
+                cssClasses={["notif-body"]}
+                label={notification.body}
+                useMarkup
+                xalign={0}
+                wrap
+                maxWidthChars={34}
+              />
+            ) : (
+              <box visible={false} />
+            )}
+          </box>
+        </button>
+
+        {actions.length > 0 ? (
+          <box cssClasses={["notif-actions"]} spacing={6} halign={Gtk.Align.FILL}>
+            {actions.map((action) => (
+              <button
+                cssClasses={["dash-btn", "notif-action"]}
+                hexpand
+                onClicked={() => {
+                  notification.invoke(action.id);
+                  notification.dismiss();
+                }}
+              >
+                <label label={action.label} />
+              </button>
+            ))}
+          </box>
+        ) : (
+          <box visible={false} />
+        )}
+      </box>
+    </box>
+  );
+}
+
+// ── Transient popups ──────────────────────────────────────────────────────────
+export function NotificationPopups() {
+  const { TOP, RIGHT } = Astal.WindowAnchor;
+
+  return (
+    <window
+      name="notification-popups"
+      namespace="epsilon-notifications"
+      cssClasses={["notif-popups-window"]}
+      anchor={TOP | RIGHT}
+      exclusivity={Astal.Exclusivity.IGNORE}
+      layer={Astal.Layer.OVERLAY}
+      marginTop={42}
+      marginRight={8}
+      visible={popupIds((ids) => ids.length > 0)}
+      application={app}
+    >
+      <box cssClasses={["notif-popups"]} orientation={Gtk.Orientation.VERTICAL} spacing={8}>
+        <For each={popupIds}>
+          {(id) => (
+            <NotificationCard id={id} variant="popup" onClose={() => dismissPopup(id)} />
+          )}
+        </For>
+      </box>
+    </window>
+  );
+}
+
+// ── Quick controls (volume + brightness sliders) ──────────────────────────────
+function SpeakerSlider({ speaker }: { speaker: AstalWp.Endpoint }) {
+  const volume = createBinding(speaker, "volume");
+  const mute = createBinding(speaker, "mute");
+  const glyph = createComputed([volume, mute], (v, m) =>
+    volumeGlyph(Math.round(v * 100), m),
+  );
+
+  return (
+    <box cssClasses={["cc-slider-row"]} spacing={10}>
+      <label cssClasses={["cc-slider-icon", "volume"]} label={glyph} valign={Gtk.Align.CENTER} />
+      <slider
+        hexpand
+        min={0}
+        max={1}
+        value={volume}
+        onChangeValue={(self) => {
+          speaker.volume = self.value;
+        }}
+        valign={Gtk.Align.CENTER}
+      />
+      <label
+        cssClasses={["cc-slider-pct"]}
+        label={volume((v) => `${Math.round(v * 100)}%`)}
+        valign={Gtk.Align.CENTER}
+      />
+    </box>
+  );
+}
+
+function VolumeSlider() {
+  const speaker = createBinding(AstalWp.get_default()!.audio, "defaultSpeaker");
+  return (
+    <With value={speaker}>
+      {(sp: AstalWp.Endpoint | null) =>
+        sp ? <SpeakerSlider speaker={sp} /> : <box visible={false} />
+      }
+    </With>
+  );
+}
+
+function BrightnessSlider() {
+  const hasBacklight = createPoll(false, 5000, () => {
+    try {
+      return Number(exec("brightnessctl max")) > 0;
+    } catch {
+      return false;
+    }
+  });
+
+  const brightness = createPoll(0, 2000, () => {
+    try {
+      const max = Number(exec("brightnessctl max"));
+      if (!max) return 0;
+      return Number(exec("brightnessctl get")) / max;
+    } catch {
+      return 0;
+    }
+  });
+
+  // Only fire brightnessctl when the integer percent actually changes, so a drag
+  // does not spawn a process per pixel.
+  let lastPercent = -1;
+  const setBrightness = (value: number) => {
+    const percent = Math.round(value * 100);
+    if (percent === lastPercent) return;
+    lastPercent = percent;
+    execAsync(["brightnessctl", "set", `${percent}%`]).catch(() => {});
+  };
+
+  return (
+    <box cssClasses={["cc-slider-row"]} spacing={10} visible={hasBacklight}>
+      <label
+        cssClasses={["cc-slider-icon", "brightness"]}
+        label={brightness((v) => brightnessGlyph(Math.round(v * 100)))}
+        valign={Gtk.Align.CENTER}
+      />
+      <slider
+        hexpand
+        min={0.05}
+        max={1}
+        value={brightness}
+        onChangeValue={(self) => setBrightness(self.value)}
+        valign={Gtk.Align.CENTER}
+      />
+      <label
+        cssClasses={["cc-slider-pct"]}
+        label={brightness((v) => `${Math.round(v * 100)}%`)}
+        valign={Gtk.Align.CENTER}
+      />
+    </box>
+  );
+}
+
+// ── Power buttons ─────────────────────────────────────────────────────────────
+function PowerButton({
+  glyph,
+  tooltip,
+  command,
+  danger = false,
+}: {
+  glyph: string;
+  tooltip: string;
+  command: string[];
+  danger?: boolean;
+}) {
+  return (
+    <button
+      cssClasses={danger ? ["dash-btn", "cc-power-btn", "danger"] : ["dash-btn", "cc-power-btn"]}
+      tooltipText={tooltip}
+      onClicked={() => {
+        execAsync(command).catch(() => {});
+        closeCenter();
+      }}
+    >
+      <label cssClasses={["cc-power-glyph"]} label={glyph} />
+    </button>
+  );
+}
+
+function PowerRow() {
+  return (
+    <box cssClasses={["cc-power"]} spacing={8} halign={Gtk.Align.CENTER}>
+      <PowerButton glyph={LOCK_GLYPH} tooltip="Lock" command={["hyprlock"]} />
+      <PowerButton glyph={SUSPEND_GLYPH} tooltip="Suspend" command={["systemctl", "suspend"]} />
+      <PowerButton glyph={LOGOUT_GLYPH} tooltip="Logout" command={["hyprctl", "dispatch", "exit"]} />
+      <PowerButton glyph={RESTART_GLYPH} tooltip="Restart" command={["systemctl", "reboot"]} danger />
+      <PowerButton glyph={SHUTDOWN_GLYPH} tooltip="Shutdown" command={["systemctl", "poweroff"]} danger />
+    </box>
+  );
+}
+
+// ── Control center (bell) ─────────────────────────────────────────────────────
+export function NotificationCenter() {
+  const { TOP, BOTTOM, LEFT, RIGHT } = Astal.WindowAnchor;
+
+  const notifications = createBinding(notifd, "notifications");
+  const dnd = createBinding(notifd, "dontDisturb");
+  const hasNotifications = notifications((list) => list.length > 0);
+
+  return (
+    <window
+      name="notification-center"
+      namespace="epsilon-notif-center"
+      visible={centerVisible}
+      cssClasses={["dashboard-window"]}
+      anchor={TOP | BOTTOM | LEFT | RIGHT}
+      exclusivity={Astal.Exclusivity.IGNORE}
+      layer={Astal.Layer.OVERLAY}
+      keymode={Astal.Keymode.ON_DEMAND}
+      application={app}
+    >
+      <Gtk.EventControllerKey
+        onKeyPressed={(_controller, keyval: number) => {
+          if (keyval === Gdk.KEY_Escape) closeCenter();
+        }}
+      />
+      <overlay>
+        <button cssClasses={["dashboard-backdrop"]} onClicked={closeCenter} />
+        <box
+          $type="overlay"
+          cssClasses={["dashboard-card", "control-center-card"]}
+          orientation={Gtk.Orientation.VERTICAL}
+          halign={Gtk.Align.END}
+          valign={Gtk.Align.START}
+          spacing={12}
+        >
+          <box cssClasses={["dash-header"]} spacing={8}>
+            <label cssClasses={["cc-title"]} label="Control Center" hexpand xalign={0} />
+            <button cssClasses={["dash-close"]} onClicked={closeCenter}>
+              <label label={CLOSE_GLYPH} />
+            </button>
+          </box>
+
+          <box
+            cssClasses={["cc-box", "cc-quick"]}
+            orientation={Gtk.Orientation.VERTICAL}
+            spacing={8}
+          >
+            <VolumeSlider />
+            <BrightnessSlider />
+          </box>
+
+          <box cssClasses={["cc-box", "cc-power-box"]}>
+            <PowerRow />
+          </box>
+
+          <box
+            cssClasses={["cc-box", "cc-notif-box"]}
+            orientation={Gtk.Orientation.VERTICAL}
+            spacing={8}
+            vexpand
+          >
+            <box cssClasses={["cc-notif-header"]} spacing={8}>
+              <label cssClasses={["cc-section"]} label="Notifications" hexpand xalign={0} />
+              <box cssClasses={["dnd-toggle"]} spacing={6}>
+                <label cssClasses={["dnd-label"]} label="DND" />
+                <switch
+                  active={dnd}
+                  valign={Gtk.Align.CENTER}
+                  onNotifyActive={(self) => {
+                    if (self.active !== notifd.dontDisturb)
+                      notifd.set_dont_disturb(self.active);
+                  }}
+                />
+              </box>
+              <button
+                cssClasses={["dash-btn", "danger", "cc-clear"]}
+                label="Clear all"
+                visible={hasNotifications}
+                onClicked={() => {
+                  [...notifd.get_notifications()].forEach((n) => n.dismiss());
+                }}
+              />
+            </box>
+
+            <box cssClasses={["list-area"]} orientation={Gtk.Orientation.VERTICAL} vexpand>
+              <box
+                vexpand
+                halign={Gtk.Align.CENTER}
+                valign={Gtk.Align.CENTER}
+                visible={hasNotifications((has) => !has)}
+              >
+                <label cssClasses={["empty-label", "list-empty"]} label="No notifications" />
+              </box>
+              <scrolledwindow
+                cssClasses={["list-scroll"]}
+                vexpand
+                hscrollbarPolicy={Gtk.PolicyType.NEVER}
+                vscrollbarPolicy={Gtk.PolicyType.AUTOMATIC}
+                visible={hasNotifications}
+              >
+                <box cssClasses={["notif-list"]} orientation={Gtk.Orientation.VERTICAL} spacing={8}>
+                  <For each={notifications((list) => [...list].reverse())}>
+                    {(notification) => (
+                      <NotificationCard
+                        id={notification.id}
+                        variant="center"
+                        onClose={() => notification.dismiss()}
+                      />
+                    )}
+                  </For>
+                </box>
+              </scrolledwindow>
+            </box>
+          </box>
+        </box>
+      </overlay>
+    </window>
+  );
+}
+
+// ── Bar trigger ───────────────────────────────────────────────────────────────
+export function NotificationBell() {
+  const notifications = createBinding(notifd, "notifications");
+  const dnd = createBinding(notifd, "dontDisturb");
+  const count = notifications((list) => list.length);
+
+  const glyph = createComputed([count, dnd], (c, isDnd) =>
+    isDnd ? BELL_DND : c > 0 ? BELL_ACTIVE : BELL,
+  );
+  const iconClasses = createComputed([count, dnd], (c, isDnd) => [
+    "control-icon",
+    "bell-icon",
+    isDnd ? "dnd" : c > 0 ? "has-notifs" : "idle",
+  ]);
+  const tooltip = createComputed([count, dnd], (c, isDnd) =>
+    isDnd
+      ? "Do Not Disturb"
+      : c > 0
+        ? `${c} notification${c === 1 ? "" : "s"}`
+        : "No notifications",
+  );
+
+  return (
+    <button
+      cssClasses={["control-item", "bell", "dash-trigger"]}
+      tooltipText={tooltip}
+      valign={Gtk.Align.CENTER}
+      onClicked={toggleCenter}
+    >
+      <overlay>
+        <label cssClasses={iconClasses} label={glyph} valign={Gtk.Align.CENTER} />
+        <label
+          $type="overlay"
+          cssClasses={["bell-badge"]}
+          halign={Gtk.Align.END}
+          valign={Gtk.Align.START}
+          visible={createComputed([count, dnd], (c, isDnd) => c > 0 && !isDnd)}
+          label={count((c) => (c > 9 ? "9+" : String(c)))}
+        />
+      </overlay>
+    </button>
+  );
+}

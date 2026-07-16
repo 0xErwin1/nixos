@@ -124,6 +124,12 @@ $font: "JetBrainsMono Nerd Font";
 }
 
 // Control cluster: icons and percentages sit on one centered row via valign.
+// Every item (icon-only or icon+percent, plain or dash-trigger) gets the same
+// horizontal padding so the gaps read uniform across the row.
+.control-item {
+  padding: 0.1rem 0.3rem;
+}
+
 .control-icon {
   font-size: 1.05rem;
 }
@@ -168,7 +174,7 @@ $font: "JetBrainsMono Nerd Font";
 // comfortable padded hitbox around the glyph (the icon itself is unchanged).
 .dash-trigger {
   all: unset;
-  padding: 0.15rem 0.35rem;
+  padding: 0.1rem 0.3rem;
   border-radius: 8px;
 }
 
@@ -591,4 +597,245 @@ entry placeholder {
 
 .wifi-password {
   margin-top: 0.3rem;
+}
+
+// ── Notifications (AstalNotifd: popups + center + bell) ────────────────────────
+.bell-icon.has-notifs {
+  color: $yellow;
+}
+
+.bell-icon.dnd {
+  color: $foreground;
+  opacity: 0.45;
+}
+
+.bell-badge {
+  background-color: $red;
+  color: $background;
+  border-radius: 999px;
+  font-size: 0.6rem;
+  font-weight: bold;
+  min-width: 0.9rem;
+  min-height: 0.9rem;
+  padding: 0 0.15rem;
+  margin-top: -0.2rem;
+  margin-right: -0.25rem;
+}
+
+.notif-popups-window {
+  background: transparent;
+}
+
+// Notification card: a small app icon on the left, an accent-colored app name
+// (by urgency) over a bold summary + muted body, and a thick left accent bar.
+.notif-card {
+  background-color: $background;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-left: 4px solid $blue;
+  border-radius: 12px;
+  padding: 0.6rem 0.75rem;
+}
+
+.notif-card.notif-critical {
+  border-left-color: $red;
+  background-color: rgba(255, 51, 51, 0.06);
+}
+
+.notif-card.notif-low {
+  border-left-color: rgba(191, 186, 176, 0.45);
+}
+
+.notif-card.notif-popup {
+  min-width: 22rem;
+}
+
+// Small app icon = identity without a big logo. Coloured dot fallback.
+.notif-app-icon {
+  border-radius: 7px;
+}
+
+.notif-app-dot {
+  min-width: 8px;
+  min-height: 8px;
+  margin-top: 0.4rem;
+  border-radius: 999px;
+  background-color: $blue;
+}
+
+.notif-card.notif-critical .notif-app-dot {
+  background-color: $red;
+}
+
+.notif-app {
+  font-size: 0.82rem;
+  font-weight: bold;
+  color: $blue;
+  letter-spacing: 0.02em;
+}
+
+.notif-card.notif-critical .notif-app {
+  color: $red;
+}
+
+.notif-card.notif-low .notif-app {
+  color: $foreground;
+  opacity: 0.7;
+}
+
+.notif-time {
+  font-size: 0.76rem;
+  opacity: 0.55;
+}
+
+.notif-close {
+  all: unset;
+  padding: 0 0.25rem;
+  border-radius: 6px;
+  opacity: 0.5;
+}
+
+.notif-close:hover {
+  background: rgba(255, 51, 51, 0.18);
+  color: $red;
+  opacity: 1;
+}
+
+// The message body is a button (click = default action); no button chrome.
+.notif-body-btn {
+  all: unset;
+  padding: 0.1rem 0;
+  border-radius: 8px;
+}
+
+// Hover feedback covers the whole card, not just the body button.
+.notif-card:hover {
+  background-color: #11161f;
+}
+
+.notif-card.notif-critical:hover {
+  background-color: rgba(255, 51, 51, 0.1);
+}
+
+.notif-summary {
+  font-weight: bold;
+  font-size: 0.96rem;
+  color: $foreground;
+}
+
+.notif-body {
+  font-size: 0.87rem;
+  opacity: 0.72;
+}
+
+.notif-image {
+  border-radius: 8px;
+  margin-top: 0.2rem;
+}
+
+.notif-actions {
+  margin-top: 0.4rem;
+}
+
+// Prominent full-width action buttons (the reference "Open Folder" style).
+.notif-action {
+  padding: 0.35rem 0.6rem;
+  font-weight: bold;
+}
+
+// ── Control center ────────────────────────────────────────────────────────────
+// Each section (sliders / power / notifications) is its own subtly-lifted card
+// so the panel reads as distinct stacked modules over the darker card bg.
+.cc-box {
+  background-color: $grey;
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  border-radius: 12px;
+  padding: 0.7rem 0.8rem;
+}
+
+.cc-title {
+  font-weight: bold;
+  font-size: 1.05rem;
+}
+
+.cc-section {
+  font-weight: bold;
+  font-size: 0.9rem;
+  opacity: 0.8;
+}
+
+.cc-notif-header {
+  margin-top: 0.2rem;
+}
+
+.dnd-label {
+  font-size: 0.85rem;
+  opacity: 0.8;
+}
+
+.cc-clear {
+  padding: 0.2rem 0.6rem;
+  font-size: 0.8rem;
+}
+
+// Volume / brightness slider rows.
+.cc-slider-icon {
+  font-size: 1.15rem;
+  min-width: 1.4rem;
+}
+
+.cc-slider-pct {
+  font-size: 0.85rem;
+  font-weight: bold;
+  min-width: 2.4rem;
+}
+
+.cc-slider-icon.volume {
+  color: $blue;
+}
+
+.cc-slider-icon.brightness {
+  color: $yellow;
+}
+
+slider,
+scale {
+  min-height: 1rem;
+}
+
+slider trough,
+scale trough {
+  background-color: $grey;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+  min-height: 0.4rem;
+}
+
+slider highlight,
+scale highlight,
+slider trough > highlight {
+  background-color: $blue;
+  border-radius: 999px;
+  min-height: 0.4rem;
+}
+
+slider slider,
+scale slider {
+  background-color: $foreground;
+  border-radius: 999px;
+  min-width: 0.9rem;
+  min-height: 0.9rem;
+  margin: -0.3rem;
+}
+
+// Power buttons.
+.cc-power {
+  margin: 0.2rem 0;
+}
+
+.cc-power-btn {
+  padding: 0.45rem 0.7rem;
+}
+
+.cc-power-glyph {
+  font-size: 1.2rem;
 }
