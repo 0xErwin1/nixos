@@ -1,6 +1,6 @@
 import GLib from "gi://GLib";
 import AstalWp from "gi://AstalWp";
-import { createBinding, createComputed, With } from "ags";
+import { createBinding, With } from "ags";
 import { Gtk } from "ags/gtk4";
 import { createPoll } from "ags/time";
 import { exec } from "ags/process";
@@ -111,56 +111,46 @@ function Battery({ vertical }: Props) {
   );
 }
 
-// Bind to the currently active speaker: AstalWp.audio.defaultSpeaker changes
-// when the default output switches (bluetooth / USB DAC / internal), so the
-// widget must re-derive against the live endpoint instead of a stale one
-// captured at construction. AstalWp `volume` is the same 0..1 scale wpctl
-// reports (0.30 -> 30%); it can exceed 1.0 for over-amplification, shown as-is.
-function SpeakerInner({
-  speaker,
-  vertical,
-}: {
-  speaker: AstalWp.Endpoint;
-  vertical: boolean;
-}) {
-  const volume = createBinding(speaker, "volume");
-  const mute = createBinding(speaker, "mute");
+interface VolumeInfo {
+  percent: number;
+  muted: boolean;
+}
 
-  const glyph = createComputed([volume, mute], (v, m) =>
-    volumeGlyph(Math.round(v * 100), m),
-  );
+// AstalWp.defaultSpeaker can stay pinned to the wrong sink when a bluetooth
+// headset exposes several nodes: e.g. the XM5 keeps its A2DP node around while a
+// call switches the real default to its HFP node, so the binding kept reporting
+// the A2DP volume (94%) instead of the sink actually being heard (33%). Poll the
+// real default sink instead — the same one the volume keys and desktop control.
+function readVolume(): VolumeInfo {
+  try {
+    const out = exec("wpctl get-volume @DEFAULT_AUDIO_SINK@");
+    const match = out.match(/Volume:\s*([0-9.]+)/);
+    const percent = match ? Math.round(parseFloat(match[1]) * 100) : 0;
+
+    return { percent, muted: /\[MUTED\]/.test(out) };
+  } catch {
+    return { percent: 0, muted: false };
+  }
+}
+
+function Volume({ vertical }: Props) {
+  const info = createPoll<VolumeInfo>(readVolume(), 1000, readVolume);
 
   return (
     <box cssClasses={["control-item", "volume"]} valign={Gtk.Align.CENTER}>
       <label
         cssClasses={["control-icon"]}
-        label={glyph}
+        label={info((i) => volumeGlyph(i.percent, i.muted))}
         valign={Gtk.Align.CENTER}
       />
       {!vertical && (
         <label
           cssClasses={["control-percent"]}
-          label={volume((v) => `${Math.round(v * 100)}%`)}
+          label={info((i) => `${i.percent}%`)}
           valign={Gtk.Align.CENTER}
         />
       )}
     </box>
-  );
-}
-
-function Volume({ vertical }: Props) {
-  const speaker = createBinding(AstalWp.get_default()!.audio, "defaultSpeaker");
-
-  return (
-    <With value={speaker}>
-      {(sp: AstalWp.Endpoint | null) =>
-        sp ? (
-          <SpeakerInner speaker={sp} vertical={vertical} />
-        ) : (
-          <box visible={false} />
-        )
-      }
-    </With>
   );
 }
 

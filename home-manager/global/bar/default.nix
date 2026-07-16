@@ -64,6 +64,7 @@ let
           pkgs.lib.makeBinPath [
             pkgs.brightnessctl
             pkgs.pulseaudio
+            pkgs.wireplumber
             pkgs.curl
             pkgs.khal
           ]
