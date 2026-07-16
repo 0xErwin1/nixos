@@ -39,16 +39,23 @@
           # Keeping a2dp-sink active ensures the autoswitch always has a valid
           # profile to return to after a call.
           "bluez5.profile" = "a2dp-sink";
-          # Codec allow-list, highest priority first. LDAC is deliberately left
-          # out: it has the best fidelity but ~200-300 ms of latency, enough to
-          # desync audio from video. AAC keeps latency low at near-transparent
-          # quality. WirePlumber always picks the highest-priority enabled codec,
-          # so dropping LDAC here is what makes AAC the default. Applies to every
-          # A2DP device, not just the XM5.
+          # Codec allow-list. This gates HFP codecs as well as A2DP ones, so
+          # msbc must be listed here or `bluez5.enable-msbc` above has nothing
+          # left to enable and the headset mic silently drops to 8 kHz CVSD.
+          # CVSD needs no entry: it is the mandatory HFP baseline and stays
+          # available as the fallback when mSBC negotiation fails.
+          #
+          # A2DP and HFP negotiate from separate candidate sets, so msbc does
+          # not compete with the A2DP entries and its position is irrelevant.
+          # Among the A2DP codecs order is priority, highest first: LDAC is
+          # deliberately left out because its ~200-300 ms of latency desyncs
+          # audio from video, and dropping it is what makes AAC the default.
+          # Applies to every Bluetooth device, not just the XM5.
           "bluez5.codecs" = [
             "aac"
             "sbc_xq"
             "sbc"
+            "msbc"
           ];
         };
         "wireplumber.settings" = {

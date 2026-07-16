@@ -9,11 +9,12 @@
     ../global/window-managers/hyprland
     ../global/audio.nix
     ../global/themes.nix
-    ../global/notify.nix
     ../global/neovim.nix
     ../global/zathura.nix
     ../global/music.nix
     ../global/voxtype.nix
+    ../global/bar/default.nix
+    ../global/calendar.nix
     ../global/communication.nix
     ../global/database.nix
     ../global/x11
@@ -32,7 +33,6 @@
     };
 
     packages = with pkgs; [
-      eww
       brightnessctl
       playerctl
       xclip
