@@ -76,21 +76,36 @@ $font: "JetBrainsMono Nerd Font";
   color: $foreground;
 }
 
-// Active-workspace state: window count + fullscreen indicator.
+// Active-workspace state: keep the icon and count compact, equally sized and
+// visually separated so they read as one aligned status rather than colliding.
 .window-icon {
   color: $yellow;
-  font-size: 1.05rem;
+  font-size: 1rem;
 }
 
 .window-count {
-  margin: 0 0.25rem;
   font-weight: bold;
-  font-size: 1.15rem;
+  font-size: 1rem;
 }
 
 .fullscreen-state {
   color: $yellow;
-  margin-left: 0.2rem;
+}
+
+.bar.horizontal .window-icon {
+  margin-right: 0.35rem;
+}
+
+.bar.horizontal .fullscreen-state {
+  margin-left: 0.35rem;
+}
+
+.bar.vertical .window-icon {
+  margin-bottom: 0.35rem;
+}
+
+.bar.vertical .fullscreen-state {
+  margin-top: 0.35rem;
 }
 
 // Subtle vertical dividers, used only between the left island's sub-groups.
