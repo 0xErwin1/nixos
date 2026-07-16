@@ -60,23 +60,26 @@ function watchVoxtype(): void {
 
 watchVoxtype();
 
-// Elapsed recording time: capture a monotonic stamp when the state enters
-// "recording" and clear it when it leaves, then format M:SS on a 1s poll.
-let recordingStart = 0;
+// Elapsed time for the current phase: reset the monotonic stamp on each entry
+// into "recording" or "transcribing", then format M:SS on a 1s poll. voxtype
+// exposes no transcription-progress percentage, so the ticking transcribe timer
+// is the honest signal for "how long is it taking / did it get stuck".
+let phaseStart = 0;
 
 voxState.subscribe(() => {
-  if (voxState.get() === "recording") {
-    if (recordingStart === 0) recordingStart = GLib.get_monotonic_time();
+  const state = voxState.get();
+  if (state === "recording" || state === "transcribing") {
+    phaseStart = GLib.get_monotonic_time();
   } else {
-    recordingStart = 0;
+    phaseStart = 0;
   }
 });
 
 const elapsed = createPoll("0:00", 1000, () => {
-  if (recordingStart === 0) return "0:00";
+  if (phaseStart === 0) return "0:00";
 
   const seconds = Math.floor(
-    (GLib.get_monotonic_time() - recordingStart) / 1_000_000,
+    (GLib.get_monotonic_time() - phaseStart) / 1_000_000,
   );
   const minutes = Math.floor(seconds / 60);
   const rest = seconds % 60;

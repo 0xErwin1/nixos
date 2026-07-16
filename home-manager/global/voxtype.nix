@@ -164,6 +164,13 @@ in
       Service = {
         ExecStart = "${voxtype-gpu}/bin/voxtype daemon";
         Restart = "on-failure";
+
+        # Bias CPU toward the daemon under contention so the CPU-bound VAD step
+        # (which runs before the GPU transcription and is the only part that
+        # collapses under load) is not starved to a crawl by a parallel build.
+        # Default weight is 100; this is a proportional share, not a guarantee —
+        # a build that saturates every core can still slow VAD, just far less.
+        CPUWeight = 300;
       };
 
       Install.WantedBy = [ "graphical-session.target" ];
