@@ -54,15 +54,18 @@ let
     '';
 
     # Runtime CLIs the bar shells out to: brightnessctl (brightness widget, no
-    # Astal service) and pactl (bluetooth A2DP/HFP profile switching — wpctl does
+    # Astal service), pactl (bluetooth A2DP/HFP profile switching — wpctl does
     # not cleanly enumerate bluez card profiles, and pactl is otherwise absent on
-    # this host).
+    # this host), curl (Open-Meteo weather + geocoding) and khal (calendar
+    # events for the calendar panel).
     preFixup = ''
       gappsWrapperArgs+=(
         --prefix PATH : ${
           pkgs.lib.makeBinPath [
             pkgs.brightnessctl
             pkgs.pulseaudio
+            pkgs.curl
+            pkgs.khal
           ]
         }
       )

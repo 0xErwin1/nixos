@@ -91,3 +91,33 @@ export function brightnessGlyph(percent: number): string {
   if (percent >= 1) return "\u{f00de}";
   return "\u{f00e1}";
 }
+
+// Weather (WMO weather codes → MDI weather glyphs). Day/night variants are
+// chosen for clear/partly-cloudy since those read very differently at night.
+export const WIND_GLYPH = "\u{f059d}"; // weather-windy
+export const HUMIDITY_GLYPH = "\u{f058e}"; // water-percent
+export const RAIN_GLYPH = "\u{f0597}"; // weather-rainy
+export const FEELS_GLYPH = "\u{f050f}"; // thermometer
+
+const WMO_PARTLY_CLOUDY = new Set([1, 2]);
+const WMO_FOG = new Set([45, 48]);
+const WMO_RAINY = new Set([51, 53, 55, 56, 57, 61, 63, 80, 81]);
+const WMO_POURING = new Set([65, 66, 67, 82]);
+const WMO_SNOW = new Set([71, 73, 75, 77, 85, 86]);
+const WMO_THUNDER = new Set([95, 96, 99]);
+
+export function weatherGlyph(code: number, isNight: boolean): string {
+  if (WMO_THUNDER.has(code)) return "\u{f067e}"; // weather-lightning-rainy
+  if (WMO_SNOW.has(code)) return "\u{f0598}"; // weather-snowy
+  if (WMO_POURING.has(code)) return "\u{f0596}"; // weather-pouring
+  if (WMO_RAINY.has(code)) return "\u{f0597}"; // weather-rainy
+  if (WMO_FOG.has(code)) return "\u{f0591}"; // weather-fog
+  if (WMO_PARTLY_CLOUDY.has(code)) return isNight ? "\u{f0f31}" : "\u{f0595}";
+  if (code === 3) return "\u{f0590}"; // weather-cloudy
+
+  return isNight ? "\u{f0594}" : "\u{f0599}"; // clear: night / sunny
+}
+
+// Calendar navigation.
+export const CHEVRON_LEFT = "\u{f0141}";
+export const CHEVRON_RIGHT = "\u{f0142}";

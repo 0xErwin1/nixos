@@ -2,6 +2,7 @@ import app from "ags/gtk4/app";
 import style from "./style.scss";
 import Bar from "./Bar";
 import Dashboard from "./modules/dashboard";
+import Calendar from "./modules/calendar";
 import { NotificationPopups, NotificationCenter } from "./modules/notifications";
 
 app.start({
@@ -13,6 +14,7 @@ app.start({
     // Separate OVERLAY windows (hidden until opened / until a notification
     // arrives); instantiating them registers them with the application.
     Dashboard();
+    Calendar();
     NotificationPopups();
     NotificationCenter();
     return Bar();

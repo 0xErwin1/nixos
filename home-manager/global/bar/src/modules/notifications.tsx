@@ -120,6 +120,10 @@ function NotificationCard({
       ]}
       spacing={10}
     >
+      <Gtk.GestureClick
+        button={Gdk.BUTTON_SECONDARY}
+        onPressed={() => onClose()}
+      />
       {appIcon ? (
         <ImageFor src={appIcon} size={24} css="notif-app-icon" />
       ) : (

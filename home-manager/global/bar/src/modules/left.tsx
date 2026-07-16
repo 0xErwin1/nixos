@@ -109,18 +109,27 @@ function WsState({ vertical }: Props) {
 }
 
 export default function Left({ vertical }: Props) {
+  const orientation = vertical
+    ? Gtk.Orientation.VERTICAL
+    : Gtk.Orientation.HORIZONTAL;
+
+  // Two separate islands (self-spaced by their .island margins): the OS icon on
+  // its own, then the workspaces + ws-state (keeping their internal separator).
   return (
-    <box
-      cssClasses={["island", "island-left"]}
-      orientation={vertical ? Gtk.Orientation.VERTICAL : Gtk.Orientation.HORIZONTAL}
-      spacing={vertical ? 6 : 4}
-      valign={Gtk.Align.CENTER}
-    >
-      <OsIcon />
-      {!vertical && <Separator />}
-      <Workspaces vertical={vertical} />
-      {!vertical && <Separator />}
-      <WsState vertical={vertical} />
+    <box orientation={orientation} valign={Gtk.Align.CENTER}>
+      <box cssClasses={["island", "os-island"]} valign={Gtk.Align.CENTER}>
+        <OsIcon />
+      </box>
+      <box
+        cssClasses={["island", "workspaces-island"]}
+        orientation={orientation}
+        spacing={vertical ? 6 : 4}
+        valign={Gtk.Align.CENTER}
+      >
+        <Workspaces vertical={vertical} />
+        {!vertical && <Separator />}
+        <WsState vertical={vertical} />
+      </box>
     </box>
   );
 }

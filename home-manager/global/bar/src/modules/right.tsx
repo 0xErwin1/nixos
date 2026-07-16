@@ -13,6 +13,7 @@ import {
   MIC_UNMUTED,
 } from "../glyphs";
 import Voxtype from "./voxtype";
+import Tray from "./tray";
 import { WifiTrigger } from "./wifi";
 import { BluetoothTrigger } from "./bluetooth";
 import { NotificationBell } from "./notifications";
@@ -195,44 +196,6 @@ function Microphone() {
   );
 }
 
-function Clock({ vertical }: Props) {
-  if (vertical) {
-    const hh = createPoll(
-      "",
-      1000,
-      () => GLib.DateTime.new_now_local().format("%H")!,
-    );
-    const mm = createPoll(
-      "",
-      1000,
-      () => GLib.DateTime.new_now_local().format("%M")!,
-    );
-
-    return (
-      <box
-        cssClasses={["date", "date-vertical"]}
-        orientation={Gtk.Orientation.VERTICAL}
-        valign={Gtk.Align.CENTER}
-      >
-        <label cssClasses={["time"]} label={hh} valign={Gtk.Align.CENTER} />
-        <label cssClasses={["time"]} label={mm} valign={Gtk.Align.CENTER} />
-      </box>
-    );
-  }
-
-  const clock = createPoll(
-    "",
-    1000,
-    () => GLib.DateTime.new_now_local().format("%H:%M │ %b %d, %Y")!,
-  );
-
-  return (
-    <box cssClasses={["date"]} valign={Gtk.Align.CENTER}>
-      <label cssClasses={["time"]} label={clock} valign={Gtk.Align.CENTER} />
-    </box>
-  );
-}
-
 export default function Right({ vertical }: Props) {
   const orientation = vertical
     ? Gtk.Orientation.VERTICAL
@@ -263,13 +226,7 @@ export default function Right({ vertical }: Props) {
         <WifiTrigger />
         <NotificationBell />
       </box>
-      <box
-        cssClasses={["island", "clock-island"]}
-        orientation={orientation}
-        valign={Gtk.Align.CENTER}
-      >
-        <Clock vertical={vertical} />
-      </box>
+      <Tray vertical={vertical} />
     </box>
   );
 }

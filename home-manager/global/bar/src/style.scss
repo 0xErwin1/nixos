@@ -133,9 +133,13 @@ $font: "JetBrainsMono Nerd Font";
 // Uniform fixed width per icon glyph (centered) so the differing Nerd Font
 // side-bearings don't make gaps look uneven — every control icon sits on the
 // same grid. Covers wifi/bt/bell too (their labels also carry .control-icon).
+// Uniform width ≈ the widest control glyph's natural advance (mic/bt at 1.05rem
+// ≈ 1.25rem), so the narrower wifi/bell glyphs get padded up to match and every
+// icon is equal-width — without the overall spread a larger value (e.g. 1.5rem)
+// caused. Covers wifi/bt/bell too (their labels also carry .control-icon).
 .control-icon {
   font-size: 1.05rem;
-  min-width: 1.5rem;
+  min-width: 1.25rem;
 }
 
 .control-percent {
@@ -272,17 +276,41 @@ $font: "JetBrainsMono Nerd Font";
 }
 
 // Clock / date island
-.date {
+// Centered date island: time (with seconds) stacked over the muted date.
+.date-time {
   color: $foreground;
   font-weight: bold;
-}
-
-.date .time {
   font-size: 1rem;
 }
 
-.date-vertical .time {
+.date-date {
+  color: $foreground;
+  font-size: 0.68rem;
+  opacity: 0.7;
+  margin-top: -0.15rem;
+}
+
+.date-vertical .date-time {
   font-size: 1rem;
+}
+
+// Mini weather shown next to the date (glyph + current temperature).
+.date-clickable:hover {
+  background-color: #11161f;
+}
+
+.date-weather {
+  margin-left: 0.2rem;
+}
+
+.date-weather-icon {
+  color: $blue;
+  font-size: 1.15rem;
+}
+
+.date-weather-temp {
+  font-weight: bold;
+  font-size: 0.9rem;
 }
 
 // ── Connectivity dashboard (top-right dropdown OVERLAY window) ─────────────────
@@ -748,6 +776,323 @@ entry placeholder {
 .notif-action {
   padding: 0.35rem 0.6rem;
   font-weight: bold;
+}
+
+// ── Calendar + weather panel (opened from the center date island) ─────────────
+.calendar-window {
+  background: transparent;
+}
+
+.calendar-backdrop {
+  all: unset;
+  background-color: transparent;
+}
+
+// Drops from under the bar, horizontally centered: calendar on the left, a thin
+// divider, and the weather column on the right.
+.calendar-card {
+  background-color: $background;
+  color: $foreground;
+  border: 1px solid $grey;
+  border-radius: 18px;
+  padding: 1.4rem 1.6rem;
+  margin-top: 42px;
+  font-family: $font;
+}
+
+.cal-section {
+  min-width: 20rem;
+}
+
+.cal-header {
+  margin-bottom: 0.2rem;
+}
+
+.cal-title {
+  font-weight: bold;
+  font-size: 1.05rem;
+  letter-spacing: 0.06em;
+}
+
+.cal-nav {
+  all: unset;
+  padding: 0.2rem 0.5rem;
+  border-radius: 999px;
+  color: $foreground;
+  opacity: 0.75;
+  font-size: 1.05rem;
+}
+
+.cal-nav:hover {
+  background: rgba(255, 255, 255, 0.08);
+  opacity: 1;
+}
+
+.cal-weekday {
+  color: $foreground;
+  opacity: 0.5;
+  font-size: 0.8rem;
+  font-weight: bold;
+}
+
+// Day cells: square-ish, chrome stripped, with a small event dot beneath the
+// number. Days outside the current month are muted; today and the selected day
+// get accent treatments (today wins when they coincide).
+.cal-day {
+  all: unset;
+  min-width: 2rem;
+  min-height: 2.1rem;
+  border-radius: 10px;
+  color: $foreground;
+  font-size: 0.9rem;
+  transition: background-color 120ms ease;
+}
+
+.cal-day:hover {
+  background-color: $grey;
+}
+
+.cal-day-out {
+  opacity: 0.28;
+}
+
+.cal-day-selected {
+  background-color: $grey;
+}
+
+.cal-day-today {
+  background-color: $blue;
+  color: $background;
+  font-weight: bold;
+}
+
+.cal-day-dot {
+  min-width: 4px;
+  min-height: 4px;
+  margin-top: 1px;
+  border-radius: 999px;
+  background-color: $blue;
+}
+
+.cal-day-today .cal-day-dot {
+  background-color: $background;
+}
+
+.cal-events {
+  margin-top: 0.3rem;
+}
+
+.cal-events-title {
+  font-weight: bold;
+  font-size: 0.85rem;
+  opacity: 0.85;
+}
+
+.cal-event {
+  padding: 0.1rem 0;
+}
+
+.cal-event-time {
+  color: $blue;
+  font-size: 0.82rem;
+  font-weight: bold;
+  min-width: 3rem;
+}
+
+.cal-event-title {
+  font-size: 0.88rem;
+}
+
+.cal-events-empty {
+  font-size: 0.82rem;
+  opacity: 0.5;
+}
+
+.cal-divider {
+  background-color: $grey;
+  min-width: 1px;
+  margin: 0.4rem 0.2rem;
+}
+
+// Weather column.
+.wx-section {
+  min-width: 20rem;
+}
+
+.cal-close {
+  all: unset;
+  padding: 0.2rem 0.5rem;
+  border-radius: 999px;
+  color: $foreground;
+  opacity: 0.7;
+  font-size: 1.1rem;
+}
+
+.cal-close:hover {
+  background: rgba(255, 51, 51, 0.18);
+  color: $red;
+  opacity: 1;
+}
+
+.wx-location {
+  font-size: 0.9rem;
+  opacity: 0.7;
+  letter-spacing: 0.04em;
+}
+
+.wx-glyph {
+  color: $blue;
+  font-size: 3.4rem;
+}
+
+.wx-temp {
+  font-size: 3rem;
+  font-weight: bold;
+  line-height: 1;
+}
+
+.wx-desc {
+  font-size: 0.95rem;
+  opacity: 0.8;
+}
+
+.wx-metric-glyph {
+  color: $blue;
+  font-size: 1.3rem;
+}
+
+.wx-metric-value {
+  font-weight: bold;
+  font-size: 0.9rem;
+  margin-top: 0.1rem;
+}
+
+.wx-metric-label {
+  font-size: 0.72rem;
+  opacity: 0.6;
+}
+
+.wx-hours {
+  margin-top: 0.2rem;
+}
+
+// Fixed cell size so every hour cell is identical regardless of its glyph or
+// digits: min-width keeps the widths equal, and the glyph row's fixed height
+// (below) keeps the time/temp rows on the same baseline across cells.
+.wx-hour {
+  background-color: $grey;
+  border-radius: 12px;
+  padding: 0.5rem 0.4rem;
+  min-width: 3rem;
+}
+
+.wx-hour-time {
+  font-size: 0.75rem;
+  opacity: 0.7;
+}
+
+.wx-hour-glyph {
+  color: $blue;
+  font-size: 1.25rem;
+  min-height: 1.7rem;
+}
+
+.wx-hour-temp {
+  font-size: 0.82rem;
+  font-weight: bold;
+}
+
+.wx-days {
+  margin-top: 0.4rem;
+}
+
+.wx-day {
+  background-color: $grey;
+  border-radius: 12px;
+  padding: 0.5rem 0.3rem;
+  min-width: 3.6rem;
+}
+
+.wx-day-label {
+  font-size: 0.75rem;
+  opacity: 0.7;
+}
+
+.wx-day-glyph {
+  color: $blue;
+  font-size: 1.25rem;
+  min-height: 1.7rem;
+}
+
+.wx-day-temps {
+  font-size: 0.75rem;
+  font-weight: bold;
+}
+
+.wx-unavailable {
+  opacity: 0.5;
+  font-size: 0.9rem;
+}
+
+.wx-loading {
+  opacity: 0.7;
+}
+
+.wx-loading spinner {
+  min-width: 1.8rem;
+  min-height: 1.8rem;
+  color: $blue;
+}
+
+.wx-loading-label {
+  font-size: 0.85rem;
+  opacity: 0.8;
+}
+
+// Weather location picker.
+.wx-search-entry {
+  border-radius: 10px;
+  font-size: 0.8rem;
+  min-height: 1.6rem;
+  padding: 0.1rem 0.5rem;
+}
+
+.wx-search-auto {
+  all: unset;
+  background-color: $grey;
+  border-radius: 10px;
+  padding: 0.25rem 0.6rem;
+  font-size: 0.75rem;
+  opacity: 0.7;
+}
+
+.wx-search-auto:hover {
+  opacity: 1;
+  color: $blue;
+}
+
+.wx-search-active {
+  font-size: 0.75rem;
+  opacity: 0.6;
+}
+
+.wx-result {
+  all: unset;
+  border-radius: 8px;
+  padding: 0.3rem 0.5rem;
+  font-size: 0.8rem;
+  opacity: 0.85;
+}
+
+.wx-result:hover {
+  background-color: $grey;
+  color: $blue;
+  opacity: 1;
+}
+
+.wx-no-results {
+  font-size: 0.75rem;
+  opacity: 0.5;
 }
 
 // ── Control center ────────────────────────────────────────────────────────────

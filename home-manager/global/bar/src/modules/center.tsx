@@ -1,40 +1,91 @@
-import AstalTray from "gi://AstalTray";
-import { For, createBinding } from "ags";
+import GLib from "gi://GLib";
+import { With } from "ags";
 import { Gtk } from "ags/gtk4";
+import { createPoll } from "ags/time";
 
-const tray = AstalTray.get_default();
+import { weather, WeatherData } from "./weather";
+import { weatherGlyph } from "../glyphs";
+import { toggleCalendar } from "./dashboard-state";
 
-function initItem(button: Gtk.MenuButton, item: AstalTray.TrayItem) {
-  button.menuModel = item.menuModel;
-  button.insert_action_group("dbusmenu", item.actionGroup);
-  item.connect("notify::action-group", () => {
-    button.insert_action_group("dbusmenu", item.actionGroup);
-  });
+// Current temperature + condition glyph shown next to the date for an at-a-glance
+// read; the full forecast lives in the calendar panel this island opens.
+function MiniWeather() {
+  return (
+    <With value={weather}>
+      {(w: WeatherData | null) =>
+        w ? (
+          <box cssClasses={["date-weather"]} spacing={7} valign={Gtk.Align.CENTER}>
+            <label
+              cssClasses={["date-weather-icon"]}
+              label={weatherGlyph(w.code, w.isNight)}
+              valign={Gtk.Align.CENTER}
+            />
+            <label
+              cssClasses={["date-weather-temp"]}
+              label={`${w.temp}°`}
+              valign={Gtk.Align.CENTER}
+            />
+          </box>
+        ) : (
+          <box visible={false} />
+        )
+      }
+    </With>
+  );
 }
 
+// Centered date island: time (with seconds) stacked over the full date, with the
+// current weather beside it. Clicking the island opens the calendar + weather
+// panel. Horizontal: "HH:MM:SS" bold over "Weekday, Mon DD" muted. Vertical: HH
+// over MM (the narrow bar has no room for the full stacked date).
 export default function Center({ vertical }: { vertical: boolean }) {
-  const items = createBinding(tray, "items");
+  if (vertical) {
+    const hh = createPoll(
+      "",
+      1000,
+      () => GLib.DateTime.new_now_local().format("%H")!,
+    );
+    const mm = createPoll(
+      "",
+      1000,
+      () => GLib.DateTime.new_now_local().format("%M")!,
+    );
+
+    return (
+      <box
+        cssClasses={["island", "date-island", "date-vertical"]}
+        orientation={Gtk.Orientation.VERTICAL}
+        valign={Gtk.Align.CENTER}
+      >
+        <label cssClasses={["date-time"]} label={hh} valign={Gtk.Align.CENTER} />
+        <label cssClasses={["date-time"]} label={mm} valign={Gtk.Align.CENTER} />
+      </box>
+    );
+  }
+
+  const time = createPoll(
+    "",
+    1000,
+    () => GLib.DateTime.new_now_local().format("%H:%M:%S")!,
+  );
+  const date = createPoll(
+    "",
+    1000,
+    () => GLib.DateTime.new_now_local().format("%A, %b %d")!,
+  );
 
   return (
     <box
-      cssClasses={["island", "tray"]}
-      visible={items((list) => list.length > 0)}
-      orientation={vertical ? Gtk.Orientation.VERTICAL : Gtk.Orientation.HORIZONTAL}
-      spacing={vertical ? 4 : 5}
-      halign={Gtk.Align.CENTER}
+      cssClasses={["island", "date-island", "date-clickable"]}
+      spacing={10}
       valign={Gtk.Align.CENTER}
     >
-      <For each={items}>
-        {(item) => (
-          <menubutton
-            cssClasses={["tray-item"]}
-            valign={Gtk.Align.CENTER}
-            $={(self) => initItem(self, item)}
-          >
-            <image gicon={createBinding(item, "gicon")} />
-          </menubutton>
-        )}
-      </For>
+      <Gtk.GestureClick onPressed={() => toggleCalendar()} />
+      <box orientation={Gtk.Orientation.VERTICAL} valign={Gtk.Align.CENTER}>
+        <label cssClasses={["date-time"]} label={time} valign={Gtk.Align.CENTER} />
+        <label cssClasses={["date-date"]} label={date} valign={Gtk.Align.CENTER} />
+      </box>
+      <MiniWeather />
     </box>
   );
 }

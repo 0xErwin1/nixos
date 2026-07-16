@@ -15,7 +15,9 @@ const EDGE = (GLib.getenv("BAR_EDGE") || "top").toLowerCase();
 const VERTICAL = EDGE === "left" || EDGE === "right";
 
 const EDGE_GAP = 4;
-const LONG_AXIS_FRACTION = 0.025;
+// Half the previous inset so the bar spans more width; marginLeft == marginRight
+// keeps the left OS island and the right tray at a symmetric inset.
+const LONG_AXIS_FRACTION = 0.0125;
 
 function anchorFor(edge: string): number {
   const { TOP, BOTTOM, LEFT, RIGHT } = Astal.WindowAnchor;
