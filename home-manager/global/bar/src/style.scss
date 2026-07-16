@@ -130,8 +130,12 @@ $font: "JetBrainsMono Nerd Font";
   padding: 0.1rem 0.3rem;
 }
 
+// Uniform fixed width per icon glyph (centered) so the differing Nerd Font
+// side-bearings don't make gaps look uneven — every control icon sits on the
+// same grid. Covers wifi/bt/bell too (their labels also carry .control-icon).
 .control-icon {
   font-size: 1.05rem;
+  min-width: 1.5rem;
 }
 
 .control-percent {
@@ -453,12 +457,7 @@ entry placeholder {
 }
 
 // Focus card: the prominent central status block on each tab.
-.focus-card {
-  background-color: $grey;
-  border-radius: 14px;
-  padding: 1.2rem;
-}
-
+// The focus card is a .cc-box (lifted $grey section) — no bespoke bg here.
 .focus-glyph {
   font-size: 2.6rem;
 }
@@ -528,23 +527,32 @@ entry placeholder {
   opacity: 0.6;
 }
 
-.list-row {
-  border-radius: 10px;
-}
-
-.list-row:hover {
-  background: rgba(255, 255, 255, 0.05);
-}
-
-.bt-row-main,
+// Inset rows: darker $background so they read as cards inside the $grey list
+// .cc-box (same treatment as notification cards in the control center).
 .wifi-row {
   all: unset;
   padding: 0.45rem 0.5rem;
   border-radius: 10px;
+  background-color: $background;
 }
 
-.bt-row-main:hover {
-  background: rgba(255, 255, 255, 0.06);
+.wifi-row:hover {
+  background-color: $grey;
+}
+
+.bt-row {
+  background-color: $background;
+  border-radius: 10px;
+}
+
+.bt-row:hover {
+  background-color: $grey;
+}
+
+.bt-row-main {
+  all: unset;
+  padding: 0.45rem 0.5rem;
+  border-radius: 10px;
 }
 
 .wifi-signal {

@@ -20,7 +20,13 @@ import {
   WIFI_REFRESH,
   btStateGlyph,
 } from "../glyphs";
-import { openDashboard, dashboardVisible } from "./dashboard-state";
+import {
+  openDashboard,
+  closeDashboard,
+  dashboardVisible,
+  activeTab,
+} from "./dashboard-state";
+import { closeCenter } from "./notify-state";
 
 const bluetooth = AstalBluetooth.get_default();
 
@@ -353,7 +359,7 @@ function BluetoothTabInner({ adapter }: { adapter: AstalBluetooth.Adapter }) {
       spacing={12}
     >
       <box
-        cssClasses={["focus-card"]}
+        cssClasses={["cc-box", "focus-card"]}
         orientation={Gtk.Orientation.VERTICAL}
         hexpand
         halign={Gtk.Align.FILL}
@@ -378,38 +384,44 @@ function BluetoothTabInner({ adapter }: { adapter: AstalBluetooth.Adapter }) {
         </With>
       </box>
 
-      <box cssClasses={["actions-row"]} halign={Gtk.Align.CENTER} spacing={14}>
-        <box cssClasses={["action-toggle"]} spacing={8}>
-          <label label="Bluetooth" />
-          <switch
-            active={powered}
-            valign={Gtk.Align.CENTER}
-            onNotifyActive={(self) => {
-              if (self.active !== bluetooth.isPowered) bluetooth.toggle();
-            }}
+      <box cssClasses={["cc-box"]}>
+        <box cssClasses={["actions-row"]} halign={Gtk.Align.CENTER} spacing={14}>
+          <box cssClasses={["action-toggle"]} spacing={8}>
+            <label label="Bluetooth" />
+            <switch
+              active={powered}
+              valign={Gtk.Align.CENTER}
+              onNotifyActive={(self) => {
+                if (self.active !== bluetooth.isPowered) bluetooth.toggle();
+              }}
+            />
+          </box>
+          <button
+            cssClasses={["dash-btn"]}
+            sensitive={powered}
+            onClicked={() =>
+              adapter.discovering
+                ? adapter.stop_discovery()
+                : adapter.start_discovery()
+            }
+          >
+            <box spacing={6}>
+              <label label={WIFI_REFRESH} />
+              <label label="Scan" />
+            </box>
+          </button>
+          <label
+            cssClasses={["scan-indicator"]}
+            label={discovering((d) => (d ? "Scanning…" : ""))}
           />
         </box>
-        <button
-          cssClasses={["dash-btn"]}
-          sensitive={powered}
-          onClicked={() =>
-            adapter.discovering
-              ? adapter.stop_discovery()
-              : adapter.start_discovery()
-          }
-        >
-          <box spacing={6}>
-            <label label={WIFI_REFRESH} />
-            <label label="Scan" />
-          </box>
-        </button>
-        <label
-          cssClasses={["scan-indicator"]}
-          label={discovering((d) => (d ? "Scanning…" : ""))}
-        />
       </box>
 
-      <box cssClasses={["list-area"]} orientation={Gtk.Orientation.VERTICAL} vexpand>
+      <box
+        cssClasses={["cc-box", "list-area"]}
+        orientation={Gtk.Orientation.VERTICAL}
+        vexpand
+      >
         <box
           vexpand
           halign={Gtk.Align.CENTER}
@@ -425,20 +437,20 @@ function BluetoothTabInner({ adapter }: { adapter: AstalBluetooth.Adapter }) {
           vscrollbarPolicy={Gtk.PolicyType.AUTOMATIC}
           visible={emptyText((t) => !t)}
         >
-          <box cssClasses={["bt-list"]} orientation={Gtk.Orientation.VERTICAL}>
+          <box cssClasses={["bt-list"]} orientation={Gtk.Orientation.VERTICAL} spacing={6}>
             <For each={devices}>
               {(device) => <DeviceRow device={device} setStatus={setStatus} />}
             </For>
           </box>
         </scrolledwindow>
-      </box>
 
-      <label
-        cssClasses={["statusline"]}
-        xalign={0}
-        visible={status((s) => !!s)}
-        label={status}
-      />
+        <label
+          cssClasses={["statusline"]}
+          xalign={0}
+          visible={status((s) => !!s)}
+          label={status}
+        />
+      </box>
     </box>
   );
 }
@@ -478,7 +490,14 @@ export function BluetoothTrigger() {
       cssClasses={["control-item", "bluetooth", "dash-trigger"]}
       tooltipText={tooltip}
       valign={Gtk.Align.CENTER}
-      onClicked={() => openDashboard("bluetooth")}
+      onClicked={() => {
+        if (dashboardVisible.get() && activeTab.get() === "bluetooth") {
+          closeDashboard();
+        } else {
+          closeCenter();
+          openDashboard("bluetooth");
+        }
+      }}
     >
       <label cssClasses={iconClasses} label={glyph} valign={Gtk.Align.CENTER} />
     </button>

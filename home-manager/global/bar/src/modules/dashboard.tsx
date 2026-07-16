@@ -51,7 +51,7 @@ export default function Dashboard() {
       cssClasses={["dashboard-window"]}
       anchor={TOP | BOTTOM | LEFT | RIGHT}
       exclusivity={Astal.Exclusivity.IGNORE}
-      layer={Astal.Layer.OVERLAY}
+      layer={Astal.Layer.TOP}
       keymode={Astal.Keymode.ON_DEMAND}
       application={app}
     >

@@ -22,10 +22,6 @@ export function closeCenter(): void {
   setCenterVisible(false);
 }
 
-export function toggleCenter(): void {
-  setCenterVisible(!centerVisible.get());
-}
-
 const POPUP_FALLBACK_MS = 5000;
 const timers = new Map<number, number>();
 

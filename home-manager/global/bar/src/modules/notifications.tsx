@@ -4,7 +4,14 @@ import AstalNotifd from "gi://AstalNotifd";
 import AstalWp from "gi://AstalWp";
 import Pango from "gi://Pango";
 import { Astal, Gdk, Gtk } from "ags/gtk4";
-import { For, With, createBinding, createComputed } from "ags";
+import {
+  For,
+  With,
+  createBinding,
+  createComputed,
+  createState,
+  onCleanup,
+} from "ags";
 import { createPoll } from "ags/time";
 import { exec, execAsync } from "ags/process";
 
@@ -25,10 +32,11 @@ import {
   notifd,
   popupIds,
   centerVisible,
+  openCenter,
   closeCenter,
-  toggleCenter,
   dismissPopup,
 } from "./notify-state";
+import { closeDashboard } from "./dashboard-state";
 
 // ── Notification card ─────────────────────────────────────────────────────────
 function urgencyClass(urgency: AstalNotifd.Urgency): string {
@@ -200,7 +208,7 @@ export function NotificationPopups() {
       cssClasses={["notif-popups-window"]}
       anchor={TOP | RIGHT}
       exclusivity={Astal.Exclusivity.IGNORE}
-      layer={Astal.Layer.OVERLAY}
+      layer={Astal.Layer.TOP}
       marginTop={42}
       marginRight={8}
       visible={popupIds((ids) => ids.length > 0)}
@@ -225,6 +233,11 @@ function SpeakerSlider({ speaker }: { speaker: AstalWp.Endpoint }) {
     volumeGlyph(Math.round(v * 100), m),
   );
 
+  // Locally displayed value so the percent tracks the drag instantly (the
+  // AstalWp binding updates a beat later); external changes also feed it.
+  const [display, setDisplay] = createState(speaker.volume);
+  onCleanup(volume.subscribe(() => setDisplay(speaker.volume)));
+
   return (
     <box cssClasses={["cc-slider-row"]} spacing={10}>
       <label cssClasses={["cc-slider-icon", "volume"]} label={glyph} valign={Gtk.Align.CENTER} />
@@ -235,12 +248,13 @@ function SpeakerSlider({ speaker }: { speaker: AstalWp.Endpoint }) {
         value={volume}
         onChangeValue={(self) => {
           speaker.volume = self.value;
+          setDisplay(self.value);
         }}
         valign={Gtk.Align.CENTER}
       />
       <label
         cssClasses={["cc-slider-pct"]}
-        label={volume((v) => `${Math.round(v * 100)}%`)}
+        label={display((v) => `${Math.round(v * 100)}%`)}
         valign={Gtk.Align.CENTER}
       />
     </box>
@@ -277,10 +291,17 @@ function BrightnessSlider() {
     }
   });
 
+  // Locally displayed value so the percent tracks the drag instantly (the label
+  // was otherwise bound to the 2s poll and lagged); the poll still feeds it for
+  // external changes (brightness keys).
+  const [display, setDisplay] = createState(0);
+  onCleanup(brightness.subscribe(() => setDisplay(brightness.get())));
+
   // Only fire brightnessctl when the integer percent actually changes, so a drag
   // does not spawn a process per pixel.
   let lastPercent = -1;
   const setBrightness = (value: number) => {
+    setDisplay(value);
     const percent = Math.round(value * 100);
     if (percent === lastPercent) return;
     lastPercent = percent;
@@ -291,7 +312,7 @@ function BrightnessSlider() {
     <box cssClasses={["cc-slider-row"]} spacing={10} visible={hasBacklight}>
       <label
         cssClasses={["cc-slider-icon", "brightness"]}
-        label={brightness((v) => brightnessGlyph(Math.round(v * 100)))}
+        label={display((v) => brightnessGlyph(Math.round(v * 100)))}
         valign={Gtk.Align.CENTER}
       />
       <slider
@@ -304,7 +325,7 @@ function BrightnessSlider() {
       />
       <label
         cssClasses={["cc-slider-pct"]}
-        label={brightness((v) => `${Math.round(v * 100)}%`)}
+        label={display((v) => `${Math.round(v * 100)}%`)}
         valign={Gtk.Align.CENTER}
       />
     </box>
@@ -365,7 +386,7 @@ export function NotificationCenter() {
       cssClasses={["dashboard-window"]}
       anchor={TOP | BOTTOM | LEFT | RIGHT}
       exclusivity={Astal.Exclusivity.IGNORE}
-      layer={Astal.Layer.OVERLAY}
+      layer={Astal.Layer.TOP}
       keymode={Astal.Keymode.ON_DEMAND}
       application={app}
     >
@@ -496,7 +517,16 @@ export function NotificationBell() {
       cssClasses={["control-item", "bell", "dash-trigger"]}
       tooltipText={tooltip}
       valign={Gtk.Align.CENTER}
-      onClicked={toggleCenter}
+      onClicked={() => {
+        // Toggle the center if it is open; otherwise switch to it (closing the
+        // connectivity dashboard if that was open).
+        if (centerVisible.get()) {
+          closeCenter();
+        } else {
+          closeDashboard();
+          openCenter();
+        }
+      }}
     >
       <overlay>
         <label cssClasses={iconClasses} label={glyph} valign={Gtk.Align.CENTER} />

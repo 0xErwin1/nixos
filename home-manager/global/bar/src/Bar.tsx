@@ -50,6 +50,11 @@ function Bar({ gdkmonitor }: { gdkmonitor: Gdk.Monitor }) {
       cssClasses={["bar-window", VERTICAL ? "vertical" : "horizontal"]}
       gdkmonitor={gdkmonitor}
       exclusivity={Astal.Exclusivity.EXCLUSIVE}
+      // OVERLAY keeps the bar above the dashboard/center panels (which are on
+      // TOP) so its trigger icons stay clickable while a panel is open — that is
+      // what lets clicking another icon switch panels instead of hitting the
+      // panel's full-screen backdrop.
+      layer={Astal.Layer.OVERLAY}
       anchor={anchorFor(EDGE)}
       marginTop={VERTICAL ? longMargin : EDGE === "top" ? EDGE_GAP : 0}
       marginBottom={VERTICAL ? longMargin : EDGE === "bottom" ? EDGE_GAP : 0}
