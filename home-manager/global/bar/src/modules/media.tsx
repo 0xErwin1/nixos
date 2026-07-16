@@ -55,9 +55,22 @@ function measureIslandX(island: Gtk.Widget): number {
   }
 }
 
+const LIVE_LENGTH_THRESHOLD_SECONDS = 7 * 24 * 60 * 60;
+
+function isLiveLength(seconds: number): boolean {
+  return Number.isFinite(seconds) && seconds > LIVE_LENGTH_THRESHOLD_SECONDS;
+}
+
 function fmtTime(seconds: number): string {
   const s = Number.isFinite(seconds) && seconds > 0 ? Math.floor(seconds) : 0;
-  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
+  const minutes = Math.floor(s / 60);
+  const secondsPart = String(s % 60).padStart(2, "0");
+
+  if (s < 60 * 60) return `${minutes}:${secondsPart}`;
+
+  const hours = Math.floor(s / (60 * 60));
+  const minutesPart = String(minutes % 60).padStart(2, "0");
+  return `${hours}:${minutesPart}:${secondsPart}`;
 }
 
 // Browsers keep an MPRIS player registered after playback ends (stopped, with
@@ -183,7 +196,11 @@ function MediaIsland({
 
   const label = createComputed([title, artist], trackLabel);
   const time = createComputed([position, length], (p, l) =>
-    l > 0 ? `${fmtTime(p)} / ${fmtTime(l)}` : fmtTime(p),
+    isLiveLength(l)
+      ? "LIVE"
+      : l > 0
+        ? `${fmtTime(p)} / ${fmtTime(l)}`
+        : fmtTime(p),
   );
 
   const openPanel = () => {
@@ -355,37 +372,52 @@ function SeekBar({ player }: { player: AstalMpris.Player }) {
   onCleanup(position.subscribe(() => setDisplay(position.get())));
 
   return (
-    <box
-      cssClasses={["media-seek"]}
-      orientation={Gtk.Orientation.VERTICAL}
-      spacing={4}
-      visible={length((l) => l > 0)}
-    >
-      <slider
-        cssClasses={["media-slider"]}
-        hexpand
-        min={0}
-        max={length}
-        value={display}
-        onChangeValue={(self: Gtk.Scale) => {
-          player.position = self.value;
-          setDisplay(self.value);
-        }}
-      />
-      <box>
-        <label
-          cssClasses={["media-seek-time"]}
-          label={display((p) => fmtTime(p))}
-          halign={Gtk.Align.START}
-          hexpand
-        />
-        <label
-          cssClasses={["media-seek-time"]}
-          label={length((l) => fmtTime(l))}
-          halign={Gtk.Align.END}
-        />
-      </box>
-    </box>
+    <With value={length}>
+      {(l: number) =>
+        isLiveLength(l) ? (
+          <box cssClasses={["media-seek"]}>
+            <label
+              cssClasses={["media-seek-time"]}
+              label="LIVE"
+              halign={Gtk.Align.START}
+            />
+          </box>
+        ) : l > 0 ? (
+          <box
+            cssClasses={["media-seek"]}
+            orientation={Gtk.Orientation.VERTICAL}
+            spacing={4}
+          >
+            <slider
+              cssClasses={["media-slider"]}
+              hexpand
+              min={0}
+              max={l}
+              value={display}
+              onChangeValue={(self: Gtk.Scale) => {
+                player.position = self.value;
+                setDisplay(self.value);
+              }}
+            />
+            <box>
+              <label
+                cssClasses={["media-seek-time"]}
+                label={display((p) => fmtTime(p))}
+                halign={Gtk.Align.START}
+                hexpand
+              />
+              <label
+                cssClasses={["media-seek-time"]}
+                label={fmtTime(l)}
+                halign={Gtk.Align.END}
+              />
+            </box>
+          </box>
+        ) : (
+          <box visible={false} />
+        )
+      }
+    </With>
   );
 }
 
