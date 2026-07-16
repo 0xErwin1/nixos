@@ -171,6 +171,8 @@ function NotificationCard({
                 xalign={0}
                 wrap
                 maxWidthChars={44}
+                lines={variant === "popup" ? 5 : 10}
+                ellipsize={Pango.EllipsizeMode.END}
               />
             ) : (
               <box visible={false} />

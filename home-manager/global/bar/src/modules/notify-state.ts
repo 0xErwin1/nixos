@@ -6,6 +6,13 @@ import { createState } from "ags";
 // (only if free — dunst must be gone), making the bar the notification server.
 export const notifd = AstalNotifd.get_default();
 
+// Keep notifications in the center until the user dismisses them. By default the
+// daemon closes each one when its expire timeout elapses, which also drops it
+// from notifd.notifications (the center's source) — so notifications appeared to
+// vanish. The transient popup is still hidden on its own timer below; ignoring
+// the timeout only affects the stored history.
+notifd.ignoreTimeout = true;
+
 // Transient popup ids (a subset of notifd.notifications shown as popups until
 // they time out / are dismissed). The notification center reads the full
 // notifd.notifications list instead, so dismissing a popup keeps it in history.
