@@ -106,6 +106,7 @@ Upstream is the source of truth for structure, asset surface, and content. Local
 | User-authored skills not present upstream: `obsidian`, `dbflux-release`, `find-skills`, `upstream-ai-sync` | canonical `ai/skills` + every client mirror |
 | User-authored agents: `bug-hunter`, `pr-reviewer` (claude/opencode) | `claude/agents/`, `opencode/agent/` |
 | `author: iperez` in skill frontmatter | every skill SKILL.md |
+| Anti-thrash guardrails: **Precision gate, Adversarial verification, Refutation protocol, Severity floor, Convergence budget** in the Review Execution Contract, plus the **SDD Gate Convergence -- Anti-Thrash** section | `shared/ORCHESTRATOR.md`, `opencode/ORCHESTRATOR.md`, `codex/sdd-orchestrator.md`, `claude/sdd-orchestrator.md`, `claude/skills/_shared/sdd-orchestrator-workflow.md`. These bound the SDD phase gate so a pedantic verifier cannot loop design->verify->design on nits. They MATCH gentle-ai upstream; if a sync ever drops or weakens them, KEEP local and restore from upstream. NEVER strip on sync. |
 
 ## Current gentle-ai (v2.0) awareness — runtime-only caveat
 

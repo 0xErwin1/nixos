@@ -101,6 +101,15 @@ In **Automatic** mode the orchestrator is the gatekeeper between phases. The gat
 
 The gatekeeper runs in addition to the Review Workload Guard and the delegation rules; it never relaxes them and never auto-marks anything reviewed in engram.
 
+### SDD Gate Convergence -- Anti-Thrash (LOCAL POLICY, load-bearing)
+
+This binds the Precision gate, Severity floor, and Convergence budget from the Review Execution Contract to the SDD phase gatekeeper and the batched apply-verify cycle. It is the guardrail that stops a pedantic verifier from resetting the pipeline on nits -- the exact failure where a bounded feature with an existing design expands into an all-day loop of design -> verify -> design. Keep it aligned with the gentle-ai Review Execution Contract and NEVER strip it on upstream sync.
+
+- **Severity floor on phase gates.** A `sdd-verify` or gatekeeper finding resets to an upstream planning phase (design, spec, propose) or re-runs apply ONLY when it is a genuine BLOCKER/CRITICAL contract violation defensible with concrete evidence. WARNING/SUGGESTION/nit findings (a naming choice, a single HTTP status code, a phrasing preference, an unproven edge case) are recorded as `info` and NEVER trigger a phase re-run or upstream reset -- carry them as non-blocking follow-ups.
+- **Convergence budget on phase gates.** At most 2 correction rounds for the same phase or the same contract issue. After round 2, STOP the chain and surface the open item to the user with both attempts and a recommended decision -- do not launch a third design/verify pass. A user "continua"/"dale" resumes the pending work; it is not standing authorization to re-open a settled contract.
+- **No re-litigation of frozen decisions.** Once a contract decision (an HTTP status, an ID-allocation strategy, an error shape) is frozen by a passed gate or by the user, a later gate MUST NOT re-open it. If new evidence genuinely invalidates a frozen decision, surface it explicitly as a scope change for the user to decide -- never silently loop back through design.
+- **Executors resolve trivial gaps locally.** "Do not invent APIs" bans inventing NEW public contracts, not naming an obvious internal detail. When an apply executor hits a bounded, low-risk local decision (a route name, a DTO field, an internal helper) that the design implies but does not spell out, it makes the reasonable choice, records it in `apply-progress`, and continues -- it does NOT bounce the whole work item back to design. Reserve the bounce for a genuine missing public contract.
+
 ### Artifact Store Mode
 
 When the user invokes `/sdd-new`, `/sdd-ff`, or `/sdd-continue` for the first time in a session, ALSO ASK which artifact store they want for this change:
@@ -356,7 +365,7 @@ Long or many-step changes are risky to apply in one shot: a single `sdd-apply` a
 1. Launch `sdd-apply` scoped to that batch only. Every batch after the first is a continuation batch, so the **Apply-Progress Continuity** protocol applies (read-merge-write the apply-progress).
 2. Run `sdd-verify` scoped to that batch: validate the batch's implemented tasks against the relevant spec/design slice and the integrity of the work so far. Tasks belonging to later batches are `pending`, not failures.
 3. Report a concise checkpoint to the user: what the batch did, the verify verdict, and what the next batch will do.
-4. If the batch verify reports a CRITICAL issue, STOP and remediate that batch before starting the next. Do not let a broken batch compound into later ones.
+4. If the batch verify reports a genuine BLOCKER/CRITICAL issue, STOP and remediate that batch before starting the next -- remediation obeys **SDD Gate Convergence**: it stays within that batch's apply scope, re-runs at most twice, and NEVER resets to an upstream planning phase; a WARNING/nit is logged and does not stop the cycle, and a genuine cross-batch design gap discovered mid-apply is surfaced to the user as a scope decision rather than silently looped back through design. Do not let a broken batch compound into later ones.
 
 Proceed to the next batch only after the current one's verify and report are done. After the last batch, run a final consolidated verify; archive only once all batches are complete and the **Task Completion Gate** passes.
 

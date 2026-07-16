@@ -121,6 +121,8 @@ If multiple rows match, run the narrow set that covers the risk. Example: shell 
 
 **Sweep budget.** Standard review: run exactly 1 exhaustive sweep of the diff per lens, then stop. Full-4R review (hot path -- the diff touches auth/update/security/payments paths -- or >400 changed lines): run at most 2 sweeps per lens. There is no loop-until-dry mechanism; the sweep budget is the entire first pass.
 
+**Precision gate.** Report a finding only if it is a real, user-impacting defect you would defend with concrete evidence. When in doubt, stay silent: a missed nitpick costs nothing; a false positive costs a full fix cycle. Style and preference findings are banned unless they obscure a defect.
+
 **Findings ledger.** Emit a findings ledger with this schema for every entry:
 
 | Field | Values |
@@ -134,6 +136,14 @@ If multiple rows match, run the narrow set that covers the risk. Example: shell 
 
 If the first pass finds nothing, persist an empty ledger record rather than skip persistence.
 
+**Adversarial verification.** Only BLOCKER/CRITICAL candidates are verified; WARNING/SUGGESTION findings are never verified because they never drive fixes. A single refuter pass (via the `reviewer` agent) evaluates the complete merged list of BLOCKER/CRITICAL candidates and returns one verdict per finding; for hot-path/full-4R reviews use at most three refuter passes through distinct lenses (correctness, exploitability/impact, reproducibility) and refute a finding only on a 2-of-3 majority. Any malformed or missing verdict defaults to `stands`.
+
+**Refutation protocol.** Refutation runs once, after merging lens ledgers and before any fix work, over BLOCKER/CRITICAL candidates only. The task ceiling is structural, not per-finding: 1 refuter task for a standard review or 3 total for full-4R, whether the list has 2 candidates or 20 -- NEVER spawn one refuter task per candidate. Judgment Day is the exception: its two-judge convergence already satisfies adversarial verification.
+
+**Severity floor.** Only BLOCKER/CRITICAL findings that survive adversarial verification enter the fix -> re-review loop. WARNING/SUGGESTION findings are reported once with status `info`, are never re-reviewed, and never block. A WARNING is never `open`.
+
+**Convergence budget.** Maximum 2 fix rounds per review. One fix round = the orchestrator (directly or via a single writer sub-agent) applies fixes for all open verified BLOCKER/CRITICAL findings, then a scoped re-review verifies the fix diff against the ledger. Anything still open after round 2 is reported to the user as open -- the loop never extends.
+
 **Ledger persistence honors the artifact store.**
 - `openspec`: write `openspec/changes/{change-name}/review-ledger.md`.
 - `engram`: upsert topic `sdd/{change-name}/review-ledger` (ad-hoc judgment-day without a change: `review/{target-slug}/ledger`, where `target-slug` = `pr-{number}` when reviewing a PR, else the current branch name kebab-cased, else a kebab-case slug of the user-stated review target).
@@ -142,6 +152,15 @@ If the first pass finds nothing, persist an empty ledger record rather than skip
 **Frozen correction and validation.** Freeze the original corroborated BLOCKER/CRITICAL IDs, initial path set, acceptance criteria, and required regression evidence before correction. Correction may address only those IDs and paths. Targeted validation receives the frozen ledger and fix diff, verifies those IDs, the original criteria/tests, and correction regression evidence, and does not conduct general defect discovery or reopen unrelated defects. New observations are non-blocking follow-ups; a failed original criterion escalates the existing review.
 
 **Execution mode.** Inline mode unless dedicated review-*/jd-* subagents are configured in this file: run each lens sequentially inside your own orchestrator context and maintain the merged ledger directly.
+
+#### SDD Gate Convergence -- Anti-Thrash (LOCAL POLICY, load-bearing)
+
+This binds the Precision gate, Severity floor, and Convergence budget above to the SDD phase gatekeeper and any batched apply-verify cycle a per-client copy defines. It is the guardrail that stops a pedantic verifier from resetting the pipeline on nits -- the exact failure where a bounded feature with an existing design expands into an all-day loop of design -> verify -> design. Keep it aligned with the gentle-ai Review Execution Contract and NEVER strip it on upstream sync.
+
+- **Severity floor on phase gates.** A `sdd-verify` or gatekeeper finding resets to an upstream planning phase (design, spec, propose) or re-runs apply ONLY when it is a genuine BLOCKER/CRITICAL contract violation defensible with concrete evidence. WARNING/SUGGESTION/nit findings (a naming choice, a single HTTP status code, a phrasing preference, an unproven edge case) are recorded as `info` and NEVER trigger a phase re-run or upstream reset -- carry them as non-blocking follow-ups.
+- **Convergence budget on phase gates.** At most 2 correction rounds for the same phase or the same contract issue. After round 2, STOP the chain and surface the open item to the user with both attempts and a recommended decision -- do not launch a third design/verify pass. A user "continua"/"dale" resumes the pending work; it is not standing authorization to re-open a settled contract.
+- **No re-litigation of frozen decisions.** Once a contract decision (an HTTP status, an ID-allocation strategy, an error shape) is frozen by a passed gate or by the user, a later gate MUST NOT re-open it. If new evidence genuinely invalidates a frozen decision, surface it explicitly as a scope change for the user to decide -- never silently loop back through design.
+- **Executors resolve trivial gaps locally.** "Do not invent APIs" bans inventing NEW public contracts, not naming an obvious internal detail. When an apply executor hits a bounded, low-risk local decision (a route name, a DTO field, an internal helper) that the design implies but does not spell out, it makes the reasonable choice, records it in `apply-progress`, and continues -- it does NOT bounce the whole work item back to design. Reserve the bounce for a genuine missing public contract.
 
 #### Cost and Context Balance
 

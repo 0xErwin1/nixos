@@ -70,7 +70,7 @@
     },
     "sdd-archive": {
       // "model": "minimax/MiniMax-M2.7",
-      "model": "openai/gpt-5.6-terra",
+      "model": "openai/gpt-5.6-luna",
       "description": "Archive completed change artifacts",
       "hidden": true,
       "mode": "subagent",
@@ -110,7 +110,7 @@
     "sdd-explore": {
      // "model": "minimax/MiniMax-M2.7",
       // "model": "zai-coding-plan/glm-5.1",
-      "model": "openai/gpt-5.6-terra",
+      "model": "openai/gpt-5.6-luna",
       "description": "Explore codebase and think through ideas",
       "hidden": true,
       "mode": "subagent",
@@ -129,7 +129,7 @@
     },
     "sdd-init": {
       //"model": "minimax/MiniMax-M2.7",
-      "model": "openai/gpt-5.6-terra",
+      "model": "openai/gpt-5.6-luna",
       // "model": "zai-coding-plan/glm-5.1",
       "description": "Bootstrap SDD context and project configuration",
       "hidden": true,
@@ -168,7 +168,7 @@
       }
     },
     "sdd-spec": {
-      "model": "openai/gpt-5.6-terra",
+      "model": "openai/gpt-5.6-luna",
       // "model": "zai-coding-plan/glm-5.1",
       "description": "Write detailed specifications from proposals",
       "hidden": true,
@@ -187,7 +187,7 @@
       }
     },
     "sdd-tasks": {
-      "model": "openai/gpt-5.6-terra",
+      "model": "openai/gpt-5.6-luna",
       // "model": "minimax/MiniMax-M2.7",
       // "model": "zai-coding-plan/glm-5.1",
       "description": "Break down specs and designs into implementation tasks",
