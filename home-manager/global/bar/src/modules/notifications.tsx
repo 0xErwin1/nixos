@@ -62,13 +62,25 @@ function defaultActionId(notification: AstalNotifd.Notification): string | null 
   return actions.length > 0 ? actions[0].id : null;
 }
 
-function ImageFor({ src, size, css }: { src: string; size: number; css: string }) {
+function ImageFor({
+  src,
+  size,
+  css,
+  halign,
+  valign,
+}: {
+  src: string;
+  size: number;
+  css: string;
+  halign?: Gtk.Align;
+  valign?: Gtk.Align;
+}) {
   const isPath = src.startsWith("/") || src.startsWith("file://");
   const file = src.replace("file://", "");
   return isPath ? (
-    <image cssClasses={[css]} file={file} pixelSize={size} />
+    <image cssClasses={[css]} file={file} pixelSize={size} halign={halign} valign={valign} />
   ) : (
-    <image cssClasses={[css]} iconName={src} pixelSize={size} />
+    <image cssClasses={[css]} iconName={src} pixelSize={size} halign={halign} valign={valign} />
   );
 }
 
@@ -125,7 +137,7 @@ function NotificationCard({
         onPressed={() => onClose()}
       />
       {appIcon ? (
-        <ImageFor src={appIcon} size={24} css="notif-app-icon" />
+        <ImageFor src={appIcon} size={24} css="notif-app-icon" valign={Gtk.Align.START} />
       ) : (
         <box cssClasses={["notif-app-dot"]} valign={Gtk.Align.START} />
       )}
@@ -159,7 +171,12 @@ function NotificationCard({
               <box visible={false} />
             )}
             {contentImage ? (
-              <ImageFor src={contentImage} size={56} css="notif-image" />
+              <ImageFor
+                src={contentImage}
+                size={48}
+                css="notif-image"
+                halign={Gtk.Align.START}
+              />
             ) : (
               <box visible={false} />
             )}

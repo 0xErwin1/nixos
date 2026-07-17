@@ -126,13 +126,13 @@ let
   expectedAgentModels = {
     sdd-orchestrator = "openai/gpt-5.6-sol";
     sdd-apply = "openai/gpt-5.6-terra";
-    sdd-archive = "openai/gpt-5.6-terra";
+    sdd-archive = "openai/gpt-5.6-luna";
     sdd-design = "openai/gpt-5.6-sol";
-    sdd-explore = "openai/gpt-5.6-terra";
-    sdd-init = "openai/gpt-5.6-terra";
+    sdd-explore = "openai/gpt-5.6-luna";
+    sdd-init = "openai/gpt-5.6-luna";
     sdd-propose = "openai/gpt-5.6-sol";
-    sdd-spec = "openai/gpt-5.6-terra";
-    sdd-tasks = "openai/gpt-5.6-terra";
+    sdd-spec = "openai/gpt-5.6-luna";
+    sdd-tasks = "openai/gpt-5.6-luna";
     sdd-verify = "openai/gpt-5.6-sol";
   };
   expectedOpenCodePermissions = {

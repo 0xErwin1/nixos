@@ -81,10 +81,19 @@ type dayCost struct {
 	EstUsd float64 `json:"estUsd"`
 }
 
+// Per-model token/cost totals over the same window, so the panel can show where
+// spend concentrates by model tier.
+type modelCost struct {
+	Model  string  `json:"model"`
+	Tokens int64   `json:"tokens"`
+	EstUsd float64 `json:"estUsd"`
+}
+
 type costSummary struct {
-	Today dayCost   `json:"today"`
-	Week  dayCost   `json:"week"`
-	Days  []dayCost `json:"days"`
+	Today  dayCost     `json:"today"`
+	Week   dayCost     `json:"week"`
+	Days   []dayCost   `json:"days"`
+	Models []modelCost `json:"models"`
 }
 
 type provider struct {
@@ -557,10 +566,32 @@ func priceFor(model string) price {
 	switch {
 	case strings.Contains(m, "opus"):
 		return price{15, 75, 18.75, 1.5}
+	case strings.Contains(m, "fable"):
+		return price{10, 50, 12.5, 1.0}
 	case strings.Contains(m, "haiku"):
 		return price{0.8, 4, 1.0, 0.08}
 	default:
 		return price{3, 15, 3.75, 0.30}
+	}
+}
+
+// modelLabel collapses a raw model id (e.g. "claude-opus-4-8-20260115") to a
+// tier name for the per-model breakdown, matching priceFor's buckets. Unknown
+// ids keep their raw string so an unrecognized model is visible rather than
+// silently folded into the sonnet default.
+func modelLabel(model string) string {
+	m := strings.ToLower(model)
+	switch {
+	case strings.Contains(m, "opus"):
+		return "Opus"
+	case strings.Contains(m, "fable"):
+		return "Fable"
+	case strings.Contains(m, "sonnet"):
+		return "Sonnet"
+	case strings.Contains(m, "haiku"):
+		return "Haiku"
+	default:
+		return model
 	}
 }
 
@@ -580,7 +611,7 @@ type claudeLine struct {
 	} `json:"message"`
 }
 
-func accumulateClaudeLine(line []byte, dayCutoff string, seen map[string]bool, perDay map[string]*dayCost) {
+func accumulateClaudeLine(line []byte, dayCutoff string, seen map[string]bool, perDay map[string]*dayCost, perModel map[string]*modelCost) {
 	var cl claudeLine
 	if json.Unmarshal(line, &cl) != nil {
 		return
@@ -621,9 +652,18 @@ func accumulateClaudeLine(line []byte, dayCutoff string, seen map[string]bool, p
 	}
 	dc.Tokens += tokens
 	dc.EstUsd += usd
+
+	label := modelLabel(cl.Message.Model)
+	mc := perModel[label]
+	if mc == nil {
+		mc = &modelCost{Model: label}
+		perModel[label] = mc
+	}
+	mc.Tokens += tokens
+	mc.EstUsd += usd
 }
 
-func scanClaudeFile(path, dayCutoff string, seen map[string]bool, perDay map[string]*dayCost) {
+func scanClaudeFile(path, dayCutoff string, seen map[string]bool, perDay map[string]*dayCost, perModel map[string]*modelCost) {
 	f, err := os.Open(path)
 	if err != nil {
 		return
@@ -636,7 +676,7 @@ func scanClaudeFile(path, dayCutoff string, seen map[string]bool, perDay map[str
 		// far larger than bufio.Scanner's cap).
 		line, err := reader.ReadBytes('\n')
 		if len(line) > 0 {
-			accumulateClaudeLine(line, dayCutoff, seen, perDay)
+			accumulateClaudeLine(line, dayCutoff, seen, perDay, perModel)
 		}
 		if err != nil {
 			return
@@ -659,6 +699,7 @@ func claudeCost() *costSummary {
 
 	seen := map[string]bool{}
 	perDay := map[string]*dayCost{}
+	perModel := map[string]*modelCost{}
 
 	_ = filepath.WalkDir(root, func(path string, d fs.DirEntry, err error) error {
 		if err != nil || d.IsDir() || !strings.HasSuffix(path, ".jsonl") {
@@ -667,7 +708,7 @@ func claudeCost() *costSummary {
 		if info, err := d.Info(); err != nil || info.ModTime().Before(cutoff) {
 			return nil
 		}
-		scanClaudeFile(path, dayCutoff, seen, perDay)
+		scanClaudeFile(path, dayCutoff, seen, perDay, perModel)
 		return nil
 	})
 
@@ -690,6 +731,16 @@ func claudeCost() *costSummary {
 	}
 	sort.Slice(summary.Days, func(i, j int) bool {
 		return summary.Days[i].Date > summary.Days[j].Date
+	})
+
+	for _, mc := range perModel {
+		if mc.Tokens == 0 {
+			continue
+		}
+		summary.Models = append(summary.Models, *mc)
+	}
+	sort.Slice(summary.Models, func(i, j int) bool {
+		return summary.Models[i].EstUsd > summary.Models[j].EstUsd
 	})
 	return summary
 }

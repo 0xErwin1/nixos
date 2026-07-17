@@ -12,5 +12,6 @@
       "dialout"
     ];
     shell = pkgs.zsh;
+    autoSubUidGidRange = true;
   };
 }

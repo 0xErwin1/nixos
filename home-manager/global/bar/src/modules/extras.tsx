@@ -25,10 +25,17 @@ interface UsageDayCost {
   estUsd: number;
 }
 
+interface UsageModelCost {
+  model: string;
+  tokens: number;
+  estUsd: number;
+}
+
 interface UsageCost {
   today: UsageDayCost;
   week: UsageDayCost;
   days: UsageDayCost[];
+  models: UsageModelCost[] | null;
 }
 
 interface UsageProvider {
@@ -174,7 +181,24 @@ function CostRow({
   );
 }
 
+function ModelRow({ model }: { model: UsageModelCost }) {
+  return (
+    <box cssClasses={["ai-cost-row"]} valign={Gtk.Align.CENTER}>
+      <label
+        cssClasses={["ai-cost-day"]}
+        label={model.model}
+        halign={Gtk.Align.START}
+        hexpand
+      />
+      <label cssClasses={["ai-cost-tokens"]} label={fmtTokens(model.tokens)} />
+      <label cssClasses={["ai-cost-usd"]} label={`~${fmtUsd(model.estUsd)}`} />
+    </box>
+  );
+}
+
 function CostSection({ cost }: { cost: UsageCost }) {
+  const models = cost.models ?? [];
+
   return (
     <box cssClasses={["ai-cost"]} orientation={Gtk.Orientation.VERTICAL} spacing={3}>
       <label
@@ -186,6 +210,19 @@ function CostSection({ cost }: { cost: UsageCost }) {
         <CostRow label={fmtDay(d.date, cost.today.date)} cost={d} total={false} today={cost.today.date} />
       ))}
       <CostRow label="7-day total" cost={cost.week} total today={cost.today.date} />
+
+      {models.length > 0 && (
+        <box orientation={Gtk.Orientation.VERTICAL} spacing={3}>
+          <label
+            cssClasses={["ai-cost-title", "ai-cost-subtitle"]}
+            label="By model · 7 days"
+            halign={Gtk.Align.START}
+          />
+          {models.map((m) => (
+            <ModelRow model={m} />
+          ))}
+        </box>
+      )}
     </box>
   );
 }
