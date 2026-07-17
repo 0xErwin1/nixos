@@ -97,6 +97,7 @@ Example:
 SDD must protect reviewer cognitive load, not only generate tasks.
 
 - The default PR review budget is **400 changed lines** (`additions + deletions`).
+- Count authored text additions plus deletions only for this threshold. Generated goldens are excluded from that authored risk count.
 - The orchestrator MUST cache a delivery strategy at session start: `ask-on-risk` (default), `auto-chain`, `single-pr`, or `exception-ok`.
 - The orchestrator MUST pass `delivery_strategy` to `sdd-tasks` and the resolved decision to `sdd-apply`.
 - `sdd-tasks` MUST forecast whether the planned work may exceed that budget.

@@ -97,7 +97,7 @@ End with: `Skill Resolution: {paths-injected|fallback-registry|fallback-path|non
 | Naming mismatch | ✅ | ❌ | SUGGESTION | Suspect |
 ```
 
-Approved criteria after Round 1: zero confirmed CRITICALs and zero confirmed real WARNINGs. Theoretical warnings and suggestions may remain.
+Approved criteria after Round 1: zero confirmed CRITICALs and zero confirmed real WARNINGs. Theoretical warnings and suggestions may remain. After the second scoped re-judgment, any remaining confirmed severe finding requires escalation; there is no third round.
 
 ## Delegation Patterns
 

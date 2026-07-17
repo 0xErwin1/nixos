@@ -124,16 +124,21 @@ These are parent-orchestrator stop rules. Once any trigger fires, the orchestrat
 
 #### Review Lens Selection
 
-When a fresh review/audit is required, run the `reviewer` agent via `task` with the matching lens as its role, announcing which lens and why first. `risk`/`resilience`/`readability` name LENS ROLES you put in the `reviewer` prompt, not separate agents -- only `reviewer` exists; targeting `review-risk`/`review-resilience`/`review-readability` as a `task` type fails with "Unknown agent". Pick lenses by risk profile:
+When a review/audit trigger fires, run the `reviewer` agent via `task` with the matching lens as its role, announcing which lens and why first. `risk`/`resilience`/`readability`/`reliability` name LENS ROLES you put in the `reviewer` prompt, not separate agents -- only `reviewer` exists; targeting `review-risk`/`review-resilience`/`review-readability`/`review-reliability` as a `task` type fails with "Unknown agent". Triage the diff deterministically -- this is a decision procedure, not advice:
+
+1. **Trivial diff** (ONLY documentation, comments, formatting, or typo fixes in strings -- zero executable code and zero configuration changes): run no lens. Any diff touching executable code or configuration is at least standard tier.
+2. **Standard diff**: run exactly ONE lens -- the row in the table below that matches the dominant risk. If multiple rows match, pick the single highest-impact row; do not add lenses.
+3. **Hot path** (the diff touches auth/update/security/payments paths) **or >400 changed lines outside pure human documentation**: run the full 4R set -- risk, resilience, readability, reliability.
+4. **Large pure human documentation** (>400 authored lines with no code, configuration, prompts, agent rules, workflows, runtime instruction docs, mixed content, or active content): run only the readability lens.
 
 | Risk signal | Lens role (in the `reviewer` prompt) |
 | --- | --- |
 | Clear naming, structure, maintainability, or small refactors | readability |
+| Behavior, state, tests, determinism, or regressions | reliability |
 | Shell/process integration, partial failures, recovery, or degraded dependencies | resilience |
 | Security, permissions, data exposure/loss, architecture, or dependencies | risk |
-| Large PR, hot path, or >400 changed lines | risk + resilience + readability |
 
-If multiple rows match, run the narrow set that covers the risk. Example: shell integration that mutates live state uses the resilience lens, not readability, by default.
+Full 4R is reserved for tier 3; a standard diff never fans out to multiple lenses.
 
 #### Review Execution Contract
 
@@ -149,18 +154,20 @@ If multiple rows match, run the narrow set that covers the risk. Example: shell 
 | `lens` | risk \| readability \| reliability \| resilience \| judgment-day |
 | `location` | `path/to/file.ext:line` or `:start-end` |
 | `severity` | BLOCKER \| CRITICAL \| WARNING \| SUGGESTION |
-| `status` | open \| fixed \| verified \| wont-fix \| info |
+| `status` | open \| fixed \| verified \| refuted \| wont-fix \| info |
 | `evidence` | why it matters |
 
 If the first pass finds nothing, persist an empty ledger record rather than skip persistence.
 
 **Adversarial verification.** Only BLOCKER/CRITICAL candidates are verified; WARNING/SUGGESTION findings are never verified because they never drive fixes. A single refuter pass (via the `reviewer` agent) evaluates the complete merged list of BLOCKER/CRITICAL candidates and returns one verdict per finding; for hot-path/full-4R reviews use at most three refuter passes through distinct lenses (correctness, exploitability/impact, reproducibility) and refute a finding only on a 2-of-3 majority. Any malformed or missing verdict defaults to `stands`.
 
-**Refutation protocol.** Refutation runs once, after merging lens ledgers and before any fix work, over BLOCKER/CRITICAL candidates only. The task ceiling is structural, not per-finding: 1 refuter task for a standard review or 3 total for full-4R, whether the list has 2 candidates or 20 -- NEVER spawn one refuter task per candidate. Judgment Day is the exception: its two-judge convergence already satisfies adversarial verification.
+**Refutation protocol.** Refutation runs once, after merging lens ledgers and before any fix work, over BLOCKER/CRITICAL candidates only. The task ceiling is structural, not per-finding: 1 refuter task for a standard review or 3 total for full-4R, whether the list has 2 candidates or 20 -- NEVER spawn one refuter task per candidate. Run refutation read-only through the `reviewer` agent: a standard review delegates exactly one batched pass with the general lens, while full-4R delegates exactly three passes, one per lens (correctness, exploitability/impact, reproducibility). Every pass receives the complete merged candidate list; a finding is `refuted` on the general verdict for a standard review or an independent 2-of-3 lens majority for full-4R, and any malformed or missing per-finding verdict defaults to `stands`. Judgment Day is the exception: its two-judge convergence already satisfies adversarial verification.
 
 **Severity floor.** Only BLOCKER/CRITICAL findings that survive adversarial verification enter the fix -> re-review loop. WARNING/SUGGESTION findings are reported once with status `info`, are never re-reviewed, and never block. A WARNING is never `open`.
 
 **Convergence budget.** Maximum 2 fix rounds per review. One fix round = the orchestrator (directly or via a single writer sub-agent) applies fixes for all open verified BLOCKER/CRITICAL findings, then a scoped re-review verifies the fix diff against the ledger. Anything still open after round 2 is reported to the user as open -- the loop never extends.
+
+**Ad-hoc severe recheck.** Outside a bounded review, rerun only the originating lens(es) that produced open verified BLOCKER/CRITICAL findings; never rerun clean lenses or lenses with only WARNING/SUGGESTION findings.
 
 **Ledger persistence honors the artifact store.**
 - `openspec`: write `openspec/changes/{change-name}/review-ledger.md`.
@@ -258,7 +265,7 @@ In **Automatic** mode the orchestrator is the gatekeeper between phases. The gat
 
 **Hybrid validation mechanism (cost-aware):**
 - **Inline for low-risk phases** (`sdd-explore`, `sdd-spec`, `sdd-tasks`, `sdd-archive`): the orchestrator runs the checks itself by reading the artifact back. No extra sub-agent.
-- **Fresh-context reviewer for high-risk phases** (`sdd-design`, `sdd-apply`): delegate the `sdd-verify` sub-agent for independent judgment, because errors in these phases compound downstream.
+- **Fresh-context phase-contract validator for high-risk phases** (`sdd-design`, `sdd-apply`): delegate the `sdd-verify` sub-agent to validate only the phase artifact against its contract and acceptance criteria, because errors in these phases compound downstream. This is a phase-contract check, NOT adversarial implementation review: it inspects no code diff and creates no 4R/Judgment-Day budget, which bounds the design -> verify -> design nit loop.
 - **Escalation on smell:** if an inline check on a low-risk phase finds any smell (status mismatch, unresolved path, suspected drift, missing artifact), escalate that phase to a fresh-context delegated review before deciding.
 
 **On gate PASS:** continue automatically to the next phase. Auto stays auto on the happy path.

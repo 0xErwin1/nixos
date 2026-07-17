@@ -9,7 +9,7 @@ metadata:
 
 ## Activation Contract
 
-Load this skill only when the user explicitly asks for Judgment Day, Judgement Day, dual/adversarial review, or equivalent Spanish trigger (`juzgar`, `que lo juzguen`). Review a specific target: files, feature, PR, or architecture slice.
+Load this skill only when the user explicitly asks for Judgment Day, Judgement Day, dual/adversarial review, or equivalent Spanish trigger (`juzgar`, `que lo juzguen`). Review a specific target: files, feature, PR, or architecture slice. Judgment Day replaces ordinary 4R for that target; never run both.
 
 ## Hard Rules
 
@@ -20,7 +20,8 @@ Load this skill only when the user explicitly asks for Judgment Day, Judgement D
 - Ask before fixing Round 1 confirmed issues.
 - After any fix agent runs, immediately re-launch both judges in parallel before commit/push/done/session summary.
 - Terminal states are only `JUDGMENT: APPROVED` or `JUDGMENT: ESCALATED`.
-- After 2 fix iterations with remaining issues, ask the user whether to continue.
+- Permit at most two fix rounds and two scoped re-judgments; any issue remaining after round two escalates and stops.
+- Never launch `review-refuter`; two-judge agreement is the corroboration mechanism.
 
 ## Decision Gates
 
@@ -40,7 +41,7 @@ Load this skill only when the user explicitly asks for Judgment Day, Judgement D
 3. Start Judge A and Judge B concurrently via delegation; each runs the exhaustive first pass and emits its own findings ledger.
 4. Synthesize findings into confirmed, suspect, contradiction, and INFO buckets; merge both judges' ledger rows into the persisted ledger and persist per the artifact-store branch.
 5. Ask before Round 1 fixes; delegate a separate fix agent for confirmed approved fixes only. The fix agent reads the persisted ledger, applies only confirmed fixes, and sets addressed ledger ids to `fixed`.
-6. Re-judge in parallel after fixes, scoped to the persisted ledger and the fix diff per the Scoped re-review contract; repeat until approved, escalated, or user asks to stop.
+6. Re-judge in parallel after fixes, scoped to the persisted ledger and the fix diff per the Scoped re-review contract; permit at most two fix rounds and two scoped re-judgments, then escalate and stop.
 7. Before any terminal action, verify every active Judgment Day has a terminal state.
 
 ## Output Contract

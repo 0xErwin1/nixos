@@ -96,7 +96,7 @@ In **Automatic** mode the orchestrator is the gatekeeper between phases. The gat
 **Hybrid validation mechanism (cost-aware):**
 
 - **Inline for low-risk phases** (`sdd-explore`, `sdd-spec`, `sdd-tasks`, `sdd-archive`): the orchestrator runs the checks itself by reading the artifact back. No extra sub-agent.
-- **Fresh-context reviewer for high-risk phases** (`sdd-design`, `sdd-apply`): delegate a fresh-context reviewer sub-agent for independent judgment, because errors in these phases compound downstream. Use the `sdd-verify` model alias for the delegated gate review and include `model` per the Model Assignments table.
+- **Fresh-context phase-contract validator for high-risk phases** (`sdd-design`, `sdd-apply`): delegate a fresh-context sub-agent that validates only the phase artifact against its contract and acceptance criteria, because errors in these phases compound downstream. This is a phase-contract check, NOT adversarial implementation review: it inspects no code diff and creates no 4R/Judgment-Day budget, which bounds the design→verify→design nit loop. Use the `sdd-verify` model alias for the delegated gate review and include `model` per the Model Assignments table.
 - **Escalation on smell:** if an inline check on a low-risk phase finds any smell (status mismatch, unresolved path, suspected drift, missing artifact), escalate that phase to a fresh-context delegated review before deciding.
 
 **On gate PASS:** continue automatically to the next phase. Auto stays auto on the happy path.

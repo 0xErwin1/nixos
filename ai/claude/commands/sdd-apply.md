@@ -46,3 +46,6 @@ For each task:
 5. Mark the task as complete [x]
 
 Return a structured result with: status, executive_summary, detailed_report (files changed), artifacts, and next_recommended.
+
+POST-APPLY ROUTING:
+After apply completes, return control to the parent orchestrator. Never auto-launch Judgment Day or open a new review budget; the parent decides whether to route to review.

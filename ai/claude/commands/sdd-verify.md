@@ -16,6 +16,8 @@ Read `~/.claude/skills/_shared/sdd-status-contract.md` and produce structured st
 TASK:
 Verify the active SDD change. Read the proposal, specs, design, and tasks artifacts. Then:
 
+Run a single independent final verification; a contradiction escalates and never starts another review/refuter/fix loop.
+
 ENGRAM PERSISTENCE (artifact store mode: engram):
 CRITICAL: mem_search returns 300-char PREVIEWS, not full content. You MUST call mem_get_observation(id) for EVERY artifact.
 STEP A -- SEARCH (get IDs only):
