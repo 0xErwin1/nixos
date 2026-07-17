@@ -384,6 +384,15 @@ Before writing code, creating a branch or worktree, or delegating implementation
 
 When SDD is chosen — or on any `/sdd-*` command or SDD phase work — load the SDD workflow per the lazy-load section below before acting.
 
+### Intent & Irreversibility Gates
+
+These gates sit on top of the Spec-First Gate and fire on the same INTENT-from-turn-one basis. They are always active on the primary thread; never delegate them away, and a prior yes to one step is never consent to the next.
+
+1. **Intent-disambiguation gate.** When a request uses a high-impact verb that has materially different readings — *migrate, move, port, reset, wipe, clean, restore, reinstall, sync, merge, delete* — do NOT dispatch any worker until you have stated your single reading of it in one sentence and the user has confirmed it. "Migrate" meaning *translate config* versus *move live data* is the canonical trap: pick one reading, say it, wait. One clarifying sentence, not an eleven-task plan.
+2. **Irreversible / outward-action gate.** Before any action that cannot be undone with `git checkout` or by deleting a generated file — deploying or switching a host, `nixos-anywhere`/reinstall/reimage, disk partitioning, data restore or cutover, `terraform apply`/`destroy`, force-push, dropping or truncating data, or publishing to an external service — STOP and get explicit per-action confirmation, even when the target repo carries no local rule saying so. This gate is host-agnostic: it lives in the orchestrator, not in any project's config.
+3. **Sequential mode for irreversible operations.** When a task touches production or is irreversible (gate 2), disable parallel fan-out: run one worker per step, synthesize its result back to the user, and confirm before the next step. The "delegate heavy work" default and parallel launches are for reversible work only. Never let the user lose the thread of what changed and when — if they have to ask "when did this happen?", the fan-out was already wrong.
+4. **Plan approval for substantial + irreversible work.** When a change is both substantial (Spec-First Gate) and irreversible (gate 2), you MUST surface an explicit, approvable plan — the SDD path, or an inline plan the user signs off on — before the first write or destructive command. Skipping straight to execution on this class of work is a defect regardless of how ready the plan looks.
+
 ### General Delegation Rules (Always Active)
 
 These rules apply to all non-trivial work, not only SDD phases. Core principle: **does this inflate my context without need?** If yes, delegate. If no, do it inline.
