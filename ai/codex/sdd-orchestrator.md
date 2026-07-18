@@ -111,6 +111,7 @@ These are parent-orchestrator stop rules. Once any trigger fires, the orchestrat
 4. **Incident rule**: after wrong `cwd`, accidental repo/worktree mutation, merge recovery, confusing test command, or environment workaround, stop and run the concrete audit/review lens(es) selected by Review Lens Selection before continuing.
 5. **Long-session rule**: after roughly 20 tool calls, 5 exploratory file reads, or 2 non-mechanical edits without delegation and growing complexity, pause and delegate instead of silently continuing monolithically.
 6. **Fresh review rule**: use fresh context with the selected concrete review lens(es) for adversarial review of diffs, conflicts, PR readiness, and incidents; use continuity/forked context only for implementation work that needs inherited state.
+7. **Normalization ordering rule**: run every source-mutating formatter/normalizer before launching review lenses, then review those exact bytes, paths, and modes. After a review has started, only check-only formatting, typechecking, tests, and builds may run; a mutating hook is acceptable only when it is already convergent and therefore a no-op. If content changes after a review, re-normalize and run one fresh review of the new diff — never patch the old verdict incrementally or loop formatter fixes through repeated re-reviews.
 
 #### Review Lens Selection
 
