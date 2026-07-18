@@ -24,6 +24,7 @@
     #./x11.nix
     #./monitor.nix
     ./kanshi.nix
+    ./kokoro-tts.nix
     ./packages.nix
   ];
 
