@@ -4,6 +4,8 @@
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
 
+    atlas.url = "github:0xErwin1/atlas/nightly";
+
     pi-harness = {
       url = "github:0xErwin1/pi-harness";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -318,6 +320,10 @@
                 flake = flakeView;
                 flakePath = self.outPath;
               };
+
+          atlas-desktop = functionalCheck "atlas-desktop" ./tests/atlas-desktop.nix {
+            flake = flakeView;
+          };
 
           pi-outputs = functionalCheck "pi-outputs" ./tests/pi-outputs.nix {
             flake = self // {
