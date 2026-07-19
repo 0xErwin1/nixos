@@ -114,6 +114,15 @@
 
   services.dbus.enable = true;
 
+  # Stable colon-free DRM symlinks for AQ_DRM_DEVICES: cardN numbering shifts
+  # across boots, and the by-path names cannot be used directly because
+  # aquamarine splits the variable on every ':', including the ones inside
+  # PCI addresses. ID_PATH is the same source udev uses to build by-path.
+  services.udev.extraRules = ''
+    ACTION=="add|change", SUBSYSTEM=="drm", KERNEL=="card*", ENV{ID_PATH}=="pci-0000:00:02.0", SYMLINK+="dri/igpu-card"
+    ACTION=="add|change", SUBSYSTEM=="drm", KERNEL=="card*", ENV{ID_PATH}=="pci-0000:01:00.0", SYMLINK+="dri/dgpu-card"
+  '';
+
   programs = {
     hyprland = {
       enable = true;
@@ -133,10 +142,10 @@
 
   environment.sessionVariables = {
     WLR_NO_HARDWARE_CURSORS = "0";
-    WLR_DRM_DEVICES = "/dev/dri/card0";
-    __GLX_VENDOR_LIBRARY_NAME = "nvidia";
-    GBM_BACKEND = "nvidia-drm";
-    LIBVA_DRIVER_NAME = "nvidia";
+    # Intel iGPU renders (primary); NVIDIA is included only to scan out DP-1,
+    # which is wired to it. The symlinks come from the udev rules above.
+    AQ_DRM_DEVICES = "/dev/dri/igpu-card:/dev/dri/dgpu-card";
+    LIBVA_DRIVER_NAME = "iHD";
   };
 
   system.stateVersion = "25.11";

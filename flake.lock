@@ -53,11 +53,11 @@
         "rust-overlay": "rust-overlay_2"
       },
       "locked": {
-        "lastModified": 1784404922,
-        "narHash": "sha256-gINkBLJFv+o7cQrAk7zb7FQoFq7qBLqbtCFdieFJn40=",
+        "lastModified": 1784479984,
+        "narHash": "sha256-EczjoxcvqZRZ2ced5ZB7M0tX0u9P2zVle2tZtdFO/Iw=",
         "owner": "0xErwin1",
         "repo": "atlas",
-        "rev": "17d4c157e5b89bc9c3f405e609bd8e2e069d1b3f",
+        "rev": "58e10ea04fe623ecf987255161c03dab233274a0",
         "type": "github"
       },
       "original": {
@@ -144,11 +144,11 @@
         "rust-overlay": "rust-overlay_3"
       },
       "locked": {
-        "lastModified": 1784009453,
-        "narHash": "sha256-+CZcbqM98R6+fkQ3a9x7E6zqzqO9Gbh9TvcSEsK4B50=",
+        "lastModified": 1784442125,
+        "narHash": "sha256-EdSUvy3ttqbtU6CQIzE6q72x66seR7O8jsVPkl4/YjM=",
         "owner": "0xErwin1",
         "repo": "dbflux",
-        "rev": "8530d8a4b06e37e07b3e20a99189193b9c7de63a",
+        "rev": "1628a108a92cfadc145caa7a4d0ab9560bc06dc7",
         "type": "github"
       },
       "original": {
