@@ -1,5 +1,4 @@
 { pkgs }:
-
 let
   inherit (pkgs)
     lib
@@ -9,12 +8,12 @@ let
     ;
 
   pname = "opencode";
-  version = "1.18.1";
+  version = "1.18.3";
 
   sources = {
     x86_64-linux = {
       archive = "opencode-linux-x64-baseline.tar.gz";
-      hash = "sha256-sK7MmxALiz6oRPnYvHfb1t/WmKBSCbb0R5vyo1h4Re4=";
+      hash = "sha256-lJ4qtyr5/S0gN5V+WQx49dZXz4doOg988xVjWK8Kjrw=";
     };
 
     aarch64-linux = {
@@ -26,12 +25,6 @@ let
   source =
     sources.${stdenv.hostPlatform.system}
       or (throw "Unsupported system for ${pname}: ${stdenv.hostPlatform.system}");
-
-in
-let
-  # The upstream archive ships a dynamically linked executable with the generic
-  # Linux loader path (/lib64/ld-linux-*.so.*). Keep the ELF untouched and run it
-  # inside an FHS environment so hosts do not need nix-ld enabled.
   rawPackage = stdenv.mkDerivation {
     inherit pname version;
 
