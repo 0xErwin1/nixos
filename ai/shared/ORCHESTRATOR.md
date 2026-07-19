@@ -218,6 +218,60 @@ Meta-commands (type directly -- orchestrator handles them, won't appear in autoc
 
 `/sdd-new`, `/sdd-continue`, and `/sdd-ff` are meta-commands handled by YOU. Do NOT invoke them as skills.
 
+### SDD Session Preflight (HARD GATE)
+
+Before executing ANY SDD command or natural-language SDD request, ensure this session has an explicit `SDD Session Preflight` decision block.
+
+This applies to `/sdd-new`, `/sdd-ff`, `/sdd-continue`, `/sdd-explore`, `/sdd-status`, `/sdd-apply`, `/sdd-verify`, `/sdd-archive`, and natural-language equivalents such as "use SDD to add dark mode" / "quiero specs para esto".
+
+Required preflight choices:
+
+1. **Execution mode**: `interactive` or `auto`.
+2. **Artifact store**: `engram`, `openspec`, or `hybrid` when Engram is callable. If Engram is unavailable, offer only file/inline-safe choices (`openspec`, `none`).
+3. **Delivery strategy**: `ask-on-risk`, `single-pr`, `auto-chain`, or `exception-ok` (local `delivery_strategy` vocabulary; feeds the Review Workload Guard).
+4. **Review budget**: maximum changed lines before stopping for reviewer-burden approval (`review_budget_lines`, default 400).
+
+Use your platform's grouped-question primitive for SDD Session Preflight (`AskUserQuestion` in Claude Code, `question` in OpenCode). Do NOT render the full preflight menu as plain chat text.
+
+Ask all four preflight groups in one single grouped call so the client renders them as one interactive prompt. Do NOT run this as a sequential wizard. Do NOT issue four separate calls.
+
+The single grouped call must contain these four localized groups in this order:
+
+1. Pace: Interactive, Automatic.
+2. Artifacts: Engram, OpenSpec, Both.
+3. PRs: Ask on risk, Single PR, Chained, Exception OK.
+4. Review: 400 lines, 800 lines, Other.
+
+Match the user's current language for question labels and descriptions. Treat the preflight UI as direct orchestrator conversation, not a generated technical artifact: technical artifacts still default to English, but this UI follows the user's conversation language. Do NOT mix languages inside one grouped question. Do NOT show canonical values or option codes in the UI.
+
+After the grouped call returns, map the selected human labels to canonical values internally (do not reveal them in the UI). If Other is selected for review budget, ask one follow-up for the numeric budget.
+
+Map answers to canonical values:
+
+- Pace: Interactive -> `interactive`; Automatic -> `auto`.
+- Artifacts: Engram -> `engram`; OpenSpec -> `openspec`; Both -> `hybrid`.
+- PRs: Ask on risk -> `ask-on-risk`; Single PR -> `single-pr`; Chained -> `auto-chain`; Exception OK -> `exception-ok`.
+- Review: 400 lines -> `review_budget_lines: 400`; 800 lines -> `review_budget_lines: 800`; Other -> ask one follow-up for the number.
+
+Hard gate rules:
+
+- `openspec/config.yaml`, existing SDD artifacts, previous `sdd-init` results, or installed SDD assets do NOT satisfy session preflight.
+- If the session has no preflight block, ask the single grouped preflight above. Do not run init, delegate phases, edit files, or apply tasks until all four choices are collected.
+- Cache the choices for this session and include them in later phase prompts.
+- If the user explicitly provided all four choices in the current conversation, summarize them as the session preflight block and continue.
+
+### SDD Entry Routing (MANDATORY)
+
+For a new product/code change request that says to use SDD, start at preflight -> init guard -> explore/proposal (`/sdd-new` equivalent). Never launch `sdd-apply` just because the user asked to implement a feature.
+
+Only launch `sdd-apply` when all are true:
+
+1. Session preflight is complete.
+2. The active change has existing spec, design, and tasks artifacts.
+3. The user explicitly asked to apply/continue implementation, or the prior SDD planning phase completed and the orchestrator has passed the Review Workload Guard.
+
+If any dependency is missing, STOP and propose `/sdd-new` or `/sdd-ff`; do not implement.
+
 ### SDD Init Guard (MANDATORY)
 
 Before executing ANY SDD command (`/sdd-new`, `/sdd-ff`, `/sdd-continue`, `/sdd-explore`, `/sdd-apply`, `/sdd-verify`, `/sdd-archive`), check if `sdd-init` has been run for this project:
@@ -235,7 +289,7 @@ Do NOT skip this check. Do NOT ask the user -- just run init silently if needed.
 
 ### Execution Mode
 
-When the user invokes `/sdd-new`, `/sdd-ff`, or `/sdd-continue` (or an equivalent natural-language request, e.g. "haceme un SDD para X" / "do SDD for X") for the first time in a session, ASK which execution mode they prefer:
+The execution mode is collected by `SDD Session Preflight` (Pace group). If it is missing, enforce the hard gate before any phase work. The cached execution mode is one of:
 
 - **Automatic** (`auto`): Run all phases back-to-back without pausing. Show the final result only. Use this when the user wants speed and trusts the process.
 - **Interactive** (`interactive`): After each phase completes, show the result summary and ASK: "Want to adjust anything or continue?" before proceeding to the next phase. Use this when the user wants to review and steer each step.
@@ -258,7 +312,7 @@ For this agent (sub-agent delegation): **Automatic** means phases run back-to-ba
 
 ### Artifact Store Mode
 
-When the user invokes `/sdd-new`, `/sdd-ff`, or `/sdd-continue` (or an equivalent natural-language request) for the first time in a session, ALSO ASK which artifact store they want for this change:
+The artifact store is collected by `SDD Session Preflight` (Artifacts group). If it is missing, enforce the hard gate before any phase work. The cached store is one of:
 
 - **`engram`**: Fast, no files created. Artifacts live in engram only. Best for solo work and quick iteration. Note: re-running a phase overwrites the previous version (no history).
 - **`openspec`**: File-based. Creates `openspec/` directory with full artifact trail. Committable, shareable with team, full git history.
@@ -270,7 +324,7 @@ Cache the artifact store choice for the session. Pass it as `artifact_store.mode
 
 ### Delivery Strategy
 
-On the first `/sdd-new`, `/sdd-ff`, or `/sdd-continue` (or an equivalent natural-language request) in a session, ask once for and cache delivery strategy: `ask-on-risk` (default), `auto-chain`, `single-pr`, or `exception-ok`. Pass it as `delivery_strategy` to `sdd-tasks` and `sdd-apply` prompts.
+The delivery strategy is collected by `SDD Session Preflight` (PRs group). Pass the cached `delivery_strategy` (`ask-on-risk` default, `auto-chain`, `single-pr`, or `exception-ok`) to `sdd-tasks` and `sdd-apply` prompts.
 
 ### Chain Strategy
 
@@ -296,7 +350,7 @@ Each phase returns: `status`, `executive_summary`, `artifacts`, `next_recommende
 
 After `sdd-tasks` completes and before launching `sdd-apply`, inspect the task result summary for `Review Workload Forecast`.
 
-If it says `Chained PRs recommended: Yes`, `400-line budget risk: High`, estimated changed lines exceed 400, or `Decision needed before apply: Yes`, apply the cached `delivery_strategy`: `ask-on-risk` asks, `auto-chain` asks for a missing `chain_strategy` and applies only the next PR slice, `single-pr` requires `size:exception`, and `exception-ok` records the exception.
+If it says `Chained PRs recommended: Yes`, `400-line budget risk: High`, estimated changed lines exceed the cached `review_budget_lines` (default 400), or `Decision needed before apply: Yes`, apply the cached `delivery_strategy`: `ask-on-risk` asks, `auto-chain` asks for a missing `chain_strategy` and applies only the next PR slice, `single-pr` requires `size:exception`, and `exception-ok` records the exception.
 
 Do this even in Automatic mode. Automatic mode does not override reviewer burnout protection.
 
