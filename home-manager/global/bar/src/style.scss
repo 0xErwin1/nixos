@@ -707,7 +707,9 @@ entry placeholder {
 
 .notif-card.notif-critical {
   border-left-color: $red;
-  background-color: rgba(255, 51, 51, 0.06);
+  // Opaque red-tinted background: a translucent rgba let the desktop bleed
+  // through the popup, since the popup window itself is transparent.
+  background-color: mix($red, $background, 8%);
 }
 
 .notif-card.notif-low {
@@ -782,7 +784,7 @@ entry placeholder {
 }
 
 .notif-card.notif-critical:hover {
-  background-color: rgba(255, 51, 51, 0.1);
+  background-color: mix($red, $background, 14%);
 }
 
 .notif-summary {

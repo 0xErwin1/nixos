@@ -55,7 +55,10 @@ interface UsageData {
 }
 
 const CACHE_SECONDS = 30;
-const BACKGROUND_SECONDS = 300;
+// Background poll cadence. Also the worst-case latency for the usage
+// threshold/reset alerts, so kept fairly tight; the provider APIs tolerate a
+// once-a-minute check.
+const BACKGROUND_SECONDS = 60;
 
 const [usage, setUsage] = createState<UsageData | null>(null);
 const [loading, setLoading] = createState(false);
