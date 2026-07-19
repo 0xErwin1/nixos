@@ -76,8 +76,9 @@ let
     # Astal service), pactl (bluetooth A2DP/HFP profile switching — wpctl does
     # not cleanly enumerate bluez card profiles, and pactl is otherwise absent on
     # this host), curl (Open-Meteo weather + geocoding), khal (calendar events
-    # for the calendar panel) and epsilon-ai-usage (AI usage for the extras
-    # panel).
+    # for the calendar panel), epsilon-ai-usage (AI usage for the extras panel)
+    # and notify-send (AI-usage threshold/reset alerts, delivered to our own
+    # notifd).
     preFixup = ''
       gappsWrapperArgs+=(
         --prefix PATH : ${
@@ -87,6 +88,7 @@ let
             pkgs.wireplumber
             pkgs.curl
             pkgs.khal
+            pkgs.libnotify
             ai-usage-wrapped
           ]
         }

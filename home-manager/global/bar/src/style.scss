@@ -362,14 +362,13 @@ $font: "JetBrainsMono Nerd Font";
   font-family: $font;
 }
 
-// Two-column control center: roughly double the connectivity card's width, with
-// notifications on the left and the controls column on the right.
-.control-center-card {
-  min-width: 68rem;
+// Two-column control center. Both columns are fixed width and neither expands,
+// so the card sizes to their sum and stays put: arriving notifications never
+// resize or shift the UI. Notifications get the wider column.
+.cc-notif-box {
+  min-width: 38rem;
 }
 
-// Fixed-width right column so the notifications column (hexpand) absorbs the rest
-// and the card width stays stable.
 .cc-col-right {
   min-width: 27rem;
 }

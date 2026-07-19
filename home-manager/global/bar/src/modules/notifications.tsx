@@ -371,6 +371,18 @@ function DeviceSelector({
 
   const [open, setOpen] = createState(false);
 
+  // The default endpoint returned by defaultSpeaker/defaultMicrophone often has
+  // an empty description, so read the current name off the endpoint list (whose
+  // descriptions are populated) by finding the one flagged isDefault. Depends on
+  // `current` too so it recomputes the moment the default changes.
+  const currentName = createComputed(
+    [current, endpoints],
+    (_cur, list: AstalWp.Endpoint[]) => {
+      const def = list.find((e) => e.isDefault);
+      return def?.description ?? "—";
+    },
+  );
+
   return (
     <box
       cssClasses={["cc-devsel"]}
@@ -390,19 +402,13 @@ function DeviceSelector({
           valign={Gtk.Align.CENTER}
         />
         <box hexpand />
-        {/* With (not a derived-binding label) so the current-device text tracks
-            defaultSpeaker/defaultMicrophone reliably, mirroring the slider. */}
-        <With value={current}>
-          {(ep: AstalWp.Endpoint | null) => (
-            <label
-              cssClasses={["cc-devsel-current"]}
-              label={ep?.description ?? "—"}
-              maxWidthChars={26}
-              ellipsize={Pango.EllipsizeMode.END}
-              valign={Gtk.Align.CENTER}
-            />
-          )}
-        </With>
+        <label
+          cssClasses={["cc-devsel-current"]}
+          label={currentName}
+          maxWidthChars={26}
+          ellipsize={Pango.EllipsizeMode.END}
+          valign={Gtk.Align.CENTER}
+        />
         <label
           cssClasses={["cc-devsel-chevron"]}
           label={open((o) => (o ? CHEVRON_UP : CHEVRON_DOWN))}
@@ -604,7 +610,6 @@ export function NotificationCenter() {
             cssClasses={["cc-box", "cc-notif-box"]}
             orientation={Gtk.Orientation.VERTICAL}
             spacing={8}
-            hexpand
             vexpand
           >
             <box cssClasses={["cc-notif-header"]} spacing={8}>

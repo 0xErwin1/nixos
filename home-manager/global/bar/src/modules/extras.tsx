@@ -62,6 +62,94 @@ const [loading, setLoading] = createState(false);
 const [extrasX, setExtrasX] = createState(8);
 let lastFetch = 0;
 
+// ── Usage threshold + reset notifications ──────────────────────────────────────
+// Per-window snapshot from the previous poll, keyed by provider + window label,
+// so crossings and resets can be detected between fetches. In-memory only: after
+// a bar restart the first poll re-seeds baselines without firing, so an already
+// high level does not trigger a retroactive alert.
+interface WindowState {
+  percent: number;
+  resetAt: string | null;
+}
+
+const usageState = new Map<string, WindowState>();
+const USAGE_THRESHOLDS = [100, 50];
+const RESET_DROP_POINTS = 15;
+const RESET_FORWARD_SECONDS = 1800;
+
+function notifyUsage(
+  urgency: "low" | "normal" | "critical",
+  summary: string,
+  body: string,
+): void {
+  // Routed through notify-send to our own notifd, so it shows as a popup and
+  // lands in the notification center like any other notification.
+  execAsync(["notify-send", "-a", "AI Usage", "-u", urgency, summary, body]).catch(
+    () => {},
+  );
+}
+
+function isoToUnix(iso: string | null): number | null {
+  if (!iso) return null;
+  const dt = GLib.DateTime.new_from_iso8601(iso, null);
+  return dt ? dt.to_unix() : null;
+}
+
+function checkWindowEvents(providerName: string, w: UsageWindow): void {
+  const key = `${providerName}:${w.label}`;
+  const prev = usageState.get(key);
+  const cur: WindowState = { percent: w.usedPercent, resetAt: w.resetAt };
+
+  if (!prev) {
+    usageState.set(key, cur);
+    return;
+  }
+
+  // A reset drops usage and never coincides with an upward crossing, so the two
+  // checks are mutually exclusive within a single poll.
+  const crossed = USAGE_THRESHOLDS.find(
+    (t) => prev.percent < t && cur.percent >= t,
+  );
+  if (crossed === 100) {
+    notifyUsage(
+      "critical",
+      `${providerName}: ${w.label} limit reached`,
+      `100% used · ${resetLabel(w.resetAt)}`,
+    );
+  } else if (crossed === 50) {
+    notifyUsage(
+      "normal",
+      `${providerName}: ${w.label} at 50%`,
+      resetLabel(w.resetAt) || "Half of the window used",
+    );
+  }
+
+  // Usage is monotonic within a window, so a clear drop means it rolled over.
+  // Also catch a low-usage reset via the reset timestamp jumping forward, while
+  // ignoring minor API jitter in that timestamp.
+  const prevReset = isoToUnix(prev.resetAt);
+  const curReset = isoToUnix(cur.resetAt);
+  const droppedUsage = prev.percent - cur.percent >= RESET_DROP_POINTS;
+  const jumpedForward =
+    prevReset !== null &&
+    curReset !== null &&
+    curReset - prevReset >= RESET_FORWARD_SECONDS &&
+    cur.percent <= prev.percent;
+
+  if (droppedUsage || jumpedForward) {
+    notifyUsage("normal", `${providerName}: ${w.label} reset`, "Fresh quota available");
+  }
+
+  usageState.set(key, cur);
+}
+
+function checkUsageEvents(data: UsageData): void {
+  for (const p of data.providers) {
+    if (!p.available) continue;
+    for (const w of p.windows) checkWindowEvents(p.name, w);
+  }
+}
+
 // The bar shells out to the packaged Go helper, which reads the local Claude /
 // Codex OAuth credentials and returns a normalized usage document. Refreshed in
 // the background so opening the panel shows fresh data instantly instead of
@@ -76,8 +164,10 @@ function fetchUsage(force: boolean): void {
   execAsync(["epsilon-ai-usage"])
     .then((out) => {
       try {
-        setUsage(JSON.parse(out) as UsageData);
+        const parsed = JSON.parse(out) as UsageData;
+        setUsage(parsed);
         lastFetch = now;
+        checkUsageEvents(parsed);
       } catch {
         // Malformed output: keep the last good snapshot.
       }
