@@ -25,18 +25,25 @@ import {
   LOGOUT_GLYPH,
   RESTART_GLYPH,
   SHUTDOWN_GLYPH,
+  CHEVRON_DOWN,
+  CHEVRON_UP,
   volumeGlyph,
   brightnessGlyph,
+  MIC_MUTED,
+  MIC_UNMUTED,
 } from "../glyphs";
 import {
   notifd,
   popupIds,
   centerVisible,
-  openCenter,
-  closeCenter,
   dismissPopup,
 } from "./notify-state";
-import { closeDashboard } from "./dashboard-state";
+import {
+  openCenter,
+  closeCenter,
+  toggleCenter,
+  anyPanelOpen,
+} from "./dashboard-state";
 
 // ── Notification card ─────────────────────────────────────────────────────────
 function urgencyClass(urgency: AstalNotifd.Urgency): string {
@@ -227,7 +234,7 @@ export function NotificationPopups() {
   return (
     <window
       name="notification-popups"
-      namespace="epsilon-notifications"
+      namespace="wl-notifications"
       cssClasses={["notif-popups-window"]}
       anchor={TOP | RIGHT}
       exclusivity={Astal.Exclusivity.IGNORE}
@@ -263,7 +270,14 @@ function SpeakerSlider({ speaker }: { speaker: AstalWp.Endpoint }) {
 
   return (
     <box cssClasses={["cc-slider-row"]} spacing={10}>
-      <label cssClasses={["cc-slider-icon", "volume"]} label={glyph} valign={Gtk.Align.CENTER} />
+      <box cssClasses={["cc-slider-mute"]} valign={Gtk.Align.CENTER}>
+        <Gtk.GestureClick onPressed={() => (speaker.mute = !speaker.mute)} />
+        <label
+          cssClasses={mute((m) => ["cc-slider-icon", "volume", m ? "muted" : ""])}
+          label={glyph}
+          valign={Gtk.Align.CENTER}
+        />
+      </box>
       <slider
         hexpand
         min={0}
@@ -280,6 +294,158 @@ function SpeakerSlider({ speaker }: { speaker: AstalWp.Endpoint }) {
         label={display((v) => `${Math.round(v * 100)}%`)}
         valign={Gtk.Align.CENTER}
       />
+    </box>
+  );
+}
+
+// Microphone volume + mute, mirroring the speaker slider. The icon doubles as
+// the mic mute toggle (red when muted); the new mic-volume slider lets input
+// gain be raised without leaving the control center.
+function MicSlider({ mic }: { mic: AstalWp.Endpoint }) {
+  const volume = createBinding(mic, "volume");
+  const mute = createBinding(mic, "mute");
+
+  const [display, setDisplay] = createState(mic.volume);
+  onCleanup(volume.subscribe(() => setDisplay(mic.volume)));
+
+  return (
+    <box cssClasses={["cc-slider-row"]} spacing={10}>
+      <box cssClasses={["cc-slider-mute"]} valign={Gtk.Align.CENTER}>
+        <Gtk.GestureClick onPressed={() => (mic.mute = !mic.mute)} />
+        <label
+          cssClasses={mute((m) => ["cc-slider-icon", "microphone", m ? "muted" : ""])}
+          label={mute((m) => (m ? MIC_MUTED : MIC_UNMUTED))}
+          valign={Gtk.Align.CENTER}
+        />
+      </box>
+      <slider
+        hexpand
+        min={0}
+        max={1}
+        value={volume}
+        onChangeValue={(self) => {
+          mic.volume = self.value;
+          setDisplay(self.value);
+        }}
+        valign={Gtk.Align.CENTER}
+      />
+      <label
+        cssClasses={["cc-slider-pct"]}
+        label={display((v) => `${Math.round(v * 100)}%`)}
+        valign={Gtk.Align.CENTER}
+      />
+    </box>
+  );
+}
+
+function MicVolume() {
+  const mic = createBinding(AstalWp.get_default()!.audio, "defaultMicrophone");
+  return (
+    <With value={mic}>
+      {(m: AstalWp.Endpoint | null) =>
+        m ? <MicSlider mic={m} /> : <box visible={false} />
+      }
+    </With>
+  );
+}
+
+// Inline output/input device picker: a header row shows the current device and
+// toggles a list of the available endpoints below it. Selecting one makes it the
+// WirePlumber default. Rendered inline (not a GTK popover) so it stays within the
+// layer-shell overlay window.
+function DeviceSelector({
+  audio,
+  kind,
+}: {
+  audio: AstalWp.Audio;
+  kind: "output" | "input";
+}) {
+  const isOutput = kind === "output";
+  const endpoints = createBinding(audio, isOutput ? "speakers" : "microphones");
+  const current = createBinding(
+    audio,
+    isOutput ? "defaultSpeaker" : "defaultMicrophone",
+  );
+  const headGlyph = isOutput ? volumeGlyph(100, false) : MIC_UNMUTED;
+  const headLabel = isOutput ? "Output" : "Input";
+
+  const [open, setOpen] = createState(false);
+
+  return (
+    <box
+      cssClasses={["cc-devsel"]}
+      orientation={Gtk.Orientation.VERTICAL}
+      spacing={4}
+    >
+      <box cssClasses={["cc-devsel-head"]} spacing={8}>
+        <Gtk.GestureClick onPressed={() => setOpen(!open.get())} />
+        <label
+          cssClasses={["cc-devsel-icon"]}
+          label={headGlyph}
+          valign={Gtk.Align.CENTER}
+        />
+        <label
+          cssClasses={["cc-devsel-title"]}
+          label={headLabel}
+          valign={Gtk.Align.CENTER}
+        />
+        <box hexpand />
+        {/* With (not a derived-binding label) so the current-device text tracks
+            defaultSpeaker/defaultMicrophone reliably, mirroring the slider. */}
+        <With value={current}>
+          {(ep: AstalWp.Endpoint | null) => (
+            <label
+              cssClasses={["cc-devsel-current"]}
+              label={ep?.description ?? "—"}
+              maxWidthChars={26}
+              ellipsize={Pango.EllipsizeMode.END}
+              valign={Gtk.Align.CENTER}
+            />
+          )}
+        </With>
+        <label
+          cssClasses={["cc-devsel-chevron"]}
+          label={open((o) => (o ? CHEVRON_UP : CHEVRON_DOWN))}
+          valign={Gtk.Align.CENTER}
+        />
+      </box>
+
+      <scrolledwindow
+        cssClasses={["cc-devsel-scroll"]}
+        visible={open}
+        propagateNaturalHeight
+        maxContentHeight={200}
+        hscrollbarPolicy={Gtk.PolicyType.NEVER}
+        vscrollbarPolicy={Gtk.PolicyType.AUTOMATIC}
+      >
+        <box
+          cssClasses={["cc-devsel-list"]}
+          orientation={Gtk.Orientation.VERTICAL}
+          spacing={2}
+        >
+          <For each={endpoints}>
+            {(ep: AstalWp.Endpoint) => (
+              <button
+                cssClasses={createBinding(ep, "isDefault")((d) => [
+                  "cc-devsel-item",
+                  d ? "active" : "",
+                ])}
+                onClicked={() => {
+                  ep.set_is_default(true);
+                  setOpen(false);
+                }}
+              >
+                <label
+                  label={ep.description}
+                  xalign={0}
+                  hexpand
+                  ellipsize={Pango.EllipsizeMode.END}
+                />
+              </button>
+            )}
+          </For>
+        </box>
+      </scrolledwindow>
     </box>
   );
 }
@@ -401,16 +567,21 @@ export function NotificationCenter() {
   const dnd = createBinding(notifd, "dontDisturb");
   const hasNotifications = notifications((list) => list.length > 0);
 
+  const audio = AstalWp.get_default()!.audio;
+
   return (
     <window
       name="notification-center"
-      namespace="epsilon-notif-center"
+      namespace="wl-notif-center"
       visible={centerVisible}
       cssClasses={["dashboard-window"]}
       anchor={TOP | BOTTOM | LEFT | RIGHT}
-      exclusivity={Astal.Exclusivity.IGNORE}
+      exclusivity={Astal.Exclusivity.NORMAL}
       layer={Astal.Layer.TOP}
       keymode={Astal.Keymode.ON_DEMAND}
+      onNotifyIsActive={(self) => {
+        if (!self.get_property("is-active")) closeCenter();
+      }}
       application={app}
     >
       <Gtk.EventControllerKey
@@ -423,39 +594,21 @@ export function NotificationCenter() {
         <box
           $type="overlay"
           cssClasses={["dashboard-card", "control-center-card"]}
-          orientation={Gtk.Orientation.VERTICAL}
+          orientation={Gtk.Orientation.HORIZONTAL}
           halign={Gtk.Align.END}
           valign={Gtk.Align.START}
           spacing={12}
         >
-          <box cssClasses={["dash-header"]} spacing={8}>
-            <label cssClasses={["cc-title"]} label="Control Center" hexpand xalign={0} />
-            <button cssClasses={["dash-close"]} onClicked={closeCenter}>
-              <label label={CLOSE_GLYPH} />
-            </button>
-          </box>
-
-          <box
-            cssClasses={["cc-box", "cc-quick"]}
-            orientation={Gtk.Orientation.VERTICAL}
-            spacing={8}
-          >
-            <VolumeSlider />
-            <BrightnessSlider />
-          </box>
-
-          <box cssClasses={["cc-box", "cc-power-box"]}>
-            <PowerRow />
-          </box>
-
+          {/* Left column: notifications, full height. */}
           <box
             cssClasses={["cc-box", "cc-notif-box"]}
             orientation={Gtk.Orientation.VERTICAL}
             spacing={8}
+            hexpand
             vexpand
           >
             <box cssClasses={["cc-notif-header"]} spacing={8}>
-              <label cssClasses={["cc-section"]} label="Notifications" hexpand xalign={0} />
+              <label cssClasses={["cc-title"]} label="Notifications" hexpand xalign={0} />
               <box cssClasses={["dnd-toggle"]} spacing={6}>
                 <label cssClasses={["dnd-label"]} label="DND" />
                 <switch
@@ -507,6 +660,43 @@ export function NotificationCenter() {
               </scrolledwindow>
             </box>
           </box>
+
+          {/* Right column: quick controls, audio devices, power. */}
+          <box
+            cssClasses={["cc-col-right"]}
+            orientation={Gtk.Orientation.VERTICAL}
+            spacing={12}
+          >
+            <box cssClasses={["dash-header"]} spacing={8}>
+              <label cssClasses={["cc-title"]} label="Control Center" hexpand xalign={0} />
+              <button cssClasses={["dash-close"]} onClicked={closeCenter}>
+                <label label={CLOSE_GLYPH} />
+              </button>
+            </box>
+
+            <box
+              cssClasses={["cc-box", "cc-quick"]}
+              orientation={Gtk.Orientation.VERTICAL}
+              spacing={8}
+            >
+              <VolumeSlider />
+              <MicVolume />
+              <BrightnessSlider />
+            </box>
+
+            <box
+              cssClasses={["cc-box", "cc-devices"]}
+              orientation={Gtk.Orientation.VERTICAL}
+              spacing={6}
+            >
+              <DeviceSelector audio={audio} kind="output" />
+              <DeviceSelector audio={audio} kind="input" />
+            </box>
+
+            <box cssClasses={["cc-box", "cc-power-box"]}>
+              <PowerRow />
+            </box>
+          </box>
         </box>
       </overlay>
     </window>
@@ -536,21 +726,17 @@ export function NotificationBell() {
   );
 
   return (
-    <button
+    <box
       cssClasses={["control-item", "bell", "dash-trigger"]}
       tooltipText={tooltip}
       valign={Gtk.Align.CENTER}
-      onClicked={() => {
-        // Toggle the center if it is open; otherwise switch to it (closing the
-        // connectivity dashboard if that was open).
-        if (centerVisible.get()) {
-          closeCenter();
-        } else {
-          closeDashboard();
-          openCenter();
-        }
-      }}
     >
+      <Gtk.GestureClick onPressed={() => toggleCenter()} />
+      <Gtk.EventControllerMotion
+        onEnter={() => {
+          if (anyPanelOpen()) openCenter();
+        }}
+      />
       <overlay>
         <label cssClasses={iconClasses} label={glyph} valign={Gtk.Align.CENTER} />
         <label
@@ -562,6 +748,6 @@ export function NotificationBell() {
           label={count((c) => (c > 9 ? "9+" : String(c)))}
         />
       </overlay>
-    </button>
+    </box>
   );
 }

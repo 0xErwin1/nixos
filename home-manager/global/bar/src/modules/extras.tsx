@@ -304,13 +304,16 @@ export function ExtrasPanel() {
   return (
     <window
       name="extras-panel"
-      namespace="epsilon-extras"
+      namespace="wl-extras"
       visible={extrasVisible}
       cssClasses={["extras-window"]}
       anchor={TOP | BOTTOM | LEFT | RIGHT}
-      exclusivity={Astal.Exclusivity.IGNORE}
+      exclusivity={Astal.Exclusivity.NORMAL}
       layer={Astal.Layer.TOP}
       keymode={Astal.Keymode.ON_DEMAND}
+      onNotifyIsActive={(self) => {
+        if (!self.get_property("is-active")) closeExtras();
+      }}
       application={app}
     >
       <Gtk.EventControllerKey
@@ -326,7 +329,7 @@ export function ExtrasPanel() {
           orientation={Gtk.Orientation.VERTICAL}
           halign={Gtk.Align.START}
           valign={Gtk.Align.START}
-          marginTop={42}
+          marginTop={8}
           marginStart={extrasX}
           spacing={12}
         >

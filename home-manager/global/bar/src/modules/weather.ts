@@ -52,8 +52,11 @@ const REFRESH_SECONDS = 900;
 const HOURS_SHOWN = 6;
 const FORECAST_DAYS = 7;
 
-const CONFIG_DIR = `${GLib.get_user_config_dir()}/epsilon-bar`;
+const CONFIG_DIR = `${GLib.get_user_config_dir()}/wl-bar`;
 const CONFIG_PATH = `${CONFIG_DIR}/weather-location.json`;
+// Previous location before the bar was renamed from epsilon-bar; still read as a
+// fallback so an existing saved location survives the rename.
+const LEGACY_CONFIG_PATH = `${GLib.get_user_config_dir()}/epsilon-bar/weather-location.json`;
 
 const DAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
@@ -105,7 +108,11 @@ function curl(url: string): Promise<string> {
 
 function readSetting(): LocationSetting {
   try {
-    const [ok, contents] = GLib.file_get_contents(CONFIG_PATH);
+    let result = GLib.file_get_contents(CONFIG_PATH);
+    if (!result[0]) result = GLib.file_get_contents(LEGACY_CONFIG_PATH);
+
+    const ok = result[0];
+    const contents = result[1];
     if (!ok) return { mode: "auto" };
 
     const parsed = JSON.parse(new TextDecoder().decode(contents));

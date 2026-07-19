@@ -17,6 +17,7 @@ import Tray from "./tray";
 import { WifiTrigger } from "./wifi";
 import { BluetoothTrigger } from "./bluetooth";
 import { NotificationBell } from "./notifications";
+import { openCenter, toggleCenter, anyPanelOpen } from "./dashboard-state";
 
 interface Props {
   vertical: boolean;
@@ -36,7 +37,16 @@ function Brightness({ vertical }: Props) {
   });
 
   return (
-    <box cssClasses={["control-item", "brightness"]} valign={Gtk.Align.CENTER}>
+    <box
+      cssClasses={["control-item", "brightness", "dash-trigger"]}
+      valign={Gtk.Align.CENTER}
+    >
+      <Gtk.GestureClick onPressed={() => toggleCenter()} />
+      <Gtk.EventControllerMotion
+        onEnter={() => {
+          if (anyPanelOpen()) openCenter();
+        }}
+      />
       <label
         cssClasses={["control-icon"]}
         label={percent(brightnessGlyph)}
@@ -137,7 +147,16 @@ function Volume({ vertical }: Props) {
   const info = createPoll<VolumeInfo>(readVolume(), 1000, readVolume);
 
   return (
-    <box cssClasses={["control-item", "volume"]} valign={Gtk.Align.CENTER}>
+    <box
+      cssClasses={["control-item", "volume", "dash-trigger"]}
+      valign={Gtk.Align.CENTER}
+    >
+      <Gtk.GestureClick onPressed={() => toggleCenter()} />
+      <Gtk.EventControllerMotion
+        onEnter={() => {
+          if (anyPanelOpen()) openCenter();
+        }}
+      />
       <label
         cssClasses={["control-icon"]}
         label={info((i) => volumeGlyph(i.percent, i.muted))}
@@ -158,7 +177,16 @@ function MicrophoneInner({ mic }: { mic: AstalWp.Endpoint }) {
   const mute = createBinding(mic, "mute");
 
   return (
-    <box cssClasses={["control-item", "microphone"]} valign={Gtk.Align.CENTER}>
+    <box
+      cssClasses={["control-item", "microphone", "dash-trigger"]}
+      valign={Gtk.Align.CENTER}
+    >
+      <Gtk.GestureClick onPressed={() => toggleCenter()} />
+      <Gtk.EventControllerMotion
+        onEnter={() => {
+          if (anyPanelOpen()) openCenter();
+        }}
+      />
       <label
         cssClasses={mute((m) => [
           "control-icon",
@@ -212,9 +240,9 @@ export default function Right({ vertical }: Props) {
         <Battery vertical={vertical} />
         <Volume vertical={vertical} />
         <Microphone />
+        <NotificationBell />
         <BluetoothTrigger />
         <WifiTrigger />
-        <NotificationBell />
       </box>
       <Tray vertical={vertical} />
     </box>

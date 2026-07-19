@@ -46,13 +46,16 @@ export default function Dashboard() {
   return (
     <window
       name="connectivity-dashboard"
-      namespace="epsilon-dashboard"
+      namespace="wl-dashboard"
       visible={dashboardVisible}
       cssClasses={["dashboard-window"]}
       anchor={TOP | BOTTOM | LEFT | RIGHT}
-      exclusivity={Astal.Exclusivity.IGNORE}
+      exclusivity={Astal.Exclusivity.NORMAL}
       layer={Astal.Layer.TOP}
       keymode={Astal.Keymode.ON_DEMAND}
+      onNotifyIsActive={(self) => {
+        if (!self.get_property("is-active")) closeDashboard();
+      }}
       application={app}
     >
       <Gtk.EventControllerKey

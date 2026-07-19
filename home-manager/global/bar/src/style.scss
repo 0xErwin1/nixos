@@ -163,7 +163,9 @@ $font: "JetBrainsMono Nerd Font";
   font-weight: bold;
 }
 
-.brightness {
+// Compound selector (.control-item.brightness) so the colour beats the
+// .dash-trigger `all: unset` reset now that these icons are clickable triggers.
+.control-item.brightness {
   color: $yellow;
 }
 
@@ -171,7 +173,7 @@ $font: "JetBrainsMono Nerd Font";
   color: $green;
 }
 
-.volume {
+.control-item.volume {
   color: $blue;
 }
 
@@ -195,9 +197,11 @@ $font: "JetBrainsMono Nerd Font";
 // The wifi/bluetooth controls are buttons that open the dashboard: strip the
 // default button chrome so they look like the other control icons, but keep a
 // comfortable padded hitbox around the glyph (the icon itself is unchanged).
+// Padded, roomy hitbox so the small icon triggers are easy to click (a tiny
+// target made the open/close toggle feel intermittent).
 .dash-trigger {
   all: unset;
-  padding: 0.1rem 0.3rem;
+  padding: 0.25rem 0.45rem;
   border-radius: 8px;
 }
 
@@ -352,10 +356,22 @@ $font: "JetBrainsMono Nerd Font";
   border: 1px solid $grey;
   border-radius: 18px;
   padding: 1.4rem;
-  margin: 42px 8px 0 0;
+  margin: 8px 8px 0 0;
   min-width: 34rem;
   min-height: 40rem;
   font-family: $font;
+}
+
+// Two-column control center: roughly double the connectivity card's width, with
+// notifications on the left and the controls column on the right.
+.control-center-card {
+  min-width: 68rem;
+}
+
+// Fixed-width right column so the notifications column (hexpand) absorbs the rest
+// and the card width stays stable.
+.cc-col-right {
+  min-width: 27rem;
 }
 
 .dash-header {
@@ -814,7 +830,7 @@ entry placeholder {
   border: 1px solid $grey;
   border-radius: 18px;
   padding: 1.4rem 1.6rem;
-  margin-top: 42px;
+  margin-top: 8px;
   font-family: $font;
 }
 
@@ -1166,6 +1182,84 @@ entry placeholder {
 
 .cc-slider-icon.brightness {
   color: $yellow;
+}
+
+.cc-slider-icon.microphone {
+  color: $green;
+}
+
+// Muted state wins over the per-channel colour above.
+.cc-slider-icon.muted {
+  color: $red;
+}
+
+// The slider icon doubles as a mute toggle: give it a padded, rounded hitbox
+// with hover feedback so it reads as clickable.
+.cc-slider-mute {
+  padding: 0.1rem 0.2rem;
+  border-radius: 8px;
+}
+
+.cc-slider-mute:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+// ── Audio device selector ─────────────────────────────────────────────────────
+.cc-devsel-head {
+  padding: 0.25rem 0.35rem;
+  border-radius: 8px;
+}
+
+.cc-devsel-head:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.cc-devsel-icon {
+  font-size: 1.05rem;
+  min-width: 1.4rem;
+  color: $blue;
+}
+
+.cc-devsel-title {
+  font-weight: bold;
+  font-size: 0.85rem;
+  opacity: 0.8;
+}
+
+.cc-devsel-current {
+  font-size: 0.85rem;
+  opacity: 0.9;
+}
+
+.cc-devsel-chevron {
+  font-size: 1rem;
+  opacity: 0.7;
+}
+
+.cc-devsel-scroll {
+  background: transparent;
+}
+
+.cc-devsel-list {
+  margin: 0.1rem 0 0.2rem 1.8rem;
+}
+
+.cc-devsel-item {
+  all: unset;
+  padding: 0.3rem 0.5rem;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  opacity: 0.8;
+}
+
+.cc-devsel-item:hover {
+  background: rgba(255, 255, 255, 0.06);
+  opacity: 1;
+}
+
+.cc-devsel-item.active {
+  color: $blue;
+  opacity: 1;
 }
 
 slider,

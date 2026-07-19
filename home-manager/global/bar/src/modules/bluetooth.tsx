@@ -25,8 +25,8 @@ import {
   closeDashboard,
   dashboardVisible,
   activeTab,
+  anyPanelOpen,
 } from "./dashboard-state";
-import { closeCenter } from "./notify-state";
 
 const bluetooth = AstalBluetooth.get_default();
 
@@ -485,21 +485,30 @@ export function BluetoothTrigger() {
     !p ? "Bluetooth off" : c ? "Bluetooth connected" : "Bluetooth on",
   );
 
+  // Press-based (GestureClick) like the other triggers so the second click
+  // reliably closes the panel. openDashboard() closes any other open panel via
+  // the shared exclusion group.
+  const activate = () => {
+    if (dashboardVisible.get() && activeTab.get() === "bluetooth") {
+      closeDashboard();
+    } else {
+      openDashboard("bluetooth");
+    }
+  };
+
   return (
-    <button
+    <box
       cssClasses={["control-item", "bluetooth", "dash-trigger"]}
       tooltipText={tooltip}
       valign={Gtk.Align.CENTER}
-      onClicked={() => {
-        if (dashboardVisible.get() && activeTab.get() === "bluetooth") {
-          closeDashboard();
-        } else {
-          closeCenter();
-          openDashboard("bluetooth");
-        }
-      }}
     >
+      <Gtk.GestureClick onPressed={activate} />
+      <Gtk.EventControllerMotion
+        onEnter={() => {
+          if (anyPanelOpen()) openDashboard("bluetooth");
+        }}
+      />
       <label cssClasses={iconClasses} label={glyph} valign={Gtk.Align.CENTER} />
-    </button>
+    </box>
   );
 }

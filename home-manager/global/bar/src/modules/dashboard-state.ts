@@ -1,5 +1,7 @@
 import { createState } from "ags";
 
+import { centerVisible, setCenterVisible } from "./notify-state";
+
 export type DashboardTab = "wifi" | "bluetooth";
 
 // Global visibility + active-tab state for the connectivity dashboard. The bar
@@ -15,13 +17,27 @@ export const [calendarVisible, setCalendarVisible] = createState(false);
 export const [mediaVisible, setMediaVisible] = createState(false);
 export const [extrasVisible, setExtrasVisible] = createState(false);
 
-type Panel = "dashboard" | "calendar" | "media" | "extras";
+type Panel = "dashboard" | "calendar" | "media" | "extras" | "center";
 
 function closeOthers(keep: Panel): void {
   if (keep !== "dashboard") setDashboardVisible(false);
   if (keep !== "calendar") setCalendarVisible(false);
   if (keep !== "media") setMediaVisible(false);
   if (keep !== "extras") setExtrasVisible(false);
+  if (keep !== "center") setCenterVisible(false);
+}
+
+// True when any dropdown panel is currently open. The bar triggers use this to
+// implement hover-switching: while a panel is open, hovering another trigger
+// switches to it; hovering when nothing is open does nothing.
+export function anyPanelOpen(): boolean {
+  return (
+    dashboardVisible.get() ||
+    calendarVisible.get() ||
+    mediaVisible.get() ||
+    extrasVisible.get() ||
+    centerVisible.get()
+  );
 }
 
 export function openDashboard(tab: DashboardTab): void {
@@ -62,4 +78,23 @@ export function toggleExtras(): void {
 
 export function closeExtras(): void {
   setExtrasVisible(false);
+}
+
+// The notification center (bell / brightness / volume / mic triggers) joins the
+// same mutually-exclusive group as the other panels. Its visibility state still
+// lives in notify-state (next to the daemon), but opening is coordinated here so
+// it closes every other panel — and they close it.
+export function openCenter(): void {
+  closeOthers("center");
+  setCenterVisible(true);
+}
+
+export function closeCenter(): void {
+  setCenterVisible(false);
+}
+
+export function toggleCenter(): void {
+  const next = !centerVisible.get();
+  if (next) closeOthers("center");
+  setCenterVisible(next);
 }

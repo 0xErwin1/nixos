@@ -121,6 +121,8 @@ export function weatherGlyph(code: number, isNight: boolean): string {
 // Calendar navigation.
 export const CHEVRON_LEFT = "\u{f0141}";
 export const CHEVRON_RIGHT = "\u{f0142}";
+export const CHEVRON_DOWN = "\u{f0140}";
+export const CHEVRON_UP = "\u{f0143}";
 
 // Extras panel (AI usage).
 export const AI_GLYPH = "\u{f06a9}"; // robot

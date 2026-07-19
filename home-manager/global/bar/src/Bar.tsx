@@ -48,8 +48,8 @@ function Bar({ gdkmonitor }: { gdkmonitor: Gdk.Monitor }) {
     <window
       $={(self) => (win = self)}
       visible
-      namespace="epsilon-bar"
-      name={`epsilon-bar-${gdkmonitor.connector}`}
+      namespace="wl-bar"
+      name={`wl-bar-${gdkmonitor.connector}`}
       cssClasses={["bar-window", VERTICAL ? "vertical" : "horizontal"]}
       gdkmonitor={gdkmonitor}
       exclusivity={Astal.Exclusivity.EXCLUSIVE}

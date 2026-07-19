@@ -486,13 +486,16 @@ export function MediaPanel() {
   return (
     <window
       name="media-panel"
-      namespace="epsilon-media"
+      namespace="wl-media"
       visible={mediaVisible}
       cssClasses={["media-window"]}
       anchor={TOP | BOTTOM | LEFT | RIGHT}
-      exclusivity={Astal.Exclusivity.IGNORE}
+      exclusivity={Astal.Exclusivity.NORMAL}
       layer={Astal.Layer.TOP}
       keymode={Astal.Keymode.ON_DEMAND}
+      onNotifyIsActive={(self) => {
+        if (!self.get_property("is-active")) closeMedia();
+      }}
       application={app}
     >
       <Gtk.EventControllerKey
@@ -508,7 +511,7 @@ export function MediaPanel() {
           orientation={Gtk.Orientation.VERTICAL}
           halign={Gtk.Align.START}
           valign={Gtk.Align.START}
-          marginTop={42}
+          marginTop={8}
           marginStart={panelX}
           spacing={10}
         >

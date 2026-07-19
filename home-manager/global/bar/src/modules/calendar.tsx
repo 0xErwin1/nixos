@@ -185,13 +185,16 @@ export default function Calendar() {
   return (
     <window
       name="calendar-panel"
-      namespace="epsilon-calendar"
+      namespace="wl-calendar"
       visible={calendarVisible}
       cssClasses={["calendar-window"]}
       anchor={TOP | BOTTOM | LEFT | RIGHT}
-      exclusivity={Astal.Exclusivity.IGNORE}
+      exclusivity={Astal.Exclusivity.NORMAL}
       layer={Astal.Layer.TOP}
       keymode={Astal.Keymode.ON_DEMAND}
+      onNotifyIsActive={(self) => {
+        if (!self.get_property("is-active")) closeCalendar();
+      }}
       application={app}
     >
       <Gtk.EventControllerKey

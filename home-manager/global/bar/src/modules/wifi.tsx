@@ -18,8 +18,8 @@ import {
   closeDashboard,
   dashboardVisible,
   activeTab,
+  anyPanelOpen,
 } from "./dashboard-state";
-import { closeCenter } from "./notify-state";
 
 const network = AstalNetwork.get_default();
 
@@ -364,27 +364,35 @@ export function WifiTrigger() {
     return ssid ? `Connected to ${ssid}` : "Disconnected";
   });
 
+  // Press-based (GestureClick) rather than a <button>'s release-based click: a
+  // button spawned the focus-taking panel window and then needed a pointer
+  // motion to re-arm before the next click closed it. openDashboard() closes any
+  // other open panel (including the center) via the shared exclusion group.
+  const activate = () => {
+    if (dashboardVisible.get() && activeTab.get() === "wifi") {
+      closeDashboard();
+    } else {
+      openDashboard("wifi");
+    }
+  };
+
   return (
-    <button
+    <box
       cssClasses={["control-item", "wifi", "dash-trigger"]}
       tooltipText={tooltip}
       valign={Gtk.Align.CENTER}
-      onClicked={() => {
-        // Toggle if already showing wifi; otherwise switch to it (closing the
-        // notification center if that was open).
-        if (dashboardVisible.get() && activeTab.get() === "wifi") {
-          closeDashboard();
-        } else {
-          closeCenter();
-          openDashboard("wifi");
-        }
-      }}
     >
+      <Gtk.GestureClick onPressed={activate} />
+      <Gtk.EventControllerMotion
+        onEnter={() => {
+          if (anyPanelOpen()) openDashboard("wifi");
+        }}
+      />
       <label
         cssClasses={["control-icon", "wifi-icon"]}
         label={glyph}
         valign={Gtk.Align.CENTER}
       />
-    </button>
+    </box>
   );
 }

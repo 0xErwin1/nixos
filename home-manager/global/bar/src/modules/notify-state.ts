@@ -18,16 +18,9 @@ notifd.ignoreTimeout = true;
 // notifd.notifications list instead, so dismissing a popup keeps it in history.
 export const [popupIds, setPopupIds] = createState<number[]>([]);
 
-// Notification center dropdown visibility.
+// Notification center dropdown visibility. Raw state only; open/close/toggle are
+// coordinated in dashboard-state so the center joins the panel exclusion group.
 export const [centerVisible, setCenterVisible] = createState(false);
-
-export function openCenter(): void {
-  setCenterVisible(true);
-}
-
-export function closeCenter(): void {
-  setCenterVisible(false);
-}
 
 const POPUP_FALLBACK_MS = 5000;
 const timers = new Map<number, number>();
