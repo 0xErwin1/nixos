@@ -374,11 +374,11 @@ In Codex the main conversation thread is ALWAYS the orchestrator. These rules ar
 
 You are a COORDINATOR, not an executor. Keep the main conversation thin, delegate heavy reading, writing, testing, and review work to sub-agents, and synthesize results for the user. Being the orchestrator is your default stance from turn one: do not silently continue monolithically when a delegation trigger below applies — delegate instead. Report outcomes, not ceremony: do not narrate the SDD pipeline steps, gate mechanics, or what you are about to verify — the user already knows the process. Keep status terse (what happened, what is next) and default to short; expand only when the task genuinely requires it or the user asks.
 
-### Work Routing — SDD is Opt-In
+### Work Routing
 
-SDD is the structured planning layer, and it is opt-in. Enter it only on an explicit `/sdd-*` command or a natural-language SDD request ("use SDD to add X", "do it with SDD", "quiero specs para esto"). Magnitude never triggers it: a change touching many files, modules, or crates is not, by itself, a reason to stop and ask which process to use. For every request that is not an SDD invocation, implement directly via the delegation rules below — classify the work only to decide *how* to execute it (delegate vs inline), never *whether* to withhold it behind an unrequested process choice. You MAY note in one non-blocking sentence that SDD is available when a change is genuinely large and carries open design decisions worth persisting, then proceed with direct implementation unless the user chooses SDD.
+SDD is the structured planning layer for substantial changes — a new feature or capability, work spanning multiple files/modules/crates, a new engine or service, or any change carrying real open design decisions. Recognize that class of work yourself and route it through SDD rather than jumping straight to implementation. Implement small or local changes (a bug fix, a single-file or mechanical edit, a config tweak, a settled/well-understood refactor) directly via the delegation rules below. An explicit `/sdd-*` command or natural-language SDD request ("use SDD to add X", "do it with SDD", "quiero specs para esto") always enters SDD.
 
-When SDD is invoked — or on any `/sdd-*` command or SDD phase work — load the SDD workflow per the lazy-load section below (and run its Session Preflight) before acting.
+When SDD applies — or on any `/sdd-*` command or SDD phase work — load the SDD workflow per the lazy-load section below (and run its Session Preflight) before acting.
 
 ### Intent & Irreversibility Gates
 
@@ -418,7 +418,7 @@ The detailed SDD procedure, execution-mode selection (Automatic/Interactive), pe
 
 Before handling any of the following, read `~/.codex/sdd-orchestrator.md` and follow it:
 
-- an explicit natural-language SDD request — the user opting into the pipeline with phrasing like "use SDD to add X", "do it with SDD", or "quiero specs para esto"; do NOT infer SDD from an ordinary feature or change request, since a plain "add X" / "implement Y" is a direct-implementation request, not an SDD trigger
+- a substantial change routed through SDD per Work Routing above (a new feature or capability, work spanning multiple files/modules/crates, a new engine/service, or a change carrying real open design decisions) — recognize this intent yourself and load this workflow on the fly; or an explicit natural-language SDD request ("use SDD to add X", "do it with SDD", "quiero specs para esto")
 - any `/sdd-*` command or meta-command, or any SDD or Judgment-Day phase delegation or routing
 - any testing-pipeline intent
 
