@@ -2,7 +2,7 @@ import AstalHyprland from "gi://AstalHyprland";
 import { createBinding, createComputed } from "ags";
 import { Gtk } from "ags/gtk4";
 import { createPoll } from "ags/time";
-import { exec } from "ags/process";
+import { execAsync } from "ags/process";
 
 import {
   OS_NIXOS,
@@ -68,20 +68,26 @@ interface WsInfo {
 // live window count and fullscreen flag for the focused workspace, which the
 // AstalHyprland focused-workspace binding did not update reliably on window
 // open/close. hyprctl is inherited from the running Hyprland session's PATH.
-function readActiveWorkspace(): WsInfo {
+// Runs via execAsync so a slow hyprctl never blocks the GTK main loop (a sync
+// spawn every second could freeze the whole bar).
+async function readActiveWorkspace(prev: WsInfo): Promise<WsInfo> {
   try {
-    const info = JSON.parse(exec("hyprctl activeworkspace -j"));
+    const info = JSON.parse(await execAsync(["hyprctl", "activeworkspace", "-j"]));
     return {
       windows: Number(info.windows) || 0,
       fullscreen: Boolean(info.hasfullscreen),
     };
   } catch {
-    return { windows: 0, fullscreen: false };
+    return prev;
   }
 }
 
 function WsState({ vertical }: Props) {
-  const info = createPoll<WsInfo>(readActiveWorkspace(), 1000, readActiveWorkspace);
+  const info = createPoll<WsInfo>(
+    { windows: 0, fullscreen: false },
+    1000,
+    readActiveWorkspace,
+  );
 
   const windowCount = info((i) => String(i.windows));
   const fullscreen = info((i) => (i.fullscreen ? FULLSCREEN_ICON : ""));

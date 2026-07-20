@@ -1551,6 +1551,12 @@ scale slider {
   opacity: 1;
 }
 
+// Keep the refresh glyph occupying space (constant button size) but invisible
+// while the loading spinner overlays it.
+.ai-spin-hidden {
+  opacity: 0;
+}
+
 .ai-card {
   padding: 0.9rem 1rem;
 }

@@ -3,7 +3,7 @@ import AstalWp from "gi://AstalWp";
 import { createBinding, With } from "ags";
 import { Gtk } from "ags/gtk4";
 import { createPoll } from "ags/time";
-import { exec } from "ags/process";
+import { execAsync } from "ags/process";
 
 import {
   batteryGlyph,
@@ -25,14 +25,16 @@ interface Props {
 
 function Brightness({ vertical }: Props) {
   // Astal ships no reliable brightness service, so poll brightnessctl like the
-  // eww bar did. Reports 0 when there is no backlight (e.g. a desktop).
-  const percent = createPoll(0, 2000, () => {
+  // eww bar did. Reports 0 when there is no backlight (e.g. a desktop). Runs
+  // async so the subprocess spawn never blocks the GTK main loop.
+  const percent = createPoll(0, 2000, async (prev) => {
     try {
-      const max = Number(exec("brightnessctl max"));
+      const max = Number(await execAsync(["brightnessctl", "max"]));
       if (!max) return 0;
-      return Math.round((Number(exec("brightnessctl get")) * 100) / max);
+      const cur = Number(await execAsync(["brightnessctl", "get"]));
+      return Math.round((cur * 100) / max);
     } catch {
-      return 0;
+      return prev;
     }
   });
 
@@ -131,20 +133,24 @@ interface VolumeInfo {
 // call switches the real default to its HFP node, so the binding kept reporting
 // the A2DP volume (94%) instead of the sink actually being heard (33%). Poll the
 // real default sink instead — the same one the volume keys and desktop control.
-function readVolume(): VolumeInfo {
+async function readVolume(prev: VolumeInfo): Promise<VolumeInfo> {
   try {
-    const out = exec("wpctl get-volume @DEFAULT_AUDIO_SINK@");
+    const out = await execAsync(["wpctl", "get-volume", "@DEFAULT_AUDIO_SINK@"]);
     const match = out.match(/Volume:\s*([0-9.]+)/);
     const percent = match ? Math.round(parseFloat(match[1]) * 100) : 0;
 
     return { percent, muted: /\[MUTED\]/.test(out) };
   } catch {
-    return { percent: 0, muted: false };
+    return prev;
   }
 }
 
 function Volume({ vertical }: Props) {
-  const info = createPoll<VolumeInfo>(readVolume(), 1000, readVolume);
+  const info = createPoll<VolumeInfo>(
+    { percent: 0, muted: false },
+    1000,
+    readVolume,
+  );
 
   return (
     <box

@@ -13,7 +13,7 @@ import {
   onCleanup,
 } from "ags";
 import { createPoll } from "ags/time";
-import { exec, execAsync } from "ags/process";
+import { execAsync } from "ags/process";
 
 import {
   BELL,
@@ -362,26 +362,10 @@ function DeviceSelector({
 }) {
   const isOutput = kind === "output";
   const endpoints = createBinding(audio, isOutput ? "speakers" : "microphones");
-  const current = createBinding(
-    audio,
-    isOutput ? "defaultSpeaker" : "defaultMicrophone",
-  );
   const headGlyph = isOutput ? volumeGlyph(100, false) : MIC_UNMUTED;
   const headLabel = isOutput ? "Output" : "Input";
 
   const [open, setOpen] = createState(false);
-
-  // The default endpoint returned by defaultSpeaker/defaultMicrophone often has
-  // an empty description, so read the current name off the endpoint list (whose
-  // descriptions are populated) by finding the one flagged isDefault. Depends on
-  // `current` too so it recomputes the moment the default changes.
-  const currentName = createComputed(
-    [current, endpoints],
-    (_cur, list: AstalWp.Endpoint[]) => {
-      const def = list.find((e) => e.isDefault);
-      return def?.description ?? "—";
-    },
-  );
 
   return (
     <box
@@ -402,13 +386,35 @@ function DeviceSelector({
           valign={Gtk.Align.CENTER}
         />
         <box hexpand />
-        <label
-          cssClasses={["cc-devsel-current"]}
-          label={currentName}
-          maxWidthChars={26}
-          ellipsize={Pango.EllipsizeMode.END}
-          valign={Gtk.Align.CENTER}
-        />
+        {/* The default endpoint's own description is often empty, and the
+            audio.default* property can lag. So show the name of whichever
+            endpoint is flagged isDefault — the exact same per-endpoint signal
+            the list rows highlight with — so the header always matches the
+            selected row. Rebuilt via With when the endpoint set changes. */}
+        <With value={endpoints}>
+          {(list: AstalWp.Endpoint[]) => {
+            const [name, setName] = createState("—");
+
+            const recompute = () => {
+              const def = list.find((e) => e.isDefault);
+              setName(def?.description ?? "—");
+            };
+            recompute();
+            for (const e of list) {
+              onCleanup(createBinding(e, "isDefault").subscribe(recompute));
+            }
+
+            return (
+              <label
+                cssClasses={["cc-devsel-current"]}
+                label={name}
+                maxWidthChars={26}
+                ellipsize={Pango.EllipsizeMode.END}
+                valign={Gtk.Align.CENTER}
+              />
+            );
+          }}
+        </With>
         <label
           cssClasses={["cc-devsel-chevron"]}
           label={open((o) => (o ? CHEVRON_UP : CHEVRON_DOWN))}
@@ -468,21 +474,23 @@ function VolumeSlider() {
 }
 
 function BrightnessSlider() {
-  const hasBacklight = createPoll(false, 5000, () => {
+  // Async polls: a synchronous brightnessctl spawn here (the control center is
+  // built at startup, so these run continuously) would block the GTK main loop.
+  const hasBacklight = createPoll(false, 5000, async (prev) => {
     try {
-      return Number(exec("brightnessctl max")) > 0;
+      return Number(await execAsync(["brightnessctl", "max"])) > 0;
     } catch {
-      return false;
+      return prev;
     }
   });
 
-  const brightness = createPoll(0, 2000, () => {
+  const brightness = createPoll(0, 2000, async (prev) => {
     try {
-      const max = Number(exec("brightnessctl max"));
+      const max = Number(await execAsync(["brightnessctl", "max"]));
       if (!max) return 0;
-      return Number(exec("brightnessctl get")) / max;
+      return Number(await execAsync(["brightnessctl", "get"])) / max;
     } catch {
-      return 0;
+      return prev;
     }
   });
 

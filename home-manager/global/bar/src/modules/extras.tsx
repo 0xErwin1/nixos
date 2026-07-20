@@ -55,10 +55,11 @@ interface UsageData {
 }
 
 const CACHE_SECONDS = 30;
-// Background poll cadence. Also the worst-case latency for the usage
-// threshold/reset alerts, so kept fairly tight; the provider APIs tolerate a
-// once-a-minute check.
-const BACKGROUND_SECONDS = 60;
+// Background poll cadence, also the worst-case latency for the usage
+// threshold/reset alerts. The Claude usage endpoint rate-limits (HTTP 429) a
+// once-a-minute cadence, so this is a compromise between timely alerts and
+// staying under that limit. A transient 429 is absorbed by mergeUsage below.
+const BACKGROUND_SECONDS = 180;
 
 const [usage, setUsage] = createState<UsageData | null>(null);
 const [loading, setLoading] = createState(false);
@@ -153,6 +154,21 @@ function checkUsageEvents(data: UsageData): void {
   }
 }
 
+// Keep the last good snapshot of a provider that comes back unavailable (e.g. a
+// transient HTTP 429 from polling), so a blip does not flash an error or wipe
+// the panel. Only a provider that has never been available shows its raw error.
+function mergeUsage(prev: UsageData | null, next: UsageData): UsageData {
+  if (!prev) return next;
+
+  const providers = next.providers.map((np) => {
+    if (np.available) return np;
+    const pp = prev.providers.find((x) => x.id === np.id);
+    return pp && pp.available ? pp : np;
+  });
+
+  return { generatedAt: next.generatedAt, providers };
+}
+
 // The bar shells out to the packaged Go helper, which reads the local Claude /
 // Codex OAuth credentials and returns a normalized usage document. Refreshed in
 // the background so opening the panel shows fresh data instantly instead of
@@ -168,9 +184,11 @@ function fetchUsage(force: boolean): void {
     .then((out) => {
       try {
         const parsed = JSON.parse(out) as UsageData;
-        setUsage(parsed);
-        lastFetch = now;
+        // Detect events on the raw response (skips unavailable providers), but
+        // display a merge that preserves the last good data across a blip.
         checkUsageEvents(parsed);
+        setUsage(mergeUsage(usage.get(), parsed));
+        lastFetch = now;
       } catch {
         // Malformed output: keep the last good snapshot.
       }
@@ -430,18 +448,27 @@ export function ExtrasPanel() {
             <label cssClasses={["ai-title-glyph"]} label={AI_GLYPH} />
             <label cssClasses={["ai-title"]} label="AI Usage" halign={Gtk.Align.START} hexpand />
             <button cssClasses={["ai-icon-btn"]} onClicked={() => fetchUsage(true)}>
-              <label label={REFRESH_GLYPH} />
+              {/* Spinner overlays the refresh glyph while loading so it never
+                  shifts the layout; the glyph stays present (just transparent)
+                  to keep the button size constant. */}
+              <overlay>
+                <label
+                  label={REFRESH_GLYPH}
+                  cssClasses={loading((l) => (l ? ["ai-spin-hidden"] : []))}
+                />
+                <Gtk.Spinner
+                  $type="overlay"
+                  $={(self: Gtk.Spinner) => self.start()}
+                  visible={loading}
+                  halign={Gtk.Align.CENTER}
+                  valign={Gtk.Align.CENTER}
+                />
+              </overlay>
             </button>
             <button cssClasses={["ai-icon-btn"]} onClicked={closeExtras}>
               <label label={CLOSE_GLYPH} />
             </button>
           </box>
-
-          <Gtk.Spinner
-            $={(self: Gtk.Spinner) => self.start()}
-            visible={loading}
-            halign={Gtk.Align.CENTER}
-          />
 
           <With value={usage}>
             {(u: UsageData | null) =>
