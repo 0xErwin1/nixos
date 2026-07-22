@@ -193,7 +193,7 @@ export default function Calendar() {
       layer={Astal.Layer.TOP}
       keymode={Astal.Keymode.ON_DEMAND}
       onNotifyIsActive={(self) => {
-        if (!self.get_property("is-active")) closeCalendar();
+        if (!self.isActive) closeCalendar();
       }}
       application={app}
     >

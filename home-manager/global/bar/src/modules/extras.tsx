@@ -530,7 +530,7 @@ export function ExtrasPanel() {
       layer={Astal.Layer.TOP}
       keymode={Astal.Keymode.ON_DEMAND}
       onNotifyIsActive={(self) => {
-        if (!self.get_property("is-active")) closeExtras();
+        if (!self.isActive) closeExtras();
       }}
       application={app}
     >

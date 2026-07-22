@@ -1,14 +1,43 @@
 import AstalTray from "gi://AstalTray";
-import { For, createBinding } from "ags";
+import { For, createBinding, onCleanup } from "ags";
 import { Gtk } from "ags/gtk4";
 
 const tray = AstalTray.get_default();
 
 function initItem(button: Gtk.MenuButton, item: AstalTray.TrayItem) {
-  button.menuModel = item.menuModel;
-  button.insert_action_group("dbusmenu", item.actionGroup);
-  item.connect("notify::action-group", () => {
-    button.insert_action_group("dbusmenu", item.actionGroup);
+  // DBusMenu hosts (Slack, Nextcloud, …) rebuild their GtkStack often and spam
+  // "duplicate child name" on the main loop when we re-insert the action group
+  // on every notify. Only push when the GObject identity actually changes.
+  let lastModel: unknown = null;
+  let lastGroup: unknown = null;
+
+  const sync = () => {
+    const model = item.menuModel;
+    const group = item.actionGroup;
+
+    if (model && model !== lastModel) {
+      button.menuModel = model;
+      lastModel = model;
+    }
+
+    if (group && group !== lastGroup) {
+      button.insert_action_group("dbusmenu", group);
+      lastGroup = group;
+    }
+  };
+
+  sync();
+
+  const modelId = item.connect("notify::menu-model", sync);
+  const groupId = item.connect("notify::action-group", sync);
+
+  onCleanup(() => {
+    try {
+      item.disconnect(modelId);
+      item.disconnect(groupId);
+    } catch {
+      // Item may already be gone when the For row is torn down.
+    }
   });
 }
 

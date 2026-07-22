@@ -26,12 +26,17 @@ interface Props {
 function Brightness({ vertical }: Props) {
   // Astal ships no reliable brightness service, so poll brightnessctl like the
   // eww bar did. Reports 0 when there is no backlight (e.g. a desktop). Runs
-  // async so the subprocess spawn never blocks the GTK main loop.
-  const percent = createPoll(0, 2000, async (prev) => {
+  // async so the subprocess spawn never blocks the GTK main loop. One spawn
+  // (`--machine-readable`) avoids the previous max+get double call every tick.
+  const percent = createPoll(0, 3000, async (prev) => {
     try {
-      const max = Number(await execAsync(["brightnessctl", "max"]));
+      // device,class,current,percent,max
+      const out = await execAsync(["brightnessctl", "-m"]);
+      const parts = out.trim().split(",");
+      if (parts.length < 5) return prev;
+      const cur = Number(parts[2]);
+      const max = Number(parts[4]);
       if (!max) return 0;
-      const cur = Number(await execAsync(["brightnessctl", "get"]));
       return Math.round((cur * 100) / max);
     } catch {
       return prev;
@@ -146,9 +151,11 @@ async function readVolume(prev: VolumeInfo): Promise<VolumeInfo> {
 }
 
 function Volume({ vertical }: Props) {
+  // 2s is enough for the island glyph; keys still feel instant because the
+  // OS volume changes regardless of our poll, and the next tick catches up.
   const info = createPoll<VolumeInfo>(
     { percent: 0, muted: false },
-    1000,
+    2000,
     readVolume,
   );
 

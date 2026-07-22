@@ -979,8 +979,12 @@ func grokProvider() provider {
 // ── Claude local cost/token scan ────────────────────────────────────────────
 
 const (
-	costWindowDays    = 7
+	costWindowDays     = 7
 	scanFileMaxAgeDays = 8
+	// The Claude transcript walk is the slowest part of a refresh (~several
+	// seconds). Cache the result across process invocations so the 180s bar
+	// poll does not rescan every time. Fresh enough for a usage estimate.
+	costCacheTTL = 5 * time.Minute
 )
 
 // Anthropic API prices per 1M tokens (USD). Subscription usage is flat-rate, so
@@ -1113,11 +1117,55 @@ func scanClaudeFile(path, dayCutoff string, seen map[string]bool, perDay map[str
 	}
 }
 
+func costCachePath() string {
+	return homePath(".cache/epsilon-ai-usage/claude-cost.json")
+}
+
+func loadCostCache() *costSummary {
+	path := costCachePath()
+	info, err := os.Stat(path)
+	if err != nil || time.Since(info.ModTime()) > costCacheTTL {
+		return nil
+	}
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return nil
+	}
+	var s costSummary
+	if json.Unmarshal(data, &s) != nil {
+		return nil
+	}
+	// Reject a cache written on a previous calendar day so "today" rolls over.
+	today := time.Now().Format("2006-01-02")
+	if s.Today.Date != "" && s.Today.Date != today {
+		return nil
+	}
+	return &s
+}
+
+func saveCostCache(s *costSummary) {
+	if s == nil {
+		return
+	}
+	dir := filepath.Dir(costCachePath())
+	_ = os.MkdirAll(dir, 0o700)
+	data, err := json.Marshal(s)
+	if err != nil {
+		return
+	}
+	_ = atomicWrite(costCachePath(), data)
+}
+
 // claudeCost aggregates per-day token totals + estimated cost over the last
 // costWindowDays from the Claude Code transcripts, deduplicating assistant turns
 // by message id + request id. Only recently-touched files are read so the scan
-// stays cheap on every refresh.
+// stays cheap on every refresh. Results are cached on disk for costCacheTTL
+// because each bar poll is a fresh process and the walk is multi-second.
 func claudeCost() *costSummary {
+	if cached := loadCostCache(); cached != nil {
+		return cached
+	}
+
 	root := homePath(".claude/projects")
 	if _, err := os.Stat(root); err != nil {
 		return nil
@@ -1171,6 +1219,7 @@ func claudeCost() *costSummary {
 	sort.Slice(summary.Models, func(i, j int) bool {
 		return summary.Models[i].EstUsd > summary.Models[j].EstUsd
 	})
+	saveCostCache(summary)
 	return summary
 }
 

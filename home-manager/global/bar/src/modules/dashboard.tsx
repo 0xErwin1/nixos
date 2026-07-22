@@ -54,7 +54,7 @@ export default function Dashboard() {
       layer={Astal.Layer.TOP}
       keymode={Astal.Keymode.ON_DEMAND}
       onNotifyIsActive={(self) => {
-        if (!self.get_property("is-active")) closeDashboard();
+        if (!self.isActive) closeDashboard();
       }}
       application={app}
     >

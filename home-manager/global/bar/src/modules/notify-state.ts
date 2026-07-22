@@ -11,7 +11,15 @@ export const notifd = AstalNotifd.get_default();
 // from notifd.notifications (the center's source) — so notifications appeared to
 // vanish. The transient popup is still hidden on its own timer below; ignoring
 // the timeout only affects the stored history.
+//
+// Unbounded history freezes the bar over long sessions (every notif is a live
+// GObject + center For row). Cap count and age so the store cannot grow forever.
 notifd.ignoreTimeout = true;
+
+const MAX_STORED = 50;
+// Drop anything older than 12h from the center even if the user never cleared.
+const MAX_AGE_SECONDS = 12 * 3600;
+const PRUNE_INTERVAL_SECONDS = 120;
 
 // Transient popup ids (a subset of notifd.notifications shown as popups until
 // they time out / are dismissed). The notification center reads the full
@@ -42,10 +50,48 @@ export function dismissPopup(id: number): void {
   dropPopup(id);
 }
 
+function pruneHistory(): void {
+  const list = [...notifd.get_notifications()];
+  if (list.length === 0) return;
+
+  const now = Math.floor(Date.now() / 1000);
+
+  // Oldest first for count eviction. Astal notifications expose `time` as unix s.
+  const sorted = list.slice().sort((a, b) => (a.time ?? 0) - (b.time ?? 0));
+
+  for (const n of sorted) {
+    const age = now - (n.time ?? now);
+    if (age > MAX_AGE_SECONDS) {
+      try {
+        n.dismiss();
+      } catch {
+        // already gone
+      }
+    }
+  }
+
+  const remaining = [...notifd.get_notifications()].sort(
+    (a, b) => (a.time ?? 0) - (b.time ?? 0),
+  );
+  const overflow = remaining.length - MAX_STORED;
+  if (overflow > 0) {
+    for (let i = 0; i < overflow; i++) {
+      try {
+        remaining[i].dismiss();
+      } catch {
+        // already gone
+      }
+    }
+  }
+}
+
 notifd.connect("notified", (_n, id: number) => {
   // In Do Not Disturb, suppress the popup but let the daemon keep it in
   // notifd.notifications so it still lands in the center.
-  if (notifd.dontDisturb) return;
+  if (notifd.dontDisturb) {
+    pruneHistory();
+    return;
+  }
 
   const notification = notifd.get_notification(id);
   if (!notification) return;
@@ -60,6 +106,7 @@ notifd.connect("notified", (_n, id: number) => {
         ? notification.expireTimeout
         : POPUP_FALLBACK_MS;
 
+    clearTimer(id);
     const source = GLib.timeout_add(GLib.PRIORITY_DEFAULT, timeout, () => {
       timers.delete(id);
       dropPopup(id);
@@ -67,6 +114,9 @@ notifd.connect("notified", (_n, id: number) => {
     });
     timers.set(id, source);
   }
+
+  // Keep the store bounded right after each arrival so a burst cannot pile up.
+  pruneHistory();
 });
 
 // A notification resolved elsewhere (dismissed from the center, expired, or
@@ -74,4 +124,10 @@ notifd.connect("notified", (_n, id: number) => {
 notifd.connect("resolved", (_n, id: number) => {
   clearTimer(id);
   dropPopup(id);
+});
+
+// Periodic sweep for age-based expiry (count is also enforced on notify).
+GLib.timeout_add_seconds(GLib.PRIORITY_DEFAULT, PRUNE_INTERVAL_SECONDS, () => {
+  pruneHistory();
+  return GLib.SOURCE_CONTINUE;
 });

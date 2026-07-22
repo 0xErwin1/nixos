@@ -474,21 +474,30 @@ function VolumeSlider() {
 }
 
 function BrightnessSlider() {
-  // Async polls: a synchronous brightnessctl spawn here (the control center is
-  // built at startup, so these run continuously) would block the GTK main loop.
-  const hasBacklight = createPoll(false, 5000, async (prev) => {
+  // Control center is built at startup and stays alive while hidden. Skip the
+  // subprocess when the center is closed so we do not double the bar's own
+  // brightness poll for nothing. One `brightnessctl -m` call per tick.
+  const hasBacklight = createPoll(false, 10000, async (prev) => {
+    if (!centerVisible.get()) return prev;
     try {
-      return Number(await execAsync(["brightnessctl", "max"])) > 0;
+      const out = await execAsync(["brightnessctl", "-m"]);
+      const parts = out.trim().split(",");
+      return parts.length >= 5 && Number(parts[4]) > 0;
     } catch {
       return prev;
     }
   });
 
-  const brightness = createPoll(0, 2000, async (prev) => {
+  const brightness = createPoll(0, 3000, async (prev) => {
+    if (!centerVisible.get()) return prev;
     try {
-      const max = Number(await execAsync(["brightnessctl", "max"]));
+      const out = await execAsync(["brightnessctl", "-m"]);
+      const parts = out.trim().split(",");
+      if (parts.length < 5) return prev;
+      const cur = Number(parts[2]);
+      const max = Number(parts[4]);
       if (!max) return 0;
-      return Number(await execAsync(["brightnessctl", "get"])) / max;
+      return cur / max;
     } catch {
       return prev;
     }
@@ -594,7 +603,7 @@ export function NotificationCenter() {
       layer={Astal.Layer.TOP}
       keymode={Astal.Keymode.ON_DEMAND}
       onNotifyIsActive={(self) => {
-        if (!self.get_property("is-active")) closeCenter();
+        if (!self.isActive) closeCenter();
       }}
       application={app}
     >
