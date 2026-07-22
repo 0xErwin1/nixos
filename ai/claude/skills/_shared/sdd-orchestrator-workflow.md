@@ -116,7 +116,7 @@ Do NOT skip this check. Do NOT ask the user -- just run init silently if needed.
 
 The execution mode is collected by `SDD Session Preflight` (Pace group). If it is missing, enforce the hard gate before any phase work. The cached execution mode is one of:
 
-- **Automatic** (`auto`): Run phases back-to-back without pausing, but run the Automatic Mode Gatekeeper after every phase before launching the next sub-agent. Surface only real gate failures or the final result.
+- **Automatic** (`auto`): Run phases back-to-back without pausing, with cheap inline Automatic Mode Continuity checks between phases. Surface only real gate failures or the final result.
 - **Interactive** (`interactive`): After each phase completes, show the result summary and ASK: "Want to adjust anything or continue?" before proceeding to the next phase. Use this when the user wants to review and steer each step.
 
 If the user doesn't specify, default to **Interactive** (safer, gives the user control).
@@ -133,49 +133,28 @@ Interactive approval is phase-scoped. A reply such as "continue", "dale", or "go
 
 Before the propose phase in interactive mode, offer the user a proposal question round instead of silently deciding whether the proposal is clear enough. Explain that the questions are meant to improve the PRD/proposal by uncovering business understanding, business rules, implications, impact, edge cases, and product tradeoffs. Prefer 3-5 concrete product questions per round, then summarize the resulting assumptions and ask whether the user wants to correct anything or run a second round. Cover business and product decisions: business problem, target users and situations, business rules, product outcome, current-state gap, implications and impact, edge cases, decision gaps, first-slice scope boundaries, non-goals, product constraints, and business tradeoffs. Do not ask about test commands, PR shape, changed-line budget, or other harness mechanics at proposal time unless the user explicitly asks to discuss delivery.
 
-For this agent (sub-agent delegation): **Automatic** means phases run back-to-back via sub-agents without pausing, with gatekeeper validation between phases. **Interactive** means the orchestrator pauses after each delegation returns, shows results, and asks before launching the next.
+For this agent (sub-agent delegation): **Automatic** means phases run back-to-back via sub-agents without pausing, with cheap inline Automatic Mode Continuity checks between phases. **Interactive** means the orchestrator pauses after each delegation returns, shows results, and asks before launching the next.
 
-### Automatic Mode Gatekeeper (MANDATORY)
+### Automatic Mode Continuity (lightweight)
 
-In **Automatic** mode the orchestrator is the gatekeeper between phases. The gatekeeper runs after every phase: when a delegated phase returns and BEFORE launching the next sub-agent, the orchestrator MUST validate that the phase reached its objective with everything in order. This is autonomous validation -- it does NOT ask the user; it only surfaces to the user when it catches a problem.
+In **Automatic** mode, phases run back-to-back. Between phases the orchestrator does a **cheap inline** check only — **no sub-agent**, no `sdd-verify` on planning artifacts, no 4R, no Judgment Day:
 
-**What the gatekeeper checks (every phase, against the Result Contract):**
+- Phase `status` indicates success (not failed/blocked).
+- Declared artifacts exist and are readable in the active store.
+- Spot-check: claimed paths resolve; output does not invent requirements outside prior phase scope.
 
-- **Contract conformance:** the phase returned `status`, `executive_summary`, `artifacts`, `next_recommended`, `risks`, and `skill_resolution`, and `status` indicates success (not partial, failed, or blocked).
-- **Artifact existence:** the declared artifact actually exists and is readable in the active backend -- read it back (engram: `mem_search` + `mem_get_observation` on the topic key; openspec: read the file path). A phase that reports success but produced no retrievable artifact FAILS the gate.
-- **No hallucination:** every file path, symbol, command, or artifact the phase claims it created or referenced must actually exist; spot-check the concrete claims. A referenced path that does not resolve FAILS the gate.
-- **No drift from inputs:** the output is consistent with the phase's required inputs per the Dependency Graph -- spec stays within the proposal's scope, design answers the proposal, tasks cover spec and design, apply implements the tasks. Invented requirements, scope creep, or dropped requirements FAILS the gate.
-- **Routing coherence:** `next_recommended` follows the Dependency Graph and `risks` are within tolerance (no unaddressed CRITICAL).
+**On failure:** re-run the **same** phase once with corrective feedback. If it fails again, STOP and report to the user.
 
-**Hybrid validation mechanism (cost-aware):**
+**Interactive mode:** no automatic inter-phase gate — the user is the gate when they say continue.
 
-- **Inline for low-risk phases** (`sdd-explore`, `sdd-spec`, `sdd-tasks`, `sdd-archive`): the orchestrator runs the checks itself by reading the artifact back. No extra sub-agent.
-- **Fresh-context phase-contract validator for high-risk phases** (`sdd-design`, `sdd-apply`): delegate a fresh-context sub-agent that validates only the phase artifact against its contract and acceptance criteria, because errors in these phases compound downstream. This is a phase-contract check, NOT adversarial implementation review: it inspects no code diff and creates no 4R/Judgment-Day budget, which bounds the design→verify→design nit loop. Use the `sdd-verify` model alias for the delegated gate review and include `model` per the Model Assignments table.
-- **Escalation on smell:** if an inline check on a low-risk phase finds any smell (status mismatch, unresolved path, suspected drift, missing artifact), escalate that phase to a fresh-context delegated review before deciding.
-
-**On gate PASS:** continue automatically to the next phase. Auto stays auto on the happy path.
-
-**On gate FAIL:** re-run the same phase exactly once with corrective feedback that names the specific failures the gatekeeper found. Re-run the gate on the new result. If it passes, continue the chain. If it fails again, STOP the automatic chain and surface a report to the user naming the phase, what the gatekeeper caught, both attempts, and the recommended fix. Do not advance to dependent phases on a failed gate.
-
-The gatekeeper runs in addition to the Review Workload Guard and the delegation rules; it never relaxes them and never auto-marks anything reviewed in engram.
+`sdd-verify` runs only after implementation (`sdd-apply` or a batch apply), never as a planning-phase phase-contract sub-agent review.
 
 ### SDD Gate Convergence -- Anti-Thrash (LOCAL POLICY, load-bearing)
 
-This binds the Precision gate, Severity floor, and Convergence budget from the Review Execution Contract to the SDD phase gatekeeper and the batched apply-verify cycle. It is the guardrail that stops a pedantic verifier from resetting the pipeline on nits -- the exact failure where a bounded feature with an existing design expands into an all-day loop of design -> verify -> design. Keep it aligned with the gentle-ai Review Execution Contract and NEVER strip it on upstream sync.
-
-- **Severity floor on phase gates.** A `sdd-verify` or gatekeeper finding resets to an upstream planning phase (design, spec, propose) or re-runs apply ONLY when it is a genuine BLOCKER/CRITICAL contract violation defensible with concrete evidence. WARNING/SUGGESTION/nit findings (a naming choice, a single HTTP status code, a phrasing preference, an unproven edge case) are recorded as `info` and NEVER trigger a phase re-run or upstream reset -- carry them as non-blocking follow-ups.
-- **Convergence budget on phase gates.** At most 2 correction rounds for the same phase or the same contract issue. After round 2, STOP the chain and surface the open item to the user with both attempts and a recommended decision -- do not launch a third design/verify pass. A user "continua"/"dale" resumes the pending work; it is not standing authorization to re-open a settled contract.
-- **No re-litigation of frozen decisions.** Once a contract decision (an HTTP status, an ID-allocation strategy, an error shape) is frozen by a passed gate or by the user, a later gate MUST NOT re-open it. If new evidence genuinely invalidates a frozen decision, surface it explicitly as a scope change for the user to decide -- never silently loop back through design.
-- **Executors resolve trivial gaps locally.** "Do not invent APIs" bans inventing NEW public contracts, not naming an obvious internal detail. When an apply executor hits a bounded, low-risk local decision (a route name, a DTO field, an internal helper) that the design implies but does not spell out, it makes the reasonable choice, records it in `apply-progress`, and continues -- it does NOT bounce the whole work item back to design. Reserve the bounce for a genuine missing public contract.
-
-### Reviews & Ship Commands Are Opt-In (LOCAL POLICY, load-bearing)
-
-This OVERRIDES any auto-review behavior in the Mandatory Delegation Triggers (PR rule, Fresh review rule), the Review Recommendations, and the Batched Apply-Verify cycle. Reviews add value but are not free, and an unrequested review inserted in front of a direct command is exactly the ceremony this policy removes. NEVER strip it on upstream sync.
-
-- **Automated review is recommend-only, never auto-run.** Concrete review lenses (risk/readability/resilience), a full-4R sweep, and any adversarial/refuter pass are RECOMMENDED, not executed by default. The orchestrator may surface a one-line recommendation ("this diff is large / security-sensitive -- want a review?") and then proceed. It does NOT launch a review on its own judgment.
-- **Full-4R / adversarial review is explicit opt-in, like Judgment Day.** Run it ONLY when the user explicitly asks ("review this", "corré un 4R", "juicio"). Never fire it speculatively, and never fire it a second time on a phase that already passed its gate.
-- **A direct user command executes directly -- never wrapped in a review.** When the user says commit, push, open a PR, merge, "hacé el commit y el PR", or any bounded ship/execute command, DO exactly that, inline and visibly. Do NOT insert a review, adversarial pass, or size gate before it. You MAY add a one-line review recommendation AFTER completing the requested action, but the action comes first and is never blocked by an unrequested review.
-- **Post-gate quiet.** Once `sdd-verify` returns PASS, the phase is done. Do not launch an additional review/refuter round to "double-check" unless the user asks. A passed gate is the stopping point, not a trigger for more review.
+- **Severity floor:** Only genuine BLOCKER/CRITICAL contract violations re-open apply or planning. WARNING/nit = `info`, never re-run design.
+- **Convergence budget:** At most 2 correction rounds per phase or batch issue; then STOP for the user.
+- **No re-litigation** of decisions frozen by a passed verify or the user.
+- **Executors resolve trivial local gaps** and record them in `apply-progress`.
 
 ### Artifact Store Mode
 
@@ -420,6 +399,8 @@ This is the canonical 3-slice shape; if visual and non-visual tasks interleave m
 Each slice is an ordinary `sdd-apply` launch and MUST follow the **Apply-Progress Continuity** protocol above: every slice after the first is a continuation batch, so tell it previous apply-progress exists and instruct it to read-merge-write. Forward Strict TDD to every slice as usual. Verify once, after the last slice.
 
 #### Batched Apply-Verify Cycles (local policy)
+
+**Quiet batch cycle (LOCAL POLICY).** The cycle is only `apply → sdd-verify(batch) → commit → report`. Never launch 4R, Judgment Day, refuter, or any extra reviewer between batches or after batch verify PASS.
 
 Long or many-step changes are risky to apply in one shot: a single `sdd-apply` accumulates context until it loses track of what it is doing, and it can run a long time with no checkpoint or report. For such changes the orchestrator runs apply in ordered batches, each followed by its own verify and a concise report, so context stays fresh and problems surface early instead of compounding.
 

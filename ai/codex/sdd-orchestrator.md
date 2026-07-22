@@ -103,77 +103,58 @@ Delegation is not optional once complexity appears. If a task crosses a trigger 
 
 #### Mandatory Delegation Triggers
 
-These are parent-orchestrator stop rules. Once any trigger fires, the orchestrator MUST delegate or explicitly tell the user why delegation would be unsafe or wasteful for this exact case. Do not pass these rules to child agents as permission to spawn more agents; children receive concrete role work and must not orchestrate.
+These are parent-orchestrator stop rules for **work** delegation, not review. Once any trigger fires, the orchestrator MUST delegate the underlying work or tell the user why not. Do not pass these rules to child agents as permission to spawn more agents; children receive concrete role work and must not orchestrate.
+
+**Direct-command exception (overrides every trigger below).** A direct, bounded user instruction -- merge, commit, push, run X, edit one file -- is executed inline and visibly. Never wrap it in a sub-agent or a review gate.
 
 1. **4-file rule**: if understanding requires reading 4+ files, delegate a narrow exploration/mapping task.
-2. **Multi-file write rule**: if implementation will touch 2+ non-trivial files, delegate one writer or continue inline only if a fresh review will audit before completion.
-3. **PR rule**: before commit, push, or PR after code changes, run the concrete review lens(es) selected by Review Lens Selection unless the diff is trivial docs/text.
-4. **Incident rule**: after wrong `cwd`, accidental repo/worktree mutation, merge recovery, confusing test command, or environment workaround, stop and run the concrete audit/review lens(es) selected by Review Lens Selection before continuing.
-5. **Long-session rule**: after roughly 20 tool calls, 5 exploratory file reads, or 2 non-mechanical edits without delegation and growing complexity, pause and delegate instead of silently continuing monolithically.
-6. **Fresh review rule**: use fresh context with the selected concrete review lens(es) for adversarial review of diffs, conflicts, PR readiness, and incidents; use continuity/forked context only for implementation work that needs inherited state.
-7. **Normalization ordering rule**: run every source-mutating formatter/normalizer before launching review lenses, then review those exact bytes, paths, and modes. After a review has started, only check-only formatting, typechecking, tests, and builds may run; a mutating hook is acceptable only when it is already convergent and therefore a no-op. If content changes after a review, re-normalize and run one fresh review of the new diff — never patch the old verdict incrementally or loop formatter fixes through repeated re-reviews.
+2. **Multi-file write rule**: if implementation will touch 2+ non-trivial files, delegate one writer (`worker` / `general` / platform equivalent).
+3. **Long-session rule**: after roughly 20 tool calls, 5 exploratory file reads, or 2 non-mechanical edits without delegation and growing complexity, pause and delegate remaining work instead of continuing monolithically.
+4. **Incident rule**: after wrong `cwd`, accidental repo/worktree mutation, or merge recovery, stop, report what happened, and continue only with explicit user direction. Do NOT auto-launch review.
 
-#### Review Lens Selection
+There is no PR auto-review rule, no fresh-review rule, and no formatter-to-re-review lifecycle. Format before commit when needed; ship when the user asks.
 
-`reviewer` is an intent, not a concrete installed agent. When a review/audit trigger fires, triage the diff deterministically -- this is a decision procedure, not advice:
+#### Explicit Review Protocols (opt-in only — LOCAL POLICY, load-bearing)
 
-1. **Trivial diff** (ONLY documentation, comments, formatting, or typo fixes in strings -- zero executable code and zero configuration changes): run no lens. Any diff touching executable code or configuration is at least standard tier.
-2. **Standard diff**: run exactly ONE lens -- the row in the table below that matches the dominant risk. If multiple rows match, pick the single highest-impact row; do not add lenses.
-3. **Hot path** (the diff touches auth/update/security/payments paths) **or >400 changed lines outside pure human documentation**: run the full 4R set -- `review-risk`, `review-resilience`, `review-readability`, `review-reliability`.
-4. **Large pure human documentation** (>400 authored lines with no code, configuration, prompts, agent rules, workflows, runtime instruction docs, mixed content, or active content): run only `review-readability`.
+Adversarial multi-agent review is **never automatic**. This harness does **not** use RDD-style receipts, native review budgets, automatic 4R after apply, refuter majority votes, or mandatory empty-ledger persistence.
 
-| Risk signal | Review lens |
-| --- | --- |
-| Clear naming, structure, maintainability, or small refactors | `review-readability` |
-| Behavior, state, tests, determinism, or regressions | `review-reliability` |
-| Shell/process integration, partial failures, recovery, or degraded dependencies | `review-resilience` |
-| Security, permissions, data exposure/loss, architecture, or dependencies | `review-risk` |
+Two **separate** protocols exist. They share **no** common auto-trigger. They may run together only when the user names both.
 
-Full 4R is reserved for tier 3; a standard diff never fans out to multiple lenses.
+##### Judgment Day (`juicio`)
 
-#### Review Execution Contract
+**Triggers (any is enough):** Judgment Day, Judgement Day, dual review, adversarial review (when named as judgment), `juicio`, `juzgar`, `que lo juzguen`.
 
-**Sweep budget.** Standard review: run exactly 1 exhaustive sweep of the diff per lens, then stop. Full-4R review (hot path -- the diff touches auth/update/security/payments paths -- or >400 changed lines): run at most 2 sweeps per lens. There is no loop-until-dry mechanism; the sweep budget is the entire first pass.
+**Does:** load the `judgment-day` skill and run that protocol only (typically two blind judges, optional fix, scoped re-judge per the skill).
 
-**Precision gate.** Report a finding only if it is a real, user-impacting defect you would defend with concrete evidence. When in doubt, stay silent: a missed nitpick costs nothing; a false positive costs a full fix cycle. Style and preference findings are banned unless they obscure a defect.
+**Does not:** start 4R, invent a shared trigger with 4R, or run after apply/verify by inference.
 
-**Findings ledger.** Emit a findings ledger with this schema for every entry:
+##### 4R
 
-| Field | Values |
-|-------|--------|
-| `id` | `{LENS}-{NNN}` (e.g. `R1-001`) |
-| `lens` | risk \| readability \| reliability \| resilience \| judgment-day |
-| `location` | `path/to/file.ext:line` or `:start-end` |
-| `severity` | BLOCKER \| CRITICAL \| WARNING \| SUGGESTION |
-| `status` | open \| fixed \| verified \| refuted \| wont-fix \| info |
-| `evidence` | why it matters |
+**Triggers (any is enough):** `4R`, `full 4R`, `corré un 4R`, `hace 4R`, `run 4R`, or explicitly naming the full four-lens set (risk + resilience + readability + reliability).
 
-If the first pass finds nothing, persist an empty ledger record rather than skip persistence.
+**Does:** launch four concurrent reviewer passes — risk, resilience, readability, reliability — on the stated target (OpenCode: four `reviewer` tasks with distinct lens role prompts; Claude/Codex: `review-*` agents when configured). Exactly one exhaustive sweep per lens. Report findings. No automatic refuter majority. No automatic fix→re-review loop unless the user asks to fix findings.
 
-**Adversarial verification.** Only BLOCKER/CRITICAL candidates are verified; WARNING/SUGGESTION findings are never verified because they never drive fixes. A single refuter pass (via the `reviewer` agent) evaluates the complete merged list of BLOCKER/CRITICAL candidates and returns one verdict per finding; for hot-path/full-4R reviews use at most three refuter passes through distinct lenses (correctness, exploitability/impact, reproducibility) and refute a finding only on a 2-of-3 majority. Any malformed or missing verdict defaults to `stands`.
+**Does not:** start Judgment Day unless the user also requested it.
 
-**Refutation protocol.** Refutation runs once, after merging lens ledgers and before any fix work, over BLOCKER/CRITICAL candidates only. The task ceiling is structural, not per-finding: 1 refuter task for a standard review or 3 total for full-4R, whether the list has 2 candidates or 20 -- NEVER spawn one refuter task per candidate. Run refutation inline as one batched read-only pass over the complete merged candidate list: a standard review makes exactly one general pass, while full-4R makes three lens passes sequentially (correctness, exploitability/impact, reproducibility). A finding is `refuted` on the general verdict for a standard review or an independent 2-of-3 lens majority for full-4R, and any malformed or missing per-finding verdict defaults to `stands`. Judgment Day is the exception: its two-judge convergence already satisfies adversarial verification.
+##### Both
 
-**Severity floor.** Only BLOCKER/CRITICAL findings that survive adversarial verification enter the fix -> re-review loop. WARNING/SUGGESTION findings are reported once with status `info`, are never re-reviewed, and never block. A WARNING is never `open`.
+If the user asks for juicio **and** 4R in the same request, run **both** protocols separately (announce each), produce two report sections, and do not merge them into one invented protocol.
 
-**Convergence budget.** Maximum 2 fix rounds per review. One fix round = the orchestrator (directly or via a single writer sub-agent) applies fixes for all open verified BLOCKER/CRITICAL findings, then a scoped re-review verifies the fix diff against the ledger. Anything still open after round 2 is reported to the user as open -- the loop never extends.
+##### Ambiguous "review this"
 
-**Ad-hoc severe recheck.** Outside a bounded review, rerun only the originating lens(es) that produced open verified BLOCKER/CRITICAL findings; never rerun clean lenses or lenses with only WARNING/SUGGESTION findings.
+If the user says only "review this" / "revisá esto" without naming juicio or 4R, ask which they want (simple single `reviewer` pass, 4R, juicio, or both). Do not default to 4R or Judgment Day.
 
-**Ledger persistence honors the artifact store.**
-- `openspec`: write `openspec/changes/{change-name}/review-ledger.md`.
-- `engram`: upsert topic `sdd/{change-name}/review-ledger` (ad-hoc judgment-day without a change: `review/{target-slug}/ledger`, where `target-slug` = `pr-{number}` when reviewing a PR, else the current branch name kebab-cased, else a kebab-case slug of the user-stated review target).
-- `none`: keep the ledger inline in the response; do not write files or Engram artifacts — the ledger lives only in this conversation; complete the review → fix → re-review loop within the session because it is not persisted across compaction.
+##### Ship and post-verify quiet
 
-**Scoped re-review.** A re-review pass takes the persisted ledger and the fix diff as input. It MUST verify each ledger finding's resolution and MUST review only fix-touched lines; it MUST NOT re-read the full original diff. A finding on an untouched line MUST be logged with status `info` as a first-pass quality signal and MUST NOT by itself trigger another full round.
-
-**Execution mode.** Inline mode unless dedicated review-*/jd-* subagents are configured in this file: run each lens sequentially inside your own orchestrator context and maintain the merged ledger directly.
+- Commit, push, open PR, merge: execute directly; never insert 4R or juicio first.
+- After `sdd-verify` PASS (batch or final): stop. Do not chain 4R or juicio.
+- A one-line optional offer after ship is fine; never a blocking gate.
 
 #### Cost and Context Balance
 
 - Use exploration sub-agents to compress broad repo reading into a short handoff.
 - Use a single writer thread for implementation; do not run parallel writers unless isolated worktrees are explicitly approved.
-- Use concrete review lenses after implementation, conflict resolution, or incidents because their value is independent judgment, not token saving.
+- Never auto-launch review after implementation, conflict resolution, or incidents.
 - Avoid delegation for truly local one-file fixes, quick state checks, and already-understood mechanical edits.
 
 ## SDD Workflow (Spec-Driven Development)
@@ -232,7 +213,7 @@ Do NOT skip this check. Do NOT ask the user -- just run init silently if needed.
 
 When the user invokes `/sdd-new`, `/sdd-ff`, or `/sdd-continue` (or an equivalent natural-language request, e.g. "create an SDD for X" / "do SDD for X") for the first time in a session, ASK which execution mode they prefer:
 
-- **Automatic** (`auto`): Run all phases back-to-back without pausing. The orchestrator runs a gatekeeper validation after every phase before launching the next sub-agent — the user only sees an interruption when the gatekeeper catches a problem. Show the final result only. Use this when the user wants speed and trusts the process.
+- **Automatic** (`auto`): Run all phases back-to-back without pausing. Between phases, run only the cheap inline Automatic Mode Continuity check (no review sub-agents). Show the final result only. Use this when the user wants speed and trusts the process.
 - **Interactive** (`interactive`): After each phase completes, show the result summary and ASK: "Want to adjust anything or continue?" before proceeding to the next phase. Use this when the user wants to review and steer each step.
 
 If the user doesn't specify, default to **Interactive** (safer, gives the user control).
@@ -249,47 +230,28 @@ Interactive approval is phase-scoped. A reply such as "continue", "dale", or "go
 
 Before the `sdd-propose` phase in interactive mode, offer the user a proposal question round instead of silently deciding whether the proposal is clear enough. Explain that the questions are meant to improve the PRD/proposal by uncovering business understanding, business rules, implications, impact, edge cases, and product tradeoffs. Prefer 3-5 concrete product questions per round, then summarize the resulting assumptions and ask whether the user wants to correct anything or run a second round. Cover business and product decisions: business problem, target users and situations, business rules, product outcome, current-state gap, implications and impact, edge cases, decision gaps, first-slice scope boundaries, non-goals, product constraints, and business tradeoffs. Do not ask about test commands, PR shape, changed-line budget, or other harness mechanics at proposal time unless the user explicitly asks to discuss delivery.
 
-### Automatic Mode Gatekeeper (MANDATORY)
+### Automatic Mode Continuity (lightweight)
 
-In **Automatic** mode the orchestrator is the gatekeeper between phases. The gatekeeper runs after every phase: when a sub-agent returns and BEFORE launching the next sub-agent, the orchestrator MUST validate that the phase reached its objective with everything in order. This is autonomous validation — it does NOT ask the user (that is Interactive mode); it surfaces to the user only when it catches a problem.
+In **Automatic** mode, phases run back-to-back. Between phases the orchestrator does a **cheap inline** check only — **no sub-agent**, no `sdd-verify` on planning artifacts, no 4R, no Judgment Day:
 
-**What the gatekeeper checks (every phase, against the Result Contract):**
-- **Contract conformance:** the phase returned `status`, `executive_summary`, `artifacts`, `next_recommended`, `risks`, and `skill_resolution`, and `status` indicates success (not partial, failed, or blocked).
-- **Artifact existence:** the declared artifact actually exists and is readable in the active backend — read it back (engram: `mem_search` + `mem_get_observation` on the topic key; openspec: read the file path). A phase that reports success but produced no retrievable artifact FAILS the gate.
-- **No hallucination:** every file path, symbol, command, or artifact the phase claims it created or referenced must actually exist; spot-check the concrete claims. A referenced path that does not resolve FAILS the gate.
-- **No drift from inputs:** the output is consistent with the phase's required inputs per the Dependency Graph — spec stays within the proposal's scope, design answers the proposal, tasks cover spec and design, apply implements the tasks. Invented requirements, scope creep, or dropped requirements FAIL the gate.
-- **Routing coherence:** `next_recommended` follows the Dependency Graph and `risks` are within tolerance (no unaddressed CRITICAL).
+- Phase `status` indicates success (not failed/blocked).
+- Declared artifacts exist and are readable in the active store (engram topic or openspec path).
+- Spot-check: claimed paths resolve; output does not invent requirements outside prior phase scope.
 
-**Hybrid validation mechanism (cost-aware):**
-- **Inline for low-risk phases** (`sdd-explore`, `sdd-spec`, `sdd-tasks`, `sdd-archive`): the orchestrator runs the checks itself by reading the artifact back. No extra sub-agent.
-- **Fresh-context phase-contract validator for high-risk phases** (`sdd-design`, `sdd-apply`): delegate a fresh-context sub-agent that validates only the phase artifact against its contract and acceptance criteria, because errors in these phases compound downstream. This is a phase-contract check, NOT adversarial implementation review: it inspects no code diff and creates no 4R/Judgment-Day budget, which bounds the design→verify→design nit loop.
-- **Escalation on smell:** if an inline check on a low-risk phase finds any smell (status mismatch, unresolved path, suspected drift, missing artifact), escalate that phase to a fresh-context delegated review before deciding.
+**On failure:** re-run the **same** phase once with corrective feedback that names the failures. If it fails again, STOP the automatic chain and report to the user. Do not advance dependent phases on a failed check.
 
-**On gate PASS:** continue automatically to the next phase. Auto stays auto on the happy path.
+**Interactive mode:** no automatic inter-phase gate — the user is the gate when they say continue / dale.
 
-**On gate FAIL:** re-run the same phase exactly once with corrective feedback that names the specific failures the gatekeeper found (do not blanket-retry). Re-run the gate on the new result. If it passes, continue the chain. If it fails again, STOP the automatic chain and surface a report to the user naming the phase, what the gatekeeper caught, both attempts, and the recommended fix. Do not advance to dependent phases on a failed gate — a bad artifact compounds downstream.
-
-The gatekeeper runs in addition to the Review Workload Guard and the Mandatory Delegation Triggers; it never relaxes them and never auto-marks anything reviewed in engram.
+`sdd-verify` runs only after implementation (`sdd-apply` or a batch apply), never as a planning-phase adversarial or phase-contract sub-agent review of design/spec/propose.
 
 ### SDD Gate Convergence -- Anti-Thrash (LOCAL POLICY, load-bearing)
 
-This binds the Precision gate, Severity floor, and Convergence budget from the Review Execution Contract to the SDD phase gatekeeper and the batched apply-verify cycle. It is the guardrail that stops a pedantic verifier from resetting the pipeline on nits -- the exact failure where a bounded feature with an existing design expands into an all-day loop of design -> verify -> design. Keep it aligned with the gentle-ai Review Execution Contract and NEVER strip it on upstream sync.
+Stops planning/apply thrash without a heavy review runtime. NEVER strip on upstream sync.
 
-- **Severity floor on phase gates.** A `sdd-verify` or gatekeeper finding resets to an upstream planning phase (design, spec, propose) or re-runs apply ONLY when it is a genuine BLOCKER/CRITICAL contract violation defensible with concrete evidence. WARNING/SUGGESTION/nit findings (a naming choice, a single HTTP status code, a phrasing preference, an unproven edge case) are recorded as `info` and NEVER trigger a phase re-run or upstream reset -- carry them as non-blocking follow-ups.
-- **Convergence budget on phase gates.** At most 2 correction rounds for the same phase or the same contract issue. After round 2, STOP the chain and surface the open item to the user with both attempts and a recommended decision -- do not launch a third design/verify pass. A user "continua"/"dale" resumes the pending work; it is not standing authorization to re-open a settled contract.
-- **No re-litigation of frozen decisions.** Once a contract decision (an HTTP status, an ID-allocation strategy, an error shape) is frozen by a passed gate or by the user, a later gate MUST NOT re-open it. If new evidence genuinely invalidates a frozen decision, surface it explicitly as a scope change for the user to decide -- never silently loop back through design.
-- **Executors resolve trivial gaps locally.** "Do not invent APIs" bans inventing NEW public contracts, not naming an obvious internal detail. When an apply executor hits a bounded, low-risk local decision (a route name, a DTO field, an internal helper) that the design implies but does not spell out, it makes the reasonable choice, records it in `apply-progress`, and continues -- it does NOT bounce the whole work item back to design. Reserve the bounce for a genuine missing public contract.
-
-### Reviews & Ship Commands Are Opt-In (LOCAL POLICY, load-bearing)
-
-This OVERRIDES any auto-review behavior in the Mandatory Delegation Triggers (PR rule, Fresh review rule), the Review Recommendations, and the Batched Apply-Verify cycle. Reviews add value but are not free, and an unrequested review inserted in front of a direct command is exactly the ceremony this policy removes. NEVER strip it on upstream sync.
-
-- **Automated review is recommend-only, never auto-run.** Concrete review lenses (risk/readability/resilience), a full-4R sweep, and any adversarial/refuter pass are RECOMMENDED, not executed by default. The orchestrator may surface a one-line recommendation ("this diff is large / security-sensitive -- want a review?") and then proceed. It does NOT launch a review on its own judgment.
-- **Full-4R / adversarial review is explicit opt-in, like Judgment Day.** Run it ONLY when the user explicitly asks ("review this", "corré un 4R", "juicio"). Never fire it speculatively, and never fire it a second time on a phase that already passed its gate.
-- **A direct user command executes directly -- never wrapped in a review.** When the user says commit, push, open a PR, merge, "hacé el commit y el PR", or any bounded ship/execute command, DO exactly that, inline and visibly. Do NOT insert a review, adversarial pass, or size gate before it. You MAY add a one-line review recommendation AFTER completing the requested action, but the action comes first and is never blocked by an unrequested review.
-- **Post-gate quiet.** Once `sdd-verify` returns PASS, the phase is done. Do not launch an additional review/refuter round to "double-check" unless the user asks. A passed gate is the stopping point, not a trigger for more review.
-
-For this agent (sub-agent delegation): **Automatic** means phases run back-to-back via sub-agents without pausing. **Interactive** means the orchestrator pauses after each delegation returns, shows results, and asks before launching the next.
+- **Severity floor:** Only genuine BLOCKER/CRITICAL contract violations re-open apply or planning. WARNING/SUGGESTION/nit findings are `info` and NEVER re-run design/spec/propose.
+- **Convergence budget:** At most 2 correction rounds for the same phase or batch issue. After round 2, STOP and surface both attempts to the user.
+- **No re-litigation:** decisions frozen by a passed verify or by the user stay frozen unless the user accepts a scope change.
+- **Executors resolve trivial local gaps** (route names, DTO fields, internal helpers implied by design), record them in `apply-progress`, and continue — do not bounce to design for internal detail.
 
 ### Artifact Store Mode
 
@@ -348,15 +310,9 @@ Automatic mode does not override this guard. Always pass the resolved `delivery_
 
 When launching `sdd-apply`, always include the resolved `delivery_strategy`, `chain_strategy`, and any chosen PR boundary/exception in the prompt.
 
-### Review Recommendations (organic, non-gating)
+### Explicit reviews (pointer)
 
-The three configured review lenses — readability, resilience, and risk/security — are recommendations the orchestrator applies with judgment, not a hard gate. They never block the pipeline on their own; they raise review depth when the diff warrants it.
-
-Trigger rules:
-- **At pre-commit:** consider a readability review (the review-readability lens) before committing code changes. This is a suggestion, not a requirement — skip it for trivial docs/text or already-reviewed mechanical edits.
-- **At pre-PR (strongly recommended):** when the diff touches authentication, an update/migration path, security-sensitive code, or payments, OR when it exceeds roughly 400 changed lines, strongly recommend running all three configured review lenses before opening the PR.
-
-These are agent-judgment recommendations layered on top of the Mandatory Delegation Triggers (especially the PR rule and Fresh review rule) and the Review Workload Guard; they do not replace or relax those. When a recommendation fires, decide whether the depth is warranted for this exact diff and note the decision rather than silently skipping it.
+4R and Judgment Day are separate opt-in protocols only. See **Explicit Review Protocols** above. Never auto-run either at pre-commit, pre-PR, or after `sdd-verify` PASS.
 
 ### Sub-Agent Launch Deduplication (MANDATORY)
 
@@ -498,6 +454,8 @@ If there are **no** visual/design tasks, run apply normally — nothing changes.
 Produce more slices if visual and non-visual tasks interleave. The invariant is absolute: **every slice that contains design/visual work uses the strongest design-capable model; every purely non-visual slice uses the normal apply model.** Collapse empty slices. Each slice is an ordinary `sdd-apply` launch and MUST follow the **Apply-Progress Continuity** protocol (continuation batches read-merge-write). Forward Strict TDD to every slice. Verify once, after the last slice.
 
 #### Batched Apply-Verify Cycles (local policy)
+
+**Quiet batch cycle (LOCAL POLICY).** The cycle is only `apply → sdd-verify(batch) → commit → report`. Never launch 4R, Judgment Day, refuter, or any extra reviewer between batches or after batch verify PASS.
 
 Long or many-step changes are risky to apply in one shot: a single `sdd-apply` accumulates context until it loses track of what it is doing, and it can run a long time with no checkpoint or report. For such changes the orchestrator runs apply in ordered batches, each followed by its own verify and a concise report, so context stays fresh and problems surface early instead of compounding.
 

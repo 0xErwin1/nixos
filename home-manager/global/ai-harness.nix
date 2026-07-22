@@ -108,6 +108,19 @@ let
       target = ".codex/skills";
       recursive = true;
     }
+    {
+      source = canonicalRoot + "/grok/AGENTS.md";
+      target = ".grok/AGENTS.md";
+    }
+    {
+      source = canonicalRoot + "/grok/ORCHESTRATOR.md";
+      target = ".grok/ORCHESTRATOR.md";
+    }
+    {
+      source = canonicalRoot + "/grok/agents";
+      target = ".grok/agents";
+      recursive = true;
+    }
   ];
 
   # Config files that must carry secret values into their final on-disk
@@ -142,6 +155,11 @@ let
       kind = "toml-mcpservers";
       template = canonicalRoot + "/codex/mcp-servers.toml";
       target = ".codex/config.toml";
+    }
+    {
+      kind = "toml-mcpservers";
+      template = canonicalRoot + "/grok/mcp-servers.toml";
+      target = ".grok/config.toml";
     }
     {
       kind = "json-deep-merge";

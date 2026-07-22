@@ -21,8 +21,9 @@ Templates live in Git with placeholders only; the rendered files are written out
 
 Provide at least the placeholders referenced by the active templates. The MCP
 templates for opencode (`ai/opencode/opencode.jsonc`), pi (`ai/pi/mcp.json`),
-Claude Code (`ai/claude/mcp-servers.json`), and Codex
-(`ai/codex/mcp-servers.toml`) require:
+Claude Code (`ai/claude/mcp-servers.json`), Codex
+(`ai/codex/mcp-servers.toml`), and Grok Build
+(`ai/grok/mcp-servers.toml`) require:
 
 - `ATLAS_TOKEN` — Atlas MCP token
 - `CONTEXT7_API_KEY` — Context7 MCP API key

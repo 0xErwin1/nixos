@@ -24,7 +24,7 @@ Two upstream sources participate:
 
 **Runtime install is by Nix projection, NOT by this skill.** Home Manager (`home-manager/global/ai-harness.nix`) is the authoritative projection map: it symlinks each `ai/<...>` source to its runtime location from `/nix/store`, or renders secret templates at activation. This skill edits `@ai` sources only; `home-manager switch` deploys them.
 
-Hard consequence — **never write into runtime dirs** (`~/.claude`, `~/.config/opencode`, `~/.codex`, `~/.agents`, `~/.pi/agent`). They are Nix-managed (read-only store symlinks or activation-rendered files). Edits there either fail or are clobbered on the next `home-manager switch`. A projection preflight also aborts `switch` if a projection target is an unmanaged file/symlink, so never create stray files at any target path.
+Hard consequence — **never write into runtime dirs** (`~/.claude`, `~/.config/opencode`, `~/.codex`, `~/.grok`, `~/.agents`, `~/.pi/agent`). They are Nix-managed (read-only store symlinks or activation-rendered files). Edits there either fail or are clobbered on the next `home-manager switch`. A projection preflight also aborts `switch` if a projection target is an unmanaged file/symlink, so never create stray files at any target path.
 
 ### Projected resources (source under `ai/` -> runtime target)
 
@@ -54,23 +54,27 @@ Taken verbatim from `ai-harness.nix` `projectedResources`:
 | `codex/commands` | `.codex/commands` |
 | `codex/agents` | `.codex/agents` |
 | `codex/skills` | `.codex/skills` |
+| `grok/AGENTS.md` | `.grok/AGENTS.md` |
+| `grok/ORCHESTRATOR.md` | `.grok/ORCHESTRATOR.md` |
+| `grok/agents` | `.grok/agents` |
 
 ### Secret-bearing configs (NEVER hold real tokens)
 
 These carry `@VAR@` placeholders and are rendered or merged at activation from the secret env files. Preserve the placeholder form; never expand or commit a secret value.
 
 - Rendered whole-file: `opencode/opencode.jsonc` -> `.config/opencode/opencode.jsonc`; `pi/mcp.json` -> `.pi/agent/mcp.json`.
-- Merged (MCP/section-only into an agent-owned file): `claude/mcp-servers.json` -> `.claude.json`; `codex/mcp-servers.toml` -> `.codex/config.toml`; `claude/settings-merge.json` -> `.claude/settings.json`.
+- Merged (MCP/section-only into an agent-owned file): `claude/mcp-servers.json` -> `.claude.json`; `codex/mcp-servers.toml` -> `.codex/config.toml`; `grok/mcp-servers.toml` -> `.grok/config.toml`; `claude/settings-merge.json` -> `.claude/settings.json`.
 
 ### Managed provider subset
 
-`@ai` mirrors only **claude, codex, opencode**, plus the shared `ai/skills` and `ai/command`, plus `ai/pi/mcp.json` (secret template only). Upstream gentle-ai ships many more providers (claude, opencode, codex, generic, gemini, cursor, kimi, kiro, qwen, windsurf, antigravity, gga, hermes, skills — the current `//go:embed` roots in `internal/assets/assets.go`). Map upstream onto the user subset only:
+`@ai` mirrors only **claude, codex, opencode, grok**, plus the shared `ai/skills` and `ai/command`, plus `ai/pi/mcp.json` (secret template only). Upstream gentle-ai ships many more providers (claude, opencode, codex, generic, gemini, cursor, kimi, kiro, qwen, windsurf, antigravity, gga, hermes, skills — the current `//go:embed` roots in `internal/assets/assets.go`). Map upstream onto the user subset only. **Grok has no gentle-ai upstream tree**; maintain `ai/grok` locally (adapted from OpenCode/shared policy + Grok Build tool surface).
 
 | Upstream | User target |
 |---|---|
 | `claude` | `ai/claude` |
 | `codex` | `ai/codex` |
 | `opencode` | `ai/opencode` |
+| *(none — local)* | `ai/grok` |
 | `skills` (and root `skills/`) | `ai/skills` and per-client mirrors `ai/{claude,codex,opencode}/skills` |
 | `generic` / shared-agnostic behavior | `ai/shared` authoring layer |
 
@@ -106,18 +110,20 @@ Upstream is the source of truth for structure, asset surface, and content. Local
 | User-authored skills not present upstream: `obsidian`, `dbflux-release`, `find-skills`, `upstream-ai-sync` | canonical `ai/skills` + every client mirror |
 | User-authored agents: `bug-hunter`, `pr-reviewer` (claude/opencode) | `claude/agents/`, `opencode/agent/` |
 | `author: iperez` in skill frontmatter | every skill SKILL.md |
-| Anti-thrash guardrails: **Precision gate, Adversarial verification, Refutation protocol, Severity floor, Convergence budget** in the Review Execution Contract, plus the **SDD Gate Convergence -- Anti-Thrash** section | `shared/ORCHESTRATOR.md`, `opencode/ORCHESTRATOR.md`, `codex/sdd-orchestrator.md`, `claude/sdd-orchestrator.md`, `claude/skills/_shared/sdd-orchestrator-workflow.md`. These bound the SDD phase gate so a pedantic verifier cannot loop design->verify->design on nits. They MATCH gentle-ai upstream; if a sync ever drops or weakens them, KEEP local and restore from upstream. NEVER strip on sync. |
+| **No-RDD / no auto-review (LOCAL POLICY)** | All orchestrators and SDD workflows | Do **not** reintroduce: Lifecycle receipt rules, `gentle-ai review *`, Review Execution Contract as default, auto 4R/refuter after apply, phase-contract `sdd-verify` on design, PR/fresh-review auto triggers. Keep **Explicit Review Protocols**: Judgment Day and 4R are separate opt-in triggers only; they may run together only when the user names both. Keep **Automatic Mode Continuity** (inline cheap checks) and **Quiet batch cycle**. NEVER strip on sync. |
+| Anti-thrash: **SDD Gate Convergence** (severity floor, 2-round budget, no re-litigation) | `shared/ORCHESTRATOR.md`, `opencode/ORCHESTRATOR.md`, `codex/sdd-orchestrator.md`, `claude/sdd-orchestrator.md`, `grok/ORCHESTRATOR.md`, workflows | Prevents design→verify→design thrash. NEVER strip on sync. |
+| Grok Build client (`ai/grok`) | `AGENTS.md`, `ORCHESTRATOR.md`, `agents/`, `mcp-servers.toml` | Local-only; not from gentle-ai. KEEP on sync. |
 
-## Current gentle-ai (v2.0) awareness — runtime-only caveat
+## Current gentle-ai (v2.0+) awareness — do not port RDD ceremony
 
-Current gentle-ai (v2.0) introduced a **runtime-backed review/delegation lifecycle** enforced by the gentle-ai Go binary: bounded review transactions (`internal/components/reviewtransaction`), receipts/CAS, a frozen-ledger validation lifecycle, and native OpenCode `general`/`explore` agent routing. These CANNOT be reproduced by prompt assets alone.
+Current gentle-ai introduced a **runtime-backed review lifecycle** (RDD / receipts / CAS / reviewtransaction). This harness **does not** use that runtime and **must not** simulate it with prompt-only multi-agent loops.
 
-Rule: when syncing behavior from these areas, port only the prompt-expressible portion into `@ai`'s prompt/orchestrator assets, and explicitly document the runtime-only remainder as not-reproducible instead of faking it with sub-agent gymnastics. This prevents the harness from inheriting gate rules it cannot actually execute.
+Rule: when syncing from gentle-ai, **reject** adoption of Lifecycle receipt rules, automatic 4R fan-out, refuter majority protocols, and empty-ledger persistence as always-on behavior. Keep local Explicit Review Protocols (opt-in 4R and Judgment Day as separate triggers). Runtime-only remainder is not-reproducible and **not desired** here.
 
 ## Hard Rules
 
 - Work only in `/home/iperez/.config/home-manager/ai` (`@ai`), the pi-harness repo, and the upstream caches under `/home/iperez/.cache/tabularium-ai/`, unless the user names another target.
-- Never write into runtime dirs (`~/.claude`, `~/.config/opencode`, `~/.codex`, `~/.agents`, `~/.pi/agent`). They are Nix-managed. Edit `@ai` sources; `home-manager switch` deploys them.
+- Never write into runtime dirs (`~/.claude`, `~/.config/opencode`, `~/.codex`, `~/.grok`, `~/.agents`, `~/.pi/agent`). They are Nix-managed. Edit `@ai` sources; `home-manager switch` deploys them.
 - Never create a stray file at any projection target path; the projection preflight aborts `switch` on unmanaged targets.
 - Do not run `home-manager` or any mutating deployment command as part of this skill unless the user explicitly asks.
 - Do not modify either upstream checkout except `git clone`, `git fetch`, `git pull --ff-only`, or read-only inspection.
@@ -153,7 +159,7 @@ The upstream toolkit ships one behavioral contract rendered as per-provider vari
 | USER_ONLY not in table | FLAG for user decision; do not auto-delete. |
 | Branding/persona content in upstream | STRIP during sync; never propagate to user files. |
 | Persistence conflict | Obsidian + Engram wins. |
-| Runtime-only behavior (v2.0 review/ledger/CAS/native agent routing) | Port prompt-expressible portion only; document the runtime remainder as not-reproducible. |
+| Runtime-only RDD / review lifecycle (receipts, CAS, reviewtransaction) | **Do not port.** Keep local Explicit Review Protocols. Document as intentionally not adopted. |
 
 ## Execution Steps
 

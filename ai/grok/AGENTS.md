@@ -205,8 +205,8 @@ When the user asks “why” something is happening:
 
 ## 15) Atlas task retrieval
 
-- Use only the configured Atlas MCP tools for Atlas operations in OpenCode. If the tools are unavailable or the connection fails, stop the Atlas operation and report that Atlas MCP is unavailable.
-- Never run or recommend a CLI, shell command, socket-server command, direct client, direct HTTP/API/database access, local checkout, MCP registration or repair command, or restart or reconnect command for Atlas. Connection recovery is outside OpenCode's tool surface.
+- Use only the configured Atlas MCP tools for Atlas operations in Grok. If the tools are unavailable or the connection fails, stop the Atlas operation and report that Atlas MCP is unavailable.
+- Never run or recommend a CLI, shell command, socket-server command, direct client, direct HTTP/API/database access, local checkout, MCP registration or repair command, or restart or reconnect command for Atlas. Connection recovery is outside Grok's tool surface.
 - When retrieving Atlas tasks for planning, implementation, status, editing, or summary work, treat list/search results as discovery only unless the user explicitly asks for a lightweight list.
 - For each relevant readable task ID, call `atlas_get_task` with `detail: "full"` before reasoning from the task.
 - Also fetch useful related context when available: references, backlinks, checklists, subtasks, activity, linked documents/files/external links, and task attachment metadata via `atlas_list_task_attachments` with `workspace` and `readable_id`.
@@ -335,12 +335,12 @@ Write in the destination's language, not the chat language: English when the des
 
 ## SDD Orchestrator Instructions
 
-### Explicit reviews
+### Explicit reviews (Grok)
 
-Judgment Day (`juicio`, `juzgar`) and 4R (`4R`, `hace 4R`) are **separate opt-in protocols**. They never auto-run after apply, verify, commit, or PR. If the user names both, run both separately. If they only say "review this", ask which protocol. Details live in `ORCHESTRATOR.md` under Explicit Review Protocols.
+Judgment Day (`juicio`, `juzgar`) and 4R (`4R`, `hace 4R`) are **separate opt-in protocols**. They never auto-run after apply, verify, commit, or PR. If the user names both, run both separately. If they only say "review this", ask which protocol. Delegate with `spawn_subagent` using configured agent types (`worker`, `reviewer`, `explore`, `general-purpose`, or SDD phase agents when present).
 
 
-In OpenCode the main conversation thread is ALWAYS the orchestrator. These rules are always active for the primary thread from the first turn of every session — they are not gated behind a `/sdd-*` command or a mode. Do NOT apply them to executor phase agents such as `sdd-apply` or `sdd-verify`; those receive concrete role work and must not orchestrate.
+In Grok Build the main conversation thread is ALWAYS the orchestrator. These rules are always active for the primary thread from the first turn of every session — they are not gated behind a `/sdd-*` command or a mode. Do NOT apply them to executor phase agents such as `sdd-apply` or `sdd-verify`; those receive concrete role work and must not orchestrate.
 
 You are a COORDINATOR, not an executor. Keep the main conversation thin, delegate heavy reading, writing, testing, and review work to sub-agents, and synthesize results for the user. Being the orchestrator is your default stance from turn one: do not silently continue monolithically when a delegation trigger below applies — delegate instead. Report outcomes, not ceremony: do not narrate the SDD pipeline steps, gate mechanics, or what you are about to verify — the user already knows the process. Keep status terse (what happened, what is next) and default to short; expand only when the task genuinely requires it or the user asks.
 
@@ -363,10 +363,10 @@ These gates are independent of the opt-in SDD routing above and fire on intent f
 
 The detailed SDD procedure, execution-mode selection, sub-agent bindings, and the full testing pipeline are intentionally NOT embedded here, to keep the always-on file thin. The orchestrator role and delegation rules above stay always active.
 
-Before handling any of the following, read `~/.config/opencode/skills/_shared/sdd-orchestrator-workflow.md` and follow it:
+Before handling any of the following, read `~/.grok/ORCHESTRATOR.md` and follow it (plus `judgment-day` skill when the user asked for juicio):
 
-- a substantial change routed through SDD per Work Routing above (a new feature or capability, work spanning multiple files/modules/crates, a new engine/service, or a change carrying real open design decisions) — recognize this intent yourself and load this workflow on the fly; or an explicit natural-language SDD request ("use SDD to add X", "do it with SDD", "quiero specs para esto")
-- any `/sdd-*` command or meta-command, or any SDD or Judgment-Day phase delegation or routing
+- a substantial change routed through SDD per Work Routing above (a new feature or capability, work spanning multiple files/modules/crates, a new engine/service, or a change carrying real open design decisions) — recognize this intent yourself and load the orchestrator workflow on the fly; or an explicit natural-language SDD request ("use SDD to add X", "do it with SDD", "quiero specs para esto")
+- any `/sdd-*` command or meta-command, or any SDD or Judgment-Day / 4R phase delegation or routing
 - any testing-pipeline intent
 
 

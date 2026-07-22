@@ -24,6 +24,11 @@ let
     "ai/codex/engram-compact-prompt.md"
     "ai/codex/commands/sdd-test.md"
     "ai/codex/agents/sdd-run-testing.md"
+    "ai/grok/AGENTS.md"
+    "ai/grok/ORCHESTRATOR.md"
+    "ai/grok/agents/worker.md"
+    "ai/grok/agents/reviewer.md"
+    "ai/grok/mcp-servers.toml"
     "ai/support/secrets-env-contract.md"
     "ai/support/operator-cutover-rollback.md"
   ];
@@ -49,6 +54,9 @@ let
     ".codex/commands"
     ".codex/agents"
     ".codex/skills"
+    ".grok/AGENTS.md"
+    ".grok/ORCHESTRATOR.md"
+    ".grok/agents"
   ];
   # Single-file projection targets: Home Manager materializes each as a
   # whole-path /nix/store symlink, so the unmanaged-collision preflight guards
@@ -66,6 +74,8 @@ let
     ".codex/sdd-orchestrator.md"
     ".codex/engram-instructions.md"
     ".codex/engram-compact-prompt.md"
+    ".grok/AGENTS.md"
+    ".grok/ORCHESTRATOR.md"
   ];
   recursiveTargetSample = ".agents/skills";
   expectedSecretEnv = {
@@ -85,19 +95,18 @@ let
       ];
     }
   ];
-  frozenLedgerAssets = [
+  # Judgment Day still uses a scoped ledger/re-judge contract when the user
+  # opts in. Orchestrators no longer embed the full RDD Review Execution Contract.
+  judgmentDayLedgerAssets = [
+    "ai/opencode/skills/judgment-day/SKILL.md"
+    "ai/claude/skills/judgment-day/SKILL.md"
+  ];
+  explicitReviewPolicyAssets = [
     "ai/shared/ORCHESTRATOR.md"
     "ai/opencode/ORCHESTRATOR.md"
     "ai/claude/sdd-orchestrator.md"
-    "ai/claude/agents/jd-judge-a.md"
-    "ai/claude/agents/jd-judge-b.md"
-    "ai/claude/agents/review-readability.md"
-    "ai/claude/agents/review-resilience.md"
-    "ai/claude/agents/review-risk.md"
-    "ai/opencode/skills/judgment-day/SKILL.md"
-    "ai/opencode/skills/judgment-day/references/prompts-and-formats.md"
-    "ai/claude/skills/judgment-day/SKILL.md"
-    "ai/claude/skills/judgment-day/references/prompts-and-formats.md"
+    "ai/codex/sdd-orchestrator.md"
+    "ai/grok/ORCHESTRATOR.md"
   ];
   trimLine =
     line:
@@ -363,30 +372,55 @@ assert builtins.all (
     "initial path set"
     "acceptance criteria"
     "regression evidence"
-    "non-blocking follow-ups"
   ]
-) frozenLedgerAssets;
+) judgmentDayLedgerAssets;
+assert builtins.all (
+  relativePath:
+  builtins.all (needle: fileContains relativePath needle) [
+    "Explicit Review Protocols"
+    "Judgment Day"
+    "4R"
+    "Automatic Mode Continuity"
+  ]
+) explicitReviewPolicyAssets;
 assert builtins.all (check: builtins.all (needle: fileContains check.file needle) check.needles) [
   {
     file = "ai/opencode/ORCHESTRATOR.md";
     needles = [
       "native `explore` agent"
       "native `general` agent"
-      "non-blocking follow-ups"
+      "Quiet batch cycle"
+      "never automatic"
     ];
   }
   {
     file = "ai/shared/ORCHESTRATOR.md";
     needles = [
-      "initial path set"
-      "non-blocking follow-ups"
+      "never automatic"
+      "Quiet batch cycle"
     ];
   }
   {
     file = "ai/claude/sdd-orchestrator.md";
     needles = [
-      "initial path set"
-      "non-blocking follow-ups"
+      "never automatic"
+      "separate"
+    ];
+  }
+  {
+    file = "ai/grok/AGENTS.md";
+    needles = [
+      "spawn_subagent"
+      "Explicit reviews"
+      "4R"
+    ];
+  }
+  {
+    file = "ai/grok/mcp-servers.toml";
+    needles = [
+      "@ATLAS_TOKEN@"
+      "@CONTEXT7_API_KEY@"
+      "@PENPOT_API_KEY@"
     ];
   }
   {
@@ -422,12 +456,16 @@ assert builtins.all
       "Git-derived snapshots"
       "authoritative Engram receipts"
       "append-only CAS"
+      "Lifecycle receipt rule"
+      "gentle-ai review status"
     ]
   )
   [
     "ai/shared/ORCHESTRATOR.md"
     "ai/opencode/ORCHESTRATOR.md"
     "ai/claude/sdd-orchestrator.md"
+    "ai/codex/sdd-orchestrator.md"
+    "ai/grok/ORCHESTRATOR.md"
     "ai/opencode/skills/judgment-day/SKILL.md"
     "ai/claude/skills/judgment-day/SKILL.md"
   ];

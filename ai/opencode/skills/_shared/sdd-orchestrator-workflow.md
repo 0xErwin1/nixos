@@ -305,6 +305,8 @@ Use the statically configured `sdd-apply` sub-agent for apply work. Do not split
 
 #### Batched Apply-Verify Cycles (local policy)
 
+**Quiet batch cycle (LOCAL POLICY).** The cycle is only `apply → sdd-verify(batch) → commit → report`. Never launch 4R, Judgment Day, refuter, or any extra reviewer between batches or after batch verify PASS.
+
 Long or many-step changes are risky to apply in one shot: a single `sdd-apply` accumulates context until it loses track of what it is doing, and it can run a long time with no checkpoint or report. For such changes the orchestrator runs apply in ordered batches, each followed by its own verify and a concise report, so context stays fresh and problems surface early instead of compounding.
 
 **Trigger (automatic).** Before launching the first `sdd-apply`, the orchestrator inspects the tasks artifact. The change is a batching candidate when it is large or multi-step — heuristics: more than ~8-10 implementation tasks, several distinct phases, or an estimated changed-line count above 400 (reuse the `Review Workload Forecast` from `sdd-tasks` when present). Small changes run as a single apply; nothing changes for them.

@@ -72,16 +72,17 @@ Put a setting in a host/profile directory when it is machine- or role-specific. 
 
 ## AI Harness
 
-`home-manager/global/ai-harness.nix` connects canonical assets under `ai/` to Pi, OpenCode, Claude Code, and Codex.
+`home-manager/global/ai-harness.nix` connects canonical assets under `ai/` to Pi, OpenCode, Claude Code, Codex, and Grok Build.
 
 - Static skills, agents, commands, prompts, and policy files are projected by Home Manager, generally as Nix store symlinks.
 - Fully owned secret-bearing configs are rendered at activation from tracked placeholder templates.
 - Agent-owned runtime configs are merged at activation so OAuth, trust, caches, and other runtime state are preserved.
 - The shared MCP set includes `aws`, `context7`, `figma`, `penpot`, `dbflux`, `engram`, `obsidian`, and `atlas`, with per-agent adjustments.
+- Reviews: 4R and Judgment Day are separate explicit opt-ins; this harness does not run the gentle-ai RDD review lifecycle.
 
 Safe AI harness workflow:
 
-1. Edit the canonical source in `ai/`, not projected files under `~/.config/opencode`, `~/.claude`, `~/.codex`, or `~/.pi`.
+1. Edit the canonical source in `ai/`, not projected files under `~/.config/opencode`, `~/.claude`, `~/.codex`, `~/.grok`, or `~/.pi`.
 2. Update `home-manager/global/ai-harness.nix` only when projection, render, merge, or secret-contract wiring changes.
 3. Keep tracked templates placeholder-only; never add rendered credentials.
 4. Run `nix flake check --no-build --no-write-lock-file` for shared harness changes.

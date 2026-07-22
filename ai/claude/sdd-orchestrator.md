@@ -87,78 +87,64 @@ Delegation is not optional once complexity appears. If a task crosses a trigger 
 
 #### Mandatory Delegation Triggers
 
-These are parent-orchestrator stop rules. Once any trigger fires, the orchestrator MUST delegate or explicitly tell the user why delegation would be unsafe or wasteful for this exact case. Do not pass these rules to child agents as permission to spawn more agents; children receive concrete role work and must not orchestrate.
+These are parent-orchestrator stop rules for **work** delegation, not review. Once any trigger fires, the orchestrator MUST delegate the underlying work or tell the user why not. Do not pass these rules to child agents as permission to spawn more agents; children receive concrete role work and must not orchestrate.
 
-1. **4-file rule**: if understanding requires reading 4+ files, delegate a narrow exploration or mapping task.
-2. **Multi-file write rule**: if implementation will touch 2+ non-trivial files, delegate one writer or continue inline only if a fresh review will audit before completion.
-3. **PR rule**: before commit, push, or PR after code changes, run the concrete review lens or lenses selected by Review Lens Selection unless the diff is trivial docs or text.
-4. **Incident rule**: after wrong `cwd`, accidental repo or worktree mutation, merge recovery, confusing test command, or environment workaround, stop and run the concrete audit or review lens or lenses selected by Review Lens Selection before continuing.
-5. **Long-session rule**: after roughly 20 tool calls, 5 exploratory file reads, or 2 non-mechanical edits without delegation and growing complexity, pause and delegate instead of silently continuing monolithically.
-6. **Fresh review rule**: use fresh context with the selected concrete review lens or lenses for adversarial review of diffs, conflicts, PR readiness, and incidents; use continuity or forked context only for implementation work that needs inherited state.
-7. **Normalization ordering rule**: run every source-mutating formatter or normalizer before launching review lenses, then review those exact bytes, paths, and modes. After a review has started, only check-only formatting, typechecking, tests, and builds may run; a mutating hook is acceptable only when it is already convergent and therefore a no-op. If content changes after a review, re-normalize and run one fresh review of the new diff — never patch the old verdict incrementally or loop formatter fixes through repeated re-reviews.
+**Direct-command exception (overrides every trigger below).** A direct, bounded user instruction -- merge, commit, push, run X, edit one file -- is executed inline and visibly. Never wrap it in a sub-agent or a review gate.
 
-#### Review Lens Selection
+1. **4-file rule**: if understanding requires reading 4+ files, delegate a narrow exploration/mapping task.
+2. **Multi-file write rule**: if implementation will touch 2+ non-trivial files, delegate one writer (`worker` / `general` / platform equivalent).
+3. **Long-session rule**: after roughly 20 tool calls, 5 exploratory file reads, or 2 non-mechanical edits without delegation and growing complexity, pause and delegate remaining work instead of continuing monolithically.
+4. **Incident rule**: after wrong `cwd`, accidental repo/worktree mutation, or merge recovery, stop, report what happened, and continue only with explicit user direction. Do NOT auto-launch review.
 
-`reviewer` is an intent, not a concrete installed agent. When a review or audit trigger fires, triage the diff deterministically — this is a decision procedure, not advice:
+There is no PR auto-review rule, no fresh-review rule, and no formatter-to-re-review lifecycle. Format before commit when needed; ship when the user asks.
 
-1. **Trivial diff** (ONLY documentation, comments, formatting, or typo fixes in strings — zero executable code and zero configuration changes): run no lens. Any diff touching executable code or configuration is at least standard tier.
-2. **Standard diff**: run exactly ONE lens — the row in the table below that matches the dominant risk. If multiple rows match, pick the single highest-impact row; do not add lenses.
-3. **Hot path** (the diff touches auth/update/security/payments paths) **or more than 400 changed lines outside pure human documentation**: run the full 4R set — `review-risk`, `review-resilience`, `review-readability`, `review-reliability`.
-4. **Large pure human documentation** (more than 400 authored lines with no code, configuration, prompts, agent rules, workflows, runtime instruction docs, mixed content, or active content): run only `review-readability`.
+#### Explicit Review Protocols (opt-in only — LOCAL POLICY, load-bearing)
 
-| Risk signal | Review lens |
-| --- | --- |
-| Clear naming, structure, maintainability, or small refactors | `review-readability` |
-| Behavior, state, tests, determinism, or regressions | `review-reliability` |
-| Shell or process integration, partial failures, recovery, or degraded dependencies | `review-resilience` |
-| Security, permissions, data exposure or loss, architecture, or dependencies | `review-risk` |
+Adversarial multi-agent review is **never automatic**. This harness does **not** use RDD-style receipts, native review budgets, automatic 4R after apply, refuter majority votes, or mandatory empty-ledger persistence.
 
-Full 4R is reserved for tier 3; a standard diff never fans out to multiple lenses.
+Two **separate** protocols exist. They share **no** common auto-trigger. They may run together only when the user names both.
 
-#### Review Execution Contract
+##### Judgment Day (`juicio`)
 
-**Sweep budget.** Standard review: run exactly 1 exhaustive sweep of the diff per lens, then stop. Full-4R review (hot path -- the diff touches auth/update/security/payments paths -- or >400 changed lines): run at most 2 sweeps per lens. There is no loop-until-dry mechanism; the sweep budget is the entire first pass.
+**Triggers (any is enough):** Judgment Day, Judgement Day, dual review, adversarial review (when named as judgment), `juicio`, `juzgar`, `que lo juzguen`.
 
-**Precision gate.** Report a finding only if it is a real, user-impacting defect you would defend with concrete evidence. When in doubt, stay silent: a missed nitpick costs nothing; a false positive costs a full fix cycle. Style and preference findings are banned unless they obscure a defect.
+**Does:** load the `judgment-day` skill and run that protocol only (typically two blind judges, optional fix, scoped re-judge per the skill).
 
-**Findings ledger.** Emit a findings ledger with this schema for every entry:
+**Does not:** start 4R, invent a shared trigger with 4R, or run after apply/verify by inference.
 
-| Field | Values |
-|-------|--------|
-| `id` | `{LENS}-{NNN}` (e.g. `R1-001`) |
-| `lens` | risk \| readability \| reliability \| resilience \| judgment-day |
-| `location` | `path/to/file.ext:line` or `:start-end` |
-| `severity` | BLOCKER \| CRITICAL \| WARNING \| SUGGESTION |
-| `status` | open \| fixed \| verified \| refuted \| wont-fix \| info |
-| `evidence` | why it matters |
+##### 4R
 
-If the first pass finds nothing, persist an empty ledger record rather than skip persistence.
+**Triggers (any is enough):** `4R`, `full 4R`, `corré un 4R`, `hace 4R`, `run 4R`, or explicitly naming the full four-lens set (risk + resilience + readability + reliability).
 
-**Adversarial verification.** Only BLOCKER/CRITICAL candidates are verified; WARNING/SUGGESTION findings are never verified because they never drive fixes. Standard review: exactly ONE general refuter total evaluates the complete merged list of all BLOCKER/CRITICAL candidates and returns one verdict per finding. Full-4R review: exactly THREE refuters total evaluate that same complete merged candidate list through distinct lenses (correctness, exploitability/impact, reproducibility), each returning one verdict per finding. Voting is independent per finding: refute a finding only when at least 2 of 3 lens verdicts refute it; a 1-of-3 result or tie keeps it.
+**Does:** launch four concurrent reviewer passes — risk, resilience, readability, reliability — on the stated target (OpenCode: four `reviewer` tasks with distinct lens role prompts; Claude/Codex: `review-*` agents when configured). Exactly one exhaustive sweep per lens. Report findings. No automatic refuter majority. No automatic fix→re-review loop unless the user asks to fix findings.
 
-**Refutation protocol.** The orchestrator invokes refutation once after merging lens ledgers and before any fix work; only BLOCKER/CRITICAL candidates are included. The task ceiling is review-level and structural: 1 refuter task for a standard review or 3 total for full-4R, whether the list has 2 candidates or 20; NEVER spawn one refuter task per candidate. Where dedicated `review-refuter` agents exist, standard review delegates exactly one batched read-only task with the `general` lens, while full-4R delegates exactly three tasks, one per lens, in parallel. Every task receives the complete merged candidate list. In standard review, a finding is `refuted` only when the general verdict refutes it; in full-4R, apply the independent 2-of-3 vote per finding. Any malformed or missing per-finding verdict defaults to `stands` for that finding. Judgment Day is the exception: its two-judge convergence satisfies adversarial verification and it spawns no `review-refuter` tasks.
+**Does not:** start Judgment Day unless the user also requested it.
 
-**Severity floor.** Only BLOCKER/CRITICAL findings that survive adversarial verification enter the fix -> re-review loop. WARNING/SUGGESTION findings are reported once with status `info`, are never re-reviewed, and never block. A WARNING is never `open`.
+##### Both
 
-**Convergence budget.** Maximum 2 fix rounds per review. One fix round = the orchestrator (directly or via a single writer sub-agent) applies fixes for all open verified BLOCKER/CRITICAL findings, then a scoped re-review verifies the fix diff against the ledger; in judgment-day the fix actor is `jd-fix-agent`. Anything still open after round 2 is reported to the user as open -- the loop never extends.
+If the user asks for juicio **and** 4R in the same request, run **both** protocols separately (announce each), produce two report sections, and do not merge them into one invented protocol.
 
-**Ad-hoc severe recheck.** Outside a bounded review, rerun only the originating lens(es) that produced open verified BLOCKER/CRITICAL findings; never rerun clean lenses or lenses with only WARNING/SUGGESTION findings.
+##### Ambiguous "review this"
 
-**Ledger persistence honors the artifact store.**
-- `openspec`: write `openspec/changes/{change-name}/review-ledger.md`.
-- `engram`: upsert topic `sdd/{change-name}/review-ledger` (ad-hoc judgment-day without a change: `review/{target-slug}/ledger`, where `target-slug` = `pr-{number}` when reviewing a PR, else the current branch name kebab-cased, else a kebab-case slug of the user-stated review target).
-- `none`: keep the ledger inline in the response; do not write files or Engram artifacts — the ledger lives only in this conversation; complete the review → fix → re-review loop within the session because it is not persisted across compaction.
+If the user says only "review this" / "revisá esto" without naming juicio or 4R, ask which they want (simple single `reviewer` pass, 4R, juicio, or both). Do not default to 4R or Judgment Day.
 
-**Frozen correction and validation.** Freeze the original corroborated BLOCKER/CRITICAL IDs, initial path set, acceptance criteria, and required regression evidence before correction. Correction may address only those IDs and paths. Targeted validation receives the frozen ledger and fix diff, verifies those IDs, the original criteria/tests, and correction regression evidence, and does not conduct general defect discovery or reopen unrelated defects. New observations are non-blocking follow-ups; a failed original criterion escalates the existing review.
+##### Ship and post-verify quiet
 
-**Execution mode.** Subagent mode (Claude uses dedicated review-*/jd-* agents): each review-*/jd-* subagent runs its own exhaustive pass and returns its own ledger rows; merge those subagent ledger rows into the persisted ledger and persist per the branch above.
+- Commit, push, open PR, merge: execute directly; never insert 4R or juicio first.
+- After `sdd-verify` PASS (batch or final): stop. Do not chain 4R or juicio.
+- A one-line optional offer after ship is fine; never a blocking gate.
 
 #### Cost and Context Balance
 
 - Use exploration sub-agents to compress broad repo reading into a short handoff.
 - Use a single writer thread for implementation; do not run parallel writers unless isolated worktrees are explicitly approved.
-- Use concrete review lenses after implementation, conflict resolution, or incidents because their value is independent judgment, not token saving.
+- Never auto-launch review after implementation, conflict resolution, or incidents.
 - Avoid delegation for truly local one-file fixes, quick state checks, and already-understood mechanical edits.
+
+
+### Automatic Mode Continuity (lightweight)
+
+When running SDD in automatic mode (see lazy-loaded workflow), use only cheap **inline** checks between phases — no sub-agent, no planning-phase `sdd-verify`, no 4R, no Judgment Day. Interactive mode: the user is the gate. Full detail is in `~/.claude/skills/_shared/sdd-orchestrator-workflow.md`.
 
 ## SDD and Testing Workflows (lazy-loaded)
 

@@ -2,7 +2,7 @@
 
 The canonical copy of shared AI harness assets now lives under `/home/iperez/.config/home-manager/ai/`.
 
-Home Manager projects selected files and directories from this tree into tool-specific locations for Pi, OpenCode, Claude, Codex, and shared agent skills. The previous external asset hub is no longer the intended canonical source for these managed assets.
+Home Manager projects selected files and directories from this tree into tool-specific locations for Pi, OpenCode, Claude, Codex, Grok Build, and shared agent skills. The previous external asset hub is no longer the intended canonical source for these managed assets.
 
 Managed examples include skills, agents, commands, orchestrators, prompts, static support notes, non-secret tool configuration files selected by the Home Manager module, and `ai/shared/engram-protocol.md` as the canonical source for rendered Engram provider files.
 
