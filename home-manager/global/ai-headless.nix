@@ -64,6 +64,7 @@
     ccstatusline
     codegraph
     engram
+    grok-build
     pi-coding-agent
     tuicr
   ];

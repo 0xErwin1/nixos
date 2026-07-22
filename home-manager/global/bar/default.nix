@@ -18,7 +18,7 @@ let
   agsPackage = inputs.ags.packages.${system}.default;
   astalPkgs = inputs.astal.packages.${system};
 
-  # Provider-agnostic AI usage fetcher (Claude + Codex) for the "extras" panel.
+  # Provider-agnostic AI usage fetcher (Claude + Codex + Grok) for the "extras" panel.
   # Pure Go stdlib (HTTP/TLS/JSON/atomic file writes), so no vendored deps. The
   # wrapper pins SSL_CERT_FILE so TLS verification works regardless of the
   # ambient environment the bar service runs in.

@@ -64,6 +64,9 @@ const BACKGROUND_SECONDS = 180;
 const [usage, setUsage] = createState<UsageData | null>(null);
 const [loading, setLoading] = createState(false);
 const [extrasX, setExtrasX] = createState(8);
+// "overview" shows a compact summary of every provider; a provider id shows the
+// full detail card. Keeps the panel short as more providers are added.
+const [selectedTab, setSelectedTab] = createState<string>("overview");
 let lastFetch = 0;
 
 // ── Usage threshold + reset notifications ──────────────────────────────────────
@@ -360,6 +363,62 @@ function WindowRow({ w }: { w: UsageWindow }) {
   );
 }
 
+function peakWindow(p: UsageProvider): UsageWindow | null {
+  if (!p.available || p.windows.length === 0) return null;
+  return p.windows.reduce((a, b) => (b.usedPercent > a.usedPercent ? b : a));
+}
+
+function ProviderSummaryRow({ p }: { p: UsageProvider }) {
+  const peak = peakWindow(p);
+
+  return (
+    <button cssClasses={["ai-summary-row"]} onClicked={() => setSelectedTab(p.id)}>
+      <box cssClasses={["cc-box", "ai-summary-card"]} orientation={Gtk.Orientation.VERTICAL} spacing={6}>
+        <box valign={Gtk.Align.CENTER} spacing={8}>
+          <label cssClasses={["ai-name"]} label={p.name} halign={Gtk.Align.START} hexpand />
+          {p.plan ? <label cssClasses={["ai-plan"]} label={p.plan} /> : <box />}
+          <label cssClasses={["ai-summary-chevron"]} label="›" />
+        </box>
+
+        {p.available && peak ? (
+          <box orientation={Gtk.Orientation.VERTICAL} spacing={3}>
+            <box valign={Gtk.Align.CENTER}>
+              <label
+                cssClasses={["ai-window-label"]}
+                label={peak.label}
+                halign={Gtk.Align.START}
+                hexpand
+              />
+              <label
+                cssClasses={["ai-window-pct"]}
+                label={`${peak.usedPercent}%`}
+                halign={Gtk.Align.END}
+              />
+            </box>
+            <Gtk.ProgressBar
+              cssClasses={["ai-bar", severity(peak.usedPercent)]}
+              fraction={Math.min(Math.max(peak.usedPercent / 100, 0), 1)}
+              showText={false}
+              valign={Gtk.Align.CENTER}
+            />
+            <label
+              cssClasses={["ai-window-reset"]}
+              label={resetLabel(peak.resetAt)}
+              halign={Gtk.Align.START}
+            />
+          </box>
+        ) : (
+          <label
+            cssClasses={["ai-unavailable"]}
+            label={p.available ? "No windows" : reasonLabel(p.reason)}
+            halign={Gtk.Align.START}
+          />
+        )}
+      </box>
+    </button>
+  );
+}
+
 function ProviderCard({ p }: { p: UsageProvider }) {
   return (
     <box cssClasses={["cc-box", "ai-card"]} orientation={Gtk.Orientation.VERTICAL} spacing={8}>
@@ -399,6 +458,54 @@ function ProviderCard({ p }: { p: UsageProvider }) {
           halign={Gtk.Align.START}
         />
       )}
+    </box>
+  );
+}
+
+function TabBar({ providers }: { providers: UsageProvider[] }) {
+  const tabs = [{ id: "overview", label: "All" }, ...providers.map((p) => ({ id: p.id, label: p.name }))];
+
+  return (
+    <box cssClasses={["ai-tabs"]} spacing={4} halign={Gtk.Align.START}>
+      {tabs.map((t) => (
+        <button
+          cssClasses={selectedTab((cur) =>
+            cur === t.id ? ["ai-tab", "ai-tab-active"] : ["ai-tab"],
+          )}
+          onClicked={() => setSelectedTab(t.id)}
+        >
+          <label label={t.label} />
+        </button>
+      ))}
+    </box>
+  );
+}
+
+function UsageBody({ u }: { u: UsageData }) {
+  return (
+    <box orientation={Gtk.Orientation.VERTICAL} spacing={10}>
+      <TabBar providers={u.providers} />
+      <With value={selectedTab}>
+        {(tab: string) => {
+          if (tab === "overview") {
+            return (
+              <box orientation={Gtk.Orientation.VERTICAL} spacing={8}>
+                {u.providers.map((p) => (
+                  <ProviderSummaryRow p={p} />
+                ))}
+              </box>
+            );
+          }
+
+          const p = u.providers.find((x) => x.id === tab);
+          if (!p) {
+            return (
+              <label cssClasses={["ai-empty"]} label="Provider not found" />
+            );
+          }
+          return <ProviderCard p={p} />;
+        }}
+      </With>
     </box>
   );
 }
@@ -473,11 +580,7 @@ export function ExtrasPanel() {
           <With value={usage}>
             {(u: UsageData | null) =>
               u ? (
-                <box orientation={Gtk.Orientation.VERTICAL} spacing={10}>
-                  {u.providers.map((p) => (
-                    <ProviderCard p={p} />
-                  ))}
-                </box>
+                <UsageBody u={u} />
               ) : (
                 <label
                   cssClasses={["ai-empty"]}

@@ -1,9 +1,9 @@
 // Command epsilon-ai-usage is a provider-agnostic AI usage fetcher for the Astal
 // bar's "extras" panel.
 //
-// It reads the local OAuth credentials that the Claude Code and Codex CLIs
-// maintain, queries each provider's usage endpoint, and prints a single
-// normalized JSON document to stdout:
+// It reads the local OAuth credentials that the Claude Code, Codex, and Grok
+// Build CLIs maintain, queries each provider's usage endpoint, and prints a
+// single normalized JSON document to stdout:
 //
 //	{
 //	  "generatedAt": "2026-07-16T18:00:00Z",
@@ -34,6 +34,7 @@ import (
 	"io/fs"
 	"math"
 	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
 	"sort"
@@ -51,12 +52,22 @@ const (
 	codexUsageURL   = "https://chatgpt.com/backend-api/wham/usage"
 	codexRefreshURL = "https://auth.openai.com/oauth/token"
 	codexClientID   = "app_EMoamEEZ73f0CkXaXp7hrann"
+
+	// Grok Build (xAI SuperGrok / X Premium+). Credentials live in ~/.grok/auth.json
+	// after `grok login`. Billing is exposed on the CLI chat proxy; identity/plan
+	// come from the user endpoint. OIDC refresh uses auth.x.ai (form-encoded).
+	grokUserURL     = "https://cli-chat-proxy.grok.com/v1/user?include=subscription"
+	grokBillingURL  = "https://cli-chat-proxy.grok.com/v1/billing?format=credits"
+	grokBillingRaw  = "https://cli-chat-proxy.grok.com/v1/billing"
+	grokRefreshURL  = "https://auth.x.ai/oauth2/token"
+	grokOIDCPrefix  = "https://auth.x.ai::"
 )
 
 var (
 	httpClient = &http.Client{Timeout: httpTimeout}
 	claudePath = homePath(".claude/.credentials.json")
 	codexPath  = homePath(".codex/auth.json")
+	grokPath   = homePath(".grok/auth.json")
 )
 
 // ── normalized output ───────────────────────────────────────────────────────
@@ -221,6 +232,42 @@ func oauthRefresh(url, refreshToken, clientID string) (tokenResponse, bool) {
 
 	status, data, err := httpJSON("POST", url, nil, body)
 	if err != nil || status < 200 || status >= 300 {
+		return tr, false
+	}
+	if err := json.Unmarshal(data, &tr); err != nil || tr.AccessToken == "" {
+		return tr, false
+	}
+	return tr, true
+}
+
+// oauthRefreshForm is the OIDC-style refresh used by xAI (application/x-www-form-urlencoded).
+func oauthRefreshForm(tokenURL, refreshToken, clientID string) (tokenResponse, bool) {
+	var tr tokenResponse
+	if refreshToken == "" {
+		return tr, false
+	}
+
+	form := strings.NewReader(url.Values{
+		"grant_type":    {"refresh_token"},
+		"refresh_token": {refreshToken},
+		"client_id":     {clientID},
+	}.Encode())
+
+	req, err := http.NewRequest("POST", tokenURL, form)
+	if err != nil {
+		return tr, false
+	}
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	req.Header.Set("Accept", "application/json")
+
+	resp, err := httpClient.Do(req)
+	if err != nil {
+		return tr, false
+	}
+	defer resp.Body.Close()
+
+	data, err := io.ReadAll(resp.Body)
+	if err != nil || resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		return tr, false
 	}
 	if err := json.Unmarshal(data, &tr); err != nil || tr.AccessToken == "" {
@@ -547,6 +594,388 @@ func codexProvider() provider {
 	return p
 }
 
+// ── Grok (xAI SuperGrok / Grok Build) ───────────────────────────────────────
+
+type grokEntry struct {
+	key        string
+	scopeKey   string
+	clientID   string
+	token      string
+	refresh    string
+	expiresAt  time.Time
+	authMode   string
+	hasExpiry  bool
+}
+
+// pickGrokEntry prefers the OIDC SuperGrok scope (auth.x.ai::<client-id>) over
+// any legacy entries. Nested maps are the credential objects.
+func pickGrokEntry(top map[string]json.RawMessage) (grokEntry, bool) {
+	var fallback *grokEntry
+
+	for scope, raw := range top {
+		var m map[string]any
+		if json.Unmarshal(raw, &m) != nil {
+			continue
+		}
+		token := str(m, "key")
+		if token == "" {
+			continue
+		}
+
+		e := grokEntry{
+			scopeKey: scope,
+			token:    token,
+			refresh:  str(m, "refresh_token"),
+			authMode: str(m, "auth_mode"),
+			clientID: str(m, "oidc_client_id"),
+		}
+		if e.clientID == "" {
+			// scope key is "https://auth.x.ai::<client-id>"
+			if i := strings.LastIndex(scope, "::"); i >= 0 && i+2 < len(scope) {
+				e.clientID = scope[i+2:]
+			}
+		}
+		if exp := str(m, "expires_at"); exp != "" {
+			if t, err := time.Parse(time.RFC3339Nano, exp); err == nil {
+				e.expiresAt = t
+				e.hasExpiry = true
+			} else if t, err := time.Parse(time.RFC3339, exp); err == nil {
+				e.expiresAt = t
+				e.hasExpiry = true
+			}
+		}
+
+		if strings.HasPrefix(scope, grokOIDCPrefix) {
+			return e, true
+		}
+		if fallback == nil {
+			cp := e
+			fallback = &cp
+		}
+	}
+	if fallback != nil {
+		return *fallback, true
+	}
+	return grokEntry{}, false
+}
+
+func grokRefresh(top map[string]json.RawMessage, e *grokEntry) string {
+	if e.clientID == "" || e.refresh == "" {
+		return ""
+	}
+
+	tr, ok := oauthRefreshForm(grokRefreshURL, e.refresh, e.clientID)
+	if !ok {
+		return ""
+	}
+
+	var entry map[string]any
+	_ = json.Unmarshal(top[e.scopeKey], &entry)
+	if entry == nil {
+		entry = map[string]any{}
+	}
+	entry["key"] = tr.AccessToken
+	if tr.RefreshToken != "" {
+		entry["refresh_token"] = tr.RefreshToken
+		e.refresh = tr.RefreshToken
+	}
+	if tr.ExpiresIn > 0 {
+		entry["expires_at"] = time.Now().UTC().Add(time.Duration(tr.ExpiresIn) * time.Second).Format(time.RFC3339Nano)
+	}
+
+	if raw, err := json.Marshal(entry); err == nil {
+		top[e.scopeKey] = raw
+		if full, err := json.MarshalIndent(top, "", "  "); err == nil {
+			_ = atomicWrite(grokPath, full)
+		}
+	}
+
+	e.token = tr.AccessToken
+	return tr.AccessToken
+}
+
+func grokAuthGet(path, token string) (int, []byte, error) {
+	return httpJSON("GET", path, map[string]string{
+		"Authorization": "Bearer " + token,
+		"Accept":        "application/json",
+		"User-Agent":    "epsilon-ai-usage",
+	}, nil)
+}
+
+func grokPlanLabel(tier string) string {
+	switch strings.ToLower(tier) {
+	case "xpremiumplus", "x_premium_plus", "x-premium-plus":
+		return "X Premium+"
+	case "xpremium", "x_premium", "x-premium":
+		return "X Premium"
+	case "supergrok", "super_grok":
+		return "SuperGrok"
+	case "supergrokheavy", "super_grok_heavy":
+		return "SuperGrok Heavy"
+	case "":
+		return ""
+	default:
+		return tier
+	}
+}
+
+func grokWindowsAndNotes(credits, monthly []byte) ([]window, []note) {
+	var windows []window
+	var notes []note
+
+	// format=credits: weekly (or period) percent + reset end.
+	var c struct {
+		Config *struct {
+			CurrentPeriod *struct {
+				Type  string  `json:"type"`
+				Start string  `json:"start"`
+				End   string  `json:"end"`
+			} `json:"currentPeriod"`
+			CreditUsagePercent *float64 `json:"creditUsagePercent"`
+			OnDemandCap        *struct {
+				Val float64 `json:"val"`
+			} `json:"onDemandCap"`
+			OnDemandUsed *struct {
+				Val float64 `json:"val"`
+			} `json:"onDemandUsed"`
+			PrepaidBalance *struct {
+				Val float64 `json:"val"`
+			} `json:"prepaidBalance"`
+			ProductUsage []struct {
+				Product      string   `json:"product"`
+				UsagePercent *float64 `json:"usagePercent"`
+			} `json:"productUsage"`
+			BillingPeriodEnd string `json:"billingPeriodEnd"`
+		} `json:"config"`
+	}
+	_ = json.Unmarshal(credits, &c)
+
+	if c.Config != nil && c.Config.CreditUsagePercent != nil {
+		label := "Credits"
+		var reset *string
+		if p := c.Config.CurrentPeriod; p != nil {
+			if p.End != "" {
+				reset = ptr(normalizeISO(p.End))
+			}
+			switch {
+			case strings.Contains(strings.ToUpper(p.Type), "WEEK"):
+				label = "Weekly"
+			case strings.Contains(strings.ToUpper(p.Type), "MONTH"):
+				label = "Monthly"
+			case strings.Contains(strings.ToUpper(p.Type), "DAY") || strings.Contains(strings.ToUpper(p.Type), "5H") || strings.Contains(strings.ToUpper(p.Type), "HOUR"):
+				if p.Start != "" && p.End != "" {
+					if s, err1 := time.Parse(time.RFC3339Nano, p.Start); err1 == nil {
+						if e, err2 := time.Parse(time.RFC3339Nano, p.End); err2 == nil {
+							label = windowLabel(int64(e.Sub(s).Seconds()))
+						}
+					}
+				}
+			}
+		} else if c.Config.BillingPeriodEnd != "" {
+			reset = ptr(normalizeISO(c.Config.BillingPeriodEnd))
+		}
+		windows = append(windows, window{
+			Label:       label,
+			UsedPercent: int(math.Round(*c.Config.CreditUsagePercent)),
+			ResetAt:     reset,
+		})
+	}
+
+	// Default billing: monthly used/limit when credits percent is missing, or as a second window.
+	var m struct {
+		Config *struct {
+			MonthlyLimit *struct {
+				Val float64 `json:"val"`
+			} `json:"monthlyLimit"`
+			Used *struct {
+				Val float64 `json:"val"`
+			} `json:"used"`
+			BillingPeriodEnd string `json:"billingPeriodEnd"`
+			OnDemandCap      *struct {
+				Val float64 `json:"val"`
+			} `json:"onDemandCap"`
+			OnDemandUsed *struct {
+				Val float64 `json:"val"`
+			} `json:"onDemandUsed"`
+		} `json:"config"`
+	}
+	_ = json.Unmarshal(monthly, &m)
+
+	if m.Config != nil && m.Config.MonthlyLimit != nil && m.Config.Used != nil && m.Config.MonthlyLimit.Val > 0 {
+		pct := int(math.Round(m.Config.Used.Val / m.Config.MonthlyLimit.Val * 100))
+		// Avoid a duplicate bar when credits already expressed the same monthly window.
+		hasMonthly := false
+		for _, w := range windows {
+			if w.Label == "Monthly" || w.Label == "Credits" {
+				hasMonthly = true
+				break
+			}
+		}
+		if !hasMonthly || (len(windows) == 1 && windows[0].Label == "Weekly") {
+			var reset *string
+			if m.Config.BillingPeriodEnd != "" {
+				reset = ptr(normalizeISO(m.Config.BillingPeriodEnd))
+			}
+			// Only add Monthly if we don't already have a weekly credits window
+			// that already covers subscription quota — still useful as absolute units note.
+			if len(windows) == 0 {
+				windows = append(windows, window{
+					Label:       "Monthly",
+					UsedPercent: pct,
+					ResetAt:     reset,
+				})
+			}
+		}
+		notes = append(notes, note{
+			Label: "Included",
+			Value: fmt.Sprintf("%s / %s",
+				fmtGrokAmount(m.Config.Used.Val),
+				fmtGrokAmount(m.Config.MonthlyLimit.Val)),
+		})
+	}
+
+	if c.Config != nil {
+		if c.Config.OnDemandCap != nil && c.Config.OnDemandUsed != nil && c.Config.OnDemandCap.Val > 0 {
+			notes = append(notes, note{
+				Label: "On-demand",
+				Value: fmt.Sprintf("%s / %s",
+					fmtGrokAmount(c.Config.OnDemandUsed.Val),
+					fmtGrokAmount(c.Config.OnDemandCap.Val)),
+			})
+		}
+		if c.Config.PrepaidBalance != nil && c.Config.PrepaidBalance.Val > 0 {
+			notes = append(notes, note{
+				Label: "Prepaid",
+				Value: fmtGrokAmount(c.Config.PrepaidBalance.Val),
+			})
+		}
+		for _, pu := range c.Config.ProductUsage {
+			if pu.UsagePercent == nil || pu.Product == "" {
+				continue
+			}
+			// Skip if it duplicates the primary credits percent.
+			if c.Config.CreditUsagePercent != nil && *pu.UsagePercent == *c.Config.CreditUsagePercent && len(c.Config.ProductUsage) == 1 {
+				continue
+			}
+			notes = append(notes, note{
+				Label: pu.Product,
+				Value: fmt.Sprintf("%d%%", int(math.Round(*pu.UsagePercent))),
+			})
+		}
+	}
+
+	return windows, notes
+}
+
+func normalizeISO(s string) string {
+	if t, err := time.Parse(time.RFC3339Nano, s); err == nil {
+		return t.UTC().Format("2006-01-02T15:04:05Z")
+	}
+	if t, err := time.Parse(time.RFC3339, s); err == nil {
+		return t.UTC().Format("2006-01-02T15:04:05Z")
+	}
+	return s
+}
+
+// fmtGrokAmount formats billing amounts. Values from the API are often whole
+// credit units (or cents-like integers). Prefer compact integers when clean.
+func fmtGrokAmount(v float64) string {
+	if v >= 1000 {
+		return fmt.Sprintf("%.0f", v)
+	}
+	if math.Abs(v-math.Round(v)) < 0.05 {
+		return fmt.Sprintf("%.0f", math.Round(v))
+	}
+	return fmt.Sprintf("%.2f", v)
+}
+
+func grokProvider() provider {
+	p := provider{ID: "grok", Name: "Grok"}
+
+	raw, err := os.ReadFile(grokPath)
+	if err != nil {
+		p.Reason = ptr("no-credentials")
+		return p
+	}
+	var top map[string]json.RawMessage
+	if err := json.Unmarshal(raw, &top); err != nil {
+		p.Reason = ptr("no-credentials")
+		return p
+	}
+
+	entry, ok := pickGrokEntry(top)
+	if !ok {
+		p.Reason = ptr("no-credentials")
+		return p
+	}
+
+	token := entry.token
+	// Refresh proactively within a minute of expiry.
+	if entry.hasExpiry && time.Now().Add(time.Minute).After(entry.expiresAt) {
+		if t := grokRefresh(top, &entry); t != "" {
+			token = t
+		}
+	}
+
+	status, userData, err := grokAuthGet(grokUserURL, token)
+	if err != nil {
+		p.Reason = ptr("network")
+		return p
+	}
+	if status == 401 {
+		if t := grokRefresh(top, &entry); t != "" {
+			token = t
+			status, userData, err = grokAuthGet(grokUserURL, token)
+		}
+		if err != nil || status == 401 {
+			p.Reason = ptr("auth")
+			return p
+		}
+	}
+	if status < 200 || status >= 300 {
+		p.Reason = ptr(fmt.Sprintf("http-%d", status))
+		return p
+	}
+
+	var user struct {
+		SubscriptionTier  *string `json:"subscriptionTier"`
+		HasGrokCodeAccess *bool   `json:"hasGrokCodeAccess"`
+	}
+	_ = json.Unmarshal(userData, &user)
+	if user.SubscriptionTier != nil {
+		if label := grokPlanLabel(*user.SubscriptionTier); label != "" {
+			p.Plan = ptr(label)
+		}
+	} else if entry.authMode != "" {
+		p.Plan = ptr(entry.authMode)
+	}
+
+	statusC, credits, errC := grokAuthGet(grokBillingURL, token)
+	statusM, monthly, errM := grokAuthGet(grokBillingRaw, token)
+	if (errC != nil && errM != nil) || (statusC >= 400 && statusM >= 400) {
+		// Identity worked; billing failed — still show plan with an error note.
+		p.Available = true
+		p.Notes = []note{{Label: "Billing", Value: "unavailable"}}
+		return p
+	}
+	if errC != nil || statusC < 200 || statusC >= 300 {
+		credits = nil
+	}
+	if errM != nil || statusM < 200 || statusM >= 300 {
+		monthly = nil
+	}
+
+	windows, notes := grokWindowsAndNotes(credits, monthly)
+	if user.HasGrokCodeAccess != nil && !*user.HasGrokCodeAccess {
+		notes = append(notes, note{Label: "Grok Code", Value: "no access"})
+	}
+
+	p.Available = true
+	p.Windows = windows
+	p.Notes = notes
+	return p
+}
+
 // ── Claude local cost/token scan ────────────────────────────────────────────
 
 const (
@@ -748,7 +1177,7 @@ func claudeCost() *costSummary {
 func main() {
 	out := output{
 		GeneratedAt: time.Now().UTC().Format("2006-01-02T15:04:05Z"),
-		Providers:   []provider{claudeProvider(), codexProvider()},
+		Providers:   []provider{claudeProvider(), codexProvider(), grokProvider()},
 	}
 	enc := json.NewEncoder(os.Stdout)
 	_ = enc.Encode(out)
