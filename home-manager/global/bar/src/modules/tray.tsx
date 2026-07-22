@@ -32,6 +32,25 @@ function initItem(button: Gtk.MenuButton, item: AstalTray.TrayItem) {
   const groupId = item.connect("notify::action-group", sync);
 
   onCleanup(() => {
+    // A tray item disappears when its app quits (Slack/Teams "Quit"). Electron
+    // apps keep owning their D-Bus name for a moment after they stop servicing
+    // it, so any synchronous dbusmenu call the popover/importer makes against
+    // that now-mute name blocks the GTK main loop until the 25s D-Bus timeout —
+    // freezing the whole bar. Detach the button from the dying importer BEFORE
+    // disconnecting so GTK never re-queries the dead menu during disposal.
+    try {
+      button.get_popover()?.popdown();
+    } catch {
+      // No popover was ever realized.
+    }
+
+    try {
+      button.menuModel = null;
+      button.insert_action_group("dbusmenu", null);
+    } catch {
+      // Button already being finalized.
+    }
+
     try {
       item.disconnect(modelId);
       item.disconnect(groupId);
