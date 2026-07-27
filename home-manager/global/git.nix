@@ -5,6 +5,10 @@
   ];
   programs = {
     gh-dash.enable = true;
+    delta = {
+      enable = true;
+      enableGitIntegration = true;
+    };
     git = {
       enable = true;
       includes = [
@@ -14,11 +18,8 @@
         user = {
           name = "Ignacio Perez";
         };
-        delta.enable = true;
-        extraConfig = {
-          push = {
-            autoSetupRemote = true;
-          };
+        push = {
+          autoSetupRemote = true;
         };
       };
     };
