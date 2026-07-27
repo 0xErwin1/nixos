@@ -1,5 +1,8 @@
 {
   "$schema": "https://opencode.ai/config.json",
+  // Without this key OpenCode resolves the default to the first non-subagent, non-hidden
+  // agent, which is the built-in "build" — leaving ORCHESTRATOR.md out of the system prompt.
+  "default_agent": "sdd-orchestrator",
   "plugin": [
     "@spoons-and-mirrors/subtask2@latest",
     "@warp-dot-dev/opencode-warp",
@@ -8,14 +11,20 @@
     "sdd-orchestrator": {
       "model": "openai/gpt-5.6-sol",
       "description": "SDD delegate-only orchestrator",
-      "mode": "all",
+      // "primary" (not "all") so the orchestrator can never be spawned as a sub-agent of itself.
+      "mode": "primary",
       "prompt": "{file:/home/iperez/.config/opencode/ORCHESTRATOR.md}",
       "permission": {
         "task": {
           "*": "deny",
           "explore": "allow",
           "general": "allow",
+          "bug-hunter": "allow",
+          "pr-reviewer": "allow",
+          "research": "allow",
+          "researcher": "allow",
           "reviewer": "allow",
+          "scout": "allow",
           "worker": "allow",
           "sdd-apply": "allow",
           "sdd-archive": "allow",
@@ -25,7 +34,11 @@
           "sdd-propose": "allow",
           "sdd-spec": "allow",
           "sdd-tasks": "allow",
-          "sdd-verify": "allow"
+          "sdd-verify": "allow",
+          "sdd-explore-testing": "allow",
+          "sdd-plan-testing": "allow",
+          "sdd-run-testing": "allow",
+          "sdd-report-testing": "allow"
         }
       },
       "tools": {
@@ -36,7 +49,7 @@
         "edit": true,
         "fetch": true,
         "glob": true,
-        "grep": false,
+        "grep": true,
         "mcp": true,
         "read": true,
         "skill": true,
@@ -115,9 +128,10 @@
       "hidden": true,
       "mode": "subagent",
       "prompt": "{file:/home/iperez/.config/opencode/prompts/sdd/sdd-explore.md}",
+      // No "edit": exploration reports findings and persists its own artifact; it never
+      // modifies source. "write" stays for openspec/hybrid artifact persistence.
       "tools": {
         "bash": true,
-        "edit": true,
         "fetch": true,
         "glob": true,
         "grep": true,
@@ -213,9 +227,11 @@
       "hidden": true,
       "mode": "subagent",
       "prompt": "{file:/home/iperez/.config/opencode/prompts/sdd/sdd-verify.md}",
+      // No "edit": a verifier that can patch source reports PASS on work it fixed itself,
+      // which destroys the independence of the verify gate. "write" stays for openspec/hybrid
+      // artifact persistence; "bash" stays because verification must run the test suites.
       "tools": {
         "bash": true,
-        "edit": true,
         "fetch": true,
         "glob": true,
         "grep": true,

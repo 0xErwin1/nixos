@@ -177,7 +177,12 @@ let
     "*" = "deny";
     explore = "allow";
     general = "allow";
+    bug-hunter = "allow";
+    pr-reviewer = "allow";
+    research = "allow";
+    researcher = "allow";
     reviewer = "allow";
+    scout = "allow";
     worker = "allow";
     sdd-apply = "allow";
     sdd-archive = "allow";
@@ -188,6 +193,10 @@ let
     sdd-spec = "allow";
     sdd-tasks = "allow";
     sdd-verify = "allow";
+    sdd-explore-testing = "allow";
+    sdd-plan-testing = "allow";
+    sdd-run-testing = "allow";
+    sdd-report-testing = "allow";
   };
   multiOverlay = builtins.fromJSON (
     builtins.readFile (flakePath + "/ai/opencode/sdd-overlay-multi.json")
@@ -361,6 +370,12 @@ assert builtins.all (
 assert actualAgentModels == expectedAgentModels;
 assert opencodeConfig.permission == expectedOpenCodePermissions;
 assert opencodeConfig.agent.sdd-orchestrator.permission.task == expectedNativeTaskPermissions;
+assert opencodeConfig.default_agent == "sdd-orchestrator";
+assert opencodeConfig.agent.sdd-orchestrator.mode == "primary";
+assert opencodeConfig.agent.sdd-orchestrator.tools.grep;
+assert !(opencodeConfig.agent.sdd-verify.tools ? edit);
+assert !(opencodeConfig.agent.sdd-explore.tools ? edit);
+assert opencodeConfig.agent.sdd-apply.tools.edit;
 assert multiOverlay.agent.sdd-orchestrator.permission.task.__replace__.general == "allow";
 assert multiOverlay.agent.sdd-orchestrator.permission.task.__replace__.explore == "allow";
 assert singleOverlay.agent.sdd-orchestrator.permission.task.__replace__.general == "allow";
