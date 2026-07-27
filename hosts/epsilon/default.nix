@@ -128,6 +128,14 @@
       enable = true;
       xwayland.enable = true;
     };
+
+    # Steam picks the first DRM node on its own, which here is the NVIDIA card.
+    # Mesa cannot drive it, so DRI3 screen creation fails and the client falls
+    # back to software GL. Pin it to the Intel iGPU that already renders the
+    # session; the dGPU stays reachable through PRIME offload for games.
+    steam.package = pkgs.steam.override {
+      extraEnv.DRI_PRIME = "pci-0000_00_02_0";
+    };
   };
 
   environment.systemPackages = with pkgs; [
