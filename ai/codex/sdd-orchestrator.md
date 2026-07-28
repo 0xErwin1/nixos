@@ -265,18 +265,13 @@ If the user doesn't specify, detect: if engram is available -> default to `engra
 
 Cache the artifact store choice for the session. Pass it as `artifact_store.mode` to every sub-agent launch.
 
-### Delivery Strategy
+### Delivery (LOCAL POLICY, load-bearing)
 
-On the first `/sdd-new`, `/sdd-ff`, or `/sdd-continue` (or an equivalent natural-language request) in a session, ask once for and cache delivery strategy: `ask-on-risk` (default), `auto-chain`, `single-pr`, or `exception-ok`. Pass it as `delivery_strategy` to `sdd-tasks` and `sdd-apply` prompts.
+SDD does not choose how work is delivered. One PR, several PRs, or committing straight to a branch with no PR at all is the user's call, made outside SDD. Do not ask about PR shape during preflight, do not cache a delivery or chain strategy, and do not pass one to any phase.
 
-### Chain Strategy
+If a change looks large enough that review will suffer, say so once when reporting the `sdd-tasks` forecast and name a suggested split. Then proceed.
 
-When `delivery_strategy` results in chained PRs (either by user choice via `ask-on-risk` or automatically via `auto-chain`), ask the user which chain strategy to use:
-
-- **`stacked-to-main`**: Each PR merges to main in order. Fast iteration, fix on the go. Best for speed-first teams and independent slices.
-- **`feature-branch-chain`**: The feature/tracker branch accumulates final integration; PR #1 targets the tracker branch, later child PRs target the immediate previous PR branch so review diffs stay focused. Only the tracker merges to main. Best for rollback control and coordinated releases.
-
-Cache the chain strategy for the session. Pass it as `chain_strategy` to `sdd-tasks` and `sdd-apply` prompts alongside `delivery_strategy`. Do not ask again unless the user changes scope.
+NEVER reintroduce delivery/chain strategy routing on upstream sync.
 
 ### Dependency Graph
 ```
@@ -295,20 +290,13 @@ The native SDD dispatcher/status guard applies only to file-based stores (opensp
 
 When the active status contract reports `nextRecommended` as a planning token (`propose`, `spec`, `design`, or `tasks`), launch the corresponding planning phase. A missing planning artifact at that point is the expected OUTPUT of the phase to run, not a blocker — do not treat the absent `proposal`, `spec`, `design`, or `tasks` artifact as `blockedReasons`. Reserve blocked handling for genuine dependency or policy failures; advance through the planning chain by `nextRecommended` and dependency states.
 
-### Review Workload Guard (MANDATORY)
+### Review Workload Forecast (report, never gate)
 
-After `sdd-tasks` completes and before launching `sdd-apply`, inspect `Review Workload Forecast`.
+After `sdd-tasks` completes, read `Review Workload Forecast` from the task result and report `Estimated changed lines` and `Review budget risk` to the user in one line. If the risk is high, add the suggested PR split as advice.
 
-If it says `Chained PRs recommended: Yes`, `400-line budget risk: High`, estimated changed lines exceed 400, or `Decision needed before apply: Yes`, apply cached `delivery_strategy`:
+Then launch `sdd-apply`. A high forecast NEVER blocks apply, never triggers a delivery question, and never shrinks the assigned scope. Do not pass a delivery or chain strategy to any phase.
 
-- **`ask-on-risk`**: STOP and ask chained/stacked PRs vs maintainer-approved `size:exception`. If the user chooses chained PRs and `chain_strategy` is not yet cached, also ask which chain strategy to use (`stacked-to-main` or `feature-branch-chain`).
-- **`auto-chain`**: Do not ask about splitting. If `chain_strategy` is not yet cached, ask which chain strategy to use. Then tell `sdd-apply` to implement only the next autonomous chained/stacked PR slice using work-unit commits, clear start/finish boundaries, verification, and rollback.
-- **`single-pr`**: STOP and require/record `size:exception` before apply.
-- **`exception-ok`**: Continue, but tell `sdd-apply` this run uses `size:exception`.
-
-Automatic mode does not override this guard. Always pass the resolved `delivery_strategy` and `chain_strategy` to `sdd-apply`.
-
-When launching `sdd-apply`, always include the resolved `delivery_strategy`, `chain_strategy`, and any chosen PR boundary/exception in the prompt.
+Apply is still batched into checkpoints when the change is large — see **Batched Apply-Verify Cycles**, which is driven by task count and phase boundaries, for context freshness and rollback granularity. Never size an apply batch to fit the review budget: that conflates a review artifact with an execution artifact and produces batch-splitting thrash.
 
 ### Explicit reviews (pointer)
 
@@ -430,7 +418,7 @@ Every `sdd-apply` launch — batched or not — MUST pin the executor to an excl
 When launching `sdd-apply`:
 
 - Enumerate the EXACT assigned task IDs in the prompt (e.g. "Implement ONLY WU-0: T01-T04"). State explicitly: implement only these, then STOP and return; do NOT proceed to any other task, work unit, or batch.
-- Pass the artifact-store mode, the Apply-Progress Continuity instruction, and the delivery/chain decision as usual.
+- Pass the artifact-store mode and the Apply-Progress Continuity instruction as usual.
 
 After `sdd-apply` returns, BEFORE launching the next batch or trusting the report:
 
@@ -459,7 +447,9 @@ Produce more slices if visual and non-visual tasks interleave. The invariant is 
 
 Long or many-step changes are risky to apply in one shot: a single `sdd-apply` accumulates context until it loses track of what it is doing, and it can run a long time with no checkpoint or report. For such changes the orchestrator runs apply in ordered batches, each followed by its own verify and a concise report, so context stays fresh and problems surface early instead of compounding.
 
-**Trigger (automatic).** Before launching the first `sdd-apply`, the orchestrator inspects the tasks artifact. The change is a batching candidate when it is large or multi-step — heuristics: more than ~8-10 implementation tasks, several distinct phases, or an estimated changed-line count above 400 (reuse the `Review Workload Forecast` from `sdd-tasks` when present). Small changes run as a single apply.
+**Trigger (automatic).** Before launching the first `sdd-apply`, the orchestrator inspects the tasks artifact. The change is a batching candidate when it is large or multi-step — heuristics: more than ~8-10 implementation tasks, or several distinct phases. Small changes run as a single apply.
+
+Batch boundaries follow coherent, independently verifiable slices — never a changed-line budget. The review budget measures review cost; it says nothing about how much work fits in one apply without losing the thread. Sizing batches to a line count is what produces split-and-resplit thrash on changes that cross several modules.
 
 **Plan (orchestrator proposes, user confirms).** When the change qualifies, the orchestrator builds a batch plan — an ordered grouping of the tasks into self-contained, independently verifiable batches (by phase or logical cluster) — and presents it for approval. In interactive mode it STOPS and shows the plan (batch count, the tasks in each, the boundaries) and waits for the user to approve or adjust before starting. In automatic mode it proceeds with its proposed plan without pausing, but still reports the plan and every per-batch result. There is no fixed unit size — the orchestrator chooses boundaries that keep each batch coherent and bounded.
 
@@ -467,7 +457,7 @@ Long or many-step changes are risky to apply in one shot: a single `sdd-apply` a
 
 **Commit per batch (checkpoint).** After a batch's scoped verify passes, COMMIT that batch as one work unit before starting the next. Do NOT accumulate an uncommitted worktree across batches: a long run that ends with one giant dirty worktree and zero commits is a failure mode -- it risks the entire run, gives no rollback granularity, and hides what actually landed. Rules: ensure the work is on a feature/work branch (create or switch at the first batch; never commit SDD apply work onto the default branch); follow the `work-unit-commits` skill for commit shape and keep tests with the code they cover; use Conventional Commits; stage ONLY that batch's paths -- never `git add -A`, because the worktree may hold unrelated user work. Do NOT push and do NOT open a PR: those remain explicit user commands. If the batch verify fails, remediate first and commit the fixed batch. Never inject "no commits" into an apply prompt -- the `sdd-apply` skill already scopes each commit-set to the assigned task IDs, and its completion claims are expected to map to real commits.
 
-**Composition.** Composes with the **Visual-Aware Apply Split** (a batch containing design tasks still routes that slice to the strongest design model; the model rule applies per slice within a batch) and with the cached `delivery_strategy` / `Review Workload Guard` (batch boundaries may align with chained-PR slices). Batching governs apply EXECUTION checkpoints; PR delivery is a separate decision.
+**Composition.** Composes with the **Visual-Aware Apply Split** (a batch containing design tasks still routes that slice to the strongest design model; the model rule applies per slice within a batch) . Batching governs apply EXECUTION checkpoints only; how the finished work is delivered is decided by the user outside SDD and never constrains batch boundaries.
 
 **Test scope & timeout.** Per-batch verify runs ONLY the focused suites for that batch's changed files; the FULL workspace suite runs ONCE, at the final consolidated verify -- not after every batch. Do not inject "run the full `just verify` / whole test suite" into each batch's apply/verify prompt. When a full-suite command IS run, give it a timeout matched to the suite's real duration (many suites take 10-15+ minutes); never cap it at a short default (e.g. 120s), which only produces wasted incomplete runs that must be re-run.
 

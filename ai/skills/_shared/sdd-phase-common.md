@@ -92,19 +92,15 @@ Example:
 (other values: `fallback-registry`, `fallback-path`, or `none — no registry found`)
 ```
 
-## E. Review Workload Guard
+## E. Review Workload Forecast
 
-SDD must protect reviewer cognitive load, not only generate tasks.
+SDD reports how much review a change will cost. It does not decide how the change is delivered.
 
-- The default PR review budget is **400 changed lines** (`additions + deletions`).
+- The default review budget is **400 changed lines** (`additions + deletions`).
 - Count authored text additions plus deletions only for this threshold. Generated goldens are excluded from that authored risk count.
-- The orchestrator MUST cache a delivery strategy at session start: `ask-on-risk` (default), `auto-chain`, `single-pr`, or `exception-ok`.
-- The orchestrator MUST pass `delivery_strategy` to `sdd-tasks` and the resolved decision to `sdd-apply`.
-- `sdd-tasks` MUST forecast whether the planned work may exceed that budget.
-- The forecast MUST include exact plain-text guard lines: `Decision needed before apply: Yes|No`, `Chained PRs recommended: Yes|No`, and `400-line budget risk: Low|Medium|High`.
-- If the forecast is high, `sdd-tasks` MUST recommend chained or stacked PRs using deliverable work units.
-- `sdd-apply` MUST NOT start oversized work unless the delivery strategy resolves to chained/stacked PR slices or explicitly accepted `size:exception`.
-- Each chained PR slice must have a clear start, clear finish, autonomous scope, verification, and reasonable rollback.
-- In a Feature Branch Chain, PR #1 targets the feature/tracker branch and later child PRs target the immediate previous PR branch; if GitHub shows previous slices in a child diff, retarget/rebase until the diff is clean.
+- `sdd-tasks` MUST forecast whether the planned work may exceed that budget, and MUST include the exact plain-text lines `Estimated changed lines: <estimate>` and `Review budget risk: Low|Medium|High`.
+- When the risk is high, `sdd-tasks` names a suggested PR split so the user can choose to land the work as separate PRs. That suggestion is advice, not a decision.
 
-This guard exists to reduce reviewer burnout and keep implementation delivery safe. Do not treat it as optional process noise.
+The forecast is **advisory in every phase**. It never gates `sdd-apply`, never requires a delivery or chain decision, and never authorizes any phase to trim assigned scope to fit the budget. How the work is delivered — one PR, several PRs, or straight to a branch with no PR at all — is the user's call, made outside SDD.
+
+Batching `sdd-apply` into checkpoints is a separate concern with its own trigger (task count and phase boundaries, for context freshness and rollback granularity). Do not drive it from this budget.

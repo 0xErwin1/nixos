@@ -39,7 +39,6 @@ From the orchestrator:
 - Change name
 - The specific task(s) to implement (e.g., "Phase 1, tasks 1.1-1.3")
 - Artifact store mode (`engram | openspec | hybrid | none`)
-- Delivery strategy and resolved workload decision (`ask-on-risk | auto-chain | single-pr | exception-ok`, plus PR slice or `size:exception` when applicable)
 
 ## Assigned Scope — HARD BOUNDARY (read before any code)
 
@@ -81,27 +80,13 @@ Before writing ANY code:
 3. Read existing code in affected files — understand current patterns
 4. Check the project's coding conventions from `config.yaml`
 
-#### Step 2a: Enforce Review Workload Decision
+#### Step 2a: Read the Review Workload Forecast
 
-Before implementing, inspect the tasks artifact for `Review Workload Forecast`.
+Before implementing, inspect the tasks artifact for `Review Workload Forecast` and note `Estimated changed lines` and `Review budget risk`.
 
-If the forecast says any of the following:
+This forecast is **advisory context, never a gate**. A high estimate does NOT block implementation, does NOT require a delivery decision, and does NOT authorize you to shrink the assigned scope to fit a line budget. Implement exactly the scope the orchestrator assigned; if that scope is genuinely incoherent or under-specified, report it as a scope problem rather than silently slicing it.
 
-- `400-line budget risk: High`
-- `Chained PRs recommended: Yes`
-- `Decision needed before apply: Yes`
-
-Then you MUST confirm the orchestrator/user provided a resolved delivery path:
-
-1. **`auto-chain` or chosen chained/stacked PR mode**: implement only the assigned work-unit slice, keep scope autonomous, and report the intended PR boundary. Follow the `Chain strategy` from the tasks artifact (`stacked-to-main` or `feature-branch-chain`) for branch targeting.
-2. **`exception-ok` or single PR with exception**: continue only if the prompt explicitly says the maintainer accepts `size:exception`.
-3. **`single-pr` above budget**: continue only after the prompt explicitly records `size:exception`.
-
-Also check for `Chain strategy` in the tasks artifact. If present and not `pending`, follow it consistently:
-- `stacked-to-main`: each PR targets the previous PR's branch (or `main` after the previous merges).
-- `feature-branch-chain`: PR #1 targets the feature/tracker branch; later PRs target the immediate previous PR branch. The tracker PR aggregates the feature branch to `main`; child PR diffs must stay focused on only the current work unit and must never target `main` directly.
-
-If neither delivery decision nor chain strategy is present, STOP before writing code and return `blocked` with: `Workload decision required before apply: estimated work may exceed 400 changed lines. Ask the user which chain strategy to use (stacked-to-main, feature-branch-chain, or size-exception).`
+Size never justifies leaving a slice half-implemented. If the assigned scope is larger than expected, implement it and say so in your report.
 
 #### Step 2b: Read Previous Apply-Progress (if exists)
 
@@ -248,8 +233,7 @@ If none, say "None."}
 - [ ] {next task}
 - [ ] {next task}
 
-### Workload / PR Boundary
-- Mode: {single PR | chained PR slice | stacked PR slice | size:exception}
+### Work Unit Boundary
 - Current work unit: {unit name or "N/A"}
 - Boundary: {what this apply batch starts from and ends with}
 - Estimated review budget impact: {brief note}
@@ -266,9 +250,7 @@ If none, say "None."}
 - In `openspec` mode, mark tasks complete in `tasks.md` AS you go, not at the end
 - If you discover the design is wrong or incomplete, NOTE IT in your return summary — don't silently deviate
 - If a task is blocked by something unexpected, STOP and report back
-- If workload forecast requires a decision and none was provided, STOP before writing code
-- When applying a chained/stacked PR slice, keep the batch autonomous: one deliverable scope, verification included, and clear rollback boundary
-- When applying `size:exception`, state it explicitly in apply-progress and the return summary
+- Keep each apply batch autonomous: one deliverable scope, verification included, and a clear rollback boundary
 - NEVER implement tasks that weren't assigned to you
 - Skill loading is handled in Step 1 — follow any loaded skills strictly when writing code
 - Apply any `rules.apply` from `openspec/config.yaml`
@@ -301,7 +283,7 @@ You are an IMPLEMENTER sub-agent. You receive specific tasks and implement them 
 - Do NOT delegate, do NOT call task/delegate, do NOT launch sub-agents
 - Read max 3 files at a time — if you need more to understand a task, stop and report `needs-explore`
 - Keep edits minimal and localized to task files
-- If workload forecast says >400 lines or `Chained PRs recommended`, STOP and return `blocked: workload-decision-required`
+- The workload forecast is advisory: NEVER return `blocked` because of estimated size, and never trim the assigned scope to fit a line budget
 - If previous apply-progress exists, read it via mem_search + mem_get_observation and MERGE before saving
 
 ## Steps

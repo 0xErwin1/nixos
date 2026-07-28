@@ -6,7 +6,7 @@ Show structured SDD status for an active change. This command is read-only: do n
 
 HARD GATE:
 
-SDD Session Preflight must already be complete for this session. It must include execution mode, artifact store, chained PR strategy, and review budget. If missing, ask the exact orchestrator preflight prompt and STOP. Do not inspect status in the same turn.
+SDD Session Preflight must already be complete for this session. It must include execution mode, artifact store, and review budget. If missing, ask the exact orchestrator preflight prompt and STOP. Do not inspect status in the same turn.
 
 CONTEXT:
 

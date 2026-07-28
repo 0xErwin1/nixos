@@ -1,6 +1,6 @@
 ---
 name: work-unit-commits
-description: "Plan commits as reviewable work units. Trigger: implementation, commit splitting, chained PRs, or keeping tests and docs with code."
+description: "Plan commits as reviewable work units. Trigger: implementation, commit splitting, splitting work across PRs, or keeping tests and docs with code."
 license: Apache-2.0
 metadata:
   author: iperez
@@ -15,9 +15,8 @@ Use it for:
 
 - Splitting a feature into reviewable work.
 - Preparing commits before opening a PR.
-- Turning a large change into chained or stacked PRs.
+- Splitting a large change across separate PRs.
 - Keeping reviewer cognitive load healthy.
-- Applying SDD tasks without accidentally producing a PR above 400 changed lines.
 
 ## Critical Rules
 
@@ -28,8 +27,7 @@ Use it for:
 | Keep tests with code | Tests belong in the same commit as the behavior they verify. |
 | Keep docs with the user-visible change | Docs belong with the feature or workflow they explain. |
 | Tell a story | A reviewer should understand why each commit exists from its diff and message. |
-| Future PR-ready | Each commit should be a candidate chained PR when the change grows. |
-| SDD workload guard | If SDD tasks forecast a >400-line change, group commits into chained PR slices before implementation. |
+| Future PR-ready | Each commit should stand on its own if the change later needs splitting across PRs. |
 
 ## Work Unit Checklist
 
@@ -55,21 +53,21 @@ Before committing, confirm:
 
 ## PR Relationship
 
-Use work-unit commits as the foundation for chained PRs:
+Use work-unit commits as the foundation for whatever PR shape the change ends up needing:
 
 1. Build the smallest independent work unit.
 2. Include verification for that unit.
 3. Commit it with a Conventional Commit message.
-4. If the PR approaches 400 changed lines, promote commits or groups of commits into chained PRs.
+4. If the change grows past a comfortable review size, split it across separate PRs along existing commit boundaries — well-shaped commits make that a regrouping, not a rewrite.
 
 ## SDD Relationship
 
-When `sdd-tasks` produces a Review Workload Forecast:
+When `sdd-tasks` produces a Review Workload Forecast, treat it as advice about review cost, not as an instruction:
 
 - Low risk: keep work-unit commits inside one PR.
-- Medium risk: commit by work unit and monitor changed lines before PR creation.
-- High risk: follow SDD `delivery_strategy` — ask on `ask-on-risk`, auto-slice on `auto-chain`, require `size:exception` on over-budget `single-pr`, or record accepted `size:exception` on `exception-ok`.
-- Count authored additions plus deletions for the `>400` threshold. Exclude generated goldens from that authored count, but include every generated file in complete snapshot identity.
+- Medium risk: commit by work unit and watch changed lines before PR creation.
+- High risk: suggest landing the work as separate PRs. The user decides; a high forecast never blocks implementation and never shrinks the work.
+- Count authored additions plus deletions for the size estimate. Exclude generated goldens from that authored count, but include every generated file in complete snapshot identity.
 
 Each SDD work unit should map cleanly to a commit or PR with:
 
