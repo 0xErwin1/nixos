@@ -53,11 +53,11 @@
         "rust-overlay": "rust-overlay_2"
       },
       "locked": {
-        "lastModified": 1785027967,
-        "narHash": "sha256-YmFcND5yuhm97g0FnneJ9uNAWRlj9tiSp8ktkj69DHg=",
+        "lastModified": 1785178819,
+        "narHash": "sha256-yCzpHjsn6s4v5VXJxBcHpLRVQTSrEpjrVmXBqwP0bVE=",
         "owner": "0xErwin1",
         "repo": "atlas",
-        "rev": "e32556048820f12c590d741eb5201c29f5606205",
+        "rev": "6a0dedc661333be4aa73284ffb4dddd59455dd91",
         "type": "github"
       },
       "original": {
@@ -761,11 +761,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1784218397,
-        "narHash": "sha256-RKWpFUmGGH1xrFT5GK2Us0eF/UeocXZqrI3kLcwU550=",
+        "lastModified": 1785268016,
+        "narHash": "sha256-fMgV4pqiOF22xheH4nz74VX+7n/g99Ye3D5Sx4jyIEg=",
         "owner": "0xErwin1",
         "repo": "pi-harness",
-        "rev": "f17b591dea1e56edb78506956af0ad0b51531dae",
+        "rev": "c7e3a9013c19936aceda08635f842e8d1f7e526d",
         "type": "github"
       },
       "original": {
