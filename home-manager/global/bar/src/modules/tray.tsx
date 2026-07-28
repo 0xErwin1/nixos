@@ -1,37 +1,97 @@
 import AstalTray from "gi://AstalTray";
+import GLib from "gi://GLib";
+import Gio from "gi://Gio";
 import { For, createBinding, onCleanup } from "ags";
 import { Gtk } from "ags/gtk4";
 
 const tray = AstalTray.get_default();
 
 function initItem(button: Gtk.MenuButton, item: AstalTray.TrayItem) {
-  // DBusMenu hosts (Slack, Nextcloud, …) rebuild their GtkStack often and spam
-  // "duplicate child name" on the main loop when we re-insert the action group
-  // on every notify. Only push when the GObject identity actually changes.
-  let lastModel: unknown = null;
+  // Never leave the item's menu model attached while the popover is closed.
+  // Once a model is set, GtkMenuButton's popover menu tracker stays subscribed
+  // to the model's items-changed, and DBusMenu hosts (udiskie, solaar, Slack,
+  // …) rebuild their menus in storms — enough churn livelocks the GTK main
+  // loop inside gtk_menu_tracker/gtk_action_muxer (100% CPU, frozen bar).
+  // While the menu is shut the button holds a static empty placeholder model
+  // instead of null: GtkMenuButton makes itself insensitive without a model,
+  // which would dim the icon and swallow the first click. The real model is
+  // swapped in on press, right before the popover opens, and swapped back out
+  // as soon as it closes so churn never reaches GTK while the menu is shut.
+  const placeholder = new Gio.Menu();
+  button.menuModel = placeholder;
+
   let lastGroup: unknown = null;
+  let detachSource = 0;
 
-  const sync = () => {
-    const model = item.menuModel;
-    const group = item.actionGroup;
-
-    if (model && model !== lastModel) {
-      button.menuModel = model;
-      lastModel = model;
+  const cancelDetach = () => {
+    if (detachSource !== 0) {
+      GLib.source_remove(detachSource);
+      detachSource = 0;
     }
+  };
 
+  const attach = () => {
+    cancelDetach();
+
+    const group = item.actionGroup;
     if (group && group !== lastGroup) {
       button.insert_action_group("dbusmenu", group);
       lastGroup = group;
     }
+
+    const model = item.menuModel;
+    if (model && button.menuModel !== model) {
+      button.menuModel = model;
+    }
   };
 
-  sync();
+  // Swapping the model back synchronously from notify::active destroys the
+  // GtkPopoverMenu — and with it the GtkMenuTrackerItem of the entry that was
+  // just chosen — while GTK is still inside the click that closed the popover.
+  // GTK hides the popover before it calls gtk_menu_tracker_item_activated, so a
+  // synchronous detach drops the activation entirely: the menu closes and the
+  // action never fires. Defer to an idle so the current emission finishes
+  // first, and re-check `active` so re-opening the menu cancels the detach
+  // instead of stealing the model out from under the popover that just opened.
+  const scheduleDetach = () => {
+    cancelDetach();
+    detachSource = GLib.idle_add(GLib.PRIORITY_DEFAULT_IDLE, () => {
+      detachSource = 0;
+      if (!button.active) {
+        button.menuModel = placeholder;
+      }
+      return GLib.SOURCE_REMOVE;
+    });
+  };
 
-  const modelId = item.connect("notify::menu-model", sync);
-  const groupId = item.connect("notify::action-group", sync);
+  // Capture phase so the model exists before the button's own press handler
+  // tries to open the (model-derived) popover.
+  const press = new Gtk.GestureClick();
+  press.set_propagation_phase(Gtk.PropagationPhase.CAPTURE);
+  press.connect("pressed", attach);
+  button.add_controller(press);
+
+  // DBusMenu hosts are allowed to publish their layout lazily, so the model can
+  // still be empty at press time and only arrive after the first AboutToShow.
+  // Adopt it then — but only while the popover is open, otherwise this is
+  // exactly the while-closed churn the placeholder exists to keep out of GTK.
+  const modelId = item.connect("notify::menu-model", () => {
+    if (button.active) {
+      attach();
+    }
+  });
+
+  const activeId = button.connect("notify::active", () => {
+    if (button.active) {
+      cancelDetach();
+    } else {
+      scheduleDetach();
+    }
+  });
 
   onCleanup(() => {
+    cancelDetach();
+
     // A tray item disappears when its app quits (Slack/Teams "Quit"). Electron
     // apps keep owning their D-Bus name for a moment after they stop servicing
     // it, so any synchronous dbusmenu call the popover/importer makes against
@@ -53,9 +113,14 @@ function initItem(button: Gtk.MenuButton, item: AstalTray.TrayItem) {
 
     try {
       item.disconnect(modelId);
-      item.disconnect(groupId);
     } catch {
       // Item may already be gone when the For row is torn down.
+    }
+
+    try {
+      button.disconnect(activeId);
+    } catch {
+      // Button already being finalized.
     }
   });
 }
