@@ -44,7 +44,9 @@ interface UsageProvider {
   plan: string | null;
   available: boolean;
   reason: string | null;
-  windows: UsageWindow[];
+  // Go emits an empty array when a provider has no quota windows, but stay
+  // defensive: a null here must never take down the whole panel.
+  windows: UsageWindow[] | null;
   notes: UsageNote[] | null;
   cost: UsageCost | null;
 }
@@ -153,7 +155,7 @@ function checkWindowEvents(providerName: string, w: UsageWindow): void {
 function checkUsageEvents(data: UsageData): void {
   for (const p of data.providers) {
     if (!p.available) continue;
-    for (const w of p.windows) checkWindowEvents(p.name, w);
+    for (const w of p.windows ?? []) checkWindowEvents(p.name, w);
   }
 }
 
@@ -172,8 +174,8 @@ function mergeUsage(prev: UsageData | null, next: UsageData): UsageData {
   return { generatedAt: next.generatedAt, providers };
 }
 
-// The bar shells out to the packaged Go helper, which reads the local Claude /
-// Codex OAuth credentials and returns a normalized usage document. Refreshed in
+// The bar shells out to the packaged Go helper, which reads the local provider
+// credentials and returns a normalized usage document. Refreshed in
 // the background so opening the panel shows fresh data instantly instead of
 // waiting on a fetch; the short cache coalesces bursts.
 function fetchUsage(force: boolean): void {
@@ -187,9 +189,15 @@ function fetchUsage(force: boolean): void {
     .then((out) => {
       try {
         const parsed = JSON.parse(out) as UsageData;
-        // Detect events on the raw response (skips unavailable providers), but
-        // display a merge that preserves the last good data across a blip.
-        checkUsageEvents(parsed);
+        // Event detection is best-effort: a failure there must not discard
+        // otherwise good provider data.
+        try {
+          // Detect events on the raw response (skips unavailable providers),
+          // but display a merge that preserves last good data across a blip.
+          checkUsageEvents(parsed);
+        } catch {
+          // Notification bookkeeping only; provider data still applies below.
+        }
         setUsage(mergeUsage(usage.get(), parsed));
         lastFetch = now;
       } catch {
@@ -364,8 +372,9 @@ function WindowRow({ w }: { w: UsageWindow }) {
 }
 
 function peakWindow(p: UsageProvider): UsageWindow | null {
-  if (!p.available || p.windows.length === 0) return null;
-  return p.windows.reduce((a, b) => (b.usedPercent > a.usedPercent ? b : a));
+  const ws = p.windows ?? [];
+  if (!p.available || ws.length === 0) return null;
+  return ws.reduce((a, b) => (b.usedPercent > a.usedPercent ? b : a));
 }
 
 function ProviderSummaryRow({ p }: { p: UsageProvider }) {
@@ -429,7 +438,7 @@ function ProviderCard({ p }: { p: UsageProvider }) {
 
       {p.available ? (
         <box orientation={Gtk.Orientation.VERTICAL} spacing={10}>
-          {p.windows.map((w) => (
+          {(p.windows ?? []).map((w) => (
             <WindowRow w={w} />
           ))}
           {p.notes && p.notes.length > 0 ? (

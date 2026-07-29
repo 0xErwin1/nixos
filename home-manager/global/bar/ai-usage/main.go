@@ -2,8 +2,9 @@
 // bar's "extras" panel.
 //
 // It reads the local OAuth credentials that the Claude Code, Codex, and Grok
-// Build CLIs maintain, queries each provider's usage endpoint, and prints a
-// single normalized JSON document to stdout:
+// Build CLIs maintain (plus the Moonshot API key stored by pi), queries each
+// provider's usage endpoint, and prints a single normalized JSON document to
+// stdout:
 //
 //	{
 //	  "generatedAt": "2026-07-16T18:00:00Z",
@@ -56,11 +57,16 @@ const (
 	// Grok Build (xAI SuperGrok / X Premium+). Credentials live in ~/.grok/auth.json
 	// after `grok login`. Billing is exposed on the CLI chat proxy; identity/plan
 	// come from the user endpoint. OIDC refresh uses auth.x.ai (form-encoded).
-	grokUserURL     = "https://cli-chat-proxy.grok.com/v1/user?include=subscription"
-	grokBillingURL  = "https://cli-chat-proxy.grok.com/v1/billing?format=credits"
-	grokBillingRaw  = "https://cli-chat-proxy.grok.com/v1/billing"
-	grokRefreshURL  = "https://auth.x.ai/oauth2/token"
-	grokOIDCPrefix  = "https://auth.x.ai::"
+	grokUserURL    = "https://cli-chat-proxy.grok.com/v1/user?include=subscription"
+	grokBillingURL = "https://cli-chat-proxy.grok.com/v1/billing?format=credits"
+	grokBillingRaw = "https://cli-chat-proxy.grok.com/v1/billing"
+	grokRefreshURL = "https://auth.x.ai/oauth2/token"
+	grokOIDCPrefix = "https://auth.x.ai::"
+
+	// Kimi (Moonshot AI) pay-as-you-go API. The key lives in pi's auth.json
+	// under "moonshotai". Balance is prepaid credit; there is no usage window
+	// endpoint, so spend comes from the local pi session logs instead.
+	kimiBalanceURL = "https://api.moonshot.ai/v1/users/me/balance"
 )
 
 var (
@@ -68,6 +74,7 @@ var (
 	claudePath = homePath(".claude/.credentials.json")
 	codexPath  = homePath(".codex/auth.json")
 	grokPath   = homePath(".grok/auth.json")
+	kimiPath   = homePath(".pi/agent/auth.json")
 )
 
 // ── normalized output ───────────────────────────────────────────────────────
@@ -597,14 +604,14 @@ func codexProvider() provider {
 // ── Grok (xAI SuperGrok / Grok Build) ───────────────────────────────────────
 
 type grokEntry struct {
-	key        string
-	scopeKey   string
-	clientID   string
-	token      string
-	refresh    string
-	expiresAt  time.Time
-	authMode   string
-	hasExpiry  bool
+	key       string
+	scopeKey  string
+	clientID  string
+	token     string
+	refresh   string
+	expiresAt time.Time
+	authMode  string
+	hasExpiry bool
 }
 
 // pickGrokEntry prefers the OIDC SuperGrok scope (auth.x.ai::<client-id>) over
@@ -727,9 +734,9 @@ func grokWindowsAndNotes(credits, monthly []byte) ([]window, []note) {
 	var c struct {
 		Config *struct {
 			CurrentPeriod *struct {
-				Type  string  `json:"type"`
-				Start string  `json:"start"`
-				End   string  `json:"end"`
+				Type  string `json:"type"`
+				Start string `json:"start"`
+				End   string `json:"end"`
 			} `json:"currentPeriod"`
 			CreditUsagePercent *float64 `json:"creditUsagePercent"`
 			OnDemandCap        *struct {
@@ -976,7 +983,71 @@ func grokProvider() provider {
 	return p
 }
 
-// ── Claude local cost/token scan ────────────────────────────────────────────
+// ── Kimi (Moonshot AI) ──────────────────────────────────────────────────────
+
+func kimiProvider() provider {
+	p := provider{ID: "kimi", Name: "Kimi"}
+
+	raw, err := os.ReadFile(kimiPath)
+	if err != nil {
+		p.Reason = ptr("no-credentials")
+		return p
+	}
+	var top map[string]json.RawMessage
+	if err := json.Unmarshal(raw, &top); err != nil {
+		p.Reason = ptr("no-credentials")
+		return p
+	}
+	entry := map[string]any{}
+	_ = json.Unmarshal(top["moonshotai"], &entry)
+	key := str(entry, "key")
+	if key == "" {
+		p.Reason = ptr("no-credentials")
+		return p
+	}
+
+	status, data, err := httpJSON("GET", kimiBalanceURL, map[string]string{
+		"Authorization": "Bearer " + key,
+		"User-Agent":    "epsilon-ai-usage",
+	}, nil)
+	if err != nil {
+		p.Reason = ptr("network")
+		return p
+	}
+	if status == 401 || status == 403 {
+		p.Reason = ptr("auth")
+		return p
+	}
+	if status < 200 || status >= 300 {
+		p.Reason = ptr(fmt.Sprintf("http-%d", status))
+		return p
+	}
+
+	var bal struct {
+		Data *struct {
+			Available float64 `json:"available_balance"`
+			Voucher   float64 `json:"voucher_balance"`
+			Cash      float64 `json:"cash_balance"`
+		} `json:"data"`
+	}
+	if err := json.Unmarshal(data, &bal); err != nil || bal.Data == nil {
+		p.Reason = ptr("bad-response")
+		return p
+	}
+
+	p.Available = true
+	p.Notes = append(p.Notes, note{Label: "Balance", Value: fmt.Sprintf("$%.2f", bal.Data.Available)})
+	if bal.Data.Voucher > 0 {
+		p.Notes = append(p.Notes, note{
+			Label: "Cash + voucher",
+			Value: fmt.Sprintf("$%.2f + $%.2f", bal.Data.Cash, bal.Data.Voucher),
+		})
+	}
+	p.Cost = kimiCost()
+	return p
+}
+
+// ── Local cost/token scans (Claude transcripts, pi sessions) ────────────────
 
 const (
 	costWindowDays     = 7
@@ -1025,6 +1096,93 @@ func modelLabel(model string) string {
 		return "Haiku"
 	default:
 		return model
+	}
+}
+
+// addUsageCost folds one assistant turn into the per-day and per-model buckets.
+func addUsageCost(date, label string, tokens int64, usd float64, perDay map[string]*dayCost, perModel map[string]*modelCost) {
+	dc := perDay[date]
+	if dc == nil {
+		dc = &dayCost{Date: date}
+		perDay[date] = dc
+	}
+	dc.Tokens += tokens
+	dc.EstUsd += usd
+
+	mc := perModel[label]
+	if mc == nil {
+		mc = &modelCost{Model: label}
+		perModel[label] = mc
+	}
+	mc.Tokens += tokens
+	mc.EstUsd += usd
+}
+
+// buildCostSummary rolls the buckets up into today/week/days/models form.
+func buildCostSummary(perDay map[string]*dayCost, perModel map[string]*modelCost) *costSummary {
+	summary := &costSummary{}
+	today := time.Now().Format("2006-01-02")
+	summary.Today.Date = today
+	summary.Week.Date = fmt.Sprintf("%dd", costWindowDays)
+
+	for _, dc := range perDay {
+		summary.Days = append(summary.Days, *dc)
+		summary.Week.Tokens += dc.Tokens
+		summary.Week.EstUsd += dc.EstUsd
+		if dc.Date == today {
+			summary.Today = *dc
+		}
+	}
+	sort.Slice(summary.Days, func(i, j int) bool {
+		return summary.Days[i].Date > summary.Days[j].Date
+	})
+
+	for _, mc := range perModel {
+		if mc.Tokens == 0 {
+			continue
+		}
+		summary.Models = append(summary.Models, *mc)
+	}
+	sort.Slice(summary.Models, func(i, j int) bool {
+		return summary.Models[i].EstUsd > summary.Models[j].EstUsd
+	})
+	return summary
+}
+
+// walkRecentJSONL feeds every .jsonl file under root modified since cutoff to
+// scan, keeping each poll's file walk cheap.
+func walkRecentJSONL(root string, cutoff time.Time, scan func(path string)) {
+	_ = filepath.WalkDir(root, func(path string, d fs.DirEntry, err error) error {
+		if err != nil || d.IsDir() || !strings.HasSuffix(path, ".jsonl") {
+			return nil
+		}
+		if info, err := d.Info(); err != nil || info.ModTime().Before(cutoff) {
+			return nil
+		}
+		scan(path)
+		return nil
+	})
+}
+
+// scanJSONLLines streams a .jsonl file line by line into accumulate. ReadBytes
+// grows to fit lines of any length (transcript lines can be far larger than
+// bufio.Scanner's cap).
+func scanJSONLLines(path string, accumulate func(line []byte)) {
+	f, err := os.Open(path)
+	if err != nil {
+		return
+	}
+	defer f.Close()
+
+	reader := bufio.NewReader(f)
+	for {
+		line, err := reader.ReadBytes('\n')
+		if len(line) > 0 {
+			accumulate(line)
+		}
+		if err != nil {
+			return
+		}
 	}
 }
 
@@ -1078,51 +1236,16 @@ func accumulateClaudeLine(line []byte, dayCutoff string, seen map[string]bool, p
 		float64(u.CacheCreation)*p.cacheWrite +
 		float64(u.CacheRead)*p.cacheRead) / 1e6
 
-	dc := perDay[date]
-	if dc == nil {
-		dc = &dayCost{Date: date}
-		perDay[date] = dc
-	}
-	dc.Tokens += tokens
-	dc.EstUsd += usd
-
-	label := modelLabel(cl.Message.Model)
-	mc := perModel[label]
-	if mc == nil {
-		mc = &modelCost{Model: label}
-		perModel[label] = mc
-	}
-	mc.Tokens += tokens
-	mc.EstUsd += usd
+	addUsageCost(date, modelLabel(cl.Message.Model), tokens, usd, perDay, perModel)
 }
 
 func scanClaudeFile(path, dayCutoff string, seen map[string]bool, perDay map[string]*dayCost, perModel map[string]*modelCost) {
-	f, err := os.Open(path)
-	if err != nil {
-		return
-	}
-	defer f.Close()
-
-	reader := bufio.NewReader(f)
-	for {
-		// ReadBytes grows to fit lines of any length (transcript lines can be
-		// far larger than bufio.Scanner's cap).
-		line, err := reader.ReadBytes('\n')
-		if len(line) > 0 {
-			accumulateClaudeLine(line, dayCutoff, seen, perDay, perModel)
-		}
-		if err != nil {
-			return
-		}
-	}
+	scanJSONLLines(path, func(line []byte) {
+		accumulateClaudeLine(line, dayCutoff, seen, perDay, perModel)
+	})
 }
 
-func costCachePath() string {
-	return homePath(".cache/epsilon-ai-usage/claude-cost.json")
-}
-
-func loadCostCache() *costSummary {
-	path := costCachePath()
+func loadCostCache(path string) *costSummary {
 	info, err := os.Stat(path)
 	if err != nil || time.Since(info.ModTime()) > costCacheTTL {
 		return nil
@@ -1143,17 +1266,17 @@ func loadCostCache() *costSummary {
 	return &s
 }
 
-func saveCostCache(s *costSummary) {
+func saveCostCache(path string, s *costSummary) {
 	if s == nil {
 		return
 	}
-	dir := filepath.Dir(costCachePath())
+	dir := filepath.Dir(path)
 	_ = os.MkdirAll(dir, 0o700)
 	data, err := json.Marshal(s)
 	if err != nil {
 		return
 	}
-	_ = atomicWrite(costCachePath(), data)
+	_ = atomicWrite(path, data)
 }
 
 // claudeCost aggregates per-day token totals + estimated cost over the last
@@ -1162,7 +1285,8 @@ func saveCostCache(s *costSummary) {
 // stays cheap on every refresh. Results are cached on disk for costCacheTTL
 // because each bar poll is a fresh process and the walk is multi-second.
 func claudeCost() *costSummary {
-	if cached := loadCostCache(); cached != nil {
+	cachePath := homePath(".cache/epsilon-ai-usage/claude-cost.json")
+	if cached := loadCostCache(cachePath); cached != nil {
 		return cached
 	}
 
@@ -1178,55 +1302,131 @@ func claudeCost() *costSummary {
 	perDay := map[string]*dayCost{}
 	perModel := map[string]*modelCost{}
 
-	_ = filepath.WalkDir(root, func(path string, d fs.DirEntry, err error) error {
-		if err != nil || d.IsDir() || !strings.HasSuffix(path, ".jsonl") {
-			return nil
-		}
-		if info, err := d.Info(); err != nil || info.ModTime().Before(cutoff) {
-			return nil
-		}
+	walkRecentJSONL(root, cutoff, func(path string) {
 		scanClaudeFile(path, dayCutoff, seen, perDay, perModel)
-		return nil
 	})
 
 	if len(perDay) == 0 {
 		return nil
 	}
 
-	summary := &costSummary{}
-	today := time.Now().Format("2006-01-02")
-	summary.Today.Date = today
-	summary.Week.Date = fmt.Sprintf("%dd", costWindowDays)
-
-	for _, dc := range perDay {
-		summary.Days = append(summary.Days, *dc)
-		summary.Week.Tokens += dc.Tokens
-		summary.Week.EstUsd += dc.EstUsd
-		if dc.Date == today {
-			summary.Today = *dc
-		}
-	}
-	sort.Slice(summary.Days, func(i, j int) bool {
-		return summary.Days[i].Date > summary.Days[j].Date
-	})
-
-	for _, mc := range perModel {
-		if mc.Tokens == 0 {
-			continue
-		}
-		summary.Models = append(summary.Models, *mc)
-	}
-	sort.Slice(summary.Models, func(i, j int) bool {
-		return summary.Models[i].EstUsd > summary.Models[j].EstUsd
-	})
-	saveCostCache(summary)
+	summary := buildCostSummary(perDay, perModel)
+	saveCostCache(cachePath, summary)
 	return summary
+}
+
+// ── Kimi local cost scan (pi session logs) ──────────────────────────────────
+
+// Pi records the actual USD cost of every assistant turn in its session logs,
+// so unlike the Claude estimate these are the real amounts billed by Moonshot.
+type piLine struct {
+	Type      string `json:"type"`
+	ID        string `json:"id"`
+	Timestamp string `json:"timestamp"`
+	Message   struct {
+		Role     string `json:"role"`
+		Provider string `json:"provider"`
+		Model    string `json:"model"`
+		Usage    *struct {
+			TotalTokens int64 `json:"totalTokens"`
+			Cost        *struct {
+				Total float64 `json:"total"`
+			} `json:"cost"`
+		} `json:"usage"`
+	} `json:"message"`
+}
+
+func accumulatePiLine(line []byte, dayCutoff string, seen map[string]bool, perDay map[string]*dayCost, perModel map[string]*modelCost) {
+	var pl piLine
+	if json.Unmarshal(line, &pl) != nil {
+		return
+	}
+	m := pl.Message
+	if pl.Type != "message" || m.Role != "assistant" || m.Provider != "moonshotai" || m.Usage == nil || m.Usage.Cost == nil {
+		return
+	}
+	if pl.ID != "" {
+		if seen[pl.ID] {
+			return
+		}
+		seen[pl.ID] = true
+	}
+
+	t, err := time.Parse(time.RFC3339, pl.Timestamp)
+	if err != nil {
+		return
+	}
+	date := t.Local().Format("2006-01-02")
+	if date < dayCutoff {
+		return
+	}
+
+	addUsageCost(date, m.Model, m.Usage.TotalTokens, m.Usage.Cost.Total, perDay, perModel)
+}
+
+// kimiCost aggregates per-day token totals + actual cost over the last
+// costWindowDays from the pi session logs, deduplicating assistant turns by
+// message id. Cached on disk for costCacheTTL like the Claude scan.
+func kimiCost() *costSummary {
+	cachePath := homePath(".cache/epsilon-ai-usage/kimi-cost.json")
+	if cached := loadCostCache(cachePath); cached != nil {
+		return cached
+	}
+
+	root := homePath(".pi/agent/sessions")
+	if _, err := os.Stat(root); err != nil {
+		return nil
+	}
+
+	cutoff := time.Now().AddDate(0, 0, -scanFileMaxAgeDays)
+	dayCutoff := time.Now().AddDate(0, 0, -(costWindowDays - 1)).Format("2006-01-02")
+
+	seen := map[string]bool{}
+	perDay := map[string]*dayCost{}
+	perModel := map[string]*modelCost{}
+
+	walkRecentJSONL(root, cutoff, func(path string) {
+		scanJSONLLines(path, func(line []byte) {
+			accumulatePiLine(line, dayCutoff, seen, perDay, perModel)
+		})
+	})
+
+	if len(perDay) == 0 {
+		return nil
+	}
+
+	summary := buildCostSummary(perDay, perModel)
+	saveCostCache(cachePath, summary)
+	return summary
+}
+
+// safeProvider isolates one provider fetch: a panic degrades that provider to
+// an error entry instead of killing the whole usage document.
+func safeProvider(id string, fn func() provider) (p provider) {
+	defer func() {
+		if recover() != nil {
+			p = provider{ID: id, Name: id, Reason: ptr("internal-error")}
+		}
+	}()
+	return fn()
 }
 
 func main() {
 	out := output{
 		GeneratedAt: time.Now().UTC().Format("2006-01-02T15:04:05Z"),
-		Providers:   []provider{claudeProvider(), codexProvider(), grokProvider()},
+		Providers: []provider{
+			safeProvider("claude", claudeProvider),
+			safeProvider("codex", codexProvider),
+			safeProvider("grok", grokProvider),
+			safeProvider("kimi", kimiProvider),
+		},
+	}
+	// The bar's renderer indexes into windows unconditionally: always emit an
+	// array, never null.
+	for i := range out.Providers {
+		if out.Providers[i].Windows == nil {
+			out.Providers[i].Windows = []window{}
+		}
 	}
 	enc := json.NewEncoder(os.Stdout)
 	_ = enc.Encode(out)
