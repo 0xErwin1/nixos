@@ -1,0 +1,60 @@
+# Agens MCP servers and permission rules — merged into
+# ~/.config/agens/config.toml at activation.
+#
+# Home Manager owns the [mcp.*] and [permissions] tables and nothing else:
+# every other table in the target file, including provider/model and
+# [mcp_defaults], survives each switch untouched. Set those by hand in the
+# target, not here.
+#
+# Placeholders are substituted from the secret env files named by the AI harness
+# secret contract. Never commit resolved token values here.
+
+# Ported from the OpenCode ruleset, which is the only harness that carries real
+# rules (Claude just sets defaultMode: bypassPermissions).
+#
+# Rules are last-match-wins, and `deny` is written after `allow` within a scope,
+# so the denials below win over the blanket allows above them.
+#
+# The denials survive a permission bypass: a bypass only upgrades `ask` to
+# `allow` and never touches an explicit `deny`. They do NOT survive a project
+# `.agens/config.toml` that re-allows the same tool, because project rules are
+# appended after global ones.
+[permissions]
+allow = ["read", "list", "search", "write", "edit", "bash"]
+deny = [
+  "read(**/.env)",
+  "read(**/.env.*)",
+  "read(**/*.env)",
+  "read(**/credentials.json)",
+  "read(**/.credentials.json)",
+  "read(**/auth.json)",
+  "read(**/.auth.json)",
+  "read(**/secrets/**)",
+  # "bash(git commit*)",
+  "bash(git push*)",
+  "bash(git rebase*)",
+  "bash(git reset --hard*)",
+]
+
+[mcp.aws]
+transport = "stdio"
+command = "uvx"
+args = ["-y", "awslabs.aws-documentation-mcp-server@latest"]
+env = { AWS_DOCUMENTATION_PARTITION = "aws", FASTMCP_LOG_LEVEL = "ERROR" }
+
+[mcp.context7]
+transport = "http"
+url = "https://mcp.context7.com/mcp"
+headers = { CONTEXT7_API_KEY = "@CONTEXT7_API_KEY@" }
+max_retries = 2
+
+[mcp.atlas]
+transport = "http"
+url = "https://atlas.iperez.dev/mcp"
+headers = { Authorization = "Bearer @ATLAS_TOKEN@" }
+max_retries = 2
+
+[mcp.engram]
+transport = "stdio"
+command = "engram"
+args = ["mcp"]

@@ -13,9 +13,13 @@ Three merge kinds are supported:
   json-deep-merge  Recursively merge the fragment object into a JSON document,
                    overriding only the keys it declares and leaving every other
                    key (including sibling keys inside merged objects) intact.
-  toml-mcpservers  Replace every top-level [mcp_servers*] table of a TOML
-                   document with the fragment's tables, preserving all other
-                   tables and the file preamble.
+  toml-mcpservers  Replace every top-level [mcp_servers] / [mcp_servers.*]
+                   table of a TOML document with the fragment's tables,
+                   preserving all other tables and the file preamble.
+  toml-mcp-permissions
+                   The same, scoped to [mcp] / [mcp.*] and [permissions]
+                   (agens). Sibling tables such as [mcp_defaults] are
+                   preserved, as is everything else the user sets by hand.
 
 @VAR@ placeholders in the fragment are substituted from the process
 environment (the secret env files are sourced by the caller before this runs).
@@ -112,7 +116,13 @@ def merge_json_deep(fragment, target):
     write_atomic(target, rendered, target_mode(target))
 
 
-def strip_mcp_server_tables(text):
+def strip_tables(text, prefixes):
+    """Drop `[prefix]` and `[prefix.*]` tables, keeping every other line.
+
+    The dot is required for the sub-table match so a sibling table that merely
+    shares the prefix as a word stem is preserved -- `[mcp_defaults]` must
+    survive a merge scoped to `mcp`.
+    """
     result = []
     skipping = False
 
@@ -120,7 +130,9 @@ def strip_mcp_server_tables(text):
         match = TABLE_HEADER.match(line)
         if match:
             name = match.group("name").strip()
-            skipping = name == "mcp_servers" or name.startswith("mcp_servers.")
+            skipping = any(
+                name == prefix or name.startswith(prefix + ".") for prefix in prefixes
+            )
 
         if not skipping:
             result.append(line)
@@ -128,13 +140,13 @@ def strip_mcp_server_tables(text):
     return "".join(result)
 
 
-def merge_toml_mcpservers(fragment, target):
+def merge_toml_tables(fragment, target, prefixes):
     existing = ""
     if os.path.exists(target):
         with open(target, encoding="utf-8") as handle:
             existing = handle.read()
 
-    kept = strip_mcp_server_tables(existing).rstrip("\n")
+    kept = strip_tables(existing, prefixes).rstrip("\n")
     body = fragment.strip("\n")
 
     rendered = (kept + "\n\n" + body + "\n") if kept else (body + "\n")
@@ -144,7 +156,12 @@ def merge_toml_mcpservers(fragment, target):
 KINDS = {
     "json-mcpservers": merge_json_mcpservers,
     "json-deep-merge": merge_json_deep,
-    "toml-mcpservers": merge_toml_mcpservers,
+    "toml-mcpservers": lambda fragment, target: merge_toml_tables(
+        fragment, target, ("mcp_servers",)
+    ),
+    "toml-mcp-permissions": lambda fragment, target: merge_toml_tables(
+        fragment, target, ("mcp", "permissions")
+    ),
 }
 
 

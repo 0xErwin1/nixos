@@ -36,6 +36,9 @@ interface UsageCost {
   week: UsageDayCost;
   days: UsageDayCost[];
   models: UsageModelCost[] | null;
+  // true: derived from local logs at published prices (show "~"); false:
+  // real money from the provider's balance ledger (Kimi).
+  estimated: boolean;
 }
 
 interface UsageProvider {
@@ -280,11 +283,13 @@ function CostRow({
   cost,
   total,
   today,
+  approx,
 }: {
   label: string;
   cost: UsageDayCost;
   total: boolean;
   today: string;
+  approx: boolean;
 }) {
   return (
     <box
@@ -298,12 +303,12 @@ function CostRow({
         hexpand
       />
       <label cssClasses={["ai-cost-tokens"]} label={fmtTokens(cost.tokens)} />
-      <label cssClasses={["ai-cost-usd"]} label={`~${fmtUsd(cost.estUsd)}`} />
+      <label cssClasses={["ai-cost-usd"]} label={`${approx ? "~" : ""}${fmtUsd(cost.estUsd)}`} />
     </box>
   );
 }
 
-function ModelRow({ model }: { model: UsageModelCost }) {
+function ModelRow({ model, approx }: { model: UsageModelCost; approx: boolean }) {
   return (
     <box cssClasses={["ai-cost-row"]} valign={Gtk.Align.CENTER}>
       <label
@@ -313,7 +318,7 @@ function ModelRow({ model }: { model: UsageModelCost }) {
         hexpand
       />
       <label cssClasses={["ai-cost-tokens"]} label={fmtTokens(model.tokens)} />
-      <label cssClasses={["ai-cost-usd"]} label={`~${fmtUsd(model.estUsd)}`} />
+      <label cssClasses={["ai-cost-usd"]} label={`${approx ? "~" : ""}${fmtUsd(model.estUsd)}`} />
     </box>
   );
 }
@@ -325,13 +330,13 @@ function CostSection({ cost }: { cost: UsageCost }) {
     <box cssClasses={["ai-cost"]} orientation={Gtk.Orientation.VERTICAL} spacing={3}>
       <label
         cssClasses={["ai-cost-title"]}
-        label="Usage · est. API cost"
+        label={cost.estimated ? "Usage · est. API cost" : "Usage · spend"}
         halign={Gtk.Align.START}
       />
       {cost.days.map((d) => (
-        <CostRow label={fmtDay(d.date, cost.today.date)} cost={d} total={false} today={cost.today.date} />
+        <CostRow label={fmtDay(d.date, cost.today.date)} cost={d} total={false} today={cost.today.date} approx={cost.estimated} />
       ))}
-      <CostRow label="7-day total" cost={cost.week} total today={cost.today.date} />
+      <CostRow label="7-day total" cost={cost.week} total today={cost.today.date} approx={cost.estimated} />
 
       {models.length > 0 && (
         <box orientation={Gtk.Orientation.VERTICAL} spacing={3}>
@@ -341,7 +346,7 @@ function CostSection({ cost }: { cost: UsageCost }) {
             halign={Gtk.Align.START}
           />
           {models.map((m) => (
-            <ModelRow model={m} />
+            <ModelRow model={m} approx={cost.estimated} />
           ))}
         </box>
       )}

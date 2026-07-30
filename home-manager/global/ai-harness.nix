@@ -123,6 +123,36 @@ let
     }
   ];
 
+  # Assets that must arrive as real files rather than Nix-store symlinks.
+  #
+  # Agens refuses to load any agent, command, or skill reached through a
+  # symbolic link: its markdown loader rejects a symlinked definition and then
+  # rejects the canonicalized path for escaping its root, and its skill loader
+  # opens every directory and manifest with O_NOFOLLOW. A `home.file` projection
+  # is symlinks all the way down, so it would leave agens with an empty catalog.
+  # These entries are therefore copied at activation and the copy is authoritative:
+  # each target is replaced wholesale on every switch, so local edits under it do
+  # not survive. Only agens needs this; every other agent takes the symlink path
+  # above.
+  copiedResources = [
+    {
+      source = canonicalRoot + "/agens/AGENTS.md";
+      target = ".config/agens/AGENTS.md";
+    }
+    {
+      source = canonicalRoot + "/agens/agents";
+      target = ".config/agens/agents";
+    }
+    {
+      source = canonicalRoot + "/agens/commands";
+      target = ".config/agens/commands";
+    }
+    {
+      source = canonicalRoot + "/agens/skills";
+      target = ".config/agens/skills";
+    }
+  ];
+
   # Config files that must carry secret values into their final on-disk
   # location. They cannot be Nix-store symlinks (read-only, so tokens could not
   # be edited) and must not hold secrets in Git, so Home Manager renders them at
@@ -140,11 +170,13 @@ let
     }
   ];
 
-  # Agents whose config file is owned and rewritten by the agent itself at
-  # runtime (Claude Code's OAuth/project state in .claude.json; Codex's project
-  # trust levels, notices, and plugin state in config.toml). A whole-file render
-  # would clobber that state, so Home Manager only owns the MCP section: the
-  # merge helper injects the rendered servers and preserves everything else.
+  # Agents whose config file holds state Home Manager must not own: state the
+  # agent writes itself at runtime (Claude Code's OAuth/project history in
+  # .claude.json; Codex's project trust levels, notices, and plugin state in
+  # config.toml), or -- for agens -- settings the user edits by hand, such as
+  # the default provider and model. A whole-file render would clobber them, so
+  # Home Manager owns only the MCP section: the merge helper injects the
+  # rendered servers and preserves every other table.
   mergedSecretConfigs = [
     {
       kind = "json-mcpservers";
@@ -166,11 +198,25 @@ let
       template = canonicalRoot + "/claude/settings-merge.json";
       target = ".claude/settings.json";
     }
+    {
+      kind = "toml-mcp-permissions";
+      template = canonicalRoot + "/agens/config.toml";
+      target = ".config/agens/config.toml";
+    }
   ];
 
   renderTemplateSources =
     (map (entry: entry.template) renderedSecretConfigs)
     ++ (map (entry: entry.template) mergedSecretConfigs);
+
+  copyTargets = map (entry: entry.target) copiedResources;
+  copySources = map (entry: entry.source) copiedResources;
+
+  copyCommands = lib.concatMapStringsSep "\n" (
+    entry: ''
+      copy_resource ${lib.escapeShellArg (toString entry.source)} ${lib.escapeShellArg "${homeDirectory}/${entry.target}"}
+    ''
+  ) copiedResources;
 
   renderCommands = lib.concatMapStringsSep "\n" (
     entry: ''
@@ -260,6 +306,18 @@ in
       message = "AI harness rendered-config templates must exist under the canonical Home Manager ai/ tree.";
     }
     {
+      assertion = lib.length copyTargets == lib.length (lib.unique copyTargets);
+      message = "AI harness copied-resource targets must be unique.";
+    }
+    {
+      assertion = lib.all builtins.pathExists copySources;
+      message = "AI harness copied-resource sources must exist under the canonical Home Manager ai/ tree.";
+    }
+    {
+      assertion = lib.all (target: !(lib.elem target projectionTargets)) copyTargets;
+      message = "AI harness targets must be either projected or copied, never both.";
+    }
+    {
       assertion = lib.all (
         entry: builtins.match ".*(=|Bearer|sk-|gh[pousr]_|xox[baprs]-).*" entry.path == null
       ) secretEnvContract;
@@ -288,6 +346,27 @@ in
         exit 1
       fi
     done
+  '';
+
+  home.activation.aiHarnessCopiedResources = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+    set -eu
+
+    # The target is replaced wholesale rather than merged: a stale agent or skill
+    # left behind from a previous generation would keep loading, and there is no
+    # per-file ownership record to prune it from. The copy is also chmod'd
+    # writable because the Nix store source is read-only, and agens refuses a
+    # skill manifest with more than one hard link, which rules out `cp -l`.
+    copy_resource() {
+      source="$1"
+      target="$2"
+
+      mkdir -p "$(dirname "$target")"
+      rm -rf "$target"
+      cp -rL --no-preserve=mode,ownership "$source" "$target"
+      chmod -R u+rwX "$target"
+    }
+
+    ${copyCommands}
   '';
 
   home.activation.aiHarnessSecretConfigRender = lib.hm.dag.entryAfter [ "writeBoundary" ] ''

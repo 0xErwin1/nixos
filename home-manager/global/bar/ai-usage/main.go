@@ -112,6 +112,9 @@ type costSummary struct {
 	Week   dayCost     `json:"week"`
 	Days   []dayCost   `json:"days"`
 	Models []modelCost `json:"models"`
+	// Estimated is true when costs are derived from local logs and published
+	// prices (Claude), false when they come from real balance movement (Kimi).
+	Estimated bool `json:"estimated"`
 }
 
 type provider struct {
@@ -1035,6 +1038,8 @@ func kimiProvider() provider {
 		return p
 	}
 
+	spend := trackKimiSpend(bal.Data.Available)
+
 	p.Available = true
 	p.Notes = append(p.Notes, note{Label: "Balance", Value: fmt.Sprintf("$%.2f", bal.Data.Available)})
 	if bal.Data.Voucher > 0 {
@@ -1043,8 +1048,71 @@ func kimiProvider() provider {
 			Value: fmt.Sprintf("$%.2f + $%.2f", bal.Data.Cash, bal.Data.Voucher),
 		})
 	}
-	p.Cost = kimiCost()
+	if spend.Credited > 0 {
+		p.Notes = append(p.Notes, note{
+			Label: "Total spent",
+			Value: fmt.Sprintf("$%.2f", spend.Credited-bal.Data.Available),
+		})
+	}
+	p.Cost = kimiCost(spend)
 	return p
+}
+
+// ── Kimi spend ledger (real consumption from balance movement) ──────────────
+
+// Moonshot exposes no consumption endpoint — only the live balance. The ledger
+// derives REAL spend (what the console shows) from balance deltas on each
+// poll: a decrease is consumption billed across EVERY client of the API key
+// (pi, opencode, anything), an increase is a recharge or voucher grant. Kept
+// under XDG state (not cache) so it survives cache cleaning.
+type kimiSpendState struct {
+	Credited  float64            `json:"credited"`
+	Available float64            `json:"available"`
+	Days      map[string]float64 `json:"days"`
+	UpdatedAt string             `json:"updatedAt"`
+}
+
+func kimiSpendPath() string {
+	if dir := os.Getenv("XDG_STATE_HOME"); dir != "" {
+		return filepath.Join(dir, "epsilon-ai-usage", "kimi-spend.json")
+	}
+	return homePath(".local/state/epsilon-ai-usage/kimi-spend.json")
+}
+
+func trackKimiSpend(avail float64) *kimiSpendState {
+	path := kimiSpendPath()
+	st := &kimiSpendState{}
+	if raw, err := os.ReadFile(path); err != nil || json.Unmarshal(raw, st) != nil || st.Days == nil {
+		// First run (or corrupt ledger): baseline at the current balance so
+		// spend accumulates from here. Pre-existing consumption can be seeded
+		// by setting "credited" to the console's Total Recharge + Voucher
+		// Amount in this file; afterwards it self-tracks.
+		st = &kimiSpendState{Credited: avail, Available: avail, Days: map[string]float64{}}
+	}
+
+	const eps = 0.0005 // ignore sub-cent float noise
+	switch delta := avail - st.Available; {
+	case delta > eps:
+		st.Credited += delta // recharge / voucher grant
+	case delta < -eps:
+		st.Days[time.Now().Format("2006-01-02")] += -delta
+	}
+	st.Available = avail
+	st.UpdatedAt = time.Now().UTC().Format("2006-01-02T15:04:05Z")
+
+	// Day granularity is only needed for the 7-day panel window; keep a month.
+	cutoff := time.Now().AddDate(0, 0, -31).Format("2006-01-02")
+	for d := range st.Days {
+		if d < cutoff {
+			delete(st.Days, d)
+		}
+	}
+
+	if raw, err := json.Marshal(st); err == nil {
+		_ = os.MkdirAll(filepath.Dir(path), 0o700)
+		_ = atomicWrite(path, raw)
+	}
+	return st
 }
 
 // ── Local cost/token scans (Claude transcripts, pi sessions) ────────────────
@@ -1119,8 +1187,8 @@ func addUsageCost(date, label string, tokens int64, usd float64, perDay map[stri
 }
 
 // buildCostSummary rolls the buckets up into today/week/days/models form.
-func buildCostSummary(perDay map[string]*dayCost, perModel map[string]*modelCost) *costSummary {
-	summary := &costSummary{}
+func buildCostSummary(perDay map[string]*dayCost, perModel map[string]*modelCost, estimated bool) *costSummary {
+	summary := &costSummary{Estimated: estimated}
 	today := time.Now().Format("2006-01-02")
 	summary.Today.Date = today
 	summary.Week.Date = fmt.Sprintf("%dd", costWindowDays)
@@ -1310,15 +1378,18 @@ func claudeCost() *costSummary {
 		return nil
 	}
 
-	summary := buildCostSummary(perDay, perModel)
+	summary := buildCostSummary(perDay, perModel, true)
 	saveCostCache(cachePath, summary)
 	return summary
 }
 
 // ── Kimi local cost scan (pi session logs) ──────────────────────────────────
 
-// Pi records the actual USD cost of every assistant turn in its session logs,
-// so unlike the Claude estimate these are the real amounts billed by Moonshot.
+// Pi records the USD cost of every assistant turn in its session logs using
+// the model's published prices. Close to the real bill, but it misses spend
+// from other clients of the same API key and drifts on unbilled retries — the
+// spend ledger above is the source of truth for money; these logs provide the
+// token counts and the per-model split.
 type piLine struct {
 	Type      string `json:"type"`
 	ID        string `json:"id"`
@@ -1364,39 +1435,94 @@ func accumulatePiLine(line []byte, dayCutoff string, seen map[string]bool, perDa
 	addUsageCost(date, m.Model, m.Usage.TotalTokens, m.Usage.Cost.Total, perDay, perModel)
 }
 
-// kimiCost aggregates per-day token totals + actual cost over the last
-// costWindowDays from the pi session logs, deduplicating assistant turns by
-// message id. Cached on disk for costCacheTTL like the Claude scan.
-func kimiCost() *costSummary {
-	cachePath := homePath(".cache/epsilon-ai-usage/kimi-cost.json")
-	if cached := loadCostCache(cachePath); cached != nil {
-		return cached
-	}
+// piScanResult is the raw pi-log scan (no summary roll-up), cached on disk
+// because the walk is the slow part of a poll.
+type piScanResult struct {
+	Days   map[string]*dayCost   `json:"days"`
+	Models map[string]*modelCost `json:"models"`
+}
 
-	root := homePath(".pi/agent/sessions")
-	if _, err := os.Stat(root); err != nil {
+func loadPiScanCache(path string) *piScanResult {
+	info, err := os.Stat(path)
+	if err != nil || time.Since(info.ModTime()) > costCacheTTL {
 		return nil
 	}
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return nil
+	}
+	var r piScanResult
+	if json.Unmarshal(data, &r) != nil || r.Days == nil {
+		return nil
+	}
+	return &r
+}
 
-	cutoff := time.Now().AddDate(0, 0, -scanFileMaxAgeDays)
-	dayCutoff := time.Now().AddDate(0, 0, -(costWindowDays - 1)).Format("2006-01-02")
+// piKimiScan aggregates per-day/per-model token totals over the last
+// costWindowDays from the pi session logs, deduplicating assistant turns by
+// message id. Cached on disk for costCacheTTL like the Claude scan.
+func piKimiScan() (map[string]*dayCost, map[string]*modelCost) {
+	cachePath := homePath(".cache/epsilon-ai-usage/kimi-scan.json")
+	if cached := loadPiScanCache(cachePath); cached != nil {
+		return cached.Days, cached.Models
+	}
 
-	seen := map[string]bool{}
 	perDay := map[string]*dayCost{}
 	perModel := map[string]*modelCost{}
 
-	walkRecentJSONL(root, cutoff, func(path string) {
-		scanJSONLLines(path, func(line []byte) {
-			accumulatePiLine(line, dayCutoff, seen, perDay, perModel)
+	root := homePath(".pi/agent/sessions")
+	if _, err := os.Stat(root); err == nil {
+		cutoff := time.Now().AddDate(0, 0, -scanFileMaxAgeDays)
+		dayCutoff := time.Now().AddDate(0, 0, -(costWindowDays - 1)).Format("2006-01-02")
+		seen := map[string]bool{}
+		walkRecentJSONL(root, cutoff, func(path string) {
+			scanJSONLLines(path, func(line []byte) {
+				accumulatePiLine(line, dayCutoff, seen, perDay, perModel)
+			})
 		})
-	})
+	}
 
+	if raw, err := json.Marshal(piScanResult{Days: perDay, Models: perModel}); err == nil {
+		_ = os.MkdirAll(filepath.Dir(cachePath), 0o700)
+		_ = atomicWrite(cachePath, raw)
+	}
+	return perDay, perModel
+}
+
+// kimiCost merges the two sources: real money from the spend ledger overrides
+// the pi-log estimate day by day; the per-model split comes from pi tokens,
+// rescaled so it sums to the real week total.
+func kimiCost(spend *kimiSpendState) *costSummary {
+	dayCutoff := time.Now().AddDate(0, 0, -(costWindowDays - 1)).Format("2006-01-02")
+
+	perDay, perModel := piKimiScan()
+
+	piWeekEst := 0.0
+	for _, dc := range perDay {
+		piWeekEst += dc.EstUsd
+	}
+	for date, usd := range spend.Days {
+		if date < dayCutoff {
+			continue
+		}
+		dc := perDay[date]
+		if dc == nil {
+			dc = &dayCost{Date: date}
+			perDay[date] = dc
+		}
+		dc.EstUsd = usd
+	}
 	if len(perDay) == 0 {
 		return nil
 	}
 
-	summary := buildCostSummary(perDay, perModel)
-	saveCostCache(cachePath, summary)
+	summary := buildCostSummary(perDay, perModel, false)
+	if piWeekEst > 0 && summary.Week.EstUsd > 0 {
+		f := summary.Week.EstUsd / piWeekEst
+		for i := range summary.Models {
+			summary.Models[i].EstUsd *= f
+		}
+	}
 	return summary
 }
 
