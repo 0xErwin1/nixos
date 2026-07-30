@@ -174,9 +174,9 @@ let
   # agent writes itself at runtime (Claude Code's OAuth/project history in
   # .claude.json; Codex's project trust levels, notices, and plugin state in
   # config.toml), or -- for agens -- settings the user edits by hand, such as
-  # the default provider and model. A whole-file render would clobber them, so
-  # Home Manager owns only the MCP section: the merge helper injects the
-  # rendered servers and preserves every other table.
+  # the default provider and model. A whole-file render would clobber them.
+  # For Agens, the merge helper only appends missing canonical MCP tables and
+  # permissions; all existing tables, including same-name MCPs, are preserved.
   mergedSecretConfigs = [
     {
       kind = "json-mcpservers";
@@ -199,6 +199,8 @@ let
       target = ".claude/settings.json";
     }
     {
+      # Additive only: existing Agens MCP and permissions tables remain
+      # runtime/user-owned, including tables with canonical MCP names.
       kind = "toml-mcp-permissions";
       template = canonicalRoot + "/agens/config.toml";
       target = ".config/agens/config.toml";

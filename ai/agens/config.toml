@@ -1,10 +1,11 @@
 # Agens MCP servers and permission rules — merged into
 # ~/.config/agens/config.toml at activation.
 #
-# Home Manager owns the [mcp.*] and [permissions] tables and nothing else:
-# every other table in the target file, including provider/model and
-# [mcp_defaults], survives each switch untouched. Set those by hand in the
-# target, not here.
+# Home Manager adds these tables only when they are absent from the target.
+# Existing [mcp.*], [permissions], provider/model, and [mcp_defaults] settings
+# remain user-owned and survive each switch unchanged. Edit existing settings
+# in the target; remove a table there only if this canonical version should be
+# added on the next activation.
 #
 # Placeholders are substituted from the secret env files named by the AI harness
 # secret contract. Never commit resolved token values here.

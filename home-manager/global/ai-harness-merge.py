@@ -17,9 +17,10 @@ Three merge kinds are supported:
                    table of a TOML document with the fragment's tables,
                    preserving all other tables and the file preamble.
   toml-mcp-permissions
-                   The same, scoped to [mcp] / [mcp.*] and [permissions]
-                   (agens). Sibling tables such as [mcp_defaults] are
-                   preserved, as is everything else the user sets by hand.
+                   Add only missing canonical [mcp.*] and [permissions]
+                   tables to an Agens TOML document. Existing MCP and
+                   permissions tables, including same-name canonical tables,
+                   are preserved unchanged.
 
 @VAR@ placeholders in the fragment are substituted from the process
 environment (the secret env files are sourced by the caller before this runs).
@@ -153,15 +154,117 @@ def merge_toml_tables(fragment, target, prefixes):
     write_atomic(target, rendered, target_mode(target))
 
 
+def toml_table_name(line):
+    """Return a TOML table name as key segments, or None for a non-header.
+
+    This deliberately covers ordinary table headers rather than parsing TOML
+    values. Quoted keys are decoded so `[mcp."local server"]` and a canonical
+    table with the same quoted name compare equal.
+    """
+    match = TABLE_HEADER.match(line)
+    if not match:
+        return None
+
+    name = match.group("name").strip()
+    segments = []
+    index = 0
+    while index < len(name):
+        while index < len(name) and name[index].isspace():
+            index += 1
+        if index >= len(name):
+            return None
+
+        if name[index] in ('"', "'"):
+            quote = name[index]
+            start = index
+            index += 1
+            while index < len(name):
+                if quote == '"' and name[index] == "\\":
+                    index += 2
+                    continue
+                if name[index] == quote:
+                    index += 1
+                    break
+                index += 1
+            else:
+                return None
+            key = name[start:index]
+            if quote == '"':
+                try:
+                    key = json.loads(key)
+                except json.JSONDecodeError:
+                    return None
+            else:
+                key = key[1:-1]
+        else:
+            start = index
+            while index < len(name) and name[index] not in ". \t":
+                index += 1
+            key = name[start:index]
+            if not key:
+                return None
+
+        segments.append(key)
+        while index < len(name) and name[index].isspace():
+            index += 1
+        if index == len(name):
+            return tuple(segments)
+        if name[index] != ".":
+            return None
+        index += 1
+
+    return None
+
+
+def toml_table_blocks(text):
+    """Return `(name, text)` pairs for table blocks in source order."""
+    lines = text.splitlines(keepends=True)
+    headers = [
+        (index, toml_table_name(line))
+        for index, line in enumerate(lines)
+        if toml_table_name(line) is not None
+    ]
+    return [
+        (name, "".join(lines[start:end]))
+        for (start, name), (end, _) in zip(headers, headers[1:] + [(len(lines), None)])
+    ]
+
+
+def merge_toml_mcp_permissions_additive(fragment, target):
+    """Append canonical Agens tables absent from a runtime-owned TOML file."""
+    existing = ""
+    if os.path.exists(target):
+        with open(target, encoding="utf-8") as handle:
+            existing = handle.read()
+
+    existing_names = {name for name, _ in toml_table_blocks(existing)}
+    missing_blocks = [
+        block
+        for name, block in toml_table_blocks(fragment)
+        if (name == ("permissions",) or (name and name[0] == "mcp"))
+        and name not in existing_names
+    ]
+
+    if not missing_blocks:
+        rendered = existing
+    else:
+        body = "".join(missing_blocks).strip("\n")
+        if existing:
+            separator = "" if existing.endswith("\n") else "\n"
+            rendered = existing + separator + "\n" + body + "\n"
+        else:
+            rendered = body + "\n"
+
+    write_atomic(target, rendered, target_mode(target))
+
+
 KINDS = {
     "json-mcpservers": merge_json_mcpservers,
     "json-deep-merge": merge_json_deep,
     "toml-mcpservers": lambda fragment, target: merge_toml_tables(
         fragment, target, ("mcp_servers",)
     ),
-    "toml-mcp-permissions": lambda fragment, target: merge_toml_tables(
-        fragment, target, ("mcp", "permissions")
-    ),
+    "toml-mcp-permissions": merge_toml_mcp_permissions_additive,
 }
 
 
