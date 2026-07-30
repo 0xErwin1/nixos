@@ -7,7 +7,6 @@ let
     "iperez@zeta"
   ];
   expectedResourceSources = {
-    ".pi/agent/AGENTS.md" = toString flake.inputs.pi-harness.assets.orchestrator;
     ".pi/agent/agents" = toString flake.inputs.pi-harness.assets.agents;
     ".pi/agent/chains" = toString flake.inputs.pi-harness.assets.chains;
     ".pi/agent/support" = toString flake.inputs.pi-harness.assets.support;
@@ -46,6 +45,7 @@ let
       hasExpectedPiTargets = builtins.all (
         target: builtins.elem target resourceTargets
       ) expectedResourceTargets;
+      orchestratorPromptNotProjected = !(builtins.elem ".pi/agent/AGENTS.md" resourceTargets);
       piTargetsAvoidRuntimeState = builtins.all (
         target: !(builtins.elem target forbiddenPiTargets)
       ) resourceTargets;
@@ -65,6 +65,7 @@ let
     item.state.moduleEnabled
     && item.state.packageName == item.state.expectedPackageName
     && item.state.hasExpectedPiTargets
+    && item.state.orchestratorPromptNotProjected
     && item.state.piTargetsAvoidRuntimeState
     && item.state.piResourcesMatchHarnessAssets
     && item.state.piResourcesDoNotComeFromHomeManagerAi

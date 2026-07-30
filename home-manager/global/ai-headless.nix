@@ -28,10 +28,6 @@
       };
       resources = [
         {
-          source = inputs.pi-harness.assets.orchestrator;
-          target = ".pi/agent/AGENTS.md";
-        }
-        {
           source = inputs.pi-harness.assets.agents;
           target = ".pi/agent/agents";
           recursive = true;
