@@ -61,6 +61,7 @@
     codegraph
     engram
     grok-build
+    maestro
     pi-coding-agent
     tuicr
   ];

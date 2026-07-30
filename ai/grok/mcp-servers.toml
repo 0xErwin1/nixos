@@ -14,6 +14,10 @@ args = ["mcp", "--client-id", "grok"]
 command = "engram"
 args = ["mcp"]
 
+[mcp_servers.maestro]
+command = "maestro"
+args = ["mcp"]
+
 [mcp_servers.obsidian]
 command = "pnpx"
 args = ["@mauricio.wolff/mcp-obsidian@latest", "/home/iperez/Atlas"]

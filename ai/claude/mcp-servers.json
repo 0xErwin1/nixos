@@ -28,6 +28,12 @@
       "claude"
     ]
   },
+  "maestro": {
+    "command": "maestro",
+    "args": [
+      "mcp"
+    ]
+  },
   "obsidian": {
     "command": "pnpx",
     "args": [

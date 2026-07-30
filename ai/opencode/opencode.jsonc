@@ -290,6 +290,14 @@
       "enabled": true,
       "type": "local"
     },
+    "maestro": {
+      "command": [
+        "maestro",
+        "mcp"
+      ],
+      "enabled": true,
+      "type": "local"
+    },
     "obsidian": {
       "type": "local",
       "enabled": true,

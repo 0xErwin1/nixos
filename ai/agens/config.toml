@@ -59,3 +59,8 @@ max_retries = 2
 transport = "stdio"
 command = "engram"
 args = ["mcp"]
+
+[mcp.maestro]
+transport = "stdio"
+command = "maestro"
+args = ["mcp"]

@@ -243,6 +243,68 @@ let
     relativePath: needle:
     builtins.match (".*" + needle + ".*") (builtins.readFile (flakePath + "/" + relativePath)) != null;
   fileDoesNotContain = relativePath: needle: !(fileContains relativePath needle);
+  fileIncludes =
+    relativePath: needle:
+    flake.inputs.nixpkgs.lib.hasInfix needle (builtins.readFile (flakePath + "/" + relativePath));
+  maestroMcpTemplates = [
+    {
+      file = "ai/agens/config.toml";
+      needles = [
+        "[mcp.maestro]"
+        "transport = \"stdio\""
+        "command = \"maestro\""
+        "args = [\"mcp\"]"
+      ];
+    }
+    {
+      file = "ai/pi/mcp.json";
+      needles = [
+        "\"maestro\": {"
+        "\"command\": \"maestro\""
+        "\"args\": [\"mcp\"]"
+      ];
+    }
+    {
+      file = "ai/opencode/opencode.jsonc";
+      needles = [
+        "\"maestro\": {"
+        "\"maestro\""
+        "\"mcp\""
+        "\"enabled\": true"
+        "\"type\": \"local\""
+      ];
+    }
+    {
+      file = "ai/claude/mcp-servers.json";
+      needles = [
+        "\"maestro\": {"
+        "\"command\": \"maestro\""
+        "\"mcp\""
+      ];
+    }
+    {
+      file = "ai/codex/mcp-servers.toml";
+      needles = [
+        "[mcp_servers.maestro]"
+        "command = \"maestro\""
+        "args = [\"mcp\"]"
+      ];
+    }
+    {
+      file = "ai/grok/mcp-servers.toml";
+      needles = [
+        "[mcp_servers.maestro]"
+        "command = \"maestro\""
+        "args = [\"mcp\"]"
+      ];
+    }
+  ];
+  hasMaestroPackage =
+    packages:
+    builtins.any (
+      package:
+      (package.pname or "") == "maestro" || builtins.match "maestro-[0-9].*" (package.name or "") != null
+    ) packages;
   fileHasTokenLikeAssignment =
     relativePath:
     builtins.match tokenLikeAssignmentPattern (builtins.readFile (flakePath + "/" + relativePath))
@@ -349,6 +411,21 @@ let
     && state.renderSourcesSecretEnvFiles;
 in
 assert builtins.all assetExists canonicalAssets;
+assert builtins.all (
+  check: builtins.all (needle: fileIncludes check.file needle) check.needles
+) maestroMcpTemplates;
+assert
+  opencodeConfig.mcp.maestro == {
+    type = "local";
+    enabled = true;
+    command = [
+      "maestro"
+      "mcp"
+    ];
+  };
+assert builtins.all (
+  host: hasMaestroPackage flake.homeConfigurations.${host}.config.home.packages
+) (hosts ++ [ "iperez@pi" ]);
 assert builtins.all (
   relativePath:
   builtins.all (needle: fileContains relativePath needle) (expectedSecretPaths ++ expectedSecretVars)

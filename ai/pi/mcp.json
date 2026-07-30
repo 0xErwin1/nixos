@@ -28,6 +28,10 @@
       "command": "engram",
       "args": ["mcp"]
     },
+    "maestro": {
+      "command": "maestro",
+      "args": ["mcp"]
+    },
     "obsidian": {
       "command": "pnpx",
       "args": ["@mauricio.wolff/mcp-obsidian@latest", "/home/iperez/Atlas"]
