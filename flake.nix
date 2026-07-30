@@ -91,6 +91,7 @@
             tuicr = final.callPackage "${self}/pkgs/tuicr" { };
             codegraph = final.callPackage "${self}/pkgs/codegraph" { };
             maestro-studio = final.callPackage "${self}/pkgs/maestro-studio" { };
+            orca = final.callPackage "${self}/pkgs/orca/package.nix" { };
           };
       };
 
