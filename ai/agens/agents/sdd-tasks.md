@@ -2,6 +2,9 @@
 name: sdd-tasks
 description: "Break down a change into an implementation task checklist. Use when spec and design are both ready and the change needs to be sliced into actionable, ordered work items.\\n"
 mode: subagent
+skills:
+  - sdd-tasks
+  - sdd-shared
 permissions:
   - deny bash
 ---

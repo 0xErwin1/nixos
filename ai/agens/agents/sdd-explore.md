@@ -2,6 +2,9 @@
 name: sdd-explore
 description: "Explore and investigate ideas before committing to a change. Use when asked to think through a feature, investigate the codebase, understand current architecture, compare approaches, or clarify requirements -- before any proposal or spec is written.\\n"
 mode: subagent
+skills:
+  - sdd-explore
+  - sdd-shared
 permissions:
   - deny write
   - deny bash

@@ -184,7 +184,7 @@ Skills (appear in autocomplete):
 - `/sdd-explore <topic>` -> investigate an idea; reads codebase, compares approaches; no files created
 - `/sdd-apply [change]` -> implement tasks in batches; checks off items as it goes
 - `/sdd-verify [change]` -> validate implementation against specs; reports CRITICAL / WARNING / SUGGESTION
-- `/sdd-archive [change]` -> close a change and persist final state in the active artifact store
+- `/sdd-archive [change]` -> close a change and persist final state in the active artifact store 
 - `/sdd-onboard` -> guided end-to-end walkthrough of SDD using your real codebase
 - `/sdd-test [feature]` -> run the full testing pipeline (explore -> suites review -> plan -> run -> report)
 - `/sdd-explore-testing <feature>` -> investigate a feature or flow from a testing perspective

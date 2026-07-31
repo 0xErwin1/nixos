@@ -2,6 +2,9 @@
 name: sdd-propose
 description: "Create a change proposal with intent, scope, and approach. Use when exploration is complete and the idea is ready to be formalized into a proposal document.\\n"
 mode: subagent
+skills:
+  - sdd-propose
+  - sdd-shared
 permissions:
   - deny bash
 ---

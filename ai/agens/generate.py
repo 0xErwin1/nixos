@@ -295,7 +295,44 @@ def permissions_for(tools_field):
     return rules
 
 
-def convert_agent(path):
+# A subagent has no `skill` tool: agens only registers it on the parent turn, so
+# an executor reaches a skill exclusively through the `skills:` field its own
+# definition declares. Anything a body says to load has to be listed here, or the
+# instruction is unreachable and the dispatcher rejects the preload outright.
+SKILL_INVOCATION = re.compile(r"`([a-z0-9][a-z0-9-]*)` skill")
+
+# The orchestrator procedure is the one exception: phase agents are told not to
+# orchestrate, and the AGENT_PATH rewrite points at it only so the reference
+# resolves for a reader.
+SKILL_DECLARATION_EXEMPT = {"sdd-orchestrator"}
+
+
+def available_skills():
+    names = {"sdd-shared", "sdd-orchestrator"}
+    for source in SKILL_SOURCES:
+        names.update(
+            directory.name for directory in source.iterdir() if directory.is_dir()
+        )
+    names.discard("_shared")
+    return names
+
+
+def declared_skills(body, catalog):
+    """List the skills an agent's own instructions tell it to load.
+
+    Order follows first mention so the generated field reads like the body, and
+    an unknown name is dropped rather than emitted: agens rejects the whole
+    definition when a declared skill is not in the catalog.
+    """
+    found = []
+    for name in SKILL_INVOCATION.findall(body):
+        if name in found or name in SKILL_DECLARATION_EXEMPT or name not in catalog:
+            continue
+        found.append(name)
+    return found
+
+
+def convert_agent(path, catalog):
     frontmatter, body = split_frontmatter(path.read_text())
     fields = parse_frontmatter(frontmatter)
 
@@ -322,6 +359,11 @@ def convert_agent(path):
         "mode: subagent",
     ]
 
+    skills = declared_skills(body, catalog)
+    if skills:
+        lines.append("skills:")
+        lines.extend(f"  - {skill}" for skill in skills)
+
     permissions = permissions_for(fields.get("tools"))
     if permissions:
         lines.append("permissions:")
@@ -336,10 +378,11 @@ def build_agents():
     shutil.rmtree(target, ignore_errors=True)
     target.mkdir(parents=True)
 
+    catalog = available_skills()
     converted, failed = 0, 0
     for path in sorted(AGENT_SOURCE.glob("*.md")):
         try:
-            name, text = convert_agent(path)
+            name, text = convert_agent(path, catalog)
         except Exception as error:  # noqa: BLE001 - report and continue
             print(f"SKIP agent {path.name}: {error}", file=sys.stderr)
             failed += 1

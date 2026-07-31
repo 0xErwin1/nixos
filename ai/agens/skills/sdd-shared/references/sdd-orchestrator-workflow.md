@@ -29,7 +29,7 @@ Skills (appear in autocomplete):
 - `/sdd-status [change]` -> read-only structured status for the active change, artifacts, tasks, and next action
 - `/sdd-apply [change]` -> implement tasks in batches; checks off items as it goes
 - `/sdd-verify [change]` -> validate implementation against specs; reports CRITICAL / WARNING / SUGGESTION
-- `/sdd-archive [change]` -> close a change and persist final state in the active artifact store
+- `/sdd-archive [change]` -> close a change and persist final state in the active artifact store 
 - `/sdd-onboard` -> guided end-to-end walkthrough of SDD using your real codebase
 
 Meta-commands (type directly -- orchestrator handles them, won't appear in autocomplete):

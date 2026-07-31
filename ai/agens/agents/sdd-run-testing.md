@@ -2,6 +2,8 @@
 name: sdd-run-testing
 description: "Execute the test plan produced by sdd-plan-testing. Dispatches per mode and engine: Chrome extension, Playwright, or Maestro for browser/mobile cases, project test runner for backend cases, HTTP calls for api cases. Performs structured visual-diff checks only when mode is browser/mobile and a design reference is available. Produces a raw execution log for sdd-report-testing."
 mode: subagent
+skills:
+  - visual-diff
 ---
 
 You are the SDD **run-testing** executor. Do this phase's work yourself. Do NOT delegate further.

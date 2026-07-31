@@ -2,6 +2,9 @@
 name: sdd-spec
 description: "Write specifications with requirements and scenarios. Use when a proposal is approved and the change needs formal requirements (delta specs) captured before implementation.\\n"
 mode: subagent
+skills:
+  - sdd-spec
+  - sdd-shared
 permissions:
   - deny bash
 ---
