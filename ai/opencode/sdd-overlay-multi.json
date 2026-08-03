@@ -5,6 +5,7 @@
       "description": "SDD Orchestrator - coordinates sub-agents, never does work inline",
       "prompt": "{file:./AGENTS.md}",
       "permission": {
+        "question": "allow",
         "task": {
           "__replace__": {
             "*": "deny",
@@ -35,7 +36,8 @@
         "bash": true,
         "delegate": true,
         "delegation_read": true,
-        "delegation_list": true
+        "delegation_list": true,
+        "question": true
       }
     },
     "sdd-init": {

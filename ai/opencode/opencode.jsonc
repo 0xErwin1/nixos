@@ -15,6 +15,7 @@
       "mode": "primary",
       "prompt": "{file:/home/iperez/.config/opencode/ORCHESTRATOR.md}",
       "permission": {
+        "question": "allow",
         "task": {
           "*": "deny",
           "explore": "allow",
@@ -31,6 +32,7 @@
           "sdd-design": "allow",
           "sdd-explore": "allow",
           "sdd-init": "allow",
+          "sdd-onboard": "allow",
           "sdd-propose": "allow",
           "sdd-spec": "allow",
           "sdd-tasks": "allow",
@@ -51,6 +53,7 @@
         "glob": true,
         "grep": true,
         "mcp": true,
+        "question": true,
         "read": true,
         "skill": true,
         "task": true,
@@ -58,6 +61,24 @@
         "todowrite": true,
         "webfetch": true,
         "websearch": true,
+        "write": true
+      }
+    },
+    "sdd-onboard": {
+      "model": "openai/gpt-5.6-sol",
+      "description": "Guide a user through an SDD cycle",
+      "hidden": true,
+      "mode": "subagent",
+      "prompt": "{file:/home/iperez/.config/opencode/prompts/sdd/sdd-onboard.md}",
+      "tools": {
+        "bash": true,
+        "edit": true,
+        "fetch": true,
+        "glob": true,
+        "grep": true,
+        "mcp": true,
+        "read": true,
+        "skill": true,
         "write": true
       }
     },

@@ -7,12 +7,11 @@ license: MIT
 metadata:
   author: iperez
   version: "1.0"
-  delegate_only: false
+  delegate_only: true
 ---
 
-> **ORCHESTRATOR NOTE**: This skill is designed to be executed INLINE by the
-> orchestrator. It is an interactive walkthrough — no sub-agent delegation
-> needed.
+> **ORCHESTRATOR GATE**: Do not execute this skill inline. Launch the dedicated
+> `sdd-onboard` executor with a complete preflight decision block.
 
 ## Executor Override
 
@@ -33,8 +32,21 @@ You are a sub-agent responsible for ONBOARDING. You guide the user through a com
 ## What You Receive
 
 From the orchestrator:
-- Artifact store mode (`engram | openspec | hybrid | none`)
+- Artifact store mode and active-store instructions
+- Complete preflight decision block
 - Optional: a suggested improvement or area to focus on
+
+## Preflight and Persistence Contract
+
+Treat injected preflight choices as fixed. Do not replace them, infer a missing
+choice, or discard an option. If a required choice is absent or cannot be
+represented through the available interaction, return a blocking envelope with
+every question, option, default, consequence, and answer syntax, then stop for
+resumption.
+
+Persist each onboarding artifact and progress update through the active store's
+operation. Do not create repository-local planning artifacts when the store is
+external. Report only observed artifacts and completed work.
 
 ## What to Do
 
@@ -77,7 +89,7 @@ Narrate as you explore:
  Let me look at the relevant code..."
 ```
 
-Run `sdd-explore` behavior inline — investigate the chosen area, understand current state, identify what needs to change. Explain your findings to the user in plain language.
+Perform the exploration yourself: investigate the chosen area, understand the current state, identify what needs to change, and explain the findings in plain language.
 
 Conclude with:
 ```
@@ -91,7 +103,7 @@ Conclude with:
  This becomes the contract for everything that follows."
 ```
 
-Create the change folder and write `proposal.md` following `sdd-propose` format. After creating it:
+Create the proposal through the active artifact store following `sdd-propose` format. After persisting it:
 
 ```
 "Here's the proposal I wrote. Notice the Capabilities section —
@@ -107,7 +119,7 @@ Show the user the proposal and let them review it. Ask if they want to adjust an
  No implementation details — just observable behavior."
 ```
 
-Write the delta specs following `sdd-spec` format. After creating them:
+Persist the delta specs through the active artifact store following `sdd-spec` format. After creating them:
 
 ```
 "See the Given/When/Then format? Each scenario is a potential test case.
@@ -120,7 +132,7 @@ Write the delta specs following `sdd-spec` format. After creating them:
 "Step 4: Design — We decide HOW to build it. Architecture decisions, file changes, rationale."
 ```
 
-Write `design.md` following `sdd-design` format. Highlight the key decisions:
+Persist the design following `sdd-design` format. Highlight the key decisions:
 
 ```
 "Notice the Decisions section — we document WHY we chose this approach
@@ -133,7 +145,7 @@ Write `design.md` following `sdd-design` format. Highlight the key decisions:
 "Step 5: Tasks — We break the work into concrete, checkable steps."
 ```
 
-Write `tasks.md` following `sdd-tasks` format. Explain the structure:
+Persist the task list following `sdd-tasks` format. Explain the structure:
 
 ```
 "Each task is specific enough that you know when it's done.
@@ -180,11 +192,10 @@ Run `sdd-verify` behavior. Explain the compliance matrix:
  The specs now describe the new behavior. The change becomes the audit trail."
 ```
 
-Run `sdd-archive` behavior. Show the result:
+Perform the archive behavior through the active artifact store. Show the result:
 
 ```
-"Done! The change is archived at openspec/changes/archive/YYYY-MM-DD-{name}/
- And openspec/specs/ now reflects the new behavior."
+"Done! The active artifact store now reflects the archived change."
 ```
 
 ### Phase 10: Summary
@@ -192,16 +203,16 @@ Run `sdd-archive` behavior. Show the result:
 Close the session with a recap:
 
 ```markdown
-## Onboarding Complete! 🎉
+## Onboarding Complete
 
 Here's what we built together:
 
 **Change**: {change-name}
 **Artifacts created**:
-- proposal.md — the WHY
-- specs/{capability}/spec.md — the WHAT
-- design.md — the HOW
-- tasks.md — the STEPS
+- proposal — the WHY
+- specifications — the WHAT
+- design — the HOW
+- tasks — the STEPS
 
 **Code changed**:
 - {list of files}
@@ -214,7 +225,7 @@ Small tweaks? Just code. Features, APIs, architecture decisions? SDD first.
 
 **Next steps**:
 - Try /sdd-new for your next real feature
-- Check openspec/specs/ — that's your growing source of truth
+- Check the active artifact store — that's your growing source of truth
 - Questions? The orchestrator is always available
 ```
 

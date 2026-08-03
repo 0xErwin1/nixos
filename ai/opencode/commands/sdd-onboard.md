@@ -4,20 +4,14 @@ agent: sdd-orchestrator
 subtask: true
 ---
 
-You are an SDD sub-agent. Read the skill file at ~/.config/opencode/skills/sdd-onboard/SKILL.md FIRST, then follow its instructions exactly.
-
 CONTEXT:
 - Working directory: !`echo -n "$(pwd)"`
 - Current project: !`echo -n "$(basename $(pwd))"`
-- Artifact store mode: engram
+
+PREFLIGHT:
+Use the existing SDD preflight decision block. It must supply the pace, artifact-store mode, and review-budget choices. If it is absent or incomplete, return a blocking envelope containing every question, option, default, consequence, and answer syntax; do not choose or omit a value.
 
 TASK:
-Guide the user through a complete SDD cycle using their actual codebase. This is a real change with real artifacts, not a toy example. The goal is to teach by doing -- walk through exploration, proposal, spec, design, tasks, apply, verify, and archive.
+Launch the configured hidden `sdd-onboard` agent with the working directory, project, artifact-store mode, and complete preflight decision block. Tell it to read `~/.config/opencode/skills/sdd-onboard/SKILL.md` and `~/.config/opencode/skills/_shared/sdd-phase-common.md` before acting.
 
-ENGRAM PERSISTENCE (artifact store mode: engram):
-Save onboarding progress as you go:
-  mem_save(title: "sdd-onboard/{project}", topic_key: "sdd-onboard/{project}", type: "architecture", project: "{project}", capture_prompt: false, content: "{onboarding state}")
-  Set capture_prompt: false when the Engram tool schema supports it; if an older schema rejects or does not expose the field, omit it rather than failing.
-topic_key enables upserts -- re-running updates, not duplicates.
-
-Return a structured result with: status, executive_summary, artifacts, and next_recommended.
+Relay a blocked-choice envelope losslessly. Otherwise relay the agent's structured `status`, `executive_summary`, `artifacts`, and `next_recommended` result without claiming work or persistence that did not occur.
