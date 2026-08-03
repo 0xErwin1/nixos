@@ -240,7 +240,7 @@ Use the `question` tool for SDD Session Preflight. Do NOT render the full prefli
 
 Ask all three preflight groups in one single `question` tool call so OpenCode renders the groups as tabs. Do NOT run this as a sequential wizard. Do NOT issue three separate `question` tool calls.
 
-The single `question` call must contain these four localized groups in this order:
+The single `question` call must contain these three localized groups in this order:
 
 1. Pace: Interactive, Automatic.
 2. Artifacts: Engram, OpenSpec, Both.

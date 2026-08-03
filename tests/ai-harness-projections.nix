@@ -256,6 +256,13 @@ let
   ];
   onboardingCommand = "ai/opencode/commands/sdd-onboard.md";
   onboardingPrompt = "ai/opencode/prompts/sdd/sdd-onboard.md";
+  sddPreflightContract = ''
+    The single `question` call must contain these three localized groups in this order:
+
+    1. Pace: Interactive, Automatic.
+    2. Artifacts: Engram, OpenSpec, Both.
+    3. Review: 400 lines, 800 lines, Other.
+  '';
   contradictoryPolicyNeedles = [
     "RDD is required"
     "require RDD"
@@ -554,12 +561,16 @@ assert !(opencodeConfig.agent.sdd-explore.tools ? edit);
 assert opencodeConfig.agent.sdd-apply.tools.edit;
 assert multiOverlay.agent.sdd-orchestrator.permission.task.__replace__.general == "allow";
 assert multiOverlay.agent.sdd-orchestrator.permission.task.__replace__.explore == "allow";
+assert multiOverlay.agent.sdd-orchestrator.permission.task.__replace__.sdd-onboard == "allow";
 assert multiOverlay.agent.sdd-orchestrator.permission.question == "allow";
 assert multiOverlay.agent.sdd-orchestrator.tools.question;
 assert singleOverlay.agent.sdd-orchestrator.permission.task.__replace__.general == "allow";
 assert singleOverlay.agent.sdd-orchestrator.permission.task.__replace__.explore == "allow";
+assert singleOverlay.agent.sdd-orchestrator.permission.task.__replace__.sdd-onboard == "allow";
 assert singleOverlay.agent.sdd-orchestrator.permission.question == "allow";
 assert singleOverlay.agent.sdd-orchestrator.tools.question;
+assert fileIncludes "ai/opencode/ORCHESTRATOR.md" sddPreflightContract;
+assert fileDoesNotContain "ai/opencode/ORCHESTRATOR.md" "four localized groups";
 assert builtins.all (
   relativePath:
   builtins.all (
