@@ -24,7 +24,7 @@ Two upstream sources participate:
 
 **Runtime install is by Nix projection, NOT by this skill.** Home Manager (`home-manager/global/ai-harness.nix`) is the authoritative projection map: it symlinks each `ai/<...>` source to its runtime location from `/nix/store`, or renders secret templates at activation. This skill edits `@ai` sources only; `home-manager switch` deploys them.
 
-Hard consequence — **never write into runtime dirs** (`~/.claude`, `~/.config/opencode`, `~/.codex`, `~/.grok`, `~/.agents`, `~/.pi/agent`). They are Nix-managed (read-only store symlinks or activation-rendered files). Edits there either fail or are clobbered on the next `home-manager switch`. A projection preflight also aborts `switch` if a projection target is an unmanaged file/symlink, so never create stray files at any target path.
+Hard consequence — **never write into runtime dirs** (`~/.config/agens`, `~/.config/opencode`, `~/.codex`, `~/.grok`, `~/.agents`, `~/.pi/agent`). They are Nix-managed (read-only store symlinks or activation-rendered files). Edits there either fail or are clobbered on the next `home-manager switch`. A projection preflight also aborts `switch` if a projection target is an unmanaged file/symlink, so never create stray files at any target path.
 
 ### Projected resources (source under `ai/` -> runtime target)
 
@@ -124,7 +124,7 @@ Rule: when syncing from gentle-ai, **reject** adoption of Lifecycle receipt rule
 ## Hard Rules
 
 - Work only in `/home/iperez/.config/home-manager/ai` (`@ai`), the pi-harness repo, and the upstream caches under `/home/iperez/.cache/tabularium-ai/`, unless the user names another target.
-- Never write into runtime dirs (`~/.claude`, `~/.config/opencode`, `~/.codex`, `~/.grok`, `~/.agents`, `~/.pi/agent`). They are Nix-managed. Edit `@ai` sources; `home-manager switch` deploys them.
+- Never write into runtime dirs (`~/.config/agens`, `~/.config/opencode`, `~/.codex`, `~/.grok`, `~/.agents`, `~/.pi/agent`). They are Nix-managed. Edit `@ai` sources; `home-manager switch` deploys them.
 - Never create a stray file at any projection target path; the projection preflight aborts `switch` on unmanaged targets.
 - Do not run `home-manager` or any mutating deployment command as part of this skill unless the user explicitly asks.
 - Do not modify either upstream checkout except `git clone`, `git fetch`, `git pull --ff-only`, or read-only inspection.

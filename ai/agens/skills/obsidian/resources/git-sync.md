@@ -28,7 +28,7 @@ Interpretation:
 - Missing name/email: ask user to set identity.
 - No remote: sync can commit locally, but cannot push until remote is configured.
 
-## AskUserQuestion Patterns
+## grouped choice prompt Patterns
 
 Use a single targeted question when a decision changes behavior.
 
@@ -111,3 +111,10 @@ Minimal script logic:
 3. push
 
 Avoid scheduling if frequent merge conflicts are expected (multi-device concurrent edits).
+
+## Agens choice transport
+
+Use one grouped blocking choice prompt when the Agens runtime exposes a choice
+mechanism that can represent every option. Otherwise present the complete
+question, options, default, consequence, and answer syntax in chat, block for
+the reply, and validate it before continuing. Never infer a missing choice.

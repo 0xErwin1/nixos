@@ -63,7 +63,8 @@ openspec/
 ```markdown
 ## Testing Capabilities
 
-**Strict TDD Mode**: {enabled/disabled}
+**Strict TDD Configuration**: {explicitly enabled/disabled}
+**Strict TDD Applicability**: Resolve per assigned work unit; it requires a behavioral test boundary.
 **Detected**: {date}
 
 ### Test Runner

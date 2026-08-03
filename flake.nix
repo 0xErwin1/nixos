@@ -221,10 +221,11 @@
           # checks) plus the source tree for file-content assertions. Passing them
           # in avoids a self-referential `getFlake`, which pure eval rejects on a
           # store path.
-          flakeView = {
-            inherit (self) homeConfigurations checks;
-            inherit inputs;
-          };
+           flakeView = {
+             inherit (self) homeConfigurations checks;
+             inherit inputs;
+           };
+           aiHarnessResourceMatrix = import ./home-manager/global/ai-harness-resources.nix;
 
           # Force the test's `assert` guards during evaluation, then materialize a
           # trivial output. If any assertion fails, `nix flake check` fails here.
@@ -233,9 +234,24 @@
             let
               evaluated = import testFile testArgs;
             in
-            pkgs.runCommandLocal name { assertionOutcome = builtins.seq evaluated "passed"; } ''
-              printf 'ai harness functional test %s: %s\n' ${nixpkgs.lib.escapeShellArg name} "$assertionOutcome" > "$out"
-            '';
+            if evaluated ? runtimeTest then
+              pkgs.runCommandLocal name {
+                assertionOutcome = builtins.seq evaluated "passed";
+                nativeBuildInputs = [
+                  pkgs.git
+                  pkgs.gnugrep
+                ];
+              } ''
+                set -eu
+
+                ${evaluated.runtimeTest}
+
+                printf 'ai harness functional test %s: %s\n' ${nixpkgs.lib.escapeShellArg name} "$assertionOutcome" > "$out"
+              ''
+            else
+              pkgs.runCommandLocal name { assertionOutcome = builtins.seq evaluated "passed"; } ''
+                printf 'ai harness functional test %s: %s\n' ${nixpkgs.lib.escapeShellArg name} "$assertionOutcome" > "$out"
+              '';
         in
         {
           ai-harness-readiness =
@@ -318,8 +334,10 @@
           ai-harness-projections =
             functionalCheck "ai-harness-projections" ./tests/ai-harness-projections.nix
               {
-                flake = flakeView;
-                flakePath = self.outPath;
+                 flake = flakeView;
+                 flakePath = self.outPath;
+                 resourceMatrix = aiHarnessResourceMatrix;
+                 runRuntimeTests = true;
               };
 
           atlas-desktop = functionalCheck "atlas-desktop" ./tests/atlas-desktop.nix {

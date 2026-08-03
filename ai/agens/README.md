@@ -1,61 +1,47 @@
-# Agens harness assets
+# Agens harness generation
 
-Agens gets the same harness as Claude, Codex, and OpenCode, but it cannot consume
-the shared files unmodified and it cannot receive them as symlinks. This directory
-holds the agens-shaped copy; `generate.py` produces it from the shared sources.
+`generate.py` builds the copied Agens harness from explicit semantic owners. It
+does not regenerate the canonical tree during validation and never changes the
+hand-managed `config.toml`.
 
 ## Quick path
 
-1. Edit the shared sources, never the generated files: `ai/shared/AGENTS.md`,
-   `ai/claude/agents`, `ai/claude/commands`, `ai/command`, `ai/skills`.
-2. Run `python3 ai/agens/generate.py`.
-3. Run `home-manager switch` to copy the result into `~/.config/agens/`.
+1. Change an owner under `ai/shared/`, `ai/opencode/`, `ai/claude/`, or `ai/skills/`.
+2. Run `python3 ai/agens/generate.py` to replace only generated outputs.
+3. Run `python3 ai/agens/generate.py --check` to prove the generated tree is current.
 
-Generated and safe to overwrite: `AGENTS.md`, `agents/`, `commands/`, `skills/`.
-Hand-maintained: `config.toml`, `generate.py`, this file.
+The generated set is exactly `AGENTS.md`, `agents/`, `commands/`, and `skills/`.
+`config.toml`, `generate.py`, and this README are protected.
 
-## Why this tree exists
+## Ownership fusion
 
-| Constraint | Consequence |
-|------------|-------------|
-| Agens refuses symlinked assets | Home Manager copies instead of projecting. `markdown.rs` rejects a symlinked definition and rejects its canonicalized path for escaping the root; the skill loader opens every directory and manifest with `O_NOFOLLOW`. A `home.file` projection would leave agens with an empty catalog. |
-| Agent frontmatter differs | Claude agents have no `mode`, so agens rejects them outright. |
-| `model` is validated | Claude's `model: inherit` / `opus` are not agens model identifiers, so the agent would be dropped as unavailable. The field is removed. |
-| `description` is one bounded line | Agens caps it at 1024 characters and rejects control characters. Claude's multi-paragraph descriptions with `<example>` blocks are truncated at the first example or blank line. |
-| Frontmatter takes strings and string lists only | A nested mapping or a boolean aborts the parse. Descriptions are JSON-quoted because an unquoted `": "` reads as a nested mapping. |
-| A manifest must open with `---` | Skills that lead with an HTML marker comment have it moved below the frontmatter rather than deleted. |
-| Agens has no tool allowlist | Claude's `tools:` list becomes agens `permissions:` deny rules over the tools it knows: read, write/edit, list, search, bash. |
-| The `read` tool is confined to the project root | Nothing under `~/.config/agens/` can be opened by path, so every "read the file at X" instruction becomes "load the X skill". Rewriting `~/.claude/...` to `~/.config/agens/...` is not enough — it just moves a dead end. `upstream-ai-sync` is exempt: those references are its subject matter. |
-| Only skills are reachable from outside the project | `_shared/` is repackaged as the `sdd-shared` skill with its documents under `references/`, and the SDD procedure as the `sdd-orchestrator` skill. A bare directory or a loose markdown file next to the config is unreachable. |
+| Surface | Owner | Agens adaptation |
+|---|---|---|
+| Global policy | `ai/shared/AGENTS.md` | Kept once, including the single CodeGraph contract. |
+| SDD entry, coordination, tools, safety, and reviews | `ai/opencode/ORCHESTRATOR.md` | Added without its duplicate CodeGraph block; filesystem workflow loading becomes a skill load. |
+| Lazy workflow and phase mechanics | `ai/claude/skills/_shared/sdd-orchestrator-workflow.md` | Packaged only as `sdd-orchestrator`; Claude model-routing instructions are removed. |
+| Phase agents and commands | `ai/claude/{agents,commands}` plus `ai/command` | Agent frontmatter and permissions are translated to native Agens syntax. |
+| Shared skills and contracts | `ai/skills/`, required Claude testing skills, and selected `_shared` references | Copied as files; `_shared` becomes the loadable `sdd-shared` skill. |
 
-## Instruction loading
+No whole file is copied from Codex. Agens uses its native agent definitions and
+configuration for model selection; generated instructions never request a
+per-call Claude model alias.
 
-Agens reads `~/.config/agens/AGENTS.md` and the project root's `AGENTS.md`, in
-that order, appending both after each agent's own prompt. Every catalog agent and
-the headless `agens chat` parent turn receive them. There is no ancestor-directory
-chain, so a monorepo subdirectory's `AGENTS.md` is not picked up.
+## Agens adapters
 
-The detailed SDD procedure is not always-on. `AGENTS.md` points at the
-`sdd-orchestrator` skill and the agent loads it on demand, which keeps the
-always-on prompt near 30 KB instead of 70 KB.
+- Skills are addressed by name because the reader is project-root confined.
+- Claude `AskUserQuestion` instructions become a single grouped blocking choice
+  prompt when available, with a complete chat-and-wait fallback otherwise.
+- Claude agent `tools:` allowlists become Agens deny permissions where possible.
+- HTML preambles move after skill frontmatter so copied manifests remain valid.
+- `--check` stages a full tree in a temporary sibling directory, compares exact
+  file sets and bytes, and writes nothing to `ai/agens/`.
 
-## Secrets and hand edits
+## Safe validation
 
-`config.toml` here is an MCP fragment, not the whole file. Home Manager **merges**
-it into `~/.config/agens/config.toml` at activation, owning the `[mcp.*]` tables
-and nothing else. Placeholders are substituted from
-`~/.config/ai-harness/secrets/mcp.env`. Never commit resolved token values.
+Run `python3 tests/ai-agens-generation.py`. The test copies `ai/` to a temporary
+sandbox, runs generation and `--check` only there, injects stale and drift files,
+and verifies the canonical `ai/agens/` tree and `config.toml` hashes are unchanged.
 
-Everything else in the target file survives each switch, so set `provider.type`,
-`provider.model`, `agent.*`, and `[mcp_defaults]` by hand there. A whole-file
-render was the first attempt and was wrong: it silently discarded exactly those
-hand-set values on the next `home-manager switch`.
-
-## Checklist after regenerating
-
-- [ ] `generate.py` reported 0 skipped agents.
-- [ ] No file outside `skills/upstream-ai-sync/` still mentions `~/.claude`.
-- [ ] No instruction names a path under `~/.config/agens/` — every one of them names a skill.
-- [ ] Every `<file>.md reference of the sdd-shared skill` mentioned anywhere exists under `skills/sdd-shared/references/`.
-- [ ] `agens config doctor` reports the global config as loaded and `Status: valid`.
-- [ ] Your hand-set `provider.model` is still in `~/.config/agens/config.toml` after the switch.
+Activation is deliberately outside this generator. Do not edit runtime files
+under `~/.config/agens/`; Home Manager owns their deployment.

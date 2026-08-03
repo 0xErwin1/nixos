@@ -3,7 +3,7 @@ description: Archive a completed SDD change -- syncs specs and closes the cycle
 ---
 
 If the native `sdd-archive` sub-agent is available, delegate this command to it.
-Otherwise, load the `sdd-archive` skill FIRST, then follow its instructions exactly inline.
+Otherwise, Load the `sdd-archive` skill, then follow its instructions exactly inline.
 
 CONTEXT:
 - Working directory: Detect agent-side before proceeding by running `git rev-parse --show-toplevel` with the Bash tool; if that fails, run `pwd` with the Bash tool.
@@ -11,7 +11,7 @@ CONTEXT:
 - Artifact store mode: engram
 
 STATUS GATE:
-Load the `sdd-status-contract.md` reference of the `sdd-shared` skill and produce structured status before acting. Continue only when verify-report exists, contains no CRITICAL issues, and tasks are complete. CRITICAL verification issues have no override. If unchecked tasks remain, send the change back to `sdd-apply` unless apply-progress/verify-report prove they are stale checkboxes and the user explicitly requests mechanical reconciliation.
+Read the `sdd-status-contract` reference of the `sdd-shared` skill and produce structured status before acting. Continue only when verify-report exists, contains no CRITICAL issues, and tasks are complete. CRITICAL verification issues have no override. If unchecked tasks remain, send the change back to `sdd-apply` unless apply-progress/verify-report prove they are stale checkboxes and the user explicitly requests mechanical reconciliation.
 
 TASK:
 Archive the active SDD change. Read the verification report first to confirm the change is ready. Then:

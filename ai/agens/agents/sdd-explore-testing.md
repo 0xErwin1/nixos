@@ -1,6 +1,6 @@
 ---
 name: sdd-explore-testing
-description: "Investigate the feature, screen, or flow that needs testing. Reads codebase, existing Playwright/Maestro flows, design references, and task context to produce a structured testing scope. Use before planning test cases."
+description: "Investigate the feature, screen, or flow that needs testing. Reads codebase, existing Playwright/Maestro flows, design references, and task context to produce a structured testing scope. Use before planning test cases"
 mode: subagent
 permissions:
   - deny write

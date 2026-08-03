@@ -3,7 +3,7 @@ description: Fast-forward all SDD planning phases -- proposal through tasks
 ---
 
 If the native `sdd-orchestrator` agent is available, delegate this command to it.
-Otherwise, load the `sdd-orchestrator-workflow.md` reference of the `sdd-shared` skill first, then follow that workflow inline.
+Otherwise, Load the `sdd-orchestrator` skill, then follow that workflow inline.
 
 WORKFLOW:
 Run these sub-agents in sequence:
@@ -25,4 +25,4 @@ CONTEXT:
 ENGRAM NOTE:
 Sub-agents handle persistence automatically. Each phase saves its artifact to engram with topic_key "sdd/$ARGUMENTS/{type}" where type is: proposal, spec, design, tasks.
 
-Load the `sdd-orchestrator-workflow.md` reference of the `sdd-shared` skill to coordinate this workflow. Do NOT execute phase work inline when a native sub-agent is available.
+Load the `sdd-orchestrator` skill to coordinate this workflow. Do NOT execute phase work inline when a native sub-agent is available.

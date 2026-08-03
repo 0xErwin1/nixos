@@ -38,11 +38,10 @@ From the orchestrator:
 
 ## Preflight and Persistence Contract
 
-Treat injected preflight choices as fixed. Do not replace them, infer a missing
-choice, or discard an option. If a required choice is absent or cannot be
-represented through the available interaction, return a blocking envelope with
-every question, option, default, consequence, and answer syntax, then stop for
-resumption.
+The orchestrator owns the complete choice and fallback transport. Treat its
+validated preflight decision block as fixed. Do not replace or infer a choice.
+If it is incomplete, return `blocked` and stop for the orchestrator to resume
+with its canonical choice envelope.
 
 Persist each onboarding artifact and progress update through the active store's
 operation. Do not create repository-local planning artifacts when the store is

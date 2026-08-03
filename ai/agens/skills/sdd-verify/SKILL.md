@@ -37,8 +37,8 @@ Run when the orchestrator launches verification for an SDD change. You are the q
 
 - Read proposal, spec, design, and tasks before judging implementation.
 - Run full verification only after all tasks are complete. If any task is pending, return `blocked` without running the full suite.
-- Execute relevant tests; static analysis alone is never verification.
-- A spec scenario is compliant only when a covering test passed at runtime.
+- Execute relevant verification; deterministic source/property checks cover prompt or configuration changes with no applicable runtime boundary.
+- A spec scenario is compliant only when its applicable covering verification passes; require runtime evidence when the scenario has a runtime boundary.
 - Compare specs first, design second, task completion third.
 - Do not fix issues; report them for the orchestrator/user.
 - Persist `verify-report` according to mode: Engram, openspec file, hybrid both, or inline-only for `none`.
@@ -51,18 +51,20 @@ Run when the orchestrator launches verification for an SDD change. You are the q
 | Condition | Action |
 |---|---|
 | Orchestrator says `STRICT TDD MODE IS ACTIVE` | Treat as authoritative. |
-| Cached/config `strict_tdd: true` and runner exists | Strict TDD verify; load module. |
-| Strict TDD false or no runner | Standard verify; skip TDD checks. |
+| Explicit `strict_tdd: true` configuration, runner, and applicable behavioral test boundary | Strict TDD verify; load module. |
+| Strict TDD is not explicitly configured, no runner exists, or no applicable boundary | Standard verify; skip TDD checks. |
 | Task incomplete | CRITICAL for core task, WARNING for cleanup task. |
 | Test command exits non-zero | CRITICAL. |
 | Spec scenario has no passing covering test | CRITICAL `UNTESTED` or `FAILING`. |
 | Design deviation exists | WARNING unless it breaks a spec. |
 
+Standard Verify always runs applicable test, build, and type checks. The launch contract carries `strict_tdd_configured, runner_available, and applicable_behavioral_boundary`; forward Strict TDD only when all three are true.
+
 ## Execution Steps
 
 1. Load relevant skills via shared SDD Section A.
 2. Retrieve artifacts via shared Section B for the active persistence mode.
-3. Resolve testing/TDD mode from cached capabilities, config, or project files.
+3. Resolve Strict TDD only from explicit configuration, runner availability, and applicable behavioral test boundaries.
 4. Count completed and incomplete tasks.
 5. Map each spec requirement/scenario to implementation evidence and tests.
 6. Check design decisions against changed code.
@@ -104,7 +106,8 @@ You are a VERIFY sub-agent. Your job: check implemented changes match spec accep
 
 - Read spec acceptance criteria only
 - Inspect changed files listed in apply-progress (or tasks) — limit to those files
-- Do NOT run tests unless `strict_tdd` is active and test runner is explicitly provided
+- Standard Verify always runs applicable test, build, and type checks.
+- Forward Strict TDD only when `strict_tdd_configured, runner_available, and applicable_behavioral_boundary` are all true.
 - Do not fix issues; report them for the orchestrator/user
 - Return minimal report
 

@@ -1,127 +1,19 @@
 { config, lib, pkgs, ... }:
 
 let
+  resourceMatrix = import ./ai-harness-resources.nix;
   canonicalRoot = builtins.path {
     path = ../../ai;
     name = "ai-harness";
   };
   homeDirectory = config.home.homeDirectory;
 
-  projectedResources = [
-    {
-      source = canonicalRoot + "/skills";
-      target = ".agents/skills";
-      recursive = true;
-    }
-    {
-      source = canonicalRoot + "/opencode/AGENTS.md";
-      target = ".config/opencode/AGENTS.md";
-    }
-    {
-      source = canonicalRoot + "/opencode/ORCHESTRATOR.md";
-      target = ".config/opencode/ORCHESTRATOR.md";
-    }
-    {
-      source = canonicalRoot + "/opencode/agent";
-      target = ".config/opencode/agent";
-      recursive = true;
-    }
-    {
-      source = canonicalRoot + "/opencode/commands";
-      target = ".config/opencode/commands";
-      recursive = true;
-    }
-    {
-      source = canonicalRoot + "/command";
-      target = ".config/opencode/command";
-      recursive = true;
-    }
-    {
-      source = canonicalRoot + "/opencode/prompts";
-      target = ".config/opencode/prompts";
-      recursive = true;
-    }
-    {
-      source = canonicalRoot + "/opencode/skills";
-      target = ".config/opencode/skills";
-      recursive = true;
-    }
-    {
-      source = canonicalRoot + "/opencode/tui.json";
-      target = ".config/opencode/tui.json";
-    }
-    {
-      source = canonicalRoot + "/claude/CLAUDE.md";
-      target = ".claude/CLAUDE.md";
-    }
-    {
-      source = canonicalRoot + "/claude/sdd-orchestrator.md";
-      target = ".claude/sdd-orchestrator.md";
-    }
-    {
-      source = canonicalRoot + "/claude/engram-protocol.md";
-      target = ".claude/engram-protocol.md";
-    }
-    {
-      source = canonicalRoot + "/claude/agents";
-      target = ".claude/agents";
-      recursive = true;
-    }
-    {
-      source = canonicalRoot + "/claude/commands";
-      target = ".claude/commands";
-      recursive = true;
-    }
-    {
-      source = canonicalRoot + "/claude/skills";
-      target = ".claude/skills";
-      recursive = true;
-    }
-    {
-      source = canonicalRoot + "/codex/AGENTS.md";
-      target = ".codex/AGENTS.md";
-    }
-    {
-      source = canonicalRoot + "/codex/sdd-orchestrator.md";
-      target = ".codex/sdd-orchestrator.md";
-    }
-    {
-      source = canonicalRoot + "/codex/engram-instructions.md";
-      target = ".codex/engram-instructions.md";
-    }
-    {
-      source = canonicalRoot + "/codex/engram-compact-prompt.md";
-      target = ".codex/engram-compact-prompt.md";
-    }
-    {
-      source = canonicalRoot + "/codex/commands";
-      target = ".codex/commands";
-      recursive = true;
-    }
-    {
-      source = canonicalRoot + "/codex/agents";
-      target = ".codex/agents";
-      recursive = true;
-    }
-    {
-      source = canonicalRoot + "/codex/skills";
-      target = ".codex/skills";
-      recursive = true;
-    }
-    {
-      source = canonicalRoot + "/grok/AGENTS.md";
-      target = ".grok/AGENTS.md";
-    }
-    {
-      source = canonicalRoot + "/grok/ORCHESTRATOR.md";
-      target = ".grok/ORCHESTRATOR.md";
-    }
-    {
-      source = canonicalRoot + "/grok/agents";
-      target = ".grok/agents";
-      recursive = true;
-    }
-  ];
+  resourcesFor = delivery: lib.filter (resource: resource.delivery or null == delivery) resourceMatrix.families;
+  toRuntimeResource = resource:
+    (builtins.removeAttrs resource [ "name" "classification" "delivery" "kind" "paths" ])
+    // { source = canonicalRoot + "/${resource.source}"; };
+
+  projectedResources = map toRuntimeResource (resourcesFor "project");
 
   # Assets that must arrive as real files rather than Nix-store symlinks.
   #
@@ -134,24 +26,7 @@ let
   # each target is replaced wholesale on every switch, so local edits under it do
   # not survive. Only agens needs this; every other agent takes the symlink path
   # above.
-  copiedResources = [
-    {
-      source = canonicalRoot + "/agens/AGENTS.md";
-      target = ".config/agens/AGENTS.md";
-    }
-    {
-      source = canonicalRoot + "/agens/agents";
-      target = ".config/agens/agents";
-    }
-    {
-      source = canonicalRoot + "/agens/commands";
-      target = ".config/agens/commands";
-    }
-    {
-      source = canonicalRoot + "/agens/skills";
-      target = ".config/agens/skills";
-    }
-  ];
+  copiedResources = map toRuntimeResource (resourcesFor "copy");
 
   # Config files that must carry secret values into their final on-disk
   # location. They cannot be Nix-store symlinks (read-only, so tokens could not
@@ -159,16 +34,11 @@ let
   # activation from the canonical template, substituting @VAR@ placeholders with
   # values sourced from the secret env files. Extend this list as more agents'
   # MCP configs get centralized.
-  renderedSecretConfigs = [
-    {
-      template = canonicalRoot + "/opencode/opencode.jsonc";
-      target = ".config/opencode/opencode.jsonc";
-    }
-    {
-      template = canonicalRoot + "/pi/mcp.json";
-      target = ".pi/agent/mcp.json";
-    }
-  ];
+  toTemplateResource = resource:
+    (builtins.removeAttrs resource [ "name" "classification" "delivery" "source" "paths" ])
+    // { template = canonicalRoot + "/${resource.source}"; };
+
+  renderedSecretConfigs = map toTemplateResource (resourcesFor "render");
 
   # Agents whose config file holds state Home Manager must not own: state the
   # agent writes itself at runtime (Claude Code's OAuth/project history in
@@ -177,35 +47,7 @@ let
   # the default provider and model. A whole-file render would clobber them.
   # For Agens, the merge helper only appends missing canonical MCP tables and
   # permissions; all existing tables, including same-name MCPs, are preserved.
-  mergedSecretConfigs = [
-    {
-      kind = "json-mcpservers";
-      template = canonicalRoot + "/claude/mcp-servers.json";
-      target = ".claude.json";
-    }
-    {
-      kind = "toml-mcpservers";
-      template = canonicalRoot + "/codex/mcp-servers.toml";
-      target = ".codex/config.toml";
-    }
-    {
-      kind = "toml-mcpservers";
-      template = canonicalRoot + "/grok/mcp-servers.toml";
-      target = ".grok/config.toml";
-    }
-    {
-      kind = "json-deep-merge";
-      template = canonicalRoot + "/claude/settings-merge.json";
-      target = ".claude/settings.json";
-    }
-    {
-      # Additive only: existing Agens MCP and permissions tables remain
-      # runtime/user-owned, including tables with canonical MCP names.
-      kind = "toml-mcp-permissions";
-      template = canonicalRoot + "/agens/config.toml";
-      target = ".config/agens/config.toml";
-    }
-  ];
+  mergedSecretConfigs = map toTemplateResource (resourcesFor "merge");
 
   renderTemplateSources =
     (map (entry: entry.template) renderedSecretConfigs)
@@ -260,6 +102,9 @@ let
 
   projectionTargets = map (resource: resource.target) projectedResources;
   projectionSources = map (resource: resource.source) projectedResources;
+  managedResources = lib.filter (resource: resource.delivery or null != null) resourceMatrix.families;
+  managedTargets = map (resource: resource.target) managedResources;
+  managedSources = map (resource: resource.source) managedResources;
 
   # Recursive resources are materialized by Home Manager as a real directory
   # whose leaf files are the managed symlinks, so the directory itself is never
@@ -298,6 +143,14 @@ in
     {
       assertion = lib.length projectionTargets == lib.length (lib.unique projectionTargets);
       message = "AI harness projection targets must be unique.";
+    }
+    {
+      assertion = lib.length managedTargets == lib.length (lib.unique managedTargets);
+      message = "AI harness ownership matrix must map every managed target exactly once.";
+    }
+    {
+      assertion = lib.length managedSources == lib.length (lib.unique managedSources);
+      message = "AI harness ownership matrix must map every managed source exactly once.";
     }
     {
       assertion = lib.all builtins.pathExists projectionSources;

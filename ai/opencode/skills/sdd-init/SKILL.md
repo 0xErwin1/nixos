@@ -51,15 +51,19 @@ Run this phase when the orchestrator/user asks to initialize SDD in a project. Y
 | `mode=openspec` | Create/update openspec bootstrap files only. |
 | `mode=hybrid` | Do both Engram and openspec persistence. |
 | `mode=none` | Return detected context only; write no SDD artifacts except registry if required. |
-| strict TDD marker/config found | Use that value. |
-| no marker/config but test runner exists | Default `strict_tdd: true`. |
+| explicit `strict_tdd: true` configuration and a runner exist | Record Strict TDD as available; resolve boundary applicability per work unit. |
+| no explicit Strict TDD configuration | Set `strict_tdd: false`, even when a runner exists. |
 | no test runner | Set `strict_tdd: false` and explain unavailable. |
+
+## Strict TDD forwarding
+
+For later apply and verify launches, record the three resolved inputs: `strict_tdd_configured, runner_available, and applicable_behavioral_boundary`. Forward Strict TDD only when all three are true; a runner alone never enables it.
 
 ## Execution Steps
 
 1. Inspect project files (`package.json`, `go.mod`, `pyproject.toml`, CI, lint/test config) and summarize stack/conventions.
 2. Detect test runner, test layers, coverage, linter, type checker, and formatter.
-3. Resolve Strict TDD from agent marker, `openspec/config.yaml`, detected runner fallback, or no-runner fallback.
+3. Resolve Strict TDD only from explicit project/session configuration and runner availability; record that each apply/verify work unit also requires an applicable behavioral test boundary.
 4. Initialize persistence for the resolved mode.
 5. Build `.agent/skill-registry.md` using the skill-registry scan rules.
 6. Persist testing capabilities and project context.

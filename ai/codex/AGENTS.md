@@ -376,9 +376,9 @@ You are a COORDINATOR, not an executor. Keep the main conversation thin, delegat
 
 ### Work Routing
 
-SDD is the structured planning layer for substantial changes — a new feature or capability, work spanning multiple files/modules/crates, a new engine or service, or any change carrying real open design decisions. Recognize that class of work yourself and route it through SDD rather than jumping straight to implementation. Implement small or local changes (a bug fix, a single-file or mechanical edit, a config tweak, a settled/well-understood refactor) directly via the delegation rules below. An explicit `/sdd-*` command or natural-language SDD request ("use SDD to add X", "do it with SDD", "quiero specs para esto") always enters SDD.
+Normal work remains direct or follows the delegation rules below. Enter SDD only when the user explicitly requests SDD, invokes an `/sdd-*` command, or accepts an offered proposal.
 
-When SDD applies — or on any `/sdd-*` command or SDD phase work — load the SDD workflow per the lazy-load section below (and run its Session Preflight) before acting.
+When SDD is entered, load the SDD workflow per the lazy-load section below before acting.
 
 ### Intent & Irreversibility Gates
 
@@ -416,11 +416,9 @@ Anti-patterns that always inflate context without need:
 
 The detailed SDD procedure, execution-mode selection (Automatic/Interactive), per-phase model assignments, and the full testing pipeline are intentionally NOT embedded here, to keep the always-on file thin. The orchestrator role and delegation rules above stay always active.
 
-Before handling any of the following, read `~/.codex/sdd-orchestrator.md` and follow it:
+Before handling an explicit `/sdd-*` command, explicit natural-language SDD request, an accepted proposal, or a testing-pipeline intent, read `~/.codex/skills/_shared/sdd-orchestrator-workflow.md` and follow it:
 
-- a substantial change routed through SDD per Work Routing above (a new feature or capability, work spanning multiple files/modules/crates, a new engine/service, or a change carrying real open design decisions) — recognize this intent yourself and load this workflow on the fly; or an explicit natural-language SDD request ("use SDD to add X", "do it with SDD", "quiero specs para esto")
-- any `/sdd-*` command or meta-command, or any SDD or Judgment-Day phase delegation or routing
-- any testing-pipeline intent
+- Use it for explicit SDD commands, SDD or Judgment-Day phase delegation, and testing-pipeline requests.
 
 
 <!-- gentle-ai:codegraph-guidance -->

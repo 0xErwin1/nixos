@@ -3,7 +3,7 @@ description: Validate implementation matches specs, design, and tasks
 ---
 
 If the native `sdd-verify` sub-agent is available, delegate this command to it.
-Otherwise, load the `sdd-verify` skill FIRST, then follow its instructions exactly inline.
+Otherwise, Load the `sdd-verify` skill, then follow its instructions exactly inline.
 
 CONTEXT:
 - Working directory: Detect agent-side before proceeding by running `git rev-parse --show-toplevel` with the Bash tool; if that fails, run `pwd` with the Bash tool.
@@ -11,7 +11,7 @@ CONTEXT:
 - Artifact store mode: engram
 
 STATUS GATE:
-Load the `sdd-status-contract.md` reference of the `sdd-shared` skill and produce structured status before acting. If the change is missing or ambiguous, ask the user to choose and STOP. Continue only when tasks and implementation evidence exist. Carry `contextFiles`, task progress, and dependency states into the sub-agent prompt when delegating.
+Read the `sdd-status-contract` reference of the `sdd-shared` skill and produce structured status before acting. If the change is missing or ambiguous, ask the user to choose and STOP. Continue only when tasks and implementation evidence exist. Carry `contextFiles`, task progress, and dependency states into the sub-agent prompt when delegating.
 
 TASK:
 Verify the active SDD change. Read the proposal, specs, design, and tasks artifacts. Then:

@@ -106,7 +106,7 @@ Judge B:   delegate(agent="jd-judge-b", prompt="...")
 Fix Agent: delegate(agent="jd-fix-agent", prompt="...")
 ```
 
-Each named agent uses its configured model from the Model Assignments table.
+Each named agent uses the runtime's configured model.
 
 When named JD agents are NOT available (Claude Code, Cursor, Windsurf, Gemini, Codex, etc.), use the adapter's generic delegate syntax. These adapters do not support the `agent` parameter — all calls use the same delegate entry point and the model is controlled externally:
 
@@ -117,7 +117,7 @@ Judge B:   delegate(prompt="...")
 Fix Agent: delegate(prompt="...")
 ```
 
-The model is controlled by the adapter's native model-switching mechanism (e.g., model sentinels in agent .md files). Pass the model alias from the Model Assignments table if the adapter supports per-call model parameters.
+Model selection is controlled by the Agens runtime configuration.
 
 ## Ledger and Re-Judge Contract
 

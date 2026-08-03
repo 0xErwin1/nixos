@@ -4,7 +4,7 @@ description: Run the full testing pipeline — explore, plan, run, report for a 
 
 This is a meta-command handled by the orchestrator. Do NOT invoke it as a skill.
 
-Before running this workflow inline, load the `sdd-orchestrator-workflow.md` reference of the `sdd-shared` skill; it contains the lazy-loaded testing pipeline, prerequisites, suites gate, and routing rules.
+Before running this workflow inline, Load the `sdd-orchestrator` skill; it contains the lazy-loaded testing pipeline, prerequisites, suites gate, and routing rules.
 
 CONTEXT:
 - Working directory: !`pwd`

@@ -3,7 +3,7 @@ description: Implement SDD tasks -- writes code following specs and design
 ---
 
 If the native `sdd-apply` sub-agent is available, delegate this command to it.
-Otherwise, load the `sdd-apply` skill FIRST, then follow its instructions exactly inline.
+Otherwise, Load the `sdd-apply` skill, then follow its instructions exactly inline.
 
 The sdd-apply skill (v2.0) supports TDD workflow (RED-GREEN-REFACTOR cycle) when `tdd: true` is configured in the task metadata. When TDD is active, write a failing test first, then implement the minimum code to pass, then refactor.
 
@@ -13,7 +13,7 @@ CONTEXT:
 - Artifact store mode: engram
 
 STATUS GATE:
-Load the `sdd-status-contract.md` reference of the `sdd-shared` skill and produce structured status before acting. If the change is missing or ambiguous, ask the user to choose and STOP. Continue only when status says apply is `ready`, spec/design/tasks exist, and `actionContext` allows implementation edits. Carry `contextFiles`, task progress, dependency states, and `actionContext` (allowed edit roots) into the sub-agent prompt when delegating.
+Read the `sdd-status-contract` reference of the `sdd-shared` skill and produce structured status before acting. If the change is missing or ambiguous, ask the user to choose and STOP. Continue only when status says apply is `ready`, spec/design/tasks exist, and `actionContext` allows implementation edits. Carry `contextFiles`, task progress, dependency states, and `actionContext` (allowed edit roots) into the sub-agent prompt when delegating.
 
 TASK:
 Implement the remaining incomplete tasks for the active SDD change.

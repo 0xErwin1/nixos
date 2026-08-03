@@ -8,7 +8,11 @@ the runtime-multiplexing pi-harness.
 
 Scope note: `@ai` manages only claude, codex, and opencode, with
 `ai/shared/` as the canonical contract. Upstream ships more provider
-variants; this doc concerns only the managed subset plus pi-harness.
+variants; this doc concerns only the managed subset plus pi-harness. The
+authoritative delivery and ownership inventory is
+`home-manager/global/ai-harness-resources.nix`; it classifies effective,
+generated, authoring-only, local-adapter, and retired families. Do not
+recreate a target list here.
 
 ## 1. The standardization pattern (what upstream does)
 
@@ -44,50 +48,26 @@ canonical source; it is NOT projected to runtime.
 
 | Asset kind | Canonical (`ai/shared/`) | Claude (`ai/claude/`) | Codex (`ai/codex/`) | OpenCode (`ai/opencode/`) | Pi-harness (out of write scope) |
 |---|---|---|---|---|---|
-| Engram protocol | `engram-protocol.md` | `engram-protocol.md` AND inlined into `sdd-orchestrator.md` | `engram-instructions.md` + `engram-compact-prompt.md` AND inlined into `sdd-orchestrator.md` | injected into `AGENTS.md` AND inlined into `ORCHESTRATOR.md` | inlined into `assets/orchestrator.md` |
-| SDD orchestrator | `ORCHESTRATOR.md` | `sdd-orchestrator.md` | `sdd-orchestrator.md` | `ORCHESTRATOR.md` + `sdd-overlay-{single,multi}.json` | embedded in `assets/orchestrator.md` |
-| Global instructions | `AGENTS.md` | `CLAUDE.md` | `AGENTS.md` | `AGENTS.md` + JSON overlay | `assets/orchestrator.md` |
+| Engram protocol | `engram-protocol.md` | `engram-protocol.md` + `CLAUDE.md` | `engram-instructions.md` + `engram-compact-prompt.md` + `AGENTS.md` | injected into `AGENTS.md` | inlined into `assets/orchestrator.md` |
+| SDD orchestrator | `ORCHESTRATOR.md` | `sdd-orchestrator.md` | `sdd-orchestrator.md` | `ORCHESTRATOR.md` | embedded in `assets/orchestrator.md` |
+| Global instructions | `AGENTS.md` | `CLAUDE.md` | `AGENTS.md` | `AGENTS.md` | `assets/orchestrator.md` |
 | Persona / output style | neutral by local policy | stripped (no persona file) | implicit in `AGENTS.md` | stripped (no persona file) | neutral by local policy |
-| Agents / sub-agents | -- | `agents/*.md` | `agents/*.md` | `agent/*.md` + overlay `agent` section | declared in pi-harness extension code |
+| Agents / sub-agents | -- | `agents/*.md` | `agents/*.md` | `agent/*.md` | declared in pi-harness extension code |
 | Commands | -- | `commands/*.md` | `commands/*` | `commands/*.md` (+ shared `ai/command/`) | pi-harness command registry |
 | Shared skills | `ai/skills/` (canonical) | mirrored into `claude/skills/` | mirrored into `codex/skills/` | mirrored into `opencode/skills/` | resolved from skill registry at runtime |
 
-### Orchestrator self-sufficiency rule (NON-NEGOTIABLE)
+### Engram availability rule (NON-NEGOTIABLE)
 
-Every orchestrator file -- `ai/shared/ORCHESTRATOR.md` (canonical),
-`ai/claude/sdd-orchestrator.md`, `ai/codex/sdd-orchestrator.md`,
-`ai/opencode/ORCHESTRATOR.md`, and pi-harness `assets/orchestrator.md`
--- MUST contain the full Engram protocol (PROACTIVE SAVE TRIGGERS, WHEN
-TO SEARCH MEMORY, SESSION CLOSE PROTOCOL, AFTER COMPACTION) inlined
-verbatim.
+Every managed provider MUST expose the full Engram protocol through its
+always-loaded global instruction path or its dedicated protocol asset.
+Compact orchestrators may reference that owner instead of duplicating the
+full protocol. Pi-harness remains self-sufficient because it has one
+injected orchestrator asset.
 
-Never assume the orchestrator is co-loaded with `AGENTS.md` /
-`CLAUDE.md` / `engram-protocol.md` / `engram-instructions.md`. Some
-clients bind only the orchestrator file to the active agent slot; if
-engram lives only in the global instructions file, that client loses
-memory behavior.
-
-The orchestrator is the orchestrator -- it must be self-sufficient at
-the agent layer.
-
-Parity audit MUST verify, for each orchestrator file:
-
-- Contains all four section headers: `PROACTIVE SAVE TRIGGERS`, `WHEN TO
-  SEARCH MEMORY`, `SESSION CLOSE PROTOCOL`, `AFTER COMPACTION`.
-- Codex variant additionally contains the `PASSIVE CAPTURE` / `Key
-  Learnings` block.
-- No persona/branding text introduced.
-- Markdown dialect matches the provider conventions in section 5.
-
-Quick check:
-
-    grep -l 'PROACTIVE SAVE\|WHEN TO SEARCH\|SESSION CLOSE\|AFTER COMPACTION' \
-      ai/shared/ORCHESTRATOR.md \
-      ai/claude/sdd-orchestrator.md \
-      ai/codex/sdd-orchestrator.md \
-      ai/opencode/ORCHESTRATOR.md
-
-All four sections must be present in every file.
+Parity audit MUST verify the provider's declared Engram owner is present,
+the compact orchestrator does not contradict it, and no persona/branding
+text is introduced. Do not require full protocol headers in compact
+orchestrators solely for parity.
 
 ## 3. Behavior contract rule
 
@@ -112,7 +92,6 @@ Engram protocol changes -- inspect ALL of:
 - `ai/codex/sdd-orchestrator.md` (inlined)
 - `ai/opencode/AGENTS.md` (engram section)
 - `ai/opencode/ORCHESTRATOR.md` (inlined)
-- `ai/opencode/sdd-overlay-{single,multi}.json` (if behavior affects overlay)
 - pi-harness `assets/orchestrator.md` (union of all; out of write scope, flag only)
 
 SDD orchestrator changes -- inspect ALL of:
@@ -120,7 +99,7 @@ SDD orchestrator changes -- inspect ALL of:
 - `ai/shared/ORCHESTRATOR.md`
 - `ai/claude/sdd-orchestrator.md`
 - `ai/codex/sdd-orchestrator.md`
-- `ai/opencode/ORCHESTRATOR.md` + `ai/opencode/sdd-overlay-*.json`
+- `ai/opencode/ORCHESTRATOR.md`
 - pi-harness `assets/orchestrator.md` (SDD section; flag only)
 
 Persona / branding -- inspect and neutralize:
@@ -190,12 +169,13 @@ against `codex/engram-instructions.md` and `opencode/sdd-orchestrator.md`:
 |---|---|
 | Claude | `~/.claude/CLAUDE.md` global + per-project; skills auto-discovered (projected from `ai/claude/`) |
 | Codex | `AGENTS.md` at workspace root; engram-compact-prompt fed to compaction step (projected from `ai/codex/`) |
-| OpenCode | `AGENTS.md` + JSON overlay (`sdd-overlay-*.json`) declares agents and tools (projected from `ai/opencode/`) |
+| OpenCode | `AGENTS.md`, `ORCHESTRATOR.md`, and `agent/*.md` are projected from `ai/opencode/` |
 | Pi-harness | single `assets/orchestrator.md` injected into system prompt by the harness (external flake input) |
 
 When OpenCode is the target, behavior added to `AGENTS.md` may also
-require updating the JSON overlay if it touches agent definitions, tool
-permissions, or sub-agent prompt files. Always inspect both.
+require updating `ORCHESTRATOR.md` or `agent/*.md` when it touches agent
+definitions, tool permissions, or sub-agent prompt files. Always inspect
+the applicable projected owner.
 
 ## 6. Runtime-only behaviors (v2.0) — not reproducible by parity
 

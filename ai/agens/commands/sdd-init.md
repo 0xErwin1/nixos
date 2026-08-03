@@ -3,7 +3,7 @@ description: Initialize SDD context -- detects project stack and bootstraps pers
 ---
 
 If the native `sdd-init` sub-agent is available, delegate this command to it.
-Otherwise, load the `sdd-init` skill FIRST, then follow its instructions exactly inline.
+Otherwise, Load the `sdd-init` skill, then follow its instructions exactly inline.
 
 CONTEXT:
 - Working directory: Detect agent-side before proceeding by running `git rev-parse --show-toplevel` with the Bash tool; if that fails, run `pwd` with the Bash tool.

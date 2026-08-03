@@ -227,7 +227,7 @@ Return to the orchestrator:
 - Use hierarchical numbering: 1.1, 1.2, 2.1, 2.2, etc.
 - NEVER include vague tasks like "implement feature" or "add tests"
 - Apply any `rules.tasks` from `openspec/config.yaml`
-- If the project uses TDD, integrate test-first tasks: RED task (write failing test) → GREEN task (make it pass) → REFACTOR task (clean up)
+- Add test-first RED → GREEN → REFACTOR tasks only when Strict TDD is explicitly configured and the task has an applicable behavioral test boundary.
 - **Size budget**: Tasks artifact MUST be under 530 words. Each task: 1-2 lines max. Use checklist format, not paragraphs.
 - **Review workload forecast**: ALWAYS include it. It is advisory — report the size estimate and a suggested PR split, never a delivery decision or a gate on apply.
 - **Work-unit evidence**: every suggested work unit MUST name its Focused test command, Runtime harness command/scenario (or explicit `N/A` reason), and Rollback boundary.

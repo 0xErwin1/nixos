@@ -46,7 +46,7 @@ The orchestrator assigns you an explicit, exclusive set of task IDs (a single wo
 
 Rules — all MANDATORY:
 
-1. **Implement ONLY the assigned task IDs.** Read the full tasks artifact for context and dependencies, but write and commit code ONLY for tasks in your assigned set. Identify your assigned IDs explicitly before writing any code; if the assignment is unclear or empty, STOP and return `blocked` asking which task IDs to implement. Do not guess a scope.
+1. **Implement ONLY the assigned task IDs.** Read the full tasks artifact for context and dependencies, but write code ONLY for tasks in your assigned set. Identify your assigned IDs explicitly before writing any code; if the assignment is unclear or empty, STOP and return `blocked` asking which task IDs to implement. Do not guess a scope.
 
 2. **Never start a task outside the assigned set** — not the "next" task, not one that looks ready, not one the tasks artifact lists, not one you think is a prerequisite. If an assigned task genuinely cannot be completed without a task outside your set, STOP and return `blocked` naming that dependency. Do NOT implement it yourself.
 
@@ -54,7 +54,7 @@ Rules — all MANDATORY:
 
 4. **Stop-on-overstep self-check.** Before implementing each task, confirm its ID is in your assigned set. The moment you are about to touch a task whose ID is NOT assigned, you have overstepped: STOP immediately, do not commit that work, and return what you actually completed for the assigned set. Do not let a long run drift past its boundary — returning a correct partial is always better than an unsupervised overrun.
 
-5. **One commit-set.** Commit only work for your assigned task IDs. Never claim, merge, or report other work units' work as yours.
+5. **No commit ownership.** Report the completed work unit and its rollback boundary. Commit, amend, push, and other Git mutation require a separate explicit user request.
 
 This boundary overrides any momentum to "finish the whole change". You implement a slice and hand back — that is the entire job.
 
@@ -111,11 +111,11 @@ Read testing capabilities from:
 └── Fallback: check project files directly (package.json, go.mod, etc.)
 
 Resolve mode:
-├── IF strict_tdd: true AND test runner exists
+├── IF `strict_tdd: true` is explicitly configured AND a test runner exists AND the assigned work has an applicable behavioral test boundary
 │   └── STRICT TDD MODE → Load and follow strict-tdd.md module
 │       (read the file: skills/sdd-apply/strict-tdd.md)
 │
-├── IF strict_tdd: false OR no test runner
+├── IF Strict TDD is not explicitly configured, no runner exists, OR no applicable behavioral test boundary exists
 │   └── STANDARD MODE → use Step 4 below (no TDD module loaded)
 │
 └── Cache the resolved mode for the return summary
@@ -123,9 +123,11 @@ Resolve mode:
 
 **Key principle**: If Strict TDD Mode is not active, ZERO TDD instructions are loaded. The `strict-tdd.md` module is never read, never processed, never consumes tokens.
 
+The launch contract carries `strict_tdd_configured, runner_available, and applicable_behavioral_boundary`. Forward Strict TDD only when all three are true; otherwise use Standard Mode while retaining its normal verification checks.
+
 #### Hard Gate (Strict TDD Only)
 
-If Strict TDD Mode is active (either from orchestrator injection or self-discovery):
+If Strict TDD Mode is active from explicit configuration, runner availability, and an applicable behavioral test boundary:
 - You MUST produce a **TDD Cycle Evidence** table in your apply-progress artifact
 - Each task row MUST have: RED (test written first) → GREEN (implementation passes) → REFACTOR columns
 - If you complete a task WITHOUT writing tests first, mark it as FAILED in the evidence table
@@ -198,7 +200,7 @@ When saving apply-progress:
 **Report integrity (MANDATORY).** The summary must describe what actually happened, verifiable against the repo and the persisted artifacts — not what you intended. Specifically:
 
 - List the **assigned task IDs** and the real status of each (done / partial / blocked). If you implemented exactly the assigned set, say so. If anything differs from the assignment, lead with a **`SCOPE DEVIATION`** line stating exactly which IDs you touched versus which were assigned.
-- Every completion you claim must map to a real commit and real file changes. Do NOT report counts, merges, or batches that are not reflected in the commits and the tasks artifact (e.g. never claim "merged WU-0+WU-1+WU-2" when the commits show one work unit). Cross-check your claims against the actual commits before returning.
+- Every completion you claim must map to real file changes, tests, and the tasks artifact. Do not claim work, tests, or task completion that the evidence does not substantiate.
 - If you cannot substantiate a claim from the repo state, do not make it.
 
 Return to the orchestrator:

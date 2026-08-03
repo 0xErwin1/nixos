@@ -3,7 +3,7 @@ description: Guided SDD walkthrough -- onboard a user through the full SDD cycle
 ---
 
 If the native `sdd-onboard` sub-agent is available, delegate this command to it.
-Otherwise, load the `sdd-onboard` skill FIRST, then follow its instructions exactly inline.
+Otherwise, Load the `sdd-onboard` skill, then follow its instructions exactly inline.
 
 CONTEXT:
 - Working directory: Detect agent-side before proceeding by running `git rev-parse --show-toplevel` with the Bash tool; if that fails, run `pwd` with the Bash tool.

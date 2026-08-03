@@ -49,7 +49,7 @@ Before executing ANY SDD command (`/sdd-new`, `/sdd-ff`, `/sdd-continue`, `/sdd-
 
 This ensures:
 - Testing capabilities are always detected and cached
-- Strict TDD Mode is activated when the project supports it
+- Strict TDD Mode is activated only when `strict_tdd_configured`, `runner_available`, and `applicable_behavioral_boundary` are all true
 - The project context (stack, conventions) is available for all phases
 
 Do NOT skip this check. Do NOT ask the user -- just run init silently if needed.
@@ -73,7 +73,7 @@ In **Interactive** mode, between phases:
 
 Interactive approval is phase-scoped. A reply such as "continue", "dale", or "go on" approves only the immediate next phase, not the rest of the SDD pipeline. Do not treat a generated artifact as approved until the user has had a chance to review it or explicitly delegate that review.
 
-Before the propose phase in interactive mode, offer the user a proposal question round instead of silently deciding whether the proposal is clear enough. Explain that the questions are meant to improve the PRD/proposal by uncovering business understanding, business rules, implications, impact, edge cases, and product tradeoffs. Prefer 3-5 concrete product questions per round, then summarize the resulting assumptions and ask whether the user wants to correct anything or run a second round. Cover business and product decisions: business problem, target users and situations, business rules, product outcome, current-state gap, implications and impact, edge cases, decision gaps, first-slice scope boundaries, non-goals, product constraints, and business tradeoffs. Do not ask about test commands, PR shape, changed-line budget, or other harness mechanics at proposal time unless the user explicitly asks to discuss delivery.
+Before the propose phase in interactive mode, offer the user a proposal question round instead of silently deciding whether the proposal is clear enough. Explain that the questions are meant to improve the PRD/proposal by uncovering business understanding, business rules, implications, impact, edge cases, and product tradeoffs. Prefer 3-5 concrete product questions per round, then summarize the resulting assumptions and ask whether the user wants to correct anything or run a second round. Cover business and product decisions: business problem, target users and situations, business rules, product outcome, current-state gap, implications and impact, edge cases, decision gaps, first-slice scope boundaries, non-goals, product constraints, and business tradeoffs.
 
 For this agent (sub-agent delegation): **Automatic** means phases run back-to-back via sub-agents without pausing. **Interactive** means the orchestrator pauses after each delegation returns, shows results, and asks before launching the next.
 
@@ -89,19 +89,11 @@ If the user doesn't specify, detect: if engram is available -> default to `engra
 
 Cache the artifact store choice for the session. Pass it as `artifact_store.mode` to every sub-agent launch.
 
-### Delivery (LOCAL POLICY, load-bearing)
-
-SDD does not choose how work is delivered. One PR, several PRs, or committing straight to a branch with no PR at all is the user's call, made outside SDD. Do not ask about PR shape during preflight, do not cache a delivery or chain strategy, and do not pass one to any phase.
-
-If a change looks large enough that review will suffer, say so once when reporting the `sdd-tasks` forecast and name a suggested split. Then proceed.
-
-NEVER reintroduce delivery/chain strategy routing on upstream sync.
-
 ### Review Workload Forecast (report, never gate)
 
-After `sdd-tasks` completes, read `Review Workload Forecast` from the task result and report `Estimated changed lines` and `Review budget risk` to the user in one line. If the risk is high, add the suggested PR split as advice.
+After `sdd-tasks` completes, read `Review Workload Forecast` from the task result and report `Estimated changed lines` and `Review budget risk` to the user in one line.
 
-Then launch `sdd-apply`. A high forecast NEVER blocks apply, never triggers a delivery question, and never shrinks the assigned scope. Do not pass a delivery or chain strategy to any phase.
+Then launch `sdd-apply`. A high forecast NEVER blocks apply and never shrinks the assigned scope.
 
 Apply is still batched into checkpoints when the change is large — see **Batched Apply-Verify Cycles**, which is driven by task count and phase boundaries, for context freshness and rollback granularity. Never size an apply batch to fit the review budget: that conflates a review artifact with an execution artifact and produces batch-splitting thrash.
 
@@ -233,15 +225,9 @@ Everything a phase produces is saved back to the active store. This rule is unif
 
 #### Strict TDD Forwarding (MANDATORY)
 
-When launching `sdd-apply` or `sdd-verify` sub-agents, the orchestrator MUST:
+When launching `sdd-apply` or `sdd-verify`, resolve and pass `strict_tdd_configured, runner_available, and applicable_behavioral_boundary` as separate facts. Forward Strict TDD only when all three are true; add the active-mode instruction with the runner command only in that case. Otherwise direct the executor to Standard Mode, where Standard Verify still runs every applicable test, build, and type check.
 
-1. Search for testing capabilities: `mem_search(query: "sdd-init/{project}", project: "{project}")`
-2. If the result contains `strict_tdd: true`:
-   - Add to the sub-agent prompt: `"STRICT TDD MODE IS ACTIVE. Test runner: {test_command}. You MUST follow strict-tdd.md. Do NOT fall back to Standard Mode."`
-   - This is NON-NEGOTIABLE. Do not rely on the sub-agent discovering this independently.
-3. If the search fails or `strict_tdd` is not found, do NOT add the TDD instruction (sub-agent uses Standard Mode).
-
-The orchestrator resolves TDD status ONCE per session (at first apply/verify launch) and caches it.
+The orchestrator may cache resolved facts for the session, but it must re-evaluate boundary applicability for each assigned work unit. This decision changes neither runtime/outward-action gates nor the explicit Git-mutation requirement.
 
 #### Apply-Progress Continuity (MANDATORY)
 
@@ -292,7 +278,7 @@ Each slice is an ordinary `sdd-apply` launch and MUST follow the **Apply-Progres
 
 #### Batched Apply-Verify Cycles (local policy)
 
-**Quiet batch cycle (LOCAL POLICY).** The cycle is only `apply → sdd-verify(batch) → commit → report`. Never launch 4R, Judgment Day, refuter, or any extra reviewer between batches or after batch verify PASS.
+**Quiet batch cycle (LOCAL POLICY).** The cycle is only `apply → sdd-verify(batch) → report`.
 
 Long or many-step changes are risky to apply in one shot: a single `sdd-apply` accumulates context until it loses track of what it is doing, and it can run a long time with no checkpoint or report. For such changes the orchestrator runs apply in ordered batches, each followed by its own verify and a concise report, so context stays fresh and problems surface early instead of compounding.
 
@@ -311,7 +297,7 @@ Batch boundaries follow coherent, independently verifiable slices — never a ch
 
 Proceed to the next batch only after the current one's verify and report are done. After the last batch, run a final consolidated verify; archive only once all batches are complete and the **Task Completion Gate** passes.
 
-**Composition.** This composes with the **Visual-Aware Apply Split** (a batch that contains design/visual tasks still routes that slice to `opus`; the model rule applies per slice within a batch) . Batching governs apply EXECUTION checkpoints only; how the finished work is delivered is decided by the user outside SDD and never constrains batch boundaries.
+**Composition.** This composes with the **Visual-Aware Apply Split** (a batch that contains design/visual tasks still routes that slice to `opus`; the model rule applies per slice within a batch). Batching governs apply execution checkpoints only.
 
 #### Engram Topic Key Format
 

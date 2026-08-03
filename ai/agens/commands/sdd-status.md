@@ -16,7 +16,7 @@ CONTEXT:
 
 TASK:
 
-1. Load the `sdd-status-contract.md` reference of the `sdd-shared` skill and follow it to produce structured status. (This setup ships no native status binary.) A native status dispatcher, where present, is authoritative only when the session artifact store is `openspec` or `hybrid`; it reads only `openspec/changes/` and cannot see Engram-backed changes. When the session artifact store is `engram`, do NOT rely on any native dispatcher output (`blocked`, `Active OpenSpec change not found`, `nextRecommended: sdd-new`) for a change that exists -- resolve status entirely from Engram (`mem_search` + `mem_get_observation` on the change's topic keys) using the manual status schema.
+1. Read the `sdd-status-contract` reference of the `sdd-shared` skill and follow it to produce structured status. (This setup ships no native status binary.) A native status dispatcher, where present, is authoritative only when the session artifact store is `openspec` or `hybrid`; it reads only `openspec/changes/` and cannot see Engram-backed changes. When the session artifact store is `engram`, do NOT rely on any native dispatcher output (`blocked`, `Active OpenSpec change not found`, `nextRecommended: sdd-new`) for a change that exists -- resolve status entirely from Engram (`mem_search` + `mem_get_observation` on the change's topic keys) using the manual status schema.
 2. Resolve the active change:
    - If `$ARGUMENTS` is provided, validate that exact change in the selected artifact store.
    - If omitted and exactly one active change exists, select it and say how it was selected.

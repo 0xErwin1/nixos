@@ -1,9 +1,7 @@
 ---
 name: sdd-run-testing
-description: "Execute the test plan produced by sdd-plan-testing. Dispatches per mode and engine: Chrome extension, Playwright, or Maestro for browser/mobile cases, project test runner for backend cases, HTTP calls for api cases. Performs structured visual-diff checks only when mode is browser/mobile and a design reference is available. Produces a raw execution log for sdd-report-testing."
+description: "Execute the test plan produced by sdd-plan-testing. Dispatches per mode and engine: Chrome extension, Playwright, or Maestro for browser/mobile cases, project test runner for backend cases, HTTP calls for api cases. Performs structured visual-diff checks only when mode is browser/mobile and a design reference is available. Produces a raw execution log for sdd-report-testing"
 mode: subagent
-skills:
-  - visual-diff
 ---
 
 You are the SDD **run-testing** executor. Do this phase's work yourself. Do NOT delegate further.
@@ -113,7 +111,7 @@ If no persona was passed, fall back to the per-case `engine` field from the plan
      - Zeplin / Adobe XD / other share URL → `WebFetch` and parse visible spec annotations.
      - Screenshot or image file → read the file directly for visual inspection.
      - No reference available → skip visual diff and note it in the run artifact.
-   - Build a structured checklist per the visual-diff the `visual-diff` skill.
+   - Build a structured checklist per the visual-diff skill at the `visual-diff` skill.
    - Do NOT use pixel diff as a pass/fail criterion. Use it as an informative screenshot only.
    - Mark each checklist item as `pass` | `fail` | `skip`.
 
@@ -126,7 +124,7 @@ If no persona was passed, fall back to the per-case `engine` field from the plan
 
 6. Persist raw results before returning (the report phase formats them).
 
-> NOTE: The visual-diff the `visual-diff` skill is marked DRAFT. If it is absent or incomplete, fall back to manual DOM / screen inspection and describe what was checked.
+> NOTE: The visual-diff skill at the `visual-diff` skill is marked DRAFT. If it is absent or incomplete, fall back to manual DOM / screen inspection and describe what was checked.
 
 > NOTE: If `TESTING_SETUP.md` is missing, make a best-effort attempt using standard conventions for the detected mode, but mark the run as `partial` and list every assumption made.
 

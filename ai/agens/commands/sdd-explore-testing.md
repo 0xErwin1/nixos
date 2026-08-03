@@ -3,7 +3,7 @@ description: Investigate a feature or flow for testing — reads codebase, Figma
 ---
 
 If the native `sdd-explore-testing` sub-agent is available, delegate this command to it.
-Otherwise, load the `sdd-orchestrator` skill FIRST, then follow its instructions exactly inline.
+Otherwise, Load the `sdd-orchestrator` skill, then follow its instructions exactly inline.
 
 CONTEXT:
 - Working directory: !`pwd`

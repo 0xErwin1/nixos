@@ -31,17 +31,20 @@ deny = [
   "read(**/auth.json)",
   "read(**/.auth.json)",
   "read(**/secrets/**)",
-  # "bash(git commit*)",
-  "bash(git push*)",
-  "bash(git rebase*)",
-  "bash(git reset --hard*)",
+]
+ask = [
+  "bash(git push**)",
+  "bash(git rebase**)",
+  "bash(git reset --hard**)",
+  "bash(rm**)",
+  "bash(git commit**)",
 ]
 
-[mcp.aws]
-transport = "stdio"
-command = "uvx"
-args = ["-y", "awslabs.aws-documentation-mcp-server@latest"]
-env = { AWS_DOCUMENTATION_PARTITION = "aws", FASTMCP_LOG_LEVEL = "ERROR" }
+# [mcp.aws]
+# transport = "stdio"
+# command = "uvx"
+# args = ["-y", "awslabs.aws-documentation-mcp-server@latest"]
+# env = { AWS_DOCUMENTATION_PARTITION = "aws", FASTMCP_LOG_LEVEL = "ERROR" }
 
 [mcp.context7]
 transport = "http"

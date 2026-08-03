@@ -147,7 +147,7 @@ Do not flatten `references/` into `SKILL.md`. Keep references local and relative
 ## Do Not Sync / Do Not Modify
 
 - Upstream repository internals: `.git/**`.
-- Anything under runtime dirs (`~/.claude`, `~/.config/opencode`, `~/.codex`, `~/.agents`, `~/.pi/agent`); these are Nix-managed.
+- Anything under runtime dirs (`~/.config/agens`, `~/.config/opencode`, `~/.codex`, `~/.agents`, `~/.pi/agent`); these are Nix-managed.
 - Snapshots except when creating a new one: `~/.cache/tabularium-ai/sync-snapshots/**`.
 - Runtime locks and databases: `scheduled_tasks.lock`, `.engram/engram.db`, `.engram/cloud.json`.
 - Skill resolver runtime output: `.agents/**` runtime state, unless the user explicitly asks to inspect generated registry state.

@@ -1,6 +1,6 @@
 ---
 name: sdd-report-testing
-description: "Produce a human-readable test report from raw run results. Summarizes pass/fail by test case and browser/device, surfaces visual-diff findings, and lists actionable follow-up items. Output is conversational — suitable for sharing with Design or PM without developer context."
+description: "Produce a human-readable test report from raw run results. Summarizes pass/fail by test case and browser/device, surfaces visual-diff findings, and lists actionable follow-up items. Output is conversational \u2014 suitable for sharing with Design or PM without developer context"
 mode: subagent
 permissions:
   - deny bash

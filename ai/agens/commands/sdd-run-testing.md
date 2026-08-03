@@ -3,7 +3,7 @@ description: Execute the test plan — drives the chosen engine (live Chrome ext
 ---
 
 If the native `sdd-run-testing` sub-agent is available, delegate this command to it.
-Otherwise, load the `sdd-orchestrator` skill FIRST, then follow its instructions exactly inline.
+Otherwise, Load the `sdd-orchestrator` skill, then follow its instructions exactly inline.
 
 CONTEXT:
 - Working directory: !`pwd`

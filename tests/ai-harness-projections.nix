@@ -1,6 +1,39 @@
-{ flake, flakePath }:
+{ flake, flakePath, resourceMatrix ? import ../home-manager/global/ai-harness-resources.nix, runRuntimeTests ? false }:
 
 let
+  matrixFamilies = resourceMatrix.families;
+  resourcesFor = delivery: builtins.filter (resource: resource.delivery or null == delivery) matrixFamilies;
+  managedResources = builtins.filter (resource: resource.delivery or null != null) matrixFamilies;
+  sourceTopLevelFamily = resource: builtins.elemAt (flake.inputs.nixpkgs.lib.splitString "/" resource.source) 0;
+  actualAiFamilies = builtins.attrNames (builtins.readDir (flakePath + "/ai"));
+  classifiedAiFamilies = flake.inputs.nixpkgs.lib.unique (map sourceTopLevelFamily matrixFamilies);
+  deliveryFamilyNames = map (resource: resource.name) (resourcesFor "project" ++ resourcesFor "copy");
+  agensCopyRoots = map (
+    resource: flake.inputs.nixpkgs.lib.removePrefix "agens/" resource.source
+  ) (builtins.filter (resource: resource.delivery or null == "copy") matrixFamilies);
+  ownershipComplete = families: actualFamilies:
+    let
+      familyNames = map (resource: resource.name) families;
+      sourceFamilies = flake.inputs.nixpkgs.lib.unique (map sourceTopLevelFamily families);
+      deliveryNames = map (
+        resource: resource.name
+      ) (builtins.filter (resource: builtins.elem (resource.delivery or null) [ "project" "copy" ]) families);
+    in
+    builtins.all (family: builtins.elem family sourceFamilies) actualFamilies
+    && flake.inputs.nixpkgs.lib.sort builtins.lessThan deliveryNames
+      == flake.inputs.nixpkgs.lib.sort builtins.lessThan resourceMatrix.requiredDeliveryFamilyNames;
+  removedAgensSkillsFixture = builtins.filter (resource: resource.name != "agens-skills") matrixFamilies;
+  addedUnclassifiedFamilyFixture = actualAiFamilies ++ [ "unclassified-family" ];
+  expectedTargets = map (resource: resource.target) (resourcesFor "project");
+  expectedFileTargets = map (resource: resource.target) (builtins.filter (resource: !(resource.recursive or false)) (resourcesFor "project"));
+  renderedSecretTargets = map (resource: resource.target) (resourcesFor "render");
+  mergedSecretTargets = map (resource: resource.target) (resourcesFor "merge");
+  managedSourcePaths = map (resource: "ai/${resource.source}") managedResources;
+  retiredAssets = builtins.concatMap (resource: map (path: "ai/${path}") (resource.paths or [ ])) (builtins.filter (resource: resource.classification == "retired") matrixFamilies);
+  retiredAssetAuthorityAssets = [
+    "home-manager/global/ai-harness.nix"
+    "ai/agens/generate.py"
+  ] ++ map (path: "ai/${path}") resourceMatrix.providerParityReferences;
   hosts = [
     "iperez@delta"
     "iperez@epsilon"
@@ -32,59 +65,30 @@ let
     "ai/support/secrets-env-contract.md"
     "ai/support/operator-cutover-rollback.md"
   ];
-  expectedTargets = [
-    ".agents/skills"
-    ".config/opencode/AGENTS.md"
-    ".config/opencode/ORCHESTRATOR.md"
-    ".config/opencode/agent"
-    ".config/opencode/commands"
-    ".config/opencode/command"
-    ".config/opencode/skills"
-    ".config/opencode/tui.json"
-    ".claude/CLAUDE.md"
-    ".claude/sdd-orchestrator.md"
-    ".claude/engram-protocol.md"
-    ".claude/agents"
-    ".claude/commands"
-    ".claude/skills"
-    ".codex/AGENTS.md"
-    ".codex/sdd-orchestrator.md"
-    ".codex/engram-instructions.md"
-    ".codex/engram-compact-prompt.md"
-    ".codex/commands"
-    ".codex/agents"
-    ".codex/skills"
-    ".grok/AGENTS.md"
-    ".grok/ORCHESTRATOR.md"
-    ".grok/agents"
+  grokSharedSkillNames = [
+    "sdd-apply"
+    "sdd-verify"
+    "judgment-day"
   ];
+  grokProjectedAgentNames = [
+    "reviewer"
+    "worker"
+  ];
+  grokReadme = "ai/grok/README.md";
+  grokOrchestrator = "ai/grok/ORCHESTRATOR.md";
+  grokGlobalPolicy = "ai/grok/AGENTS.md";
+  grokAgentsDirectory = flakePath + "/ai/grok/agents";
+  grokProjectedAgentFiles = builtins.attrNames (builtins.readDir grokAgentsDirectory);
   # Single-file projection targets: Home Manager materializes each as a
   # whole-path /nix/store symlink, so the unmanaged-collision preflight guards
   # exactly these. Recursive directory targets become real directories with
   # symlinked leaves, so the preflight intentionally skips them (guarding the
   # directory's top level would abort on every switch after the first).
-  expectedFileTargets = [
-    ".config/opencode/AGENTS.md"
-    ".config/opencode/ORCHESTRATOR.md"
-    ".config/opencode/tui.json"
-    ".claude/CLAUDE.md"
-    ".claude/sdd-orchestrator.md"
-    ".claude/engram-protocol.md"
-    ".codex/AGENTS.md"
-    ".codex/sdd-orchestrator.md"
-    ".codex/engram-instructions.md"
-    ".codex/engram-compact-prompt.md"
-    ".grok/AGENTS.md"
-    ".grok/ORCHESTRATOR.md"
-  ];
   recursiveTargetSample = ".agents/skills";
   expectedSecretEnv = {
     AI_HARNESS_MCP_ENV_FILE = "/home/iperez/.config/ai-harness/secrets/mcp.env";
     AI_HARNESS_API_ENV_FILE = "/home/iperez/.config/ai-harness/secrets/api.env";
   };
-  renderedSecretTargets = [
-    ".config/opencode/opencode.jsonc"
-  ];
   renderedTemplateChecks = [
     {
       file = "ai/opencode/opencode.jsonc";
@@ -100,6 +104,28 @@ let
   judgmentDayLedgerAssets = [
     "ai/opencode/skills/judgment-day/SKILL.md"
     "ai/claude/skills/judgment-day/SKILL.md"
+  ];
+  claudeReviewOwnerAssets = [
+    "ai/claude/agents/review-risk.md"
+    "ai/claude/agents/review-readability.md"
+    "ai/claude/agents/review-reliability.md"
+    "ai/claude/agents/review-resilience.md"
+    "ai/claude/agents/jd-judge-a.md"
+    "ai/claude/agents/jd-judge-b.md"
+  ];
+  claudeReviewOwnerForbiddenNeedles = [
+    "refuter"
+    "automatically launch a refuter"
+    "voting"
+    "majority"
+    "empty ledger record"
+    "fix → re-review"
+    "fix rounds"
+    "re-review loop"
+  ];
+  claudeJudgmentDayJudgeAssets = [
+    "ai/claude/agents/jd-judge-a.md"
+    "ai/claude/agents/jd-judge-b.md"
   ];
   explicitReviewPolicyAssets = [
     "ai/shared/ORCHESTRATOR.md"
@@ -200,62 +226,178 @@ let
     sdd-run-testing = "allow";
     sdd-report-testing = "allow";
   };
-  multiOverlay = builtins.fromJSON (
-    builtins.readFile (flakePath + "/ai/opencode/sdd-overlay-multi.json")
-  );
-  singleOverlay = builtins.fromJSON (
-    builtins.readFile (flakePath + "/ai/opencode/sdd-overlay-single.json")
-  );
-  portableTrustContractAssets = [
-    "ai/shared/ORCHESTRATOR.md"
-    "ai/claude/sdd-orchestrator.md"
-    "ai/codex/sdd-orchestrator.md"
-    "ai/opencode/ORCHESTRATOR.md"
-  ];
-  portableTrustContractObligations = [
-    {
-      name = "lossless choice retention";
-      needles = [
-        "every question, option, default, consequence, and answer syntax"
-        "block for an answer"
-        "do not infer or silently discard a choice"
-      ];
-    }
-    {
-      name = "requirement-preserving handoffs";
-      needles = [
-        "explicit requirements, constraints, acceptance criteria, and assigned scope"
-        "within that scope"
-        "must not claim work or completion they did not perform"
-      ];
-    }
-    {
-      name = "truthful failure handoff";
-      needles = [
-        "report the failure as it occurred"
-        "preserve the uncompleted work and next actionable state"
-        "do not present the result as successful"
-      ];
-    }
-    {
-      name = "observed-evidence reporting";
-      needles = [
-        "observed evidence"
-        "naming the command, artifact, tool result"
-        "distinguish observed facts from inferences"
-      ];
-    }
-    {
-      name = "claim verification";
-      needles = [
-        "against available evidence"
-        "If verification is unavailable"
-        "next action needed to verify it"
-      ];
-    }
+  retiredAssetReferenceNeedles = [
+    "sdd-overlay-single.json"
+    "sdd-overlay-multi.json"
+    "ai/commands/"
+    "skill-improver/skill-improver"
+    ".atl/skill-registry.md"
   ];
   onboardingCommand = "ai/opencode/commands/sdd-onboard.md";
   onboardingPrompt = "ai/opencode/prompts/sdd/sdd-onboard.md";
+  onboardingSkill = "ai/opencode/skills/sdd-onboard/SKILL.md";
+  onboardingFallbackOwner = "ai/opencode/ORCHESTRATOR.md";
+  onboardingFallbackConsumers = [
+    onboardingCommand
+    onboardingPrompt
+    onboardingSkill
+  ];
+  sddCommandAssets = [
+    "ai/opencode/commands/sdd-new.md"
+    "ai/opencode/commands/sdd-continue.md"
+    "ai/opencode/commands/sdd-ff.md"
+    "ai/opencode/commands/sdd-init.md"
+    "ai/opencode/commands/sdd-explore.md"
+    "ai/opencode/commands/sdd-apply.md"
+    "ai/opencode/commands/sdd-verify.md"
+    "ai/opencode/commands/sdd-archive.md"
+    "ai/opencode/commands/sdd-onboard.md"
+    "ai/opencode/commands/sdd-test.md"
+    "ai/opencode/commands/sdd-explore-testing.md"
+    "ai/opencode/commands/sdd-plan-testing.md"
+    "ai/opencode/commands/sdd-run-testing.md"
+    "ai/opencode/commands/sdd-report-testing.md"
+  ];
+  sddStatusCommand = "ai/opencode/commands/sdd-status.md";
+  opencodeCoordinationWorkflow = "ai/opencode/skills/_shared/sdd-orchestrator-workflow.md";
+  opencodeWorkflowCoordinationNeedles = [
+    "Status and artifact routing"
+    "For `engram`, resolve status manually with `mem_search` then `mem_get_observation`."
+    "For `openspec` or `hybrid`, the native dispatcher is authoritative when available."
+    "Skill injection"
+    "pass exact `SKILL.md` paths to every phase executor."
+    "Exact apply scope and result reconciliation"
+    "The executor implements only the assigned IDs, then stops."
+    "Apply-progress continuity"
+    "Completion, escalation, and synthesis"
+    "The parent records completion only after reconciling the result with artifacts and repository evidence."
+    "## Testing pipeline"
+    "The suites approval is a user checkpoint."
+  ];
+  opencodeWorkflowForbiddenNeedles = [
+    "RDD"
+    "receipt"
+    "ledger"
+    "refuter"
+    "delivery strategy"
+    "chain strategy"
+    "open a PR"
+    "create a PR"
+    "automatically run 4R"
+    "automatically run Judgment Day"
+  ];
+  strictTddInitSkillAssets = [
+    "ai/skills/sdd-init/SKILL.md"
+    "ai/opencode/skills/sdd-init/SKILL.md"
+    "ai/claude/skills/sdd-init/SKILL.md"
+    "ai/codex/skills/sdd-init/SKILL.md"
+  ];
+  strictTddInitReferenceAssets = [
+    "ai/skills/sdd-init/references/init-details.md"
+    "ai/opencode/skills/sdd-init/references/init-details.md"
+    "ai/claude/skills/sdd-init/references/init-details.md"
+    "ai/codex/skills/sdd-init/references/init-details.md"
+  ];
+  strictTddApplySkillAssets = [
+    "ai/skills/sdd-apply/SKILL.md"
+    "ai/opencode/skills/sdd-apply/SKILL.md"
+    "ai/claude/skills/sdd-apply/SKILL.md"
+    "ai/codex/skills/sdd-apply/SKILL.md"
+  ];
+  strictTddVerifySkillAssets = [
+    "ai/skills/sdd-verify/SKILL.md"
+    "ai/opencode/skills/sdd-verify/SKILL.md"
+    "ai/claude/skills/sdd-verify/SKILL.md"
+    "ai/codex/skills/sdd-verify/SKILL.md"
+  ];
+  strictTddTasksSkillAssets = [
+    "ai/skills/sdd-tasks/SKILL.md"
+    "ai/opencode/skills/sdd-tasks/SKILL.md"
+    "ai/claude/skills/sdd-tasks/SKILL.md"
+    "ai/codex/skills/sdd-tasks/SKILL.md"
+  ];
+  strictTddForwardingAssets =
+    strictTddInitSkillAssets
+    ++ strictTddApplySkillAssets
+    ++ strictTddVerifySkillAssets
+    ++ [
+      "ai/opencode/skills/_shared/sdd-orchestrator-workflow.md"
+      "ai/claude/skills/_shared/sdd-orchestrator-workflow.md"
+      "ai/codex/skills/_shared/sdd-orchestrator-workflow.md"
+    ];
+  effectiveLazyWorkflowAssets = [
+    "ai/opencode/skills/_shared/sdd-orchestrator-workflow.md"
+    "ai/claude/skills/_shared/sdd-orchestrator-workflow.md"
+    "ai/codex/skills/_shared/sdd-orchestrator-workflow.md"
+  ];
+  staleStrictTddActivationPhrase = "Strict TDD Mode is activated when the project supports it";
+  standardVerifyAssets = strictTddVerifySkillAssets;
+  strictTddForwardingCases = [
+    {
+      strict_tdd_configured = false;
+      runner_available = false;
+      applicable_behavioral_boundary = false;
+      forwarded = false;
+    }
+    {
+      strict_tdd_configured = false;
+      runner_available = false;
+      applicable_behavioral_boundary = true;
+      forwarded = false;
+    }
+    {
+      strict_tdd_configured = false;
+      runner_available = true;
+      applicable_behavioral_boundary = false;
+      forwarded = false;
+    }
+    {
+      strict_tdd_configured = false;
+      runner_available = true;
+      applicable_behavioral_boundary = true;
+      forwarded = false;
+    }
+    {
+      strict_tdd_configured = true;
+      runner_available = false;
+      applicable_behavioral_boundary = false;
+      forwarded = false;
+    }
+    {
+      strict_tdd_configured = true;
+      runner_available = false;
+      applicable_behavioral_boundary = true;
+      forwarded = false;
+    }
+    {
+      strict_tdd_configured = true;
+      runner_available = true;
+      applicable_behavioral_boundary = false;
+      forwarded = false;
+    }
+    {
+      strict_tdd_configured = true;
+      runner_available = true;
+      applicable_behavioral_boundary = true;
+      forwarded = true;
+    }
+  ];
+  strictTddForwarded = inputs:
+    inputs.strict_tdd_configured
+    && inputs.runner_available
+    && inputs.applicable_behavioral_boundary;
+  commandForbiddenNeedles = [
+    "subtask:"
+    "mem_"
+    "artifact-store"
+    "Engram"
+    "OpenSpec"
+    "strict_tdd"
+    "TDD"
+    "$("
+    "task("
+    "delegate"
+  ];
   sddPreflightContract = ''
     The single `question` call must contain these three localized groups in this order:
 
@@ -281,6 +423,89 @@ let
     "require a PR for delivery"
     "route delivery through a PR"
   ];
+  normalFlowForbiddenNeedles = contradictoryPolicyNeedles ++ [
+    "refuter"
+    "delivery strategy"
+    "chain strategy"
+    "review workload guard"
+    "suggested PR split"
+    "PR shape"
+  ];
+  effectiveNormalFlowAssets = [
+    "ai/shared/ORCHESTRATOR.md"
+    "ai/opencode/ORCHESTRATOR.md"
+    "ai/opencode/skills/_shared/sdd-orchestrator-workflow.md"
+    "ai/claude/CLAUDE.md"
+    "ai/claude/sdd-orchestrator.md"
+    "ai/claude/skills/_shared/sdd-orchestrator-workflow.md"
+    "ai/codex/AGENTS.md"
+    "ai/codex/sdd-orchestrator.md"
+    "ai/codex/skills/_shared/sdd-orchestrator-workflow.md"
+    "ai/grok/ORCHESTRATOR.md"
+  ];
+  lifecycleForbiddenNeedles = [
+    "review-start"
+    "review-resume"
+    "review-validate"
+    "transaction locks"
+    "Git-derived snapshots"
+    "authoritative Engram receipts"
+    "append-only CAS"
+    "Lifecycle receipt rule"
+    "gentle-ai review status"
+  ];
+  globalPolicyOnlyNeedles = [
+    "## Engram Persistent Memory — Protocol"
+    "Atlas task retrieval"
+    "## Writing Comments, Docs, and External Messages — ALWAYS ACTIVE"
+    "## CodeGraph"
+  ];
+  globalPolicyForbiddenNeedles = [
+    "Memory & persistence"
+    "## Local Policy"
+    "## SDD Orchestrator Instructions"
+    "### Work Routing"
+    "### Intent & Irreversibility Gates"
+    "SDD Workflow & Testing"
+  ];
+  orchestratorOwnedNeedles = [
+    "## SDD Orchestrator"
+    "## Intent & Irreversibility Gates"
+    "### Explicit Review Protocols"
+    "every question, option, default, consequence, and answer syntax"
+    "Git mutation requires an explicit user request"
+  ];
+  orchestratorForbiddenNeedles = [
+    "## SDD Workflow (Spec-Driven Development)"
+    "### Artifact Store Policy"
+    "### Commands"
+    "### SDD Session Preflight (HARD GATE)"
+    "### SDD Entry Routing (MANDATORY)"
+    "### SDD Init Guard (MANDATORY)"
+    "### Execution Mode"
+    "### Automatic Mode Continuity (lightweight)"
+    "### Artifact Store Mode"
+    "### Dependency Graph"
+    "### Status-Based Routing"
+    "### Review Workload Forecast (report, never gate)"
+    "### Engram Topic Key Format"
+  ];
+  automaticGitMutationNeedles = [
+    "apply → sdd-verify(batch) → commit → report"
+    "Commit per batch"
+    "COMMIT that batch"
+    "commit after every passing"
+    "apply → verify → commit"
+  ];
+  inferredSddRoutingPatterns = [
+    "[Ss]ubstantial changes.*SDD"
+    "[Nn]ew feature.*SDD"
+    "[Ww]ork spanning multiple files.*SDD"
+    "[Rr]eal open design decisions.*SDD"
+    "[Aa]utomatically enter SDD"
+    "[Aa]utomatically route.*SDD"
+  ];
+  sddWorkflow = "ai/opencode/skills/_shared/sdd-orchestrator-workflow.md";
   expectedSecretPaths = builtins.attrValues expectedSecretEnv;
   expectedSecretVars = builtins.attrNames expectedSecretEnv;
   managedFilesToScan = [
@@ -320,9 +545,16 @@ let
     relativePath: needle:
     builtins.match (".*" + needle + ".*") (builtins.readFile (flakePath + "/" + relativePath)) != null;
   fileDoesNotContain = relativePath: needle: !(fileContains relativePath needle);
+  fileDoesNotContainFixedString =
+    relativePath: needle:
+    let
+      content = builtins.readFile (flakePath + "/" + relativePath);
+    in
+    builtins.replaceStrings [ needle ] [ "" ] content == content;
   fileIncludes =
     relativePath: needle:
     flake.inputs.nixpkgs.lib.hasInfix needle (builtins.readFile (flakePath + "/" + relativePath));
+  fileDoesNotInclude = relativePath: needle: !(fileIncludes relativePath needle);
   maestroMcpTemplates = [
     {
       file = "ai/agens/config.toml";
@@ -397,7 +629,14 @@ let
       targets = map (resource: resource.target) cfg.resources;
       sources = map (resource: toString resource.source) cfg.resources;
       environment = cfg.environment;
-      generatedEnvFile = homeConfiguration.config.home.file.".pi/agent/pi-harness-env.sh".text;
+       generatedEnvFile = homeConfiguration.config.home.file.".pi/agent/pi-harness-env.sh".text;
+       resources = flake.inputs.nixpkgs.lib.imap0 (index: source: {
+         inherit source;
+         target = builtins.elemAt targets index;
+       }) sources;
+       canonicalResourceTargets = map (resource: resource.target) (builtins.filter (
+         resource: builtins.match ".*-ai-harness/.*" resource.source != null
+       ) resources);
     in
     {
       inherit
@@ -407,9 +646,10 @@ let
         activation
         secretActivation
         environment
-        generatedEnvFile
-        ;
-      hasExpectedTargets = builtins.all (target: builtins.elem target targets) expectedTargets;
+         generatedEnvFile
+         canonicalResourceTargets
+         ;
+       hasExpectedTargets = canonicalResourceTargets == expectedTargets;
       targetsAreUnique = unique targets;
       targetsAvoidRuntimeState = builtins.all (
         target: !(builtins.any (fragment: hasFragment fragment target) runtimeTargetFragments)
@@ -457,9 +697,9 @@ let
       renderedSecretConfigsNotProjected = builtins.all (
         target: !(builtins.elem target targets)
       ) renderedSecretTargets;
-      renderMentionsRenderedTargets = builtins.all (
-        target: builtins.match (".*" + target + ".*") renderActivation != null
-      ) renderedSecretTargets;
+       renderMentionsRenderedTargets = builtins.all (
+         target: builtins.match (".*" + target + ".*") renderActivation != null
+       ) (renderedSecretTargets ++ mergedSecretTargets);
       renderSourcesSecretEnvFiles = builtins.all (
         path: builtins.match (".*" + path + ".*") renderActivation != null
       ) expectedSecretPaths;
@@ -483,11 +723,28 @@ let
     && state.activationBlocksUnmanagedFiles
     && state.activationBlocksUnmanagedSymlinks
     && state.activationAllowsNixStoreSymlinks
-    && state.renderedSecretConfigsNotProjected
+     && state.renderedSecretConfigsNotProjected
     && state.renderMentionsRenderedTargets
     && state.renderSourcesSecretEnvFiles;
 in
 assert builtins.all assetExists canonicalAssets;
+assert builtins.all (
+  resource: builtins.elem resource.classification [ "effective" "generated" "authoring-only" "local-adapter" "retired" ]
+) matrixFamilies;
+assert unique (map (resource: resource.name) matrixFamilies);
+assert ownershipComplete matrixFamilies actualAiFamilies;
+assert !(ownershipComplete removedAgensSkillsFixture actualAiFamilies);
+assert !(ownershipComplete matrixFamilies addedUnclassifiedFamilyFixture);
+assert agensCopyRoots == resourceMatrix.agensManagedRoots;
+assert unique managedSourcePaths;
+assert unique (map (resource: resource.target) managedResources);
+assert builtins.all (
+  resource: resource.classification == "retired" || assetExists "ai/${resource.source}"
+) matrixFamilies;
+assert builtins.all (target: !(builtins.elem target expectedTargets)) (renderedSecretTargets ++ mergedSecretTargets);
+assert builtins.all (
+  relativePath: fileIncludes relativePath "ai-harness-resources.nix"
+) (map (path: "ai/${path}") resourceMatrix.providerParityReferences);
 assert builtins.all (
   check: builtins.all (needle: fileIncludes check.file needle) check.needles
 ) maestroMcpTemplates;
@@ -537,60 +794,47 @@ assert opencodeConfig.agent.sdd-onboard.tools.write;
 assert !(opencodeConfig.agent.sdd-onboard.tools ? task);
 assert !(opencodeConfig.agent.sdd-onboard.tools ? delegate);
 assert assetExists onboardingPrompt;
-assert builtins.all (needle: fileIncludes onboardingCommand needle) [
+assert builtins.length sddCommandAssets == 14;
+assert builtins.all (relativePath: builtins.all (needle: fileIncludes relativePath needle) [
   "agent: sdd-orchestrator"
-  "existing SDD preflight decision block"
-  "every question, option, default, consequence, and answer syntax"
-  "Engram `mem_current_project`"
-  "returned project value unchanged"
-  "hidden `sdd-onboard` agent"
-  "working directory, artifact-store mode, and complete preflight decision block"
-  "Relay a blocked-choice envelope losslessly"
+  "Route"
+]) sddCommandAssets;
+assert builtins.all (
+  relativePath: builtins.all (needle: fileDoesNotInclude relativePath needle) commandForbiddenNeedles
+) sddCommandAssets;
+assert assetExists sddStatusCommand;
+assert builtins.all (needle: fileIncludes sddStatusCommand needle) [
+  "agent: sdd-orchestrator"
+  "Route"
+  "status contract"
 ];
+assert builtins.all (needle: fileDoesNotInclude sddStatusCommand needle) commandForbiddenNeedles;
+assert builtins.all (needle: fileIncludes opencodeCoordinationWorkflow needle) opencodeWorkflowCoordinationNeedles;
+assert builtins.all (
+  needle: fileDoesNotContainFixedString opencodeCoordinationWorkflow needle
+) opencodeWorkflowForbiddenNeedles;
+assert fileIncludes onboardingFallbackOwner "every question, option, default, consequence, and answer syntax";
+assert builtins.all (
+  relativePath: fileDoesNotContain relativePath "every question, option, default, consequence, and answer syntax"
+) onboardingFallbackConsumers;
 assert builtins.all (needle: fileIncludes onboardingPrompt needle) [
-  "SDD executor for onboarding, not the orchestrator"
-  "Do NOT delegate, do NOT call task/delegate, and do NOT launch sub-agents"
-  "injected working directory, project, artifact-store mode, and preflight decision block"
+  "validated preflight decision block"
   "Do not replace an injected value or infer a missing user choice"
-  "blocking envelope that preserves every question, option, default, consequence, and answer syntax"
-  "Stop after returning that envelope"
-  "status`, `executive_summary`, `artifacts`, and `next_recommended`"
+];
+assert builtins.all (needle: fileIncludes onboardingSkill needle) [
+  "validated preflight decision block"
+  "Do not replace or infer a choice"
 ];
 assert !(opencodeConfig.agent.sdd-verify.tools ? edit);
 assert !(opencodeConfig.agent.sdd-explore.tools ? edit);
 assert opencodeConfig.agent.sdd-apply.tools.edit;
-assert multiOverlay.agent.sdd-orchestrator.permission.task.__replace__.general == "allow";
-assert multiOverlay.agent.sdd-orchestrator.permission.task.__replace__.explore == "allow";
-assert multiOverlay.agent.sdd-orchestrator.permission.task.__replace__.sdd-onboard == "allow";
-assert multiOverlay.agent.sdd-orchestrator.permission.question == "allow";
-assert multiOverlay.agent.sdd-orchestrator.tools.question;
-assert singleOverlay.agent.sdd-orchestrator.permission.task.__replace__.general == "allow";
-assert singleOverlay.agent.sdd-orchestrator.permission.task.__replace__.explore == "allow";
-assert singleOverlay.agent.sdd-orchestrator.permission.task.__replace__.sdd-onboard == "allow";
-assert singleOverlay.agent.sdd-orchestrator.permission.question == "allow";
-assert singleOverlay.agent.sdd-orchestrator.tools.question;
-assert fileIncludes "ai/opencode/ORCHESTRATOR.md" sddPreflightContract;
-assert fileDoesNotContain "ai/opencode/ORCHESTRATOR.md" "four localized groups";
+assert builtins.all (relativePath: !(assetExists relativePath)) retiredAssets;
 assert builtins.all (
-  relativePath:
-  builtins.all (
-    obligation: builtins.all (needle: fileIncludes relativePath needle) obligation.needles
-  ) portableTrustContractObligations
-) portableTrustContractAssets;
-assert builtins.all (
-  relativePath:
-  builtins.all (needle: fileIncludes relativePath needle) [
-    "RDD-style receipts"
-    "never automatic"
-    "There is no PR auto-review rule"
-  ]
-) portableTrustContractAssets;
-assert builtins.all (
-  relativePath: builtins.all (needle: fileDoesNotContain relativePath needle) contradictoryPolicyNeedles
-) portableTrustContractAssets;
-assert builtins.all (
-  relativePath: fileDoesNotContain relativePath ".atl/"
-) portableTrustContractAssets;
+  authority:
+  builtins.all (needle: fileDoesNotInclude authority needle) retiredAssetReferenceNeedles
+) retiredAssetAuthorityAssets;
+assert fileIncludes sddWorkflow sddPreflightContract;
+assert fileDoesNotContain sddWorkflow "four localized groups";
 assert builtins.all (
   relativePath:
   builtins.all (needle: fileContains relativePath needle) [
@@ -600,47 +844,23 @@ assert builtins.all (
     "regression evidence"
   ]
 ) judgmentDayLedgerAssets;
+assert !(assetExists "ai/claude/agents/review-refuter.md");
+assert builtins.all (
+  relativePath:
+  builtins.all (needle: fileDoesNotContainFixedString relativePath needle) claudeReviewOwnerForbiddenNeedles
+) claudeReviewOwnerAssets;
+assert builtins.all (
+  relativePath: fileIncludes relativePath "only when the Judgment Day skill explicitly requests it"
+) claudeJudgmentDayJudgeAssets;
 assert builtins.all (
   relativePath:
   builtins.all (needle: fileContains relativePath needle) [
-    "Explicit Review Protocols"
     "Judgment Day"
     "4R"
-    "Automatic Mode Continuity"
+    "explicit"
   ]
 ) explicitReviewPolicyAssets;
 assert builtins.all (check: builtins.all (needle: fileContains check.file needle) check.needles) [
-  {
-    file = "ai/opencode/ORCHESTRATOR.md";
-    needles = [
-      "native `explore` agent"
-      "native `general` agent"
-      "Quiet batch cycle"
-      "never automatic"
-    ];
-  }
-  {
-    file = "ai/shared/ORCHESTRATOR.md";
-    needles = [
-      "never automatic"
-      "Quiet batch cycle"
-    ];
-  }
-  {
-    file = "ai/claude/sdd-orchestrator.md";
-    needles = [
-      "never automatic"
-      "separate"
-    ];
-  }
-  {
-    file = "ai/grok/AGENTS.md";
-    needles = [
-      "spawn_subagent"
-      "Explicit reviews"
-      "4R"
-    ];
-  }
   {
     file = "ai/grok/mcp-servers.toml";
     needles = [
@@ -666,38 +886,208 @@ assert builtins.all (check: builtins.all (needle: fileContains check.file needle
   {
     file = "ai/opencode/ORCHESTRATOR.md";
     needles = [
-      "Delivery guarantee"
+      "Delivery Guarantee"
       "must never block"
     ];
   }
 ];
-assert builtins.all
-  (
-    relativePath:
-    builtins.all (needle: fileDoesNotContain relativePath needle) [
-      "review-start"
-      "review-resume"
-      "review-validate"
-      "transaction locks"
-      "Git-derived snapshots"
-      "authoritative Engram receipts"
-      "append-only CAS"
-      "Lifecycle receipt rule"
-      "gentle-ai review status"
-    ]
-  )
-  [
-    "ai/shared/ORCHESTRATOR.md"
-    "ai/opencode/ORCHESTRATOR.md"
-    "ai/claude/sdd-orchestrator.md"
-    "ai/codex/sdd-orchestrator.md"
-    "ai/grok/ORCHESTRATOR.md"
-    "ai/opencode/skills/judgment-day/SKILL.md"
-    "ai/claude/skills/judgment-day/SKILL.md"
-  ];
+assert builtins.all (
+  relativePath: builtins.all (needle: fileDoesNotContainFixedString relativePath needle) lifecycleForbiddenNeedles
+) (effectiveNormalFlowAssets ++ [
+  "ai/opencode/skills/judgment-day/SKILL.md"
+  "ai/claude/skills/judgment-day/SKILL.md"
+]);
+assert builtins.all (
+  relativePath: builtins.all (needle: fileDoesNotContainFixedString relativePath needle) contradictoryPolicyNeedles
+) effectiveNormalFlowAssets;
+assert builtins.all (
+  relativePath: builtins.all (needle: fileDoesNotContainFixedString relativePath needle) normalFlowForbiddenNeedles
+) effectiveNormalFlowAssets;
+assert builtins.all (needle: fileContains "ai/opencode/AGENTS.md" needle) globalPolicyOnlyNeedles;
+assert builtins.all (needle: fileDoesNotContain "ai/opencode/AGENTS.md" needle) globalPolicyForbiddenNeedles;
+assert builtins.all (needle: fileContains "ai/opencode/ORCHESTRATOR.md" needle) orchestratorOwnedNeedles;
+assert builtins.all (needle: fileDoesNotContain "ai/opencode/ORCHESTRATOR.md" needle) orchestratorForbiddenNeedles;
+assert runRuntimeTests;
+assert fileIncludes sddWorkflow "Explicit SDD entry";
+assert fileIncludes sddWorkflow "apply → verify → report";
+assert builtins.all (pattern: builtins.match (".*" + pattern + ".*") (builtins.readFile (flakePath + "/" + sddWorkflow)) == null) inferredSddRoutingPatterns;
+assert builtins.all (
+  relativePath: fileIncludes relativePath "explicit `strict_tdd: true` configuration"
+) strictTddInitSkillAssets;
+assert builtins.all (
+  relativePath: fileDoesNotContain relativePath "Default `strict_tdd: true`"
+) strictTddInitSkillAssets;
+assert builtins.all (
+  relativePath: fileIncludes relativePath "Strict TDD Applicability"
+) strictTddInitReferenceAssets;
+assert builtins.all (
+  relativePath:
+  fileIncludes relativePath "`strict_tdd: true` is explicitly configured"
+  && fileIncludes relativePath "applicable behavioral test boundary"
+) strictTddApplySkillAssets;
+assert builtins.all (
+  relativePath:
+  fileIncludes relativePath "Explicit `strict_tdd: true` configuration"
+  && fileIncludes relativePath "applicable behavioral test boundary"
+) strictTddVerifySkillAssets;
+assert builtins.all (
+  relativePath:
+  fileIncludes relativePath "Strict TDD is explicitly configured"
+  && fileIncludes relativePath "applicable behavioral test boundary"
+) strictTddTasksSkillAssets;
+assert builtins.length strictTddForwardingCases == 8;
+assert builtins.all (
+  inputs: strictTddForwarded inputs == inputs.forwarded
+) strictTddForwardingCases;
+assert builtins.all (
+  relativePath: fileIncludes relativePath "strict_tdd_configured, runner_available, and applicable_behavioral_boundary"
+) strictTddForwardingAssets;
+assert builtins.all (
+  relativePath: fileDoesNotContainFixedString relativePath staleStrictTddActivationPhrase
+) effectiveLazyWorkflowAssets;
+assert builtins.all (
+  relativePath: fileIncludes relativePath "Standard Verify always runs applicable test, build, and type checks."
+) standardVerifyAssets;
+assert builtins.all (
+  relativePath: fileDoesNotInclude relativePath "Do NOT run tests unless `strict_tdd` is active"
+) standardVerifyAssets;
+assert builtins.all (
+  relativePath: builtins.all (needle: fileDoesNotContainFixedString relativePath needle) [
+    "write and commit code ONLY"
+    "**One commit-set.**"
+    "real commit and real file changes"
+  ]
+) strictTddApplySkillAssets;
 assert flake.checks.x86_64-linux ? ai-harness-readiness;
 assert builtins.all validState states;
+assert builtins.all (name: assetExists "ai/skills/${name}/SKILL.md") grokSharedSkillNames;
+assert grokProjectedAgentFiles == map (name: "${name}.md") grokProjectedAgentNames;
+assert fileIncludes grokReadme "Grok Build discovers the shared `ai/skills` projection at `~/.agents/skills`.";
+assert fileIncludes grokReadme "This harness does not project named `sdd-*` Grok agent profiles";
+assert fileIncludes grokReadme "the projected `reviewer` profile";
+assert fileIncludes grokOrchestrator "Shared `sdd-*` skills are direct skill mechanics, not Grok phase-agent definitions";
+assert fileIncludes grokOrchestrator "only through the projected `reviewer` profile";
+assert fileIncludes grokGlobalPolicy "configured `reviewer` profile";
+assert fileDoesNotInclude grokGlobalPolicy "SDD phase agents when present";
 {
+  runtimeTest = ''
+    set -eu
+
+    source_tree=${flakePath}
+    workdir="$(mktemp -d)"
+    trap 'rm -rf "$workdir"' EXIT
+
+    require_no_automatic_git_mutation() {
+      candidate="$1"
+
+      ${flake.inputs.nixpkgs.lib.concatMapStringsSep "\n" (needle: ''
+        if grep -F -- ${flake.inputs.nixpkgs.lib.escapeShellArg needle} "$candidate" >/dev/null; then
+          echo "Automatic Git mutation contract reintroduced: ${needle}" >&2
+          return 1
+        fi
+      '') automaticGitMutationNeedles}
+    }
+
+    require_explicit_sdd_routing() {
+      candidate="$1"
+
+      grep -F -- 'Enter SDD only when the user invokes `/sdd-*`, requests SDD in natural language, or accepts an offered SDD proposal.' "$candidate" >/dev/null
+      grep -F -- 'Ordinary work remains direct.' "$candidate" >/dev/null
+
+      ${flake.inputs.nixpkgs.lib.concatMapStringsSep "\n" (pattern: ''
+        if grep -E -- ${flake.inputs.nixpkgs.lib.escapeShellArg pattern} "$candidate" >/dev/null; then
+          echo "Inferred SDD routing contract reintroduced: ${pattern}" >&2
+          return 1
+        fi
+      '') inferredSddRoutingPatterns}
+    }
+
+    require_no_normal_flow_policy() {
+      candidate="$1"
+
+      ${flake.inputs.nixpkgs.lib.concatMapStringsSep "\n" (needle: ''
+        if grep -F -- ${flake.inputs.nixpkgs.lib.escapeShellArg needle} "$candidate" >/dev/null; then
+          echo "Normal-flow policy reintroduced: ${needle}" >&2
+          return 1
+        fi
+      '') normalFlowForbiddenNeedles}
+    }
+
+    assert_normal_flow_assets() {
+      ${flake.inputs.nixpkgs.lib.concatMapStringsSep "\n" (relativePath: ''
+        require_no_normal_flow_policy "$source_tree/${relativePath}"
+      '') effectiveNormalFlowAssets}
+    }
+
+    assert_state_unchanged() {
+      name="$1"
+      repository="$2"
+      before_status="$(git -C "$repository" status --porcelain=v1)"
+      before_index="$(git -C "$repository" diff --cached --binary)"
+      before_worktree="$(git -C "$repository" diff --binary)"
+
+      require_no_automatic_git_mutation "$source_tree/ai/opencode/ORCHESTRATOR.md"
+      require_no_automatic_git_mutation "$source_tree/${sddWorkflow}"
+      require_explicit_sdd_routing "$source_tree/${sddWorkflow}"
+      assert_normal_flow_assets
+
+      test "$before_status" = "$(git -C "$repository" status --porcelain=v1)"
+      test "$before_index" = "$(git -C "$repository" diff --cached --binary)"
+      test "$before_worktree" = "$(git -C "$repository" diff --binary)"
+
+      printf '%s\n' "$name verified"
+    }
+
+    initialize_repository() {
+      repository="$1"
+
+      git init -q "$repository"
+      git -C "$repository" config user.email test@example.invalid
+      git -C "$repository" config user.name "Projection Test"
+      printf 'initial\n' > "$repository/tracked.txt"
+      git -C "$repository" add tracked.txt
+      git -C "$repository" commit -qm initial
+    }
+
+    staged_repository="$workdir/staged"
+    initialize_repository "$staged_repository"
+    printf 'staged\n' > "$staged_repository/tracked.txt"
+    git -C "$staged_repository" add tracked.txt
+    git -C "$staged_repository" diff --cached --quiet && exit 1
+    assert_state_unchanged "staged changes" "$staged_repository"
+
+    commit_a_repository="$workdir/commit-a"
+    initialize_repository "$commit_a_repository"
+    printf 'modified\n' > "$commit_a_repository/tracked.txt"
+    git -C "$commit_a_repository" diff --quiet && exit 1
+    git -C "$commit_a_repository" diff --cached --quiet
+    assert_state_unchanged "commit -a eligible changes" "$commit_a_repository"
+
+    empty_index_repository="$workdir/empty-index"
+    initialize_repository "$empty_index_repository"
+    git -C "$empty_index_repository" diff --quiet
+    git -C "$empty_index_repository" diff --cached --quiet
+    test -z "$(git -C "$empty_index_repository" status --porcelain=v1)"
+    assert_state_unchanged "empty index" "$empty_index_repository"
+
+    rejected_workflow="$workdir/inferred-routing.md"
+    cp "$source_tree/${sddWorkflow}" "$rejected_workflow"
+    chmod u+w "$rejected_workflow"
+    printf '\nSubstantial changes automatically enter SDD.\n' >> "$rejected_workflow"
+    if require_explicit_sdd_routing "$rejected_workflow"; then
+      echo "Inferred SDD routing was not rejected." >&2
+      exit 1
+    fi
+
+    rejected_policy="$workdir/reintroduced-policy.md"
+    cp "$source_tree/ai/claude/skills/_shared/sdd-orchestrator-workflow.md" "$rejected_policy"
+    chmod u+w "$rejected_policy"
+    printf '\nautomatically launch a refuter\n' >> "$rejected_policy"
+    if require_no_normal_flow_policy "$rejected_policy"; then
+      echo "Reintroduced normal-flow policy was not rejected." >&2
+      exit 1
+    fi
+  '';
   checkedHosts = hosts;
   inherit
     canonicalAssets
