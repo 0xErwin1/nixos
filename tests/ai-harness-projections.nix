@@ -212,12 +212,67 @@ let
     "ai/codex/sdd-orchestrator.md"
     "ai/opencode/ORCHESTRATOR.md"
   ];
-  portableTrustContractNeedles = [
-    "Lossless Choice Retention"
-    "Bounded, Requirement-Preserving Handoffs"
-    "Truthful Failure"
-    "Observed-Evidence Reporting"
-    "Claim Verification"
+  portableTrustContractObligations = [
+    {
+      name = "lossless choice retention";
+      needles = [
+        "every question, option, default, consequence, and answer syntax"
+        "block for an answer"
+        "do not infer or silently discard a choice"
+      ];
+    }
+    {
+      name = "requirement-preserving handoffs";
+      needles = [
+        "explicit requirements, constraints, acceptance criteria, and assigned scope"
+        "within that scope"
+        "must not claim work or completion they did not perform"
+      ];
+    }
+    {
+      name = "truthful failure handoff";
+      needles = [
+        "report the failure as it occurred"
+        "preserve the uncompleted work and next actionable state"
+        "do not present the result as successful"
+      ];
+    }
+    {
+      name = "observed-evidence reporting";
+      needles = [
+        "observed evidence"
+        "naming the command, artifact, tool result"
+        "distinguish observed facts from inferences"
+      ];
+    }
+    {
+      name = "claim verification";
+      needles = [
+        "against available evidence"
+        "If verification is unavailable"
+        "next action needed to verify it"
+      ];
+    }
+  ];
+  onboardingCommand = "ai/opencode/commands/sdd-onboard.md";
+  onboardingPrompt = "ai/opencode/prompts/sdd/sdd-onboard.md";
+  contradictoryPolicyNeedles = [
+    "RDD is required"
+    "require RDD"
+    "must produce RDD receipts"
+    "generate RDD receipts"
+    "automatically run 4R"
+    "automatically launch 4R"
+    "automatically run Judgment Day"
+    "run 4R automatically"
+    "run Judgment Day automatically"
+    "automatically launch a refuter"
+    "refuter majority decides"
+    "open a PR after"
+    "create a PR after"
+    "must open a PR"
+    "require a PR for delivery"
+    "route delivery through a PR"
   ];
   expectedSecretPaths = builtins.attrValues expectedSecretEnv;
   expectedSecretVars = builtins.attrNames expectedSecretEnv;
@@ -474,6 +529,26 @@ assert opencodeConfig.agent.sdd-onboard.tools.read;
 assert opencodeConfig.agent.sdd-onboard.tools.write;
 assert !(opencodeConfig.agent.sdd-onboard.tools ? task);
 assert !(opencodeConfig.agent.sdd-onboard.tools ? delegate);
+assert assetExists onboardingPrompt;
+assert builtins.all (needle: fileIncludes onboardingCommand needle) [
+  "agent: sdd-orchestrator"
+  "existing SDD preflight decision block"
+  "every question, option, default, consequence, and answer syntax"
+  "Engram `mem_current_project`"
+  "returned project value unchanged"
+  "hidden `sdd-onboard` agent"
+  "working directory, artifact-store mode, and complete preflight decision block"
+  "Relay a blocked-choice envelope losslessly"
+];
+assert builtins.all (needle: fileIncludes onboardingPrompt needle) [
+  "SDD executor for onboarding, not the orchestrator"
+  "Do NOT delegate, do NOT call task/delegate, and do NOT launch sub-agents"
+  "injected working directory, project, artifact-store mode, and preflight decision block"
+  "Do not replace an injected value or infer a missing user choice"
+  "blocking envelope that preserves every question, option, default, consequence, and answer syntax"
+  "Stop after returning that envelope"
+  "status`, `executive_summary`, `artifacts`, and `next_recommended`"
+];
 assert !(opencodeConfig.agent.sdd-verify.tools ? edit);
 assert !(opencodeConfig.agent.sdd-explore.tools ? edit);
 assert opencodeConfig.agent.sdd-apply.tools.edit;
@@ -486,7 +561,10 @@ assert singleOverlay.agent.sdd-orchestrator.permission.task.__replace__.explore 
 assert singleOverlay.agent.sdd-orchestrator.permission.question == "allow";
 assert singleOverlay.agent.sdd-orchestrator.tools.question;
 assert builtins.all (
-  relativePath: builtins.all (needle: fileIncludes relativePath needle) portableTrustContractNeedles
+  relativePath:
+  builtins.all (
+    obligation: builtins.all (needle: fileIncludes relativePath needle) obligation.needles
+  ) portableTrustContractObligations
 ) portableTrustContractAssets;
 assert builtins.all (
   relativePath:
@@ -495,6 +573,9 @@ assert builtins.all (
     "never automatic"
     "There is no PR auto-review rule"
   ]
+) portableTrustContractAssets;
+assert builtins.all (
+  relativePath: builtins.all (needle: fileDoesNotContain relativePath needle) contradictoryPolicyNeedles
 ) portableTrustContractAssets;
 assert builtins.all (
   relativePath: fileDoesNotContain relativePath ".atl/"
