@@ -134,6 +134,7 @@ let
   );
   expectedAgentModels = {
     sdd-orchestrator = "openai/gpt-5.6-sol";
+    sdd-onboard = "openai/gpt-5.6-sol";
     sdd-apply = "openai/gpt-5.6-terra";
     sdd-archive = "openai/gpt-5.6-luna";
     sdd-design = "openai/gpt-5.6-sol";
@@ -189,6 +190,7 @@ let
     sdd-design = "allow";
     sdd-explore = "allow";
     sdd-init = "allow";
+    sdd-onboard = "allow";
     sdd-propose = "allow";
     sdd-spec = "allow";
     sdd-tasks = "allow";
@@ -204,6 +206,19 @@ let
   singleOverlay = builtins.fromJSON (
     builtins.readFile (flakePath + "/ai/opencode/sdd-overlay-single.json")
   );
+  portableTrustContractAssets = [
+    "ai/shared/ORCHESTRATOR.md"
+    "ai/claude/sdd-orchestrator.md"
+    "ai/codex/sdd-orchestrator.md"
+    "ai/opencode/ORCHESTRATOR.md"
+  ];
+  portableTrustContractNeedles = [
+    "Lossless Choice Retention"
+    "Bounded, Requirement-Preserving Handoffs"
+    "Truthful Failure"
+    "Observed-Evidence Reporting"
+    "Claim Verification"
+  ];
   expectedSecretPaths = builtins.attrValues expectedSecretEnv;
   expectedSecretVars = builtins.attrNames expectedSecretEnv;
   managedFilesToScan = [
@@ -450,13 +465,40 @@ assert opencodeConfig.agent.sdd-orchestrator.permission.task == expectedNativeTa
 assert opencodeConfig.default_agent == "sdd-orchestrator";
 assert opencodeConfig.agent.sdd-orchestrator.mode == "primary";
 assert opencodeConfig.agent.sdd-orchestrator.tools.grep;
+assert opencodeConfig.agent.sdd-orchestrator.permission.question == "allow";
+assert opencodeConfig.agent.sdd-orchestrator.tools.question;
+assert opencodeConfig.agent.sdd-onboard.hidden;
+assert opencodeConfig.agent.sdd-onboard.mode == "subagent";
+assert opencodeConfig.agent.sdd-onboard.prompt == "{file:/home/iperez/.config/opencode/prompts/sdd/sdd-onboard.md}";
+assert opencodeConfig.agent.sdd-onboard.tools.read;
+assert opencodeConfig.agent.sdd-onboard.tools.write;
+assert !(opencodeConfig.agent.sdd-onboard.tools ? task);
+assert !(opencodeConfig.agent.sdd-onboard.tools ? delegate);
 assert !(opencodeConfig.agent.sdd-verify.tools ? edit);
 assert !(opencodeConfig.agent.sdd-explore.tools ? edit);
 assert opencodeConfig.agent.sdd-apply.tools.edit;
 assert multiOverlay.agent.sdd-orchestrator.permission.task.__replace__.general == "allow";
 assert multiOverlay.agent.sdd-orchestrator.permission.task.__replace__.explore == "allow";
+assert multiOverlay.agent.sdd-orchestrator.permission.question == "allow";
+assert multiOverlay.agent.sdd-orchestrator.tools.question;
 assert singleOverlay.agent.sdd-orchestrator.permission.task.__replace__.general == "allow";
 assert singleOverlay.agent.sdd-orchestrator.permission.task.__replace__.explore == "allow";
+assert singleOverlay.agent.sdd-orchestrator.permission.question == "allow";
+assert singleOverlay.agent.sdd-orchestrator.tools.question;
+assert builtins.all (
+  relativePath: builtins.all (needle: fileIncludes relativePath needle) portableTrustContractNeedles
+) portableTrustContractAssets;
+assert builtins.all (
+  relativePath:
+  builtins.all (needle: fileIncludes relativePath needle) [
+    "RDD-style receipts"
+    "never automatic"
+    "There is no PR auto-review rule"
+  ]
+) portableTrustContractAssets;
+assert builtins.all (
+  relativePath: fileDoesNotContain relativePath ".atl/"
+) portableTrustContractAssets;
 assert builtins.all (
   relativePath:
   builtins.all (needle: fileContains relativePath needle) [
