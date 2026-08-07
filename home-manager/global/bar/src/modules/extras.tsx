@@ -382,8 +382,16 @@ function peakWindow(p: UsageProvider): UsageWindow | null {
   return ws.reduce((a, b) => (b.usedPercent > a.usedPercent ? b : a));
 }
 
+function summaryNotes(p: UsageProvider): UsageNote[] {
+  const notes = p.notes ?? [];
+  if (p.id !== "kimi") return notes;
+
+  return notes.filter((n) => n.label === "Available" || n.label === "Spent");
+}
+
 function ProviderSummaryRow({ p }: { p: UsageProvider }) {
   const peak = peakWindow(p);
+  const notes = summaryNotes(p);
 
   return (
     <button cssClasses={["ai-summary-row"]} onClicked={() => setSelectedTab(p.id)}>
@@ -420,6 +428,20 @@ function ProviderSummaryRow({ p }: { p: UsageProvider }) {
               label={resetLabel(peak.resetAt)}
               halign={Gtk.Align.START}
             />
+          </box>
+        ) : p.available && notes.length > 0 ? (
+          <box cssClasses={["ai-notes"]} orientation={Gtk.Orientation.VERTICAL} spacing={2}>
+            {notes.map((n) => (
+              <box cssClasses={["ai-note"]} valign={Gtk.Align.CENTER}>
+                <label
+                  cssClasses={["ai-note-label"]}
+                  label={n.label}
+                  halign={Gtk.Align.START}
+                  hexpand
+                />
+                <label cssClasses={["ai-note-value"]} label={n.value} halign={Gtk.Align.END} />
+              </box>
+            ))}
           </box>
         ) : (
           <label

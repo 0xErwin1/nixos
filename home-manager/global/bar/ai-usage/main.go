@@ -1041,17 +1041,14 @@ func kimiProvider() provider {
 	spend := trackKimiSpend(bal.Data.Available)
 
 	p.Available = true
-	p.Notes = append(p.Notes, note{Label: "Balance", Value: fmt.Sprintf("$%.2f", bal.Data.Available)})
+	p.Notes = append(p.Notes,
+		note{Label: "Available", Value: fmt.Sprintf("$%.2f", bal.Data.Available)},
+		note{Label: "Spent", Value: fmt.Sprintf("$%.2f", spend.Credited-bal.Data.Available)},
+	)
 	if bal.Data.Voucher > 0 {
 		p.Notes = append(p.Notes, note{
 			Label: "Cash + voucher",
 			Value: fmt.Sprintf("$%.2f + $%.2f", bal.Data.Cash, bal.Data.Voucher),
-		})
-	}
-	if spend.Credited > 0 {
-		p.Notes = append(p.Notes, note{
-			Label: "Total spent",
-			Value: fmt.Sprintf("$%.2f", spend.Credited-bal.Data.Available),
 		})
 	}
 	p.Cost = kimiCost(spend)
