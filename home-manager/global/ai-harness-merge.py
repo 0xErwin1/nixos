@@ -17,10 +17,11 @@ Three merge kinds are supported:
                    table of a TOML document with the fragment's tables,
                    preserving all other tables and the file preamble.
   toml-mcp-permissions
-                   Add only missing canonical [mcp.*] and [permissions]
-                   tables to an Agens TOML document. Existing MCP and
-                   permissions tables, including same-name canonical tables,
-                   are preserved unchanged.
+                   Replace a marked block containing canonical [mcp.*] and
+                   [permissions] tables in an Agens TOML document. On first
+                   use, remove same-name canonical tables and canonical MCP
+                   descendants before adding the managed block; preserve every
+                   other setting.
 
 @VAR@ placeholders in the fragment are substituted from the process
 environment (the secret env files are sourced by the caller before this runs).
@@ -36,6 +37,9 @@ import sys
 
 PLACEHOLDER = re.compile(r"@([A-Z][A-Z0-9_]*)@")
 TABLE_HEADER = re.compile(r"^\s*\[\[?(?P<name>[^\]]+)\]\]?")
+AGENS_MANAGED_NAME = "agens-mcp-permissions"
+AGENS_MANAGED_BEGIN = f"# BEGIN HOME MANAGER MANAGED: {AGENS_MANAGED_NAME}"
+AGENS_MANAGED_END = f"# END HOME MANAGER MANAGED: {AGENS_MANAGED_NAME}"
 
 
 def substitute_secrets(text, target):
@@ -73,7 +77,7 @@ def write_atomic(target, text, mode):
     tmp = target + ".tmp"
 
     fd = os.open(tmp, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, mode)
-    with os.fdopen(fd, "w", encoding="utf-8") as handle:
+    with os.fdopen(fd, "w", encoding="utf-8", newline="") as handle:
         handle.write(text)
 
     os.chmod(tmp, mode)
@@ -157,15 +161,14 @@ def merge_toml_tables(fragment, target, prefixes):
 def toml_table_name(line):
     """Return a TOML table name as key segments, or None for a non-header.
 
-    This deliberately covers ordinary table headers rather than parsing TOML
-    values. Quoted keys are decoded so `[mcp."local server"]` and a canonical
-    table with the same quoted name compare equal.
+    Quoted keys are decoded so `[mcp."local server"]` and a canonical table
+    with the same quoted name compare equal. Array-table headers are accepted
+    so legacy descendants can be removed with their canonical server.
     """
-    match = TABLE_HEADER.match(line)
-    if not match:
+    name = toml_header_key(line)
+    if name is None:
         return None
 
-    name = match.group("name").strip()
     segments = []
     index = 0
     while index < len(name):
@@ -216,13 +219,117 @@ def toml_table_name(line):
     return None
 
 
+def toml_string_state_after_line(line, state):
+    """Track TOML multiline strings without interpreting their contents."""
+    index = 0
+    while index < len(line):
+        if state == '"""':
+            if line.startswith('"""', index):
+                state = None
+                index += 3
+            elif line[index] == "\\":
+                index += 2
+            else:
+                index += 1
+            continue
+
+        if state == "'''":
+            if line.startswith("'''", index):
+                state = None
+                index += 3
+            else:
+                index += 1
+            continue
+
+        if line[index] == "#":
+            break
+        if line.startswith('"""', index):
+            state = '"""'
+            index += 3
+            continue
+        if line.startswith("'''", index):
+            state = "'''"
+            index += 3
+            continue
+        if line[index] not in ('"', "'"):
+            index += 1
+            continue
+
+        quote = line[index]
+        index += 1
+        while index < len(line):
+            if quote == '"' and line[index] == "\\":
+                index += 2
+            elif line[index] == quote:
+                index += 1
+                break
+            else:
+                index += 1
+
+    return state
+
+
+def toml_lines(text):
+    """Return source lines with offsets and multiline-string visibility."""
+    result = []
+    state = None
+    offset = 0
+
+    for line in text.splitlines(keepends=True):
+        content = line.rstrip("\r\n")
+        result.append((offset, offset + len(line), content, state is None))
+        state = toml_string_state_after_line(line, state)
+        offset += len(line)
+
+    return result
+
+
+def toml_header_key(line):
+    """Extract a table key while respecting quoted keys and trailing comments."""
+    source = line.rstrip("\r\n").lstrip()
+    if source.startswith("[["):
+        opening_length = 2
+        closing = "]]"
+    elif source.startswith("["):
+        opening_length = 1
+        closing = "]"
+    else:
+        return None
+
+    quote = None
+    index = opening_length
+    while index < len(source):
+        if quote is not None:
+            if quote == '"' and source[index] == "\\":
+                index += 2
+            elif source[index] == quote:
+                quote = None
+                index += 1
+            else:
+                index += 1
+            continue
+
+        if source[index] in ('"', "'"):
+            quote = source[index]
+            index += 1
+            continue
+        if source.startswith(closing, index):
+            remainder = source[index + len(closing) :].strip()
+            if remainder and not remainder.startswith("#"):
+                return None
+            return source[opening_length:index].strip()
+        index += 1
+
+    return None
+
+
 def toml_table_blocks(text):
     """Return `(name, text)` pairs for table blocks in source order."""
     lines = text.splitlines(keepends=True)
     headers = [
         (index, toml_table_name(line))
-        for index, line in enumerate(lines)
-        if toml_table_name(line) is not None
+        for index, (_, _, line, structural) in enumerate(toml_lines(text))
+        if structural and toml_table_name(line) is not None
     ]
     return [
         (name, "".join(lines[start:end]))
@@ -230,30 +337,100 @@ def toml_table_blocks(text):
     ]
 
 
-def merge_toml_mcp_permissions_additive(fragment, target):
-    """Append canonical Agens tables absent from a runtime-owned TOML file."""
+def canonical_agens_blocks(fragment):
+    """Return canonical Agens table roots and their source blocks."""
+    blocks = [
+        (name, block)
+        for name, block in toml_table_blocks(fragment)
+        if name == ("permissions",) or (name and name[0] == "mcp" and len(name) > 1)
+    ]
+    roots = {
+        name if name == ("permissions",) else name[:2]
+        for name, _ in blocks
+    }
+    return roots, blocks
+
+
+def is_legacy_managed_table(name, roots):
+    return any(
+        name == root or (root[0] == "mcp" and name[: len(root)] == root)
+        for root in roots
+    )
+
+
+def strip_legacy_managed_tables(text, roots):
+    """Remove canonical legacy tables while retaining exterior TOML trivia."""
+    result = []
+    skipping = False
+
+    for start, end, content, structural in toml_lines(text):
+        line = text[start:end]
+        name = toml_table_name(content) if structural else None
+        if name is not None:
+            skipping = is_legacy_managed_table(name, roots)
+
+        trivia = structural and (
+            not content.strip() or content.lstrip().startswith("#")
+        )
+        if not skipping or trivia:
+            result.append(line)
+
+    return "".join(result)
+
+
+def managed_block_bounds(text, target):
+    """Return managed block bounds, or None when the target is unmarked."""
+    begin_lines = []
+    end_lines = []
+    for start, end, content, structural in toml_lines(text):
+        if not structural:
+            continue
+        if content == AGENS_MANAGED_BEGIN:
+            begin_lines.append((start, end))
+        elif content == AGENS_MANAGED_END:
+            end_lines.append((start, end))
+
+    if not begin_lines and not end_lines:
+        return None
+    if len(begin_lines) != 1 or len(end_lines) != 1:
+        raise ValueError(
+            f"AI harness MCP merge failed for {target}; corrupt Agens managed markers"
+        )
+
+    begin_start, _ = begin_lines[0]
+    end_start, end = end_lines[0]
+    if end_start <= begin_start:
+        raise ValueError(
+            f"AI harness MCP merge failed for {target}; corrupt Agens managed markers"
+        )
+
+    return begin_start, end
+
+
+def render_agens_managed_block(blocks):
+    body = "".join(block for _, block in blocks).strip("\n")
+    return f"{AGENS_MANAGED_BEGIN}\n{body}\n{AGENS_MANAGED_END}\n"
+
+
+def merge_toml_mcp_permissions(fragment, target):
+    """Replace Home Manager's marked Agens tables without owning the file."""
     existing = ""
     if os.path.exists(target):
-        with open(target, encoding="utf-8") as handle:
+        with open(target, encoding="utf-8", newline="") as handle:
             existing = handle.read()
 
-    existing_names = {name for name, _ in toml_table_blocks(existing)}
-    missing_blocks = [
-        block
-        for name, block in toml_table_blocks(fragment)
-        if (name == ("permissions",) or (name and name[0] == "mcp"))
-        and name not in existing_names
-    ]
+    canonical_names, canonical_blocks = canonical_agens_blocks(fragment)
+    managed = render_agens_managed_block(canonical_blocks)
+    bounds = managed_block_bounds(existing, target)
 
-    if not missing_blocks:
-        rendered = existing
+    if bounds is not None:
+        start, end = bounds
+        rendered = existing[:start] + managed + existing[end:]
     else:
-        body = "".join(missing_blocks).strip("\n")
-        if existing:
-            separator = "" if existing.endswith("\n") else "\n"
-            rendered = existing + separator + "\n" + body + "\n"
-        else:
-            rendered = body + "\n"
+        kept = strip_legacy_managed_tables(existing, canonical_names)
+        separator = "" if not kept or kept.endswith("\n") else "\n"
+        spacer = "\n" if kept else ""
+        rendered = kept + separator + spacer + managed
 
     write_atomic(target, rendered, target_mode(target))
 
@@ -264,7 +441,7 @@ KINDS = {
     "toml-mcpservers": lambda fragment, target: merge_toml_tables(
         fragment, target, ("mcp_servers",)
     ),
-    "toml-mcp-permissions": merge_toml_mcp_permissions_additive,
+    "toml-mcp-permissions": merge_toml_mcp_permissions,
 }
 
 
@@ -278,7 +455,11 @@ def main():
     with open(template, encoding="utf-8") as handle:
         fragment = substitute_secrets(handle.read(), target)
 
-    KINDS[kind](fragment, target)
+    try:
+        KINDS[kind](fragment, target)
+    except ValueError as error:
+        sys.stderr.write(f"{error}\n")
+        sys.exit(1)
 
 
 if __name__ == "__main__":

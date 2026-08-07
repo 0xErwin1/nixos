@@ -977,6 +977,12 @@ assert fileDoesNotInclude grokGlobalPolicy "SDD phase agents when present";
     workdir="$(mktemp -d)"
     trap 'rm -rf "$workdir"' EXIT
 
+    freshness_tree="$workdir/source"
+    cp -r --no-preserve=mode,ownership "$source_tree" "$freshness_tree"
+    chmod -R u+rwX "$freshness_tree"
+    PATH=${flake.inputs.nixpkgs.legacyPackages.x86_64-linux.python3}/bin:$PATH \
+      python3 -B "$freshness_tree/ai/agens/generate.py" --check
+
     require_no_automatic_git_mutation() {
       candidate="$1"
 

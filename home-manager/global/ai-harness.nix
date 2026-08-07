@@ -45,8 +45,10 @@ let
   # .claude.json; Codex's project trust levels, notices, and plugin state in
   # config.toml), or -- for agens -- settings the user edits by hand, such as
   # the default provider and model. A whole-file render would clobber them.
-  # For Agens, the merge helper only appends missing canonical MCP tables and
-  # permissions; all existing tables, including same-name MCPs, are preserved.
+  # For Agens, the merge helper replaces only a comment-delimited managed block.
+  # Its first run removes canonical MCP tables, their descendants, and the
+  # permission table so the target remains valid TOML, while unrelated user and
+  # runtime settings survive.
   mergedSecretConfigs = map toTemplateResource (resourcesFor "merge");
 
   renderTemplateSources =

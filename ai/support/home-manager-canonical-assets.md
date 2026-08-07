@@ -8,4 +8,4 @@ Managed examples include skills, agents, commands, orchestrators, prompts, stati
 
 Unmanaged examples include auth files, sessions, caches, logs, databases, histories, sockets, PIDs, telemetry, local backups, and machine-local secret files.
 
-Agens' runtime-owned `~/.config/agens/config.toml` is merged additively: Home Manager appends a canonical MCP table or `[permissions]` table only when that exact table is absent. Existing MCPs (including canonical names), permissions, comments, and unrelated settings remain unchanged.
+Agens' runtime-owned `~/.config/agens/config.toml` contains one comment-delimited Home Manager block for canonical MCP servers and permissions. On the first marked-block activation, Home Manager removes legacy `[permissions]`, each canonical `[mcp.<name>]`, and that server's descendant tables before adding the block. Later activations replace only the block. Provider/model settings, custom MCP servers, runtime tables, comments, and all other content outside the markers remain freely editable.
