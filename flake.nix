@@ -87,6 +87,7 @@
             ccstatusline = final.callPackage "${self}/pkgs/ccstatusline" { };
             helium = final.callPackage "${self}/pkgs/helium" { };
             engram = final.callPackage "${self}/pkgs/engram" { };
+            gentle-ai = final.callPackage "${self}/pkgs/gentle-ai" { };
             opencode = final.callPackage "${self}/pkgs/opencode" { };
             tuicr = final.callPackage "${self}/pkgs/tuicr" { };
             codegraph = final.callPackage "${self}/pkgs/codegraph" { };
