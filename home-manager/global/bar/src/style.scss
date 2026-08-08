@@ -732,8 +732,10 @@ entry placeholder {
   min-width: 0.9rem;
   min-height: 0.9rem;
   padding: 0 0.15rem;
+  // Lifted, but not pulled outward: a horizontal overhang spills into the gap
+  // before the next control, which reads as that pair being grouped and leaves
+  // the following icon looking stranded.
   margin-top: -0.2rem;
-  margin-right: -0.25rem;
 }
 
 .notif-popups-window {
