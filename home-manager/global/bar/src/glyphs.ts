@@ -23,21 +23,46 @@ export const FULLSCREEN_ICON = "\u{f0294}";
 export const MIC_MUTED = "\u{f036d}";
 export const MIC_UNMUTED = "\u{f036c}";
 
-export const WIFI_ETHERNET = "\u{f0200}";
-export const WIFI_WIFI = "\u{f1eb}";
-export const WIFI_DISCONNECTED = "\u{f16b5}";
+// Network status glyphs. Names are the Nerd Font glyph names as shipped in
+// JetBrainsMono Nerd Font, not the upstream Material Design Icons names.
+export const ETHERNET = "\u{f0200}"; // md-ethernet
+export const WIFI = "\u{f1eb}"; // fa-wifi — generic, for the panel tab button
+export const WIFI_OFF = "\u{f05aa}"; // md-wifi_off — radio disabled
+export const WIFI_UNAVAILABLE = "\u{f092e}"; // md-wifi_strength_off_outline
+export const WIFI_SYNC = "\u{f16c7}"; // md-wifi_sync — associating
+export const WIFI_PORTAL = "\u{f16bf}"; // md-wifi_lock — captive portal
+export const VPN = "\u{f0582}"; // md-vpn — panel row, where the linework reads
+// Badge-scale tunnel marker. md-vpn's strokes turn to mush overlaid on another
+// glyph, so the bar uses a solid silhouette that survives the downscale.
+export const VPN_BADGE = "\u{f0565}"; // md-shield_check
+
+// Reachability glyphs for wired: the font has no ethernet variants, so the
+// degraded wired states borrow the "web" family, which names the thing that is
+// actually degraded (internet reachability) rather than the medium.
+export const INTERNET_OFF = "\u{f0a8e}"; // md-web_off
+export const INTERNET_SYNC = "\u{f1792}"; // md-web_sync
+export const INTERNET_PORTAL = "\u{f1791}"; // md-web_refresh
 
 // Wi-Fi dashboard panel glyphs.
-export const WIFI_LOCK = "\u{f033e}";
-export const WIFI_ACTIVE = "\u{f012c}";
-export const WIFI_REFRESH = "\u{f0450}";
+export const WIFI_LOCK = "\u{f033e}"; // md-lock
+export const WIFI_ACTIVE = "\u{f012c}"; // md-check
+export const WIFI_REFRESH = "\u{f0450}"; // md-refresh
 
 export function wifiSignalGlyph(strength: number): string {
-  if (strength >= 75) return "\u{f0928}"; // wifi-strength-4
-  if (strength >= 50) return "\u{f0925}"; // wifi-strength-3
-  if (strength >= 25) return "\u{f0922}"; // wifi-strength-2
-  if (strength > 0) return "\u{f091f}"; // wifi-strength-1
-  return "\u{f092f}"; // wifi-strength-off-outline
+  if (strength >= 75) return "\u{f0928}"; // md-wifi_strength_4
+  if (strength >= 50) return "\u{f0925}"; // md-wifi_strength_3
+  if (strength >= 25) return "\u{f0922}"; // md-wifi_strength_2
+  if (strength > 0) return "\u{f091f}"; // md-wifi_strength_1
+  return "\u{f092f}"; // md-wifi_strength_outline
+}
+
+/** Same signal buckets, but marked as associated without internet access. */
+export function wifiSignalAlertGlyph(strength: number): string {
+  if (strength >= 75) return "\u{f0929}"; // md-wifi_strength_4_alert
+  if (strength >= 50) return "\u{f0926}"; // md-wifi_strength_3_alert
+  if (strength >= 25) return "\u{f0923}"; // md-wifi_strength_2_alert
+  if (strength > 0) return "\u{f0920}"; // md-wifi_strength_1_alert
+  return "\u{f092b}"; // md-wifi_strength_alert_outline
 }
 
 // Bluetooth + dashboard glyphs.

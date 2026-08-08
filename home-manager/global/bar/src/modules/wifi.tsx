@@ -5,14 +5,19 @@ import { createBinding, createComputed, createState, For, onCleanup } from "ags"
 import { execAsync, subprocess } from "ags/process";
 
 import {
-  WIFI_ETHERNET,
-  WIFI_WIFI,
-  WIFI_DISCONNECTED,
+  VPN,
+  VPN_BADGE,
   WIFI_LOCK,
   WIFI_ACTIVE,
   WIFI_REFRESH,
   wifiSignalGlyph,
 } from "../glyphs";
+import {
+  networkStatus,
+  networkGlyph,
+  reachLabel,
+  statusTooltip,
+} from "./network-state";
 import {
   openDashboard,
   closeDashboard,
@@ -22,8 +27,6 @@ import {
 } from "./dashboard-state";
 
 const network = AstalNetwork.get_default();
-
-const WIFI_OFF_GLYPH = "\u{f092f}"; // wifi-strength-off-outline
 
 // Connect/disconnect go through nmcli rather than AstalNetwork's native
 // activate(): nmcli creates and persists the NetworkManager connection profile,
@@ -116,7 +119,6 @@ function WifiTabInner({ wifi }: { wifi: AstalNetwork.Wifi }) {
   const enabled = createBinding(wifi, "enabled");
   const scanning = createBinding(wifi, "scanning");
   const activeSsid = createBinding(wifi, "ssid");
-  const activeAp = createBinding(wifi, "activeAccessPoint");
   const accessPoints = createBinding(wifi, "accessPoints")(dedupeSort);
 
   const emptyText = createComputed(
@@ -194,12 +196,23 @@ function WifiTabInner({ wifi }: { wifi: AstalNetwork.Wifi }) {
       .catch(() => setStatus("Check password"));
   };
 
-  const focusGlyph = createComputed([enabled, activeAp], (en, ap) =>
-    !en ? WIFI_OFF_GLYPH : ap ? wifiSignalGlyph(ap.strength) : WIFI_DISCONNECTED,
+  // The focus card mirrors the bar trigger: same derived status, so the panel can
+  // never disagree with the icon the user clicked to open it.
+  const focusGlyph = networkStatus(networkGlyph);
+  const focusTitle = createComputed([networkStatus, enabled], (status, en) => {
+    if (status.medium === "wired") return "Wired";
+    if (!en) return "Wi-Fi Off";
+    return status.ssid || "Not connected";
+  });
+  const focusSubtitle = networkStatus(reachLabel);
+  const signalText = networkStatus((status) =>
+    status.medium === "wifi" && status.strength > 0
+      ? `Signal ${status.strength}%`
+      : status.medium === "wired" && status.wiredSpeed > 0
+        ? `${status.wiredSpeed} Mb/s`
+        : "",
   );
-  const focusTitle = createComputed([enabled, activeSsid], (en, s) =>
-    !en ? "Wi-Fi Off" : s || "Not connected",
-  );
+  const vpnText = networkStatus((status) => status.vpn.join(", "));
 
   return (
     <box
@@ -217,11 +230,26 @@ function WifiTabInner({ wifi }: { wifi: AstalNetwork.Wifi }) {
       >
         <label cssClasses={["focus-glyph", "wifi-focus-glyph"]} label={focusGlyph} />
         <label cssClasses={["focus-title"]} label={focusTitle} />
+        <label cssClasses={["focus-subtitle"]} label={focusSubtitle} />
         <label
-          cssClasses={["focus-subtitle"]}
-          label="Connected"
-          visible={activeSsid((s) => !!s)}
+          cssClasses={["focus-detail"]}
+          label={signalText}
+          visible={signalText((t) => !!t)}
         />
+        <box
+          cssClasses={["wifi-vpn-row"]}
+          halign={Gtk.Align.CENTER}
+          spacing={6}
+          visible={vpnText((t) => !!t)}
+        >
+          <label cssClasses={["wifi-vpn-glyph"]} label={VPN} />
+          <label
+            cssClasses={["wifi-vpn-name"]}
+            label={vpnText}
+            maxWidthChars={24}
+            ellipsize={Pango.EllipsizeMode.END}
+          />
+        </box>
         <box cssClasses={["wifi-active-row"]} visible={activeSsid((s) => !!s)}>
           <label
             cssClasses={["wifi-active-ssid"]}
@@ -349,20 +377,17 @@ export function WifiTab() {
 }
 
 export function WifiTrigger() {
-  const state = createBinding(network, "state");
+  const glyph = networkStatus(networkGlyph);
+  const tooltip = networkStatus(statusTooltip);
+  const vpnActive = networkStatus((status) => status.vpn.length > 0);
 
-  const glyph = state(() => {
-    if (network.primary === AstalNetwork.Primary.WIRED) return WIFI_ETHERNET;
-    if (network.primary === AstalNetwork.Primary.WIFI || network.wifi)
-      return WIFI_WIFI;
-    return WIFI_DISCONNECTED;
-  });
-
-  const tooltip = state(() => {
-    if (network.primary === AstalNetwork.Primary.WIRED) return "Wired";
-    const ssid = network.wifi?.ssid;
-    return ssid ? `Connected to ${ssid}` : "Disconnected";
-  });
+  // One state class at a time so the stylesheet can colour the icon by
+  // reachability (degraded states read as warnings) without any inline styling.
+  const iconClasses = networkStatus((status) => [
+    "control-icon",
+    "wifi-icon",
+    `net-${status.reach}`,
+  ]);
 
   // Press-based (GestureClick) rather than a <button>'s release-based click: a
   // button spawned the focus-taking panel window and then needed a pointer
@@ -388,11 +413,21 @@ export function WifiTrigger() {
           if (anyPanelOpen()) openDashboard("wifi");
         }}
       />
-      <label
-        cssClasses={["control-icon", "wifi-icon"]}
-        label={glyph}
-        valign={Gtk.Align.CENTER}
-      />
+      <overlay>
+        <label cssClasses={iconClasses} label={glyph} valign={Gtk.Align.CENTER} />
+        {/* Overlaid rather than placed beside the icon: the control row keeps a
+            uniform slot per glyph, so a second child would make this the one
+            trigger wider than the rest. Sits bottom-end, clear of the signal
+            glyph's dense corner. */}
+        <label
+          $type="overlay"
+          cssClasses={["wifi-vpn-badge"]}
+          label={VPN_BADGE}
+          halign={Gtk.Align.END}
+          valign={Gtk.Align.END}
+          visible={vpnActive}
+        />
+      </overlay>
     </box>
   );
 }

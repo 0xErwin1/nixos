@@ -54,6 +54,10 @@ let
       pkgs.typescript
       pkgs.gtk4
       pkgs.gtk4-layer-shell
+      # AstalNetwork does not model VPN tunnels, so the network module reads
+      # NM.Client's active connections directly. astal-network does not propagate
+      # the NM typelib, so it has to be pulled in explicitly for `gi://NM`.
+      pkgs.networkmanager
       astalPkgs.io
       astalPkgs.astal4
       astalPkgs.battery

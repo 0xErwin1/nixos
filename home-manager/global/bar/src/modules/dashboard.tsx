@@ -10,7 +10,7 @@ import {
 } from "./dashboard-state";
 import { WifiTab } from "./wifi";
 import { BluetoothTab } from "./bluetooth";
-import { WIFI_WIFI, BT_ON, CLOSE_GLYPH } from "../glyphs";
+import { WIFI, BT_ON, CLOSE_GLYPH } from "../glyphs";
 
 function TabButton({
   tab,
@@ -90,7 +90,7 @@ export default function Dashboard() {
           </box>
 
           <box cssClasses={["dashboard-tabs"]} halign={Gtk.Align.CENTER} spacing={10}>
-            <TabButton tab="wifi" label="Wi-Fi" glyph={WIFI_WIFI} />
+            <TabButton tab="wifi" label="Wi-Fi" glyph={WIFI} />
             <TabButton tab="bluetooth" label="Bluetooth" glyph={BT_ON} />
           </box>
         </box>
