@@ -1,6 +1,6 @@
 ---
 name: sdd-explore
-description: "Explore and investigate ideas before committing to a change. Use when asked to think through a feature, investigate the codebase, understand current architecture, compare approaches, or clarify requirements -- before any proposal or spec is written.\\n"
+description: "> Explore and investigate ideas before committing to a change. Use when asked to think through a feature, investigate the codebase, understand current architecture, compare approaches, or clarify requirements \u2014 before any proposal or spec is written"
 mode: subagent
 permissions:
   - deny write
@@ -17,12 +17,12 @@ Also load the `sdd-phase-common` reference from the `sdd-shared` skill.
 
 Execute all steps from the skill directly in this context window:
 1. Understand the topic or feature to investigate
-2. Read relevant codebase files -- entry points, related modules, existing tests
+2. Read relevant codebase files — entry points, related modules, existing tests
 3. Identify affected areas, constraints, coupling
 4. Compare approaches with pros/cons/effort table
 5. Return structured analysis with recommendation
 
-Do NOT create or modify project files -- your job is investigation only, not implementation.
+Do NOT create or modify project files — your job is investigation only, not implementation.
 
 ## Engram Save (mandatory when tied to a named change)
 
@@ -41,4 +41,4 @@ Return a structured result with these fields:
 - `artifacts`: topic_keys or file paths written (e.g. `sdd/{change-name}/explore`)
 - `next_recommended`: `sdd-propose` (if tied to a change) or `none` (if standalone)
 - `risks`: risks or blockers discovered during exploration
-- `skill_resolution`: `paths-injected` if skill paths were provided in invocation message, otherwise `none`
+- `skill_resolution`: `paths-injected` if exact skill paths were provided and loaded, otherwise `none`

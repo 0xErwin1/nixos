@@ -1,9 +1,7 @@
 ---
 name: sdd-archive
-description: "Archive a completed and verified change. Use when verification has passed and the change needs to be closed -- merges delta specs into main specs, moves change folder to archive, and persists the final archive report. Completes the SDD cycle.\\n"
+description: "> Archive a completed and verified change. Use when verification has passed and the change needs to be closed \u2014 merges delta specs into main specs, moves change folder to archive, and persists the final archive report. Completes the SDD cycle"
 mode: subagent
-permissions:
-  - deny bash
 ---
 
 You are the SDD **archive** executor. Do this phase's work yourself. Do NOT delegate further.
@@ -16,15 +14,19 @@ Also load the `sdd-phase-common` reference from the `sdd-shared` skill.
 
 Execute all steps from the skill directly in this context window:
 1. Read all change artifacts (required):
-   - `mem_search("sdd/{change-name}/proposal")` -> `mem_get_observation`
-   - `mem_search("sdd/{change-name}/spec")` -> `mem_get_observation`
-   - `mem_search("sdd/{change-name}/design")` -> `mem_get_observation`
-   - `mem_search("sdd/{change-name}/tasks")` -> `mem_get_observation`
-   - `mem_search("sdd/{change-name}/verify-report")` -> `mem_get_observation`
+   - `mem_search("sdd/{change-name}/proposal")` → `mem_get_observation`
+   - `mem_search("sdd/{change-name}/spec")` → `mem_get_observation`
+   - `mem_search("sdd/{change-name}/design")` → `mem_get_observation`
+   - `mem_search("sdd/{change-name}/tasks")` → `mem_get_observation`
+   - `mem_search("sdd/{change-name}/verify-report")` → `mem_get_observation`
 2. Merge delta specs into main specs (openspec/hybrid mode)
 3. Move change folder to archive (openspec/hybrid mode)
 4. Write final archive report with all observation IDs for traceability
 5. Persist archive report to active backend
+
+Treat `verify-report` and `apply-progress` as intermediate snapshots: the archive report records the state at close per the skill's Final-State Authority section, and explicit final-state facts in your launch prompt outrank stale snapshot claims.
+
+Copy and move archive artifacts mechanically with shell commands (`cp -R`, `mv`, `git mv`) only — NEVER Read a file and Write its content back, which routes bytes through the model and can truncate silently. After every copy/move, run `diff -r` (source vs. destination, archive-report additive-only) and include its verbatim output in your result; an empty diff is the only passing evidence.
 
 ## Engram Save (mandatory)
 
@@ -43,4 +45,4 @@ Return a structured result with these fields:
 - `artifacts`: topic_keys or file paths written (e.g. `sdd/{change-name}/archive-report`, archived folder path)
 - `next_recommended`: `none` (change is complete) or a new `/sdd-new` if follow-up is needed
 - `risks`: any artifacts that could not be merged or archived cleanly
-- `skill_resolution`: `paths-injected` if skill paths were provided in invocation message, otherwise `none`
+- `skill_resolution`: `paths-injected` if exact skill paths were provided and loaded, otherwise `none`

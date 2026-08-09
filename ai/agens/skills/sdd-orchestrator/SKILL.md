@@ -3,89 +3,95 @@ name: sdd-orchestrator
 description: "Lazy SDD workflow and phase mechanics for Agens."
 ---
 
-# SDD Orchestrator Workflow (lazy-loaded)
-
-This is the detailed SDD + Testing procedure for the orchestrator. It is read on demand: the always-on orchestrator shell keeps only the orchestrator role, delegation rules, memory protocol, and anti-patterns, and points here before any SDD command, SDD/Judgment-Day phase delegation, or testing-pipeline intent.
-
-The orchestrator role and Delegation Rules defined in the always-on orchestrator shell still apply; this file does not repeat them.
-
----
-
 ## SDD Workflow (Spec-Driven Development)
 
-SDD is the structured planning layer for substantial changes.
-
-### Scope Proportionality (LOCAL POLICY, load-bearing)
-
-The design/spec MUST be proportional to the request. Do NOT expand a bounded feature into infrastructure the user did not ask for. Adding a background reconciler, retention/pruning jobs, idempotency-token schemes, distributed lifecycle/state machines, tombstoning ledgers, or exactly-once guarantees to a simple feature ("attach a file to a comment", "add a filter", "show a badge") is over-engineering and is BANNED unless the requirement explicitly calls for that guarantee or the user asks. Pick the smallest design that satisfies the stated requirement; surface any heavier option as an explicit "do you also want X?" question instead of silently building it. When delegating `sdd-propose` / `sdd-design`, forward this rule.
+SDD is the structured planning layer for substantial changes. This file is the lazy-loaded Claude Code workflow surface; read it before handling `/sdd-*`, SDD meta-commands, SDD/Judgment-Day phase delegation, or SDD continuation/routing.
 
 ### Artifact Store Policy
 
-- `engram` -- default when available; persistent memory across sessions
-- `openspec` -- file-based artifacts; use only when user explicitly requests
-- `hybrid` -- both backends; cross-session recovery + local files; more tokens per op
-- `none` -- return results inline only; recommend enabling engram or openspec
+- `engram` — default when available; persistent memory across sessions.
+- `openspec` — file-based artifacts; use only when the user explicitly requests it or a change already exists there.
+- `hybrid` — both backends; useful for team-shareable files plus cross-session recovery.
+- `none` — return results inline only; recommend enabling engram or openspec.
 
 ### Commands
 
-Skills (appear in autocomplete):
-- `/sdd-init` -> initialize SDD context; detects stack, bootstraps persistence
-- `/sdd-explore <topic>` -> investigate an idea; reads codebase, compares approaches; no files created
-- `/sdd-status [change]` -> read-only structured status for the active change, artifacts, tasks, and next action
-- `/sdd-apply [change]` -> implement tasks in batches; checks off items as it goes
-- `/sdd-verify [change]` -> validate implementation against specs; reports CRITICAL / WARNING / SUGGESTION
-- `/sdd-archive [change]` -> close a change and persist final state in the active artifact store
-- `/sdd-onboard` -> guided end-to-end walkthrough of SDD using your real codebase
+Skills and slash commands:
 
-Meta-commands (type directly -- orchestrator handles them, won't appear in autocomplete):
-- `/sdd-new <change>` -> start a new change by delegating exploration + proposal to sub-agents
-- `/sdd-continue [change]` -> run the next dependency-ready phase via sub-agent(s)
-- `/sdd-ff <name>` -> fast-forward planning: proposal -> specs -> design -> tasks
+- `/sdd-init` → initialize SDD context; detects stack and testing capabilities.
+- `/sdd-explore <topic>` → investigate an idea; no implementation.
+- `/sdd-status [change]` → read-only structured status.
+- `/sdd-apply [change]` → implement pending tasks in batches.
+- `/sdd-verify [change]` → validate implementation against specs/tasks.
+- `/sdd-archive [change]` → close a completed change.
+- `/sdd-onboard` → guided end-to-end walkthrough.
 
-`/sdd-new`, `/sdd-continue`, and `/sdd-ff` are meta-commands handled by YOU. Do NOT invoke them as skills.
+Meta-commands are handled by the orchestrator directly and do not appear in autocomplete:
 
-### Status-First Routing Guard
+- `/sdd-new <change>` → run exploration then proposal.
+- `/sdd-continue [change]` → run the next dependency-ready phase.
+- `/sdd-ff <name>` → fast-forward proposal → specs → design → tasks.
 
-Before routing, continuing, applying, verifying, or archiving an SDD change, produce structured status first by reading the `sdd-status-contract` reference of the `sdd-shared` skill and following it against the active artifact store (engram by default). The native SDD dispatcher/status guard applies only to file-based stores (`openspec`/`hybrid`): a native engine reads ONLY OpenSpec file artifacts under `openspec/changes/` and always emits `artifactStore: openspec`, so it cannot observe Engram-backed changes. When the session artifact store is `engram`, do NOT invoke a native dispatcher and do NOT treat its openspec-oriented output (`blocked`, `Active OpenSpec change not found`, `nextRecommended: sdd-new`) as a real blocker for an Engram change that exists -- resolve status entirely from Engram (`mem_search` + `mem_get_observation` on the change's topic keys such as `sdd/{change-name}/tasks`) using the manual status schema. Treat native status as authoritative only for `openspec`/`hybrid`. Route ONLY by `nextRecommended` and the dependency states; never infer routing from free text. If `blockedReasons` is non-empty, do not proceed to apply, archive, or terminal work. If `nextRecommended` is `verify`, verification/remediation may run only to refresh evidence; if it is `resolve-blockers`, report `blockedReasons` and stop; if it is a planning token (`propose`, `spec`, `design`, or `tasks`), launch the corresponding planning phase. A missing planning artifact named by a planning token is the expected OUTPUT of that phase, not a blocker -- do not treat it as a `blockedReason`. Carry `contextFiles`, task progress, dependency states, and `actionContext` (allowed edit roots) into every sub-agent launch.
+### Native SDD Dispatcher Guard
+
+Before routing, continuing, applying, verifying, or archiving an SDD change, first determine this session's artifact store. The native dispatcher (`gentle-ai sdd-continue [change] --cwd <repo>` or `gentle-ai sdd-status [change] --cwd <repo> --json --instructions`) reads only OpenSpec file artifacts and always emits `artifactStore: openspec`; it cannot observe Engram-backed changes.
+
+- For `engram`, do NOT invoke the dispatcher. Resolve status from Engram topic keys with `mem_search` followed by `mem_get_observation`.
+- For `openspec` or `hybrid`, use the dispatcher when available and treat its JSON as authoritative over prompt inference.
+- Route only by structured `nextRecommended`, dependency states, and `blockedReasons`; never infer from free text.
+- If blocked, stop and report the blocker. Do not proceed to apply, archive, or terminal work.
 
 ### SDD Session Preflight (HARD GATE)
 
 Before executing ANY SDD command or natural-language SDD request, ensure this session has an explicit `SDD Session Preflight` decision block.
 
-This applies to `/sdd-new`, `/sdd-ff`, `/sdd-continue`, `/sdd-explore`, `/sdd-status`, `/sdd-apply`, `/sdd-verify`, `/sdd-archive`, and natural-language equivalents such as "use SDD to add dark mode" / "quiero specs para esto".
+This applies to `/sdd-new`, `/sdd-ff`, `/sdd-continue`, `/sdd-explore`, `/sdd-status`, `/sdd-apply`, `/sdd-verify`, `/sdd-archive`, and natural-language equivalents such as "use SDD to add dark mode" / "do it with SDD".
 
 Required preflight choices:
 
 1. **Execution mode**: `interactive` or `auto`.
-2. **Artifact store**: `engram`, `openspec`, or `hybrid` when Engram is callable. If Engram is unavailable, offer only file/inline-safe choices (`openspec`, `none`).
-3. **Review budget**: changed-line threshold above which `sdd-tasks` flags the change as review-heavy (`review_budget_lines`, default 400). This is an advisory reporting threshold, not a gate.
+2. **Artifact store**: `openspec`, `engram`, or `hybrid` when Engram is callable. If Engram is unavailable, offer only file/inline-safe choices.
+3. **Chained PR strategy**: the canonical `delivery_strategy` — `ask-on-risk`, `auto-chain`, `single-pr`, or `exception-ok`. The preflight menu offers the first three; `exception-ok` is reachable only when the user explicitly accepts `size:exception`.
+4. **Review budget**: maximum changed lines before stopping for reviewer-burden approval.
 
-Use Agens choice transport for SDD Session Preflight. Do NOT render the full preflight menu as plain chat text.
+User-facing preflight question format:
 
-Ask all three preflight groups in one single `grouped choice prompt` tool call so Claude Code renders the groups as one interactive prompt. Do NOT run this as a sequential wizard. Do NOT issue three separate choice prompts.
+Use Agens choice transport for SDD Session Preflight only when it is available in the current interactive runtime and all four groups are exactly representable. While that native route is usable, do NOT render a duplicate plain-chat menu. If the tool is unavailable, denied, the runtime is noninteractive, or the prompt is unrepresentable, follow the Lossless Blocking Prompts fallback in the orchestrator rule and STOP.
 
-The single grouped choice prompt must contain these four localized groups in this order:
+When the native route is representable, ask all four preflight groups in one single `grouped choice prompt` tool call so Claude Code can render the groups as one interactive prompt. Do NOT run this as a sequential wizard. Do NOT issue four separate `grouped choice prompt` tool calls.
+
+The single `grouped choice prompt` tool call must contain these four localized groups in this order:
 
 1. Pace: Interactive, Automatic.
-2. Artifacts: Engram, OpenSpec, Both.
-3. Review: 400 lines, 800 lines, Other.
+2. Artifacts: OpenSpec, Engram, Both.
+3. PRs: Ask me, Single PR, Auto.
+4. Review: 400 lines, 800 lines, Other.
 
-Match the user's current language for question labels and descriptions. Treat the preflight UI as direct orchestrator conversation, not a generated technical artifact: technical artifacts still default to English, but this UI follows the user's conversation language. Do NOT mix languages inside one grouped question. Do NOT show canonical values or option codes in the UI.
+Match the user's current language and active persona for question labels and descriptions. Treat the preflight UI as direct orchestrator conversation, not as a generated technical artifact. Technical artifacts still default to English, but this UI follows the user's conversation language/persona. Do NOT mix languages inside one grouped question.
 
-After the grouped call returns, map the selected human labels to canonical values internally (do not reveal them in the UI). If Other is selected for review budget, ask one follow-up for the numeric budget.
+Do NOT show option codes in the interactive UI. Do NOT show canonical values or other internal values in the interactive UI labels or descriptions.
+
+After the single grouped `grouped choice prompt` tool call returns, map the selected human labels to canonical values internally. Do not reveal the canonical values in the UI.
+
+If Other is selected for review budget, ask one follow-up question for the numeric budget.
+
+Only after all four preflight choices are collected, summarize them as the `SDD Session Preflight` decision block and continue with the SDD init guard/requested phase.
 
 Map answers to canonical values:
 
 - Pace: Interactive -> `interactive`; Automatic -> `auto`.
-- Artifacts: Engram -> `engram`; OpenSpec -> `openspec`; Both -> `hybrid`.
+- Artifacts: OpenSpec -> `openspec`; Engram -> `engram`; Both -> `hybrid`.
+- PRs: Ask me -> `ask-on-risk`; Single PR -> `single-pr`; Auto -> `auto-chain`.
 - Review: 400 lines -> `review_budget_lines: 400`; 800 lines -> `review_budget_lines: 800`; Other -> ask one follow-up for the number.
+
+The PR canonical values are exactly the `delivery_strategy` domain `sdd-tasks` and `sdd-apply` accept; never emit a value outside it. The preflight offers no separate chained option because `delivery_strategy` is only consulted once the tasks forecast flags review-budget risk: below that line there is nothing to chain, and above it `Auto` already resolves to `auto-chain` without asking again.
 
 Hard gate rules:
 
 - `openspec/config.yaml`, existing SDD artifacts, previous `sdd-init` results, or installed SDD assets do NOT satisfy session preflight.
-- If the session has no preflight block, ask the single grouped `grouped choice prompt` preflight above. Do not run init, delegate phases, edit files, or apply tasks until all three choices are collected.
+- If the session has no preflight block, ask the single grouped `grouped choice prompt` preflight above. Do not run init, delegate phases, edit files, or apply tasks until all four choices are collected.
 - Cache the choices for this session and include them in later phase prompts.
-- If the user explicitly provided all three choices in the current conversation, summarize them as the session preflight block and continue.
+- If the user explicitly provided all four choices in the current conversation, summarize them as the session preflight block and continue.
 
 ### SDD Entry Routing (MANDATORY)
 
@@ -95,91 +101,92 @@ Only launch `sdd-apply` when all are true:
 
 1. Session preflight is complete.
 2. The active change has existing spec, design, and tasks artifacts.
-3. The user explicitly asked to apply/continue implementation, or the prior SDD planning phase completed and the orchestrator has reported the Review Workload Forecast.
+3. The user explicitly asked to apply/continue implementation, or the prior SDD planning phase completed and the orchestrator has passed the review workload guard.
 
 If any dependency is missing, STOP and propose `/sdd-new` or `/sdd-ff`; do not implement.
 
 ### SDD Init Guard (MANDATORY)
 
-Before executing ANY SDD command (`/sdd-new`, `/sdd-ff`, `/sdd-continue`, `/sdd-explore`, `/sdd-status`, `/sdd-apply`, `/sdd-verify`, `/sdd-archive`, `/sdd-test`, `/sdd-explore-testing`, `/sdd-plan-testing`, `/sdd-run-testing`, `/sdd-report-testing`) or any conversational testing-intent entry (natural-language trigger that maps to the testing pipeline), check if `sdd-init` has been run for this project:
+Before executing any SDD command or meta-command, check whether `sdd-init` has run for this project:
 
-1. Search Engram: `mem_search(query: "sdd-init/{project}", project: "{project}")`
-2. If found -> init was done, proceed normally
-3. If NOT found -> run `sdd-init` FIRST (delegate to sdd-init sub-agent), THEN proceed with the requested command
+1. Search Engram: `mem_search(query: "sdd-init/{project}", project: "{project}")`.
+2. If found, proceed normally.
+3. If not found, run `sdd-init` first, then continue with the requested command.
 
-This ensures:
-- Testing capabilities are always detected and cached
-- Strict TDD Mode is activated only when `strict_tdd_configured`, `runner_available`, and `applicable_behavioral_boundary` are all true
-- The project context (stack, conventions) is available for all phases
-
-Do NOT skip this check. Do NOT ask the user -- just run init silently if needed.
+This ensures testing capabilities, Strict TDD mode, and project context are available to later phases.
 
 ### Execution Mode
 
-The execution mode is collected by `SDD Session Preflight` (Pace group). If it is missing, enforce the hard gate before any phase work. The cached execution mode is one of:
+This is collected by `SDD Session Preflight`. If missing, enforce the hard gate before any phase work. Cache the collected mode for the session:
 
-- **Automatic** (`auto`): Run phases back-to-back without pausing, with cheap inline Automatic Mode Continuity checks between phases. Surface only real gate failures or the final result.
-- **Interactive** (`interactive`): After each phase completes, show the result summary and ASK: "Want to adjust anything or continue?" before proceeding to the next phase. Use this when the user wants to review and steer each step.
+- **Automatic** (`auto`): phases run back-to-back without pausing, but the orchestrator gatekeeper validates after each phase before launching the next.
+- **Interactive** (`interactive`): after each phase, show a concise summary and ask whether to adjust or continue.
 
-If the user doesn't specify, default to **Interactive** (safer, gives the user control).
+If the user doesn't specify, default to **Automatic**. After scope approval, expect zero further prompts on the happy path and at most one actionable prompt per recoverable failure; the gatekeeper summarizes phase progress instead of interrupting except on a second consecutive gate failure or a genuine scope/product decision. Interactive approval is phase-scoped; words like "continue", "dale", or "go on" approve only the immediate next phase.
 
-Cache the mode choice for the session -- don't ask again unless the user explicitly requests a mode change.
+Before the `sdd-propose` phase in interactive mode, offer the user a proposal question round focused on business/product understanding, business problem, business rules, outcomes, implications and impact, edge cases, scope boundaries, non-goals, constraints, and product tradeoffs. Do not ask about test commands, PR shape, changed-line budget, or other harness mechanics unless the user explicitly asks.
 
-In **Interactive** mode, between phases:
-1. Show a concise summary of what the phase produced
-2. List what the next phase will do
-3. Ask: "¿Continuamos? / Continue?" -- accept YES/continue, NO/stop, or specific feedback to adjust
-4. If the user gives feedback, incorporate it before running the next phase
+### Automatic Mode Gatekeeper (MANDATORY)
 
-Interactive approval is phase-scoped. A reply such as "continue", "dale", or "go on" approves only the immediate next phase, not the rest of the SDD pipeline. Do not treat a generated artifact as approved until the user has had a chance to review it or explicitly delegate that review.
+In Automatic mode, the orchestrator validates every delegated phase result before launching the next phase. The gatekeeper runs after every phase and before launching the next sub-agent.
 
-Before the propose phase in interactive mode, offer the user a proposal question round instead of silently deciding whether the proposal is clear enough. Explain that the questions are meant to improve the PRD/proposal by uncovering business understanding, business rules, implications, impact, edge cases, and product tradeoffs. Prefer 3-5 concrete product questions per round, then summarize the resulting assumptions and ask whether the user wants to correct anything or run a second round. Cover business and product decisions: business problem, target users and situations, business rules, product outcome, current-state gap, implications and impact, edge cases, decision gaps, first-slice scope boundaries, non-goals, product constraints, and business tradeoffs.
+Gate checks:
 
-For this agent (sub-agent delegation): **Automatic** means phases run back-to-back via sub-agents without pausing, with cheap inline Automatic Mode Continuity checks between phases. **Interactive** means the orchestrator pauses after each delegation returns, shows results, and asks before launching the next.
+- **Contract conformance:** returned `status`, `executive_summary`, `artifacts`, `next_recommended`, `risks`, and `skill_resolution`; status is not partial/failed/blocked.
+- **Artifact existence:** declared artifact is readable in the active backend.
+- **No hallucination:** claimed files, symbols, commands, and artifacts exist.
+- **No drift from inputs:** proposal/spec/design/tasks/apply outputs stay consistent with their dependencies.
+- **Routing coherence:** `next_recommended` follows the dependency graph and no unaddressed CRITICAL risk remains.
 
-### Automatic Mode Continuity (lightweight)
+Hybrid validation:
 
-In **Automatic** mode, phases run back-to-back. Between phases the orchestrator does a **cheap inline** check only — **no sub-agent**, no `sdd-verify` on planning artifacts, no 4R, no Judgment Day:
+- Inline for low-risk phases: `sdd-explore`, `sdd-spec`, `sdd-tasks`, `sdd-archive`.
+- Fresh-context phase-contract validator for `sdd-design` and `sdd-apply`: validate only the phase artifact against its inputs. This is not adversarial implementation review, inspects no code diff, and creates no 4R/Judgment-Day budget.
+- Escalate to fresh-context review when an inline gate smells wrong.
 
-- Phase `status` indicates success (not failed/blocked).
-- Declared artifacts exist and are readable in the active store.
-- Spot-check: claimed paths resolve; output does not invent requirements outside prior phase scope.
+On gate failure, re-run the same phase exactly once with specific corrective feedback. If the second result fails, STOP the automatic chain and report; do not advance dependent phases.
 
-**On failure:** re-run the **same** phase once with corrective feedback. If it fails again, STOP and report to the user.
+### Native Runtime Attempt Authority (MANDATORY)
 
-**Interactive mode:** no automatic inter-phase gate — the user is the gate when they say continue.
+Use the provider-owned Git-common-dir runtime ledger for every runtime-bearing `sdd-apply`, `sdd-verify`, or remediation continuation. It is the single attempt/budget authority for both OpenSpec and Engram; never persist caller-authored counters in OpenSpec files, Engram topics, prompts, or Pi state.
 
-`sdd-verify` runs only after implementation (`sdd-apply` or a batch apply), never as a planning-phase phase-contract sub-agent review.
-
-### SDD Gate Convergence -- Anti-Thrash (LOCAL POLICY, load-bearing)
-
-- **Severity floor:** Only genuine BLOCKER/CRITICAL contract violations re-open apply or planning. WARNING/nit = `info`, never re-run design.
-- **Convergence budget:** At most 2 correction rounds per phase or batch issue; then STOP for the user.
-- **No re-litigation** of decisions frozen by a passed verify or the user.
-- **Executors resolve trivial local gaps** and record them in `apply-progress`.
+1. Before an actor or harness launch, call `gentle-ai sdd-attempt acquire --cwd <repo> --change <change> --request-id <id> --work-unit <label> --evidence-goal <goal> --max-attempts <count> --max-changed-lines <count>`.
+   - Exception: when this launch is a phase actor started BY a parent that already ran this exact acquire and got `state: proceed`, do not acquire blind — pass the parent's returned token as `--token <token>` on the actor's own acquire call. A matching token proves the actor is continuing that SAME attempt and returns `proceed` with zero ledger mutation; acquiring without it collides with the parent's own active attempt and deadlocks on `blocked: active_attempt` (#2291).
+2. Launch only when acquire returns `state: proceed`, and retain its opaque `token`. `blocked` or `complete` stops the launch.
+3. After the external run, call `gentle-ai sdd-attempt settle --cwd <repo> --change <change> --token <token> --request-id <settle-id> ...` with a request ID distinct from the acquire operation's request ID, outcome, and bounded evidence. Reuse each operation's own ID only for its idempotent replay. Settle derives native binding/remediation inputs; pass `--successor-lineage` only for a distinct approved successor, otherwise the bound lineage remains its own successor.
+4. Route only from settle's `proceed`, `blocked`, or `complete` state. Full `status|begin|finish|reset` operations are diagnostic/compatibility surfaces; reset requires an explicit maintainer scope decision and is never automatic.
 
 ### Artifact Store Mode
 
-The artifact store is collected by `SDD Session Preflight` (Artifacts group). If it is missing, enforce the hard gate before any phase work. The cached store is one of:
+This is collected by `SDD Session Preflight`. If missing, enforce the hard gate before any phase work. Cache the collected store (`engram`, `openspec`, `hybrid`, or `none`) for the session. If unspecified, default to `engram` when Engram is available; otherwise use `none` and explain the persistence limitation.
 
-- **`engram`**: Fast, no files created. Artifacts live in engram only. Best for solo work and quick iteration. Note: re-running a phase overwrites the previous version (no history).
-- **`openspec`**: File-based. Creates `openspec/` directory with full artifact trail. Committable, shareable with team, full git history.
-- **`hybrid`**: Both -- files for team sharing + engram for cross-session recovery. Higher token cost.
+Pass the artifact store mode to every SDD phase agent.
 
-If the user doesn't specify, detect: if engram is available -> default to `engram`. Otherwise -> `none`.
+### Delivery Strategy
 
-Cache the artifact store choice for the session. Pass it as `artifact_store.mode` to every sub-agent launch.
+On the first SDD chain request in a session, ask once for delivery strategy and cache it:
 
-### Review Workload Forecast (report, never gate)
+- `ask-on-risk` — default; ask only when the tasks forecast detects review-budget risk.
+- `auto-chain` — automatically split into chained/stacked PR slices when needed.
+- `single-pr` — proceed as one PR only if the size is within budget.
+- `exception-ok` — user accepts `size:exception` when over budget. The preflight menu cannot select this; it is reached only when the user explicitly accepts `size:exception`, either up front or when `ask-on-risk` stops to ask.
 
-After `sdd-tasks` completes, read `Review Workload Forecast` from the task result and report `Estimated changed lines` and `Review budget risk` to the user in one line.
+These four are the whole domain. Pass `delivery_strategy` to `sdd-tasks` and `sdd-apply`.
 
-Then launch `sdd-apply`. A high forecast NEVER blocks apply and never shrinks the assigned scope.
+### Chain Strategy
 
-Apply is still batched into checkpoints when the change is large — see **Batched Apply-Verify Cycles**, which is driven by task count and phase boundaries, for context freshness and rollback granularity. Never size an apply batch to fit the review budget: that conflates a review artifact with an execution artifact and produces batch-splitting thrash.
+When delivery planning yields chained PRs, ask once for chain strategy and cache it:
+
+- `stacked-to-main` — each PR targets the previous PR branch or main in sequence.
+- `feature-branch-chain` — PR #1 targets the tracker branch; child PRs target the immediate previous PR branch; only the tracker merges to main.
+
+When chained PRs are selected, treat `chained-pr` (registry skill `gentle-ai-chained-pr`) as a required skill match. Resolve and forward it by registry path to `sdd-tasks` and `sdd-apply`; do not hardcode its path.
+
+Pass it as `chain_strategy` to `sdd-tasks` and `sdd-apply` prompts alongside `delivery_strategy`.
 
 ### Dependency Graph
-```
+
+```text
 proposal -> specs --> tasks -> apply -> verify -> archive
              ^
              |
@@ -187,7 +194,27 @@ proposal -> specs --> tasks -> apply -> verify -> archive
 ```
 
 ### Result Contract
-Each phase returns: `status`, `executive_summary`, `artifacts`, `next_recommended`, `risks`, `skill_resolution`.
+
+Every SDD phase returns: `status`, `executive_summary`, `artifacts`, `next_recommended`, `risks`, and `skill_resolution`.
+
+### Review Workload Guard (MANDATORY)
+
+After `sdd-tasks` completes and before launching `sdd-apply`, inspect `Review Workload Forecast`.
+
+If it says `Chained PRs recommended: Yes`, `400-line budget risk: High`, estimated changed lines exceed 400, or `Decision needed before apply: Yes`, apply cached `delivery_strategy`:
+
+- `ask-on-risk`: stop and ask whether to split or proceed with `size:exception`.
+- `auto-chain`: split automatically; ask for `chain_strategy` only if missing.
+- `single-pr`: stop and require/record `size:exception` before apply.
+- `exception-ok`: continue and tell `sdd-apply` this run uses `size:exception`.
+
+Any other `delivery_strategy` value is invalid. Do NOT pick the nearest branch and do NOT proceed: STOP, report the unrecognised value, and re-collect the delivery strategy before launching `sdd-apply`.
+
+Always pass the resolved `delivery_strategy`, `chain_strategy`, and PR boundary/exception to `sdd-apply`.
+
+When launching `sdd-apply`, always include the resolved `delivery_strategy`, `chain_strategy`, and any chosen PR boundary/exception in the prompt.
+
+<!-- gentle-ai:sdd-model-assignments -->
 
 
 ## SDD Testing Workflow

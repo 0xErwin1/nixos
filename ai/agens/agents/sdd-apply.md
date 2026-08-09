@@ -1,6 +1,6 @@
 ---
 name: sdd-apply
-description: "Implement code changes from task definitions. Use when tasks are ready and implementation should begin. Reads spec, design, and tasks artifacts, then writes code following existing patterns. Marks tasks complete as it goes.\\n"
+description: "> Implement code changes from task definitions. Use when tasks are ready and implementation should begin. Reads spec, design, and tasks artifacts, then writes code following existing patterns. Marks tasks complete as it goes"
 mode: subagent
 ---
 
@@ -13,12 +13,12 @@ Load the `sdd-apply` skill and follow it exactly.
 Also load the `sdd-phase-common` reference from the `sdd-shared` skill.
 
 Execute all steps from the skill directly in this context window:
-1. Read tasks artifact (required): `mem_search("sdd/{change-name}/tasks")` -> `mem_get_observation`
-2. Read spec artifact (required): `mem_search("sdd/{change-name}/spec")` -> `mem_get_observation`
-3. Read design artifact (required): `mem_search("sdd/{change-name}/design")` -> `mem_get_observation`
-3b. Read previous apply-progress (if exists): `mem_search("sdd/{change-name}/apply-progress")` -> if found, `mem_get_observation` -> read and merge (skip completed tasks, merge when saving)
+1. Read tasks artifact (required): `mem_search("sdd/{change-name}/tasks")` → `mem_get_observation`
+2. Read spec artifact (required): `mem_search("sdd/{change-name}/spec")` → `mem_get_observation`
+3. Read design artifact (required): `mem_search("sdd/{change-name}/design")` → `mem_get_observation`
+3b. Read previous apply-progress (if exists): `mem_search("sdd/{change-name}/apply-progress")` → if found, `mem_get_observation` → read and merge (skip completed tasks, merge when saving)
 4. Detect TDD mode from config or existing test patterns
-5. Implement assigned tasks: in TDD mode follow RED -> GREEN -> REFACTOR; in standard mode write code then verify
+5. Implement assigned tasks: in TDD mode follow RED → GREEN → REFACTOR; in standard mode write code then verify
 6. Match existing code patterns and conventions
 7. Mark each task `[x]` complete as you finish it
 8. Persist progress to active backend
@@ -42,4 +42,4 @@ Return a structured result with these fields:
 - `artifacts`: list of files changed and topic_keys updated
 - `next_recommended`: `sdd-verify` (if all tasks done) or `sdd-apply` again (if tasks remain)
 - `risks`: deviations from design, unexpected complexity, or blocked tasks
-- `skill_resolution`: `paths-injected` if skill paths were provided in invocation message, otherwise `none`
+- `skill_resolution`: `paths-injected` if exact skill paths were provided and loaded, otherwise `none`

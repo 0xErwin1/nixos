@@ -1,6 +1,6 @@
 ---
 name: sdd-verify
-description: "Validate that implementation matches specs, design, and tasks. Use when apply reports done (or partial) and the change must be verified against its contract before archive.\\n"
+description: "> Validate that implementation matches specs, design, and tasks. Use when apply reports done (or partial) and the change must be verified against its contract before archive"
 mode: subagent
 permissions:
   - deny write
@@ -15,11 +15,11 @@ Load the `sdd-verify` skill and follow it exactly.
 Also load the `sdd-phase-common` reference from the `sdd-shared` skill.
 
 Execute all steps from the skill directly in this context window:
-1. Read spec artifact (required): `mem_search("sdd/{change-name}/spec")` -> `mem_get_observation`
-2. Read tasks artifact (required): `mem_search("sdd/{change-name}/tasks")` -> `mem_get_observation`
-3. Read apply-progress (required): `mem_search("sdd/{change-name}/apply-progress")` -> `mem_get_observation`
+1. Read spec artifact (required): `mem_search("sdd/{change-name}/spec")` → `mem_get_observation`
+2. Read tasks artifact (required): `mem_search("sdd/{change-name}/tasks")` → `mem_get_observation`
+3. Read apply-progress (required): `mem_search("sdd/{change-name}/apply-progress")` → `mem_get_observation`
 4. Run the test suite appropriate to the stack (use terminal/MCP as needed)
-5. Check each spec requirement against implementation -- flag CRITICAL / WARNING / SUGGESTION
+5. Check each spec requirement against implementation — flag CRITICAL / WARNING / SUGGESTION
 6. Confirm tasks are marked complete and match code state
 7. Persist verify report to active backend
 
@@ -40,4 +40,4 @@ Return a structured result with these fields:
 - `artifacts`: topic_keys or file paths written (e.g. `sdd/{change-name}/verify-report`)
 - `next_recommended`: `sdd-archive` (if clean) or `sdd-apply` (if CRITICAL issues found)
 - `risks`: unresolved CRITICAL issues that block archive
-- `skill_resolution`: `paths-injected` if skill paths were provided in invocation message, otherwise `none`
+- `skill_resolution`: `paths-injected` if exact skill paths were provided and loaded, otherwise `none`

@@ -3,7 +3,7 @@ name: comment-writer
 description: "Write warm, direct collaboration comments. Trigger: PR feedback, issue replies, reviews, Slack messages, or GitHub comments."
 license: Apache-2.0
 metadata:
-  author: iperez
+  author: gentleman-programming
   version: "1.0"
 ---
 
@@ -27,7 +27,7 @@ Use it for:
 | Keep it short | Prefer 1 to 3 short paragraphs or a tight bullet list. |
 | Explain why | Give the technical reason when asking for a change. |
 | Avoid pile-ons | Comment on the highest-value issue, not every tiny preference. |
-| Match target context language | Write in the target context language by default: Spanish thread -> Spanish comment, English thread -> English comment, mixed context -> target message language. If the user explicitly requests a language or tone, follow that request. For Spanish comments, use neutral/professional Spanish unless the user or target context clearly calls for regional tone (e.g. voseo). |
+| Match target context language | Write in the target context language by default: Spanish issue/thread -> Spanish comment, English issue/thread -> English comment, mixed context -> target message language. If the user explicitly requests a language or tone, follow that request. For Spanish comments, use neutral/professional Spanish by default unless the user or target context clearly calls for regional tone. |
 | No em dashes | Use commas, periods, or parentheses instead. |
 
 ## Comment Formula
@@ -61,7 +61,7 @@ For the next PR, add links to the previous and following PRs so the chain stays 
 ### Ask for split
 
 ```markdown
-This PR is well over the review budget, so I'd rather split it than ask anyone to review it in one sitting.
+This PR exceeds the 400-line budget, so we need to split it or justify `size:exception`.
 
 Suggested order: foundation + tests first, then integration, then docs. That gives each review a clear start and end.
 ```
