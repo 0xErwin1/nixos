@@ -16,8 +16,13 @@ Apply these rules only to the primary SDD orchestrator, never to executor phase 
 
 ## Reviews
 
-- Normal flow has no automatic review lifecycle.
-- 4R and Judgment Day remain separate, explicit opt-ins. Never start either after apply, verify, commit, or PR unless the user explicitly requests it.
+- Native bounded review governs the normal flow. Each provider's own orchestrator
+  carries the full contract — route, receipt identity, normalization ordering, and
+  delivery gates — and is authoritative over this summary.
+- One immutable candidate permits at most one scoped correction. There is no
+  loop-until-clean behavior, and gates never reopen review for unchanged content.
+- Judgment Day remains a separate, explicit opt-in on top of native review; start it
+  only when the user asks for it by name.
 
 ## Provider applicability
 

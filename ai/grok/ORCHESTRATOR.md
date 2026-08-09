@@ -16,8 +16,13 @@ These rules apply only to Grok Build's primary orchestrator thread, never to exe
 
 ## Reviews
 
-- Normal flow has no automatic review lifecycle.
-- 4R and Judgment Day remain separate, explicit opt-ins. Run either only through the projected `reviewer` profile and only when the user explicitly requests it; never start either after apply, verify, commit, or PR.
+- Grok Build has no upstream gentle-ai orchestrator, so it does not carry the native
+  bounded-review contract the other providers do. Do not simulate that runtime with a
+  prompt-only review loop; the `gentle-ai` CLI is the only authority for it.
+- Review here stays explicit. Run 4R or Judgment Day only through the projected
+  `reviewer` profile and only when the user requests it by name; never start either
+  after apply, verify, commit, or PR on your own initiative.
+- One candidate permits at most one scoped correction round. No loop-until-clean.
 
 ## Provider applicability
 
