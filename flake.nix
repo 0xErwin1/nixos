@@ -332,14 +332,21 @@
             flake = flakeView;
           };
 
-          ai-harness-projections =
-            functionalCheck "ai-harness-projections" ./tests/ai-harness-projections.nix
-              {
-                 flake = flakeView;
-                 flakePath = self.outPath;
-                 resourceMatrix = aiHarnessResourceMatrix;
-                 runRuntimeTests = true;
-              };
+          # BRANCH-SCOPED: disabled on experiment/gentle-ai-full-harness only.
+          # This check encodes local harness policy (thin SDD commands, own
+          # orchestrator wording, validated preflight blocks) that upstream
+          # gentle-ai contradicts by design, so ~94 assertions no longer hold.
+          # Relaxing them one by one would leave a test that still looks
+          # authoritative while validating almost nothing. Restore this block
+          # verbatim before merging anything back to main.
+          # ai-harness-projections =
+          #   functionalCheck "ai-harness-projections" ./tests/ai-harness-projections.nix
+          #     {
+          #        flake = flakeView;
+          #        flakePath = self.outPath;
+          #        resourceMatrix = aiHarnessResourceMatrix;
+          #        runRuntimeTests = true;
+          #     };
 
           atlas-desktop = functionalCheck "atlas-desktop" ./tests/atlas-desktop.nix {
             flake = flakeView;
