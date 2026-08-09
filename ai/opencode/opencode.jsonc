@@ -261,6 +261,134 @@
         "skill": true,
         "write": true
       }
+    },
+    // Review panel from gentle-ai v2.3. Model is intentionally omitted so these
+    // inherit the session default; every model value above is hand-curated.
+    "jd-fix-agent": {
+      "description": "Surgical fix agent for judgment-day protocol",
+      "hidden": true,
+      "mode": "subagent",
+      "prompt": "{file:/home/iperez/.config/opencode/prompts/review/jd-fix-agent.md}",
+      "tools": {
+        "bash": true,
+        "edit": true,
+        "read": true,
+        "write": true
+      }
+    },
+    "jd-judge-a": {
+      "description": "Adversarial code reviewer \u2014 blind judge A for judgment-day protocol",
+      "hidden": true,
+      "mode": "subagent",
+      "prompt": "{file:/home/iperez/.config/opencode/prompts/review/jd-judge-a.md}",
+      "tools": {
+        "*": false,
+        "bash": false,
+        "edit": false,
+        "read": true,
+        "task": false,
+        "write": false
+      }
+    },
+    "jd-judge-b": {
+      "description": "Adversarial code reviewer \u2014 blind judge B for judgment-day protocol",
+      "hidden": true,
+      "mode": "subagent",
+      "prompt": "{file:/home/iperez/.config/opencode/prompts/review/jd-judge-b.md}",
+      "tools": {
+        "*": false,
+        "bash": false,
+        "edit": false,
+        "read": true,
+        "task": false,
+        "write": false
+      }
+    },
+    "review-readability": {
+      "description": "R2 Readability reviewer \u2014 naming, complexity, intention, maintainability, review size, and context clarity",
+      "hidden": true,
+      "mode": "subagent",
+      "prompt": "{file:/home/iperez/.config/opencode/prompts/review/review-readability.md}",
+      "permission": {
+        "bash": "deny",
+        "edit": "deny"
+      },
+      "tools": {
+        "*": false,
+        "bash": false,
+        "edit": false,
+        "read": false,
+        "task": false,
+        "write": false
+      }
+    },
+    "review-refuter": {
+      "description": "Batched adversarial refuter \u2014 evaluates every BLOCKER/CRITICAL candidate through one assigned lens and returns one verdict per finding",
+      "hidden": true,
+      "mode": "subagent",
+      "prompt": "{file:/home/iperez/.config/opencode/prompts/review/review-refuter.md}",
+      "tools": {
+        "*": false,
+        "bash": false,
+        "edit": false,
+        "read": true,
+        "task": false,
+        "write": false
+      }
+    },
+    "review-reliability": {
+      "description": "R3 Reliability reviewer \u2014 behavior-first tests, coverage value, edge cases, determinism, contracts, and regressions",
+      "hidden": true,
+      "mode": "subagent",
+      "prompt": "{file:/home/iperez/.config/opencode/prompts/review/review-reliability.md}",
+      "permission": {
+        "bash": "deny",
+        "edit": "deny"
+      },
+      "tools": {
+        "*": false,
+        "bash": false,
+        "edit": false,
+        "read": false,
+        "task": false,
+        "write": false
+      }
+    },
+    "review-resilience": {
+      "description": "R4 Resilience reviewer \u2014 fallbacks, retry/backoff, graceful degradation, observability, load, rollback, and SLO risks",
+      "hidden": true,
+      "mode": "subagent",
+      "prompt": "{file:/home/iperez/.config/opencode/prompts/review/review-resilience.md}",
+      "permission": {
+        "bash": "deny",
+        "edit": "deny"
+      },
+      "tools": {
+        "*": false,
+        "bash": false,
+        "edit": false,
+        "read": false,
+        "task": false,
+        "write": false
+      }
+    },
+    "review-risk": {
+      "description": "R1 Risk reviewer \u2014 security, privilege boundaries, data exposure, dependency risks, and merge-blocking vulnerabilities",
+      "hidden": true,
+      "mode": "subagent",
+      "prompt": "{file:/home/iperez/.config/opencode/prompts/review/review-risk.md}",
+      "permission": {
+        "bash": "deny",
+        "edit": "deny"
+      },
+      "tools": {
+        "*": false,
+        "bash": false,
+        "edit": false,
+        "read": false,
+        "task": false,
+        "write": false
+      }
     }
   },
   "mcp": {
