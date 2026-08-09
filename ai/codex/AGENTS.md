@@ -886,6 +886,7 @@ Any action that cannot be undone with `git checkout` or by deleting a generated 
   no `pip install --user`, and never add a package to the Home Manager or NixOS
   configuration as a side effect of running a command. Adding a package to the
   configuration is its own change and needs to be requested.
+- Prefer bat/rg/fd/sd/eza over cat/grep/find/sed/ls. If one is missing, reach it with `nix shell nixpkgs#<pkg> -c <cmd>` for a one-off, or `nix develop` when the project's flake already provides it. Never install with brew, apt, or any imperative package manager: this host is Nix-managed and such installs do not persist. If Nix cannot provide it either, use the POSIX tool and say so.
 
 ## Atlas task retrieval
 
