@@ -60,6 +60,7 @@
     ccstatusline
     codegraph
     engram
+    gentle-ai
     grok-build
     maestro
     pi-coding-agent
