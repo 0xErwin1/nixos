@@ -1,5 +1,5 @@
 ---
-description: Explore and investigate an idea or feature -- reads codebase and compares approaches
+description: Explore and investigate an idea or feature — reads codebase and compares approaches
 ---
 
 If the native `sdd-explore` sub-agent is available, delegate this command to it.
@@ -16,11 +16,11 @@ Explore the topic "$ARGUMENTS" in this codebase. Investigate the current state, 
 
 ENGRAM PERSISTENCE (artifact store mode: engram):
 Read project context (optional):
-  mem_search(query: "sdd-init/{project}", project: "{project}") -> if found, mem_get_observation(id) for full content
+  mem_search(query: "sdd-init/{project}", project: "{project}") → if found, mem_get_observation(id) for full content
 Save exploration:
   mem_save(title: "sdd/$ARGUMENTS/explore", topic_key: "sdd/$ARGUMENTS/explore", type: "architecture", project: "{project}", capture_prompt: false, content: "{exploration}")
   Set capture_prompt: false when the Engram tool schema supports it; if an older schema rejects or does not expose the field, omit it rather than failing.
 
-This is an exploration only -- do NOT create any files or modify code. Just research and return your analysis.
+This is an exploration only — do NOT create any files or modify code. Just research and return your analysis.
 
 Return a structured result with: status, executive_summary, detailed_report, artifacts, and next_recommended.

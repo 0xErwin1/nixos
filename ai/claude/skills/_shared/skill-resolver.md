@@ -19,7 +19,7 @@ The registry is an **index** of skill names, triggers, scopes, and exact `SKILL.
 Resolution order:
 1. Use the session cache if present.
 2. `mem_search(query: "skill-registry", project: "{project}")` → `mem_get_observation(id)` for full content.
-3. Fallback: read `.agent/skill-registry.md` from the project root.
+3. Fallback: read `.atl/skill-registry.md` from the project root.
 4. No registry found → proceed without project skills and warn the user to run `gentle-ai skill-registry refresh`.
 
 ### Step 2: Match Relevant Skills
@@ -61,7 +61,7 @@ If a sub-agent reports anything other than `paths-injected`, the orchestrator MU
 
 ## Compaction Safety
 
-- The registry persists in Engram and `.agent/skill-registry.md`.
+- The registry persists in Engram and `.atl/skill-registry.md`.
 - Delegators can recover selected paths after compaction by re-reading the registry.
 - Sub-agents receive exact files to read, so skill meaning is not degraded by generated summaries.
 

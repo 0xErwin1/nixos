@@ -41,12 +41,14 @@ in
     "opencode-prompts"
     "opencode-skills"
     "opencode-tui"
+    "opencode-plugins"
     "claude-instructions"
     "claude-orchestrator"
     "claude-engram-protocol"
     "claude-agents"
     "claude-commands"
     "claude-skills"
+    "claude-output-styles"
     "codex-instructions"
     "codex-orchestrator"
     "codex-engram-instructions"
@@ -54,6 +56,10 @@ in
     "codex-commands"
     "codex-agents"
     "codex-skills"
+    "codex-hooks"
+    "codex-sdd-strong-profile"
+    "codex-sdd-mid-profile"
+    "codex-sdd-cheap-profile"
     "grok-instructions"
     "grok-orchestrator"
     "grok-agents"
@@ -133,6 +139,14 @@ in
       delivery = "project";
       source = "opencode/tui.json";
       target = ".config/opencode/tui.json";
+    }
+    {
+      name = "opencode-plugins";
+      classification = "effective";
+      delivery = "project";
+      source = "opencode/plugins";
+      target = ".config/opencode/plugins";
+      recursive = true;
     }
     {
       name = "claude-instructions";
@@ -224,12 +238,48 @@ in
       recursive = true;
     }
     {
+      name = "claude-output-styles";
+      classification = "effective";
+      delivery = "project";
+      source = "claude/output-styles";
+      target = ".claude/output-styles";
+      recursive = true;
+    }
+    {
       name = "codex-skills";
       classification = "effective";
       delivery = "project";
       source = "codex/skills";
       target = ".codex/skills";
       recursive = true;
+    }
+    {
+      name = "codex-hooks";
+      classification = "effective";
+      delivery = "project";
+      source = "codex/hooks.json";
+      target = ".codex/hooks.json";
+    }
+    {
+      name = "codex-sdd-strong-profile";
+      classification = "effective";
+      delivery = "project";
+      source = "codex/sdd-strong.config.toml";
+      target = ".codex/sdd-strong.config.toml";
+    }
+    {
+      name = "codex-sdd-mid-profile";
+      classification = "effective";
+      delivery = "project";
+      source = "codex/sdd-mid.config.toml";
+      target = ".codex/sdd-mid.config.toml";
+    }
+    {
+      name = "codex-sdd-cheap-profile";
+      classification = "effective";
+      delivery = "project";
+      source = "codex/sdd-cheap.config.toml";
+      target = ".codex/sdd-cheap.config.toml";
     }
     {
       name = "grok-instructions";

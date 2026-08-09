@@ -5,28 +5,25 @@ disable-model-invocation: true
 user-invocable: false
 license: MIT
 metadata:
-  author: iperez
+  author: gentleman-programming
   version: "3.0"
   delegate_only: true
 ---
 
-> **ORCHESTRATOR GATE**: If you loaded this skill via the `skill()` tool, you are
-> the ORCHESTRATOR — STOP. Do NOT execute these instructions inline. Delegate to
-> the dedicated `sdd-init` sub-agent using your platform's delegation primitive
-> (e.g., `task(...)`, sub-agent invocation, etc.). This skill is for EXECUTORS
-> only.
+## Execution Role
 
-## Executor Override
+Confirm your role before acting. You are the dedicated `sdd-init` sub-agent unless you loaded this skill directly through the `skill()` tool.
 
-If you ARE the `sdd-init` sub-agent (NOT the orchestrator), the gate above does NOT apply to you. Continue with the phase work below. Do NOT delegate. Do NOT call the Skill tool. You are the executor — execute.
+- If you are the `sdd-init` sub-agent, continue with the phase work below. Do not delegate. Do not call the Skill tool.
+- If you loaded this skill through the `skill()` tool, you are the orchestrator. Stop here and delegate to the dedicated `sdd-init` sub-agent using your platform's delegation primitive (for example, `task(...)` or a sub-agent invocation).
 
 ## Language Domain Contract
 
-Generated technical artifacts default to English. Do not inherit the user's conversational language for SDD artifacts unless the user explicitly requests that artifact language or the project convention requires it.
+Generated technical artifacts default to English. Do not inherit the user's conversational language or the active persona's regional voice for SDD artifacts unless the user explicitly requests that artifact language or the project convention requires it.
 
 If technical artifacts are explicitly requested in another language, use a neutral/professional register unless the user explicitly requests a different tone or regional variant.
 
-Public and contextual comments follow the target context language by default. Explicit user language or tone overrides win; otherwise use a neutral/professional register unless the target context clearly calls for another tone or regional variant.
+Public/contextual comments follow the target context language by default. Explicit user language or tone overrides win; otherwise use a neutral/professional register unless the target context clearly calls for another tone or regional variant.
 
 ## Activation Contract
 
@@ -39,7 +36,7 @@ Run this phase when the orchestrator/user asks to initialize SDD in a project. Y
 - In `openspec` mode, follow `../_shared/openspec-convention.md` and write file artifacts.
 - In `hybrid` mode, write both openspec files and Engram observations.
 - Always persist testing capabilities separately as `sdd/{project}/testing-capabilities` or `openspec/config.yaml` `testing:`.
-- Always build `.agent/skill-registry.md`; also save `skill-registry` to Engram when available.
+- Always build `.atl/skill-registry.md`; also save `skill-registry` to Engram when available.
 - Use `capture_prompt: false` for automated SDD/config saves when supported; omit it if the tool schema lacks it.
 - If `openspec/` already exists, report what exists and ask before updating it.
 
@@ -51,21 +48,17 @@ Run this phase when the orchestrator/user asks to initialize SDD in a project. Y
 | `mode=openspec` | Create/update openspec bootstrap files only. |
 | `mode=hybrid` | Do both Engram and openspec persistence. |
 | `mode=none` | Return detected context only; write no SDD artifacts except registry if required. |
-| explicit `strict_tdd: true` configuration and a runner exist | Record Strict TDD as available; resolve boundary applicability per work unit. |
-| no explicit Strict TDD configuration | Set `strict_tdd: false`, even when a runner exists. |
+| strict TDD marker/config found | Use that value. |
+| no marker/config but test runner exists | Default `strict_tdd: true`. |
 | no test runner | Set `strict_tdd: false` and explain unavailable. |
-
-## Strict TDD forwarding
-
-For later apply and verify launches, record the three resolved inputs: `strict_tdd_configured, runner_available, and applicable_behavioral_boundary`. Forward Strict TDD only when all three are true; a runner alone never enables it.
 
 ## Execution Steps
 
 1. Inspect project files (`package.json`, `go.mod`, `pyproject.toml`, CI, lint/test config) and summarize stack/conventions.
 2. Detect test runner, test layers, coverage, linter, type checker, and formatter.
-3. Resolve Strict TDD only from explicit project/session configuration and runner availability; record that each apply/verify work unit also requires an applicable behavioral test boundary.
+3. Resolve Strict TDD from agent marker, `openspec/config.yaml`, detected runner fallback, or no-runner fallback.
 4. Initialize persistence for the resolved mode.
-5. Build `.agent/skill-registry.md` using the skill-registry scan rules.
+5. Build `.atl/skill-registry.md` using the skill-registry scan rules.
 6. Persist testing capabilities and project context.
 7. Return the structured initialization envelope.
 

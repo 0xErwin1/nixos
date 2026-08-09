@@ -10,7 +10,7 @@ Executor boundary: every SDD phase agent is an EXECUTOR, not an orchestrator. Do
 2. If no skills block was provided, check for `SKILL: Load` instructions. If present, load those exact skill files.
 3. If neither was provided, search for the skill registry as a fallback:
    a. `mem_search(query: "skill-registry", project: "{project}")` — if found, `mem_get_observation(id)` for full content
-   b. Fallback: read `.agent/skill-registry.md` from the project root if it exists
+   b. Fallback: read `.atl/skill-registry.md` from the project root if it exists
    c. From the registry's skills index, match triggers to your task and read the exact listed `SKILL.md` paths.
 4. If no registry exists, proceed with your phase skill only.
 
@@ -37,6 +37,8 @@ Do NOT use search previews as source material.
 ## C. Artifact Persistence
 
 Every phase that produces an artifact MUST persist it. Skipping this BREAKS the pipeline — downstream phases will not find your output.
+
+For `verify-report`, first build exact candidate bytes and run `gentle-ai sdd-verify-validate` with authoritative requirement/scenario counts before any OpenSpec or Engram write. If the validator is unavailable or denies admission, make zero writes and leave the prior report untouched; otherwise persist only the same admitted bytes, including a valid `fail`.
 
 ### Engram mode
 
@@ -80,6 +82,8 @@ Every phase MUST return a structured envelope to the orchestrator:
 - `risks`: risks discovered, or "None"
 - `skill_resolution`: how skills were loaded — `paths-injected` (received exact skill paths from orchestrator), `fallback-registry` (self-loaded paths from registry), `fallback-path` (loaded via SKILL: Load path), or `none` (no skills loaded)
 
+If the task transport reports `sdd_task_result_empty` or `sdd_task_result_malformed`, do not assume this envelope was delivered. Do not retry automatically or initiate another phase. The terminal value starts with `GENTLE_AI_SDD_FAILURE ` followed by a `gentle-ai.sdd-task-result-failure/v1` JSON handoff; preserve it unchanged, run its `continuation` exactly once to inspect current state, report the typed failure to the user, and wait for an explicit decision.
+
 Example:
 
 ```markdown
@@ -92,15 +96,38 @@ Example:
 (other values: `fallback-registry`, `fallback-path`, or `none — no registry found`)
 ```
 
-## E. Review Workload Forecast
+## E. Review Workload Guard
 
-SDD reports how much review a change will cost. It does not decide how the change is delivered.
+SDD must protect reviewer cognitive load, not only generate tasks.
 
-- The default review budget is **400 changed lines** (`additions + deletions`).
-- Count authored text additions plus deletions only for this threshold. Generated goldens are excluded from that authored risk count.
-- `sdd-tasks` MUST forecast whether the planned work may exceed that budget, and MUST include the exact plain-text lines `Estimated changed lines: <estimate>` and `Review budget risk: Low|Medium|High`.
-- When the risk is high, `sdd-tasks` names a suggested PR split so the user can choose to land the work as separate PRs. That suggestion is advice, not a decision.
+- The default PR review budget is **400 changed lines** (`additions + deletions`).
+- Count authored text additions plus deletions only for this threshold. Generated goldens are excluded from authored risk count but remain included in complete snapshot identity and receipt validation.
+- The orchestrator MUST cache a delivery strategy at session start: `ask-on-risk` (default), `auto-chain`, `single-pr`, or `exception-ok`. Those four are the whole domain.
+- Any other `delivery_strategy` value is invalid. A phase MUST NOT map it to the nearest branch, MUST NOT record it in an artifact, and MUST NOT forward it: report the unrecognised value and stop.
+- The orchestrator MUST pass `delivery_strategy` to `sdd-tasks` and the resolved decision to `sdd-apply`.
+- `sdd-tasks` MUST forecast whether the planned work may exceed that budget.
+- The forecast MUST include exact plain-text guard lines: `Decision needed before apply: Yes|No`, `Chained PRs recommended: Yes|No`, and `400-line budget risk: Low|Medium|High`.
+- If the forecast is high, `sdd-tasks` MUST recommend chained or stacked PRs using deliverable work units.
+- `sdd-apply` MUST NOT start oversized work unless the delivery strategy resolves to chained/stacked PR slices or explicitly accepted `size:exception`.
+- Each chained PR slice must have a clear start, clear finish, autonomous scope, verification, and reasonable rollback.
+- In a Feature Branch Chain, PR #1 targets the feature/tracker branch and later child PRs target the immediate previous PR branch; if GitHub shows previous slices in a child diff, retarget/rebase until the diff is clean.
 
-The forecast is **advisory in every phase**. It never gates `sdd-apply`, never requires a delivery or chain decision, and never authorizes any phase to trim assigned scope to fit the budget. How the work is delivered — one PR, several PRs, or straight to a branch with no PR at all — is the user's call, made outside SDD.
+This guard exists to reduce reviewer burnout and keep implementation delivery safe. Do not treat it as optional process noise.
 
-Batching `sdd-apply` into checkpoints is a separate concern with its own trigger (task count and phase boundaries, for context freshness and rollback granularity). Do not drive it from this budget.
+## F. Key Learnings Closing
+
+Close your **final report message** (the return envelope) with a `## Key Learnings` section to enable engram passive capture.
+
+**Format**: numbered list with 1–5 items. Each item is a standalone factual sentence that is ≥20 characters and ≥4 words.
+
+**Example**:
+
+```markdown
+## Key Learnings
+
+1. Async validation in the apply phase caught a race condition in concurrent writes.
+2. Golden test regeneration for system prompts requires the `-update` flag before re-run.
+3. Bounded review contracts must stay consistent across `sdd-phase-common.md` and `engram/protocol.md`.
+```
+
+This applies to your final text response to the orchestrator, not intermediate tool outputs or artifact content. Engram will automatically extract and persist these learnings.

@@ -1,104 +1,187 @@
-# SDD Orchestrator Workflow (lazy-loaded)
-
-This is the detailed SDD + Testing procedure for the orchestrator. It is read on demand: the always-on `CLAUDE.md` keeps only the orchestrator role, delegation rules, and anti-patterns, and points here before any SDD command, SDD/Judgment-Day phase delegation, or testing-pipeline intent.
-
-The orchestrator role and Delegation Rules defined in `CLAUDE.md` still apply; this file does not repeat them.
-
----
-
 ## SDD Workflow (Spec-Driven Development)
 
-SDD is the structured planning layer for substantial changes.
+SDD is the structured planning layer for substantial changes. This file is the lazy-loaded Claude Code workflow surface; read it before handling `/sdd-*`, SDD meta-commands, SDD/Judgment-Day phase delegation, or SDD continuation/routing.
 
 ### Artifact Store Policy
 
-- `engram` -- default when available; persistent memory across sessions
-- `openspec` -- file-based artifacts; use only when user explicitly requests
-- `hybrid` -- both backends; cross-session recovery + local files; more tokens per op
-- `none` -- return results inline only; recommend enabling engram or openspec
+- `engram` — default when available; persistent memory across sessions.
+- `openspec` — file-based artifacts; use only when the user explicitly requests it or a change already exists there.
+- `hybrid` — both backends; useful for team-shareable files plus cross-session recovery.
+- `none` — return results inline only; recommend enabling engram or openspec.
 
 ### Commands
 
-Skills (appear in autocomplete):
-- `/sdd-init` -> initialize SDD context; detects stack, bootstraps persistence
-- `/sdd-explore <topic>` -> investigate an idea; reads codebase, compares approaches; no files created
-- `/sdd-status [change]` -> read-only structured status for the active change, artifacts, tasks, and next action
-- `/sdd-apply [change]` -> implement tasks in batches; checks off items as it goes
-- `/sdd-verify [change]` -> validate implementation against specs; reports CRITICAL / WARNING / SUGGESTION
-- `/sdd-archive [change]` -> close a change and persist final state in the active artifact store 
-- `/sdd-onboard` -> guided end-to-end walkthrough of SDD using your real codebase
+Skills and slash commands:
 
-Meta-commands (type directly -- orchestrator handles them, won't appear in autocomplete):
-- `/sdd-new <change>` -> start a new change by delegating exploration + proposal to sub-agents
-- `/sdd-continue [change]` -> run the next dependency-ready phase via sub-agent(s)
-- `/sdd-ff <name>` -> fast-forward planning: proposal -> specs -> design -> tasks
+- `/sdd-init` → initialize SDD context; detects stack and testing capabilities.
+- `/sdd-explore <topic>` → investigate an idea; no implementation.
+- `/sdd-status [change]` → read-only structured status.
+- `/sdd-apply [change]` → implement pending tasks in batches.
+- `/sdd-verify [change]` → validate implementation against specs/tasks.
+- `/sdd-archive [change]` → close a completed change.
+- `/sdd-onboard` → guided end-to-end walkthrough.
 
-`/sdd-new`, `/sdd-continue`, and `/sdd-ff` are meta-commands handled by YOU. Do NOT invoke them as skills.
+Meta-commands are handled by the orchestrator directly and do not appear in autocomplete:
 
-### Status-First Routing Guard
+- `/sdd-new <change>` → run exploration then proposal.
+- `/sdd-continue [change]` → run the next dependency-ready phase.
+- `/sdd-ff <name>` → fast-forward proposal → specs → design → tasks.
 
-Before routing, continuing, applying, verifying, or archiving an SDD change, produce structured status first by reading `~/.codex/skills/_shared/sdd-status-contract.md` and following it against the active artifact store (engram by default). Route ONLY by `nextRecommended` and the dependency states; never infer routing from free text. If `blockedReasons` is non-empty, do not proceed to apply, archive, or terminal work. If `nextRecommended` is `verify`, verification/remediation may run only to refresh evidence; if it is `resolve-blockers`, report `blockedReasons` and stop. Carry `contextFiles`, task progress, dependency states, and `actionContext` (allowed edit roots) into every sub-agent launch.
+### Native SDD Dispatcher Guard
+
+Before routing, continuing, applying, verifying, or archiving an SDD change, first determine this session's artifact store. The native dispatcher (`gentle-ai sdd-continue [change] --cwd <repo>` or `gentle-ai sdd-status [change] --cwd <repo> --json --instructions`) reads only OpenSpec file artifacts and always emits `artifactStore: openspec`; it cannot observe Engram-backed changes.
+
+- For `engram`, do NOT invoke the dispatcher. Resolve status from Engram topic keys with `mem_search` followed by `mem_get_observation`.
+- For `openspec` or `hybrid`, use the dispatcher when available and treat its JSON as authoritative over prompt inference.
+- Route only by structured `nextRecommended`, dependency states, and `blockedReasons`; never infer from free text.
+- If blocked, stop and report the blocker. Do not proceed to apply, archive, or terminal work.
+
+### SDD Session Preflight (HARD GATE)
+
+Before executing ANY SDD command or natural-language SDD request, ensure this session has an explicit `SDD Session Preflight` decision block.
+
+This applies to `/sdd-new`, `/sdd-ff`, `/sdd-continue`, `/sdd-explore`, `/sdd-status`, `/sdd-apply`, `/sdd-verify`, `/sdd-archive`, and natural-language equivalents such as "use SDD to add dark mode" / "do it with SDD".
+
+Required preflight choices:
+
+1. **Execution mode**: `interactive` or `auto`.
+2. **Artifact store**: `openspec`, `engram`, or `hybrid` when Engram is callable. If Engram is unavailable, offer only file/inline-safe choices.
+3. **Chained PR strategy**: the canonical `delivery_strategy` — `ask-on-risk`, `auto-chain`, `single-pr`, or `exception-ok`. The preflight menu offers the first three; `exception-ok` is reachable only when the user explicitly accepts `size:exception`.
+4. **Review budget**: maximum changed lines before stopping for reviewer-burden approval.
+
+User-facing preflight question format:
+
+Use the built-in `AskUserQuestion` tool for SDD Session Preflight only when it is available in the current interactive runtime and all four groups are exactly representable. While that native route is usable, do NOT render a duplicate plain-chat menu. If the tool is unavailable, denied, the runtime is noninteractive, or the prompt is unrepresentable, follow the Lossless Blocking Prompts fallback in the orchestrator rule and STOP.
+
+When the native route is representable, ask all four preflight groups in one single `AskUserQuestion` tool call so Claude Code can render the groups as one interactive prompt. Do NOT run this as a sequential wizard. Do NOT issue four separate `AskUserQuestion` tool calls.
+
+The single `AskUserQuestion` tool call must contain these four localized groups in this order:
+
+1. Pace: Interactive, Automatic.
+2. Artifacts: OpenSpec, Engram, Both.
+3. PRs: Ask me, Single PR, Auto.
+4. Review: 400 lines, 800 lines, Other.
+
+Match the user's current language and active persona for question labels and descriptions. Treat the preflight UI as direct orchestrator conversation, not as a generated technical artifact. Technical artifacts still default to English, but this UI follows the user's conversation language/persona. Do NOT mix languages inside one grouped question.
+
+Do NOT show option codes in the interactive UI. Do NOT show canonical values or other internal values in the interactive UI labels or descriptions.
+
+After the single grouped `AskUserQuestion` tool call returns, map the selected human labels to canonical values internally. Do not reveal the canonical values in the UI.
+
+If Other is selected for review budget, ask one follow-up question for the numeric budget.
+
+Only after all four preflight choices are collected, summarize them as the `SDD Session Preflight` decision block and continue with the SDD init guard/requested phase.
+
+Map answers to canonical values:
+
+- Pace: Interactive -> `interactive`; Automatic -> `auto`.
+- Artifacts: OpenSpec -> `openspec`; Engram -> `engram`; Both -> `hybrid`.
+- PRs: Ask me -> `ask-on-risk`; Single PR -> `single-pr`; Auto -> `auto-chain`.
+- Review: 400 lines -> `review_budget_lines: 400`; 800 lines -> `review_budget_lines: 800`; Other -> ask one follow-up for the number.
+
+The PR canonical values are exactly the `delivery_strategy` domain `sdd-tasks` and `sdd-apply` accept; never emit a value outside it. The preflight offers no separate chained option because `delivery_strategy` is only consulted once the tasks forecast flags review-budget risk: below that line there is nothing to chain, and above it `Auto` already resolves to `auto-chain` without asking again.
+
+Hard gate rules:
+
+- `openspec/config.yaml`, existing SDD artifacts, previous `sdd-init` results, or installed SDD assets do NOT satisfy session preflight.
+- If the session has no preflight block, ask the single grouped `AskUserQuestion` preflight above. Do not run init, delegate phases, edit files, or apply tasks until all four choices are collected.
+- Cache the choices for this session and include them in later phase prompts.
+- If the user explicitly provided all four choices in the current conversation, summarize them as the session preflight block and continue.
+
+### SDD Entry Routing (MANDATORY)
+
+For a new product/code change request that says to use SDD, start at preflight -> init guard -> explore/proposal (`/sdd-new` equivalent). Never launch `sdd-apply` just because the user asked to implement a feature.
+
+Only launch `sdd-apply` when all are true:
+
+1. Session preflight is complete.
+2. The active change has existing spec, design, and tasks artifacts.
+3. The user explicitly asked to apply/continue implementation, or the prior SDD planning phase completed and the orchestrator has passed the review workload guard.
+
+If any dependency is missing, STOP and propose `/sdd-new` or `/sdd-ff`; do not implement.
 
 ### SDD Init Guard (MANDATORY)
 
-Before executing ANY SDD command (`/sdd-new`, `/sdd-ff`, `/sdd-continue`, `/sdd-explore`, `/sdd-status`, `/sdd-apply`, `/sdd-verify`, `/sdd-archive`, `/sdd-test`, `/sdd-explore-testing`, `/sdd-plan-testing`, `/sdd-run-testing`, `/sdd-report-testing`) or any conversational testing-intent entry (natural-language trigger that maps to the testing pipeline), check if `sdd-init` has been run for this project:
+Before executing any SDD command or meta-command, check whether `sdd-init` has run for this project:
 
-1. Search Engram: `mem_search(query: "sdd-init/{project}", project: "{project}")`
-2. If found -> init was done, proceed normally
-3. If NOT found -> run `sdd-init` FIRST (delegate to sdd-init sub-agent), THEN proceed with the requested command
+1. Search Engram: `mem_search(query: "sdd-init/{project}", project: "{project}")`.
+2. If found, proceed normally.
+3. If not found, run `sdd-init` first, then continue with the requested command.
 
-This ensures:
-- Testing capabilities are always detected and cached
-- Strict TDD Mode is activated only when `strict_tdd_configured`, `runner_available`, and `applicable_behavioral_boundary` are all true
-- The project context (stack, conventions) is available for all phases
-
-Do NOT skip this check. Do NOT ask the user -- just run init silently if needed.
+This ensures testing capabilities, Strict TDD mode, and project context are available to later phases.
 
 ### Execution Mode
 
-When the user invokes `/sdd-new`, `/sdd-ff`, or `/sdd-continue` for the first time in a session, ASK which execution mode they prefer:
+This is collected by `SDD Session Preflight`. If missing, enforce the hard gate before any phase work. Cache the collected mode for the session:
 
-- **Automatic** (`auto`): Run all phases back-to-back without pausing. Show the final result only. Use this when the user wants speed and trusts the process.
-- **Interactive** (`interactive`): After each phase completes, show the result summary and ASK: "Want to adjust anything or continue?" before proceeding to the next phase. Use this when the user wants to review and steer each step.
+- **Automatic** (`auto`): phases run back-to-back without pausing, but the orchestrator gatekeeper validates after each phase before launching the next.
+- **Interactive** (`interactive`): after each phase, show a concise summary and ask whether to adjust or continue.
 
-If the user doesn't specify, default to **Interactive** (safer, gives the user control).
+If the user doesn't specify, default to **Automatic**. After scope approval, expect zero further prompts on the happy path and at most one actionable prompt per recoverable failure; the gatekeeper summarizes phase progress instead of interrupting except on a second consecutive gate failure or a genuine scope/product decision. Interactive approval is phase-scoped; words like "continue", "dale", or "go on" approve only the immediate next phase.
 
-Cache the mode choice for the session -- don't ask again unless the user explicitly requests a mode change.
+Before the `sdd-propose` phase in interactive mode, offer the user a proposal question round focused on business/product understanding, business problem, business rules, outcomes, implications and impact, edge cases, scope boundaries, non-goals, constraints, and product tradeoffs. Do not ask about test commands, PR shape, changed-line budget, or other harness mechanics unless the user explicitly asks.
 
-In **Interactive** mode, between phases:
-1. Show a concise summary of what the phase produced
-2. List what the next phase will do
-3. Ask: "¿Continuamos? / Continue?" -- accept YES/continue, NO/stop, or specific feedback to adjust
-4. If the user gives feedback, incorporate it before running the next phase
+### Automatic Mode Gatekeeper (MANDATORY)
 
-Interactive approval is phase-scoped. A reply such as "continue", "dale", or "go on" approves only the immediate next phase, not the rest of the SDD pipeline. Do not treat a generated artifact as approved until the user has had a chance to review it or explicitly delegate that review.
+In Automatic mode, the orchestrator validates every delegated phase result before launching the next phase. The gatekeeper runs after every phase and before launching the next sub-agent.
 
-Before the propose phase in interactive mode, offer the user a proposal question round instead of silently deciding whether the proposal is clear enough. Explain that the questions are meant to improve the PRD/proposal by uncovering business understanding, business rules, implications, impact, edge cases, and product tradeoffs. Prefer 3-5 concrete product questions per round, then summarize the resulting assumptions and ask whether the user wants to correct anything or run a second round. Cover business and product decisions: business problem, target users and situations, business rules, product outcome, current-state gap, implications and impact, edge cases, decision gaps, first-slice scope boundaries, non-goals, product constraints, and business tradeoffs.
+Gate checks:
 
-For this agent (sub-agent delegation): **Automatic** means phases run back-to-back via sub-agents without pausing. **Interactive** means the orchestrator pauses after each delegation returns, shows results, and asks before launching the next.
+- **Contract conformance:** returned `status`, `executive_summary`, `artifacts`, `next_recommended`, `risks`, and `skill_resolution`; status is not partial/failed/blocked.
+- **Artifact existence:** declared artifact is readable in the active backend.
+- **No hallucination:** claimed files, symbols, commands, and artifacts exist.
+- **No drift from inputs:** proposal/spec/design/tasks/apply outputs stay consistent with their dependencies.
+- **Routing coherence:** `next_recommended` follows the dependency graph and no unaddressed CRITICAL risk remains.
+
+Hybrid validation:
+
+- Inline for low-risk phases: `sdd-explore`, `sdd-spec`, `sdd-tasks`, `sdd-archive`.
+- Fresh-context phase-contract validator for `sdd-design` and `sdd-apply`: validate only the phase artifact against its inputs. This is not adversarial implementation review, inspects no code diff, and creates no 4R/Judgment-Day budget.
+- Escalate to fresh-context review when an inline gate smells wrong.
+
+On gate failure, re-run the same phase exactly once with specific corrective feedback. If the second result fails, STOP the automatic chain and report; do not advance dependent phases.
+
+### Native Runtime Attempt Authority (MANDATORY)
+
+Use the provider-owned Git-common-dir runtime ledger for every runtime-bearing `sdd-apply`, `sdd-verify`, or remediation continuation. It is the single attempt/budget authority for both OpenSpec and Engram; never persist caller-authored counters in OpenSpec files, Engram topics, prompts, or Pi state.
+
+1. Before an actor or harness launch, call `gentle-ai sdd-attempt acquire --cwd <repo> --change <change> --request-id <id> --work-unit <label> --evidence-goal <goal> --max-attempts <count> --max-changed-lines <count>`.
+   - Exception: when this launch is a phase actor started BY a parent that already ran this exact acquire and got `state: proceed`, do not acquire blind — pass the parent's returned token as `--token <token>` on the actor's own acquire call. A matching token proves the actor is continuing that SAME attempt and returns `proceed` with zero ledger mutation; acquiring without it collides with the parent's own active attempt and deadlocks on `blocked: active_attempt` (#2291).
+2. Launch only when acquire returns `state: proceed`, and retain its opaque `token`. `blocked` or `complete` stops the launch.
+3. After the external run, call `gentle-ai sdd-attempt settle --cwd <repo> --change <change> --token <token> --request-id <settle-id> ...` with a request ID distinct from the acquire operation's request ID, outcome, and bounded evidence. Reuse each operation's own ID only for its idempotent replay. Settle derives native binding/remediation inputs; pass `--successor-lineage` only for a distinct approved successor, otherwise the bound lineage remains its own successor.
+4. Route only from settle's `proceed`, `blocked`, or `complete` state. Full `status|begin|finish|reset` operations are diagnostic/compatibility surfaces; reset requires an explicit maintainer scope decision and is never automatic.
 
 ### Artifact Store Mode
 
-When the user invokes `/sdd-new`, `/sdd-ff`, or `/sdd-continue` for the first time in a session, ALSO ASK which artifact store they want for this change:
+This is collected by `SDD Session Preflight`. If missing, enforce the hard gate before any phase work. Cache the collected store (`engram`, `openspec`, `hybrid`, or `none`) for the session. If unspecified, default to `engram` when Engram is available; otherwise use `none` and explain the persistence limitation.
 
-- **`engram`**: Fast, no files created. Artifacts live in engram only. Best for solo work and quick iteration. Note: re-running a phase overwrites the previous version (no history).
-- **`openspec`**: File-based. Creates `openspec/` directory with full artifact trail. Committable, shareable with team, full git history.
-- **`hybrid`**: Both -- files for team sharing + engram for cross-session recovery. Higher token cost.
+Pass the artifact store mode to every SDD phase agent.
 
-If the user doesn't specify, detect: if engram is available -> default to `engram`. Otherwise -> `none`.
+### Delivery Strategy
 
-Cache the artifact store choice for the session. Pass it as `artifact_store.mode` to every sub-agent launch.
+On the first SDD chain request in a session, ask once for delivery strategy and cache it:
 
-### Review Workload Forecast (report, never gate)
+- `ask-on-risk` — default; ask only when the tasks forecast detects review-budget risk.
+- `auto-chain` — automatically split into chained/stacked PR slices when needed.
+- `single-pr` — proceed as one PR only if the size is within budget.
+- `exception-ok` — user accepts `size:exception` when over budget. The preflight menu cannot select this; it is reached only when the user explicitly accepts `size:exception`, either up front or when `ask-on-risk` stops to ask.
 
-After `sdd-tasks` completes, read `Review Workload Forecast` from the task result and report `Estimated changed lines` and `Review budget risk` to the user in one line.
+These four are the whole domain. Pass `delivery_strategy` to `sdd-tasks` and `sdd-apply`.
 
-Then launch `sdd-apply`. A high forecast NEVER blocks apply and never shrinks the assigned scope.
+### Chain Strategy
 
-Apply is still batched into checkpoints when the change is large — see **Batched Apply-Verify Cycles**, which is driven by task count and phase boundaries, for context freshness and rollback granularity. Never size an apply batch to fit the review budget: that conflates a review artifact with an execution artifact and produces batch-splitting thrash.
+When delivery planning yields chained PRs, ask once for chain strategy and cache it:
+
+- `stacked-to-main` — each PR targets the previous PR branch or main in sequence.
+- `feature-branch-chain` — PR #1 targets the tracker branch; child PRs target the immediate previous PR branch; only the tracker merges to main.
+
+When chained PRs are selected, treat `chained-pr` (registry skill `gentle-ai-chained-pr`) as a required skill match. Resolve and forward it by registry path to `sdd-tasks` and `sdd-apply`; do not hardcode its path.
+
+Pass it as `chain_strategy` to `sdd-tasks` and `sdd-apply` prompts alongside `delivery_strategy`.
 
 ### Dependency Graph
-```
+
+```text
 proposal -> specs --> tasks -> apply -> verify -> archive
              ^
              |
@@ -106,227 +189,132 @@ proposal -> specs --> tasks -> apply -> verify -> archive
 ```
 
 ### Result Contract
-Each phase returns: `status`, `executive_summary`, `artifacts`, `next_recommended`, `risks`, `skill_resolution`.
+
+Every SDD phase returns: `status`, `executive_summary`, `artifacts`, `next_recommended`, `risks`, and `skill_resolution`.
+
+### Review Workload Guard (MANDATORY)
+
+After `sdd-tasks` completes and before launching `sdd-apply`, inspect `Review Workload Forecast`.
+
+If it says `Chained PRs recommended: Yes`, `400-line budget risk: High`, estimated changed lines exceed 400, or `Decision needed before apply: Yes`, apply cached `delivery_strategy`:
+
+- `ask-on-risk`: stop and ask whether to split or proceed with `size:exception`.
+- `auto-chain`: split automatically; ask for `chain_strategy` only if missing.
+- `single-pr`: stop and require/record `size:exception` before apply.
+- `exception-ok`: continue and tell `sdd-apply` this run uses `size:exception`.
+
+Any other `delivery_strategy` value is invalid. Do NOT pick the nearest branch and do NOT proceed: STOP, report the unrecognised value, and re-collect the delivery strategy before launching `sdd-apply`.
+
+Always pass the resolved `delivery_strategy`, `chain_strategy`, and PR boundary/exception to `sdd-apply`.
+
+When launching `sdd-apply`, always include the resolved `delivery_strategy`, `chain_strategy`, and any chosen PR boundary/exception in the prompt.
+
+<!-- gentle-ai:sdd-model-assignments -->
 
 ## Model Assignments
 
-Read this table at session start (or before first delegation), cache it for the session, and pass the mapped alias in every Agent tool call via the `model` parameter. If a phase is missing, use the `default` row. If you lack access to the assigned model, substitute `sonnet` and continue.
+Read this table before the first SDD/Judgment-Day delegation in a session, cache it, and use the mapped alias only for SDD/Judgment-Day phase agents. If a phase is missing, use `default`. If the assigned model is unavailable, substitute `sonnet` and continue.
 
-| Phase | Default Model | Reason |
-|-------|---------------|--------|
-| orchestrator | opus | Coordinates, makes decisions |
-| sdd-explore | sonnet | Reads code, structural - not architectural |
-| sdd-propose | opus | Architectural decisions — most demanding reasoning |
-| sdd-spec | opus | Structured writing |
-| sdd-design | opus | Architecture decisions — most demanding reasoning |
-| sdd-tasks | sonnet | Mechanical breakdown |
-| sdd-apply | sonnet | Implementation |
-| sdd-apply (visual/design slice) | opus | UI/visual/design work — sonnet tends to produce weak designs |
-| sdd-verify | opus | Validation against spec |
-| sdd-archive | haiku | Copy and close |
-| sdd-explore-testing | sonnet | Codebase reading, structural - not architectural |
-| sdd-plan-testing | sonnet | Structured writing |
-| sdd-run-testing | sonnet | Implementation and execution |
-| sdd-run-testing (visual diff) | opus | Screenshot capture + design-spec interpretation needs the strongest vision |
-| sdd-report-testing | sonnet | Structured writing |
-| default | sonnet | Non-SDD general delegation |
+The Claude Code session model is controlled by Claude Code itself; Gentle AI does not configure the main orchestrator model. This table applies only to Agent tool calls for SDD/Judgment-Day phase sub-agents, not generic delegation.
+
+**Mandatory phase model gate:** Agent tool calls for SDD/Judgment-Day phase agents MUST include `model`. Generic/non-SDD delegation MUST NOT use this table; omit `model` unless the user explicitly requested an override.
+
+| Phase       | Default Model | Effort  | Reason                                     |
+| ----------- | ------------- | ------- | ------------------------------------------ |
+| sdd-explore | sonnet        | default | Reads code, structural - not architectural |
+| sdd-propose | opus          | default | Architectural decisions                    |
+| sdd-spec    | sonnet        | default | Structured writing                         |
+| sdd-design  | opus          | default | Architecture decisions                     |
+| sdd-tasks   | sonnet        | default | Mechanical breakdown                       |
+| sdd-apply   | sonnet        | default | Implementation                             |
+| sdd-verify  | sonnet        | default | Validation against spec                    |
+| sdd-archive | haiku         | default | Copy and close                             |
+| default     | sonnet        | default | SDD/JD phase fallback                      |
 
 <!-- /gentle-ai:sdd-model-assignments -->
 
-**Conditional model for `sdd-run-testing`:** the orchestrator resolves the sub-agent model AFTER `plan-testing` returns, based on the plan contents:
-- If the plan contains at least one case with `visual diff: yes`, launch `sdd-run-testing` with `opus` — interpreting captured screenshots against the design reference benefits most from the strongest vision model. This holds for both user-facing UI engines here: a `playwright` visual run captures styles and screenshots via the CLI, and a `maestro` visual run captures device/browser evidence through Maestro MCP or CLI.
-- Otherwise (backend, api, or browser cases with no design reference), launch with `sonnet` — these are mechanical execution and gain nothing from a larger model.
+### Sub-Agent Launch Deduplication (MANDATORY)
 
-**Conditional model for `sdd-apply` (local policy):** the orchestrator inspects the tasks artifact BEFORE launching apply. If it contains any design/visual work, the visual slice is applied by an `opus` sub-agent while purely non-visual slices stay on `sonnet`. See **Visual-Aware Apply Split** under Sub-Agent Context Protocol for the split mechanism.
+Maintain a session-scoped launch log of `(phase, task-fingerprint)` pairs. If the same pair already exists, do NOT launch again. Emit exactly one launch per distinct task and append the pair after launch.
 
+### Sub-Agent Launch Protocol
 
-### Sub-Agent Launch Pattern
+ALL sub-agent launch prompts that involve reading, writing, or reviewing code MUST include pre-resolved skill paths from the skill registry. Follow `~/.claude/skills/_shared/skill-resolver.md`.
 
-ALL sub-agent launch prompts that involve reading, writing, or reviewing code MUST include the matching skill **paths** from the skill registry. Follow the **Skill Resolver Protocol** (`~/.codex/skills/_shared/skill-resolver.md`).
+Pre-flight before every SDD/Judgment-Day Agent call:
 
-The orchestrator resolves skills from the registry ONCE (at session start or first delegation), caches the index, and injects matching skill paths into each sub-agent's prompt. Also reads the Model Assignments table once per session, caches `phase -> alias`, includes that alias in every Agent tool call via `model`.
+1. Identify the phase key (`sdd-apply`, `sdd-verify`, `jd-judge-a`, etc.).
+2. Look up the model alias in the Model Assignments table.
+3. Include `model: "<alias>"` in SDD/Judgment-Day Agent calls.
+4. For generic/non-SDD delegation, omit `model` unless the user explicitly requested one.
 
-Orchestrator skill resolution (do once per session):
-1. `mem_search(query: "skill-registry", project: "{project}")` -> `mem_get_observation(id)` for full registry content
-2. Fallback: read `.agent/skill-registry.md` if engram not available
-3. Cache the skill index (skill names, triggers, scopes, and exact `SKILL.md` paths)
-4. If no registry exists, warn user and proceed without project-specific standards
+Resolve skills once per session, cache the registry, and pass exact `SKILL.md` paths. If a delegated result reports `skill_resolution` as `fallback-registry`, `fallback-path`, or `none`, re-read the registry before subsequent delegations.
 
-For each sub-agent launch:
-1. Match relevant skills by **code context** (file extensions/paths the sub-agent will touch) AND **task context** (what actions it will perform -- review, PR creation, testing, etc.) against the `Trigger / description` column
-2. Pass matching `SKILL.md` paths into the sub-agent prompt under `## Skills to load before work`
-3. Inject BEFORE the sub-agent's task-specific instructions; tell the sub-agent to read those exact files before acting
+**Key Learnings closing (generic delegations):** When delegating to generic agents (Explore, general-purpose), instruct the sub-agent to close its final message with a `## Key Learnings` section containing 1–5 numbered items, each a standalone factual sentence of ≥4 words and ≥20 characters. This enables engram passive capture of learnings across delegation boundaries. SDD phase agents load this requirement from `~/.claude/skills/_shared/sdd-phase-common.md` section F automatically.
 
-**Key rule**: pass skill paths, not rule text. Sub-agents read the exact `SKILL.md` files themselves -- the registry is an index, not a summary. This preserves author intent and is compaction-safe because each delegation re-reads the registry if the cache is lost.
+### Context Protocol
 
-### Skill Resolution Feedback
+Sub-agents start with fresh context. The orchestrator controls what context they receive.
 
-After every delegation that returns a result, check the `skill_resolution` field:
-- `paths-injected` -> all good, skill paths were passed correctly
-- `fallback-registry`, `fallback-path`, or `none` -> skill cache was lost (likely compaction). Re-read the registry immediately and pass matching skill paths in all subsequent delegations.
+For non-SDD delegation:
 
-This is a self-correction mechanism. Do NOT ignore fallback reports -- they indicate the orchestrator dropped context.
+- Orchestrator searches Engram for relevant prior context and passes it in the prompt.
+- Sub-agent saves significant discoveries, decisions, and bug fixes to Engram before returning.
+- Orchestrator forwards exact skill paths.
 
-### Mandatory Writing Skills
+For SDD phases, sub-agents read/write the active backend directly using artifact references, not copied artifact bodies.
 
-Comments and documentation are not freeform. Whenever you, or a sub-agent you launch, will write a comment (PR/issue/review comment, chat or async reply, support ticket, email) or any documentation (README, RFC, guide, onboarding, architecture doc, PR description), you MUST load the relevant writing skill:
+| Phase         | Reads                                                  | Writes           |
+| ------------- | ------------------------------------------------------ | ---------------- |
+| `sdd-explore` | nothing                                                | `explore`        |
+| `sdd-propose` | exploration (optional)                                 | `proposal`       |
+| `sdd-spec`    | proposal (required)                                    | `spec`           |
+| `sdd-design`  | proposal (required)                                    | `design`         |
+| `sdd-tasks`   | spec + design (required)                               | `tasks`          |
+| `sdd-apply`   | tasks + spec + design + apply-progress if present      | `apply-progress` |
+| `sdd-verify`  | spec + tasks + apply-progress                          | `verify-report`  |
+| `sdd-archive` | all artifacts                                          | `archive-report` |
 
-- Comments -> `comment-writer`
-- Documentation -> `cognitive-doc-design`
+### Strict TDD Forwarding (MANDATORY)
 
-This is not optional and is independent of registry matching: if the activity is writing a comment or a doc, the corresponding skill applies even if the registry returned no match for "comment" or "doc".
+When launching `sdd-apply` or `sdd-verify`, search for testing capabilities (`sdd-init/{project}`). If `strict_tdd: true`, add: `STRICT TDD MODE IS ACTIVE. Test runner: {test_command}. You MUST follow strict-tdd.md. Do NOT fall back to Standard Mode.`
 
-Applies in BOTH modes:
-- **Delegating**: include the matching `SKILL.md` path in the sub-agent prompt under `## Skills to load before work`.
-- **Writing directly (no sub-agent)**: YOU must read the matching `SKILL.md` yourself BEFORE drafting a single line. Self-check before any comment/doc output: "Did I load the writing skill this turn? If no, STOP and load it now." Do not rely on prior session memory of the skill -- read the file in the current turn.
+### Apply-Progress Continuity (MANDATORY)
 
-Also pass the destination context (target repo/thread/channel and its primary language) so the writer applies the correct language -- write in the destination's language, not the chat language: English when the destination is primarily English, even if the user is talking to you in Spanish.
+When launching `sdd-apply` after prior batches, search for `sdd/{change-name}/apply-progress`. If it exists, tell the sub-agent to read it first, merge new progress into it, and save the combined result. Do not overwrite.
 
-### Code Comment Hygiene
+### Archive Final-State Handoff (MANDATORY)
 
-Code comments are not freeform either. Default to NO inline comments. Add one only when the WHY is non-obvious: a hidden constraint, a subtle invariant, a workaround for a specific bug, or behavior that would surprise a reader. If deleting the comment would not confuse a future reader, do not write it. Function-level documentation (intent, invariants, assumptions, side effects) is allowed and preferred over inline statement comments. Never write comments that restate what the code does, and never reference the current task, fix, PR, or ticket.
+When launching `sdd-archive`, forward explicit final-state facts for any work completed after `apply-progress` or `verify-report` were persisted — verify warnings fixed in later commits, blockers resolved, tasks finished, updated test or issue counts — with commit or evidence references where available. Those two artifacts are intermediate snapshots, valid at the time they were written; the archive report records the state at close, and explicit final-state facts in the `sdd-archive` launch prompt outrank stale snapshot claims.
 
-This applies whether you write code inline or delegate it. The executor sub-agents are self-sufficient and do NOT load CLAUDE.md/AGENTS.md, so they will not follow this rule unless you state it in the sub-agent prompt. When delegating any code-writing task, include this rule.
+### Topic Keys
 
-### Sub-Agent Context Protocol
+| Artifact        | Topic Key                          |
+| --------------- | ---------------------------------- |
+| Project context | `sdd-init/{project}`               |
+| Exploration     | `sdd/{change-name}/explore`        |
+| Proposal        | `sdd/{change-name}/proposal`       |
+| Spec            | `sdd/{change-name}/spec`           |
+| Design          | `sdd/{change-name}/design`         |
+| Tasks           | `sdd/{change-name}/tasks`          |
+| Apply progress  | `sdd/{change-name}/apply-progress` |
+| Verify report   | `sdd/{change-name}/verify-report`  |
+| Archive report  | `sdd/{change-name}/archive-report` |
+| DAG state       | `sdd/{change-name}/state`          |
 
-Sub-agents get a fresh context with NO memory. The orchestrator controls context access.
-
-#### Non-SDD Tasks (general delegation)
-
-- Read context: orchestrator searches engram (`mem_search`) for relevant prior context and passes it in the sub-agent prompt. Sub-agent does NOT search engram itself.
-- Write context: sub-agent MUST save significant discoveries, decisions, or bug fixes to engram via `mem_save` before returning. Sub-agent has full detail -- save before returning, not after.
-- Always add to sub-agent prompt: `"If you make important discoveries, decisions, or fix bugs, save them to engram via mem_save with project: '{project}'."`
-- Skills: orchestrator matches the registry and passes the matching `SKILL.md` paths under `## Skills to load before work` in the sub-agent prompt. Sub-agents read those exact files themselves; they do NOT rediscover the registry.
-
-#### SDD Phases
-
-Each phase has explicit read/write rules:
-
-| Phase | Reads | Writes |
-|-------|-------|--------|
-| `sdd-explore` | nothing | `explore` |
-| `sdd-propose` | exploration (optional) | `proposal` |
-| `sdd-spec` | proposal (required) | `spec` |
-| `sdd-design` | proposal (required) | `design` |
-| `sdd-tasks` | spec + design (required) | `tasks` |
-| `sdd-apply` | tasks + spec + design + **apply-progress (if exists)** | `apply-progress` |
-| `sdd-verify` | spec + tasks + **apply-progress** | `verify-report` |
-| `sdd-archive` | all artifacts | `archive-report` |
-
-For phases with required dependencies, sub-agent reads directly from the backend -- orchestrator passes artifact references (topic keys or file paths), NOT content itself.
-
-**Reuse-before-rediscover from the active artifact store (all phases -- SDD development AND testing).** The source of truth is whichever artifact store is active for the session (`hybrid` / `engram` / `openspec`) per Artifact Store Policy -- engram is ONE backend, not a hard requirement, and this rule must not assume engram is present. Beyond the required artifacts the orchestrator references, every phase sub-agent SHOULD open by reading relevant prior context from the active store and reuse what it finds rather than rediscover:
-
-- Under `engram` or `hybrid`: `mem_search(query, project: "{project}")` for same-project prior work, and -- engram only -- `mem_search(query)` with NO project filter to discover analogous work in OTHER projects.
-- Under `openspec`: read the relevant files under the `openspec/` tree (no cross-project discovery is available file-only).
-
-Everything a phase produces is saved back to the active store. This rule is uniform -- the testing phases are NOT an exception; they follow the same artifact-store contract as the development phases.
-
-#### Strict TDD Forwarding (MANDATORY)
-
-When launching `sdd-apply` or `sdd-verify`, resolve and pass `strict_tdd_configured, runner_available, and applicable_behavioral_boundary` as separate facts. Forward Strict TDD only when all three are true; add the active-mode instruction with the runner command only in that case. Otherwise direct the executor to Standard Mode, where Standard Verify still runs every applicable test, build, and type check.
-
-The orchestrator may cache resolved facts for the session, but it must re-evaluate boundary applicability for each assigned work unit. This decision changes neither runtime/outward-action gates nor the explicit Git-mutation requirement.
-
-#### Apply-Progress Continuity (MANDATORY)
-
-When launching `sdd-apply` for a continuation batch (not the first batch):
-
-1. Search for existing apply-progress: `mem_search(query: "sdd/{change-name}/apply-progress", project: "{project}")`
-2. If found, add to the sub-agent prompt: `"PREVIOUS APPLY-PROGRESS EXISTS at topic_key 'sdd/{change-name}/apply-progress'. You MUST read it first via mem_search + mem_get_observation, merge your new progress with the existing progress, and save the combined result. Do NOT overwrite -- MERGE."`
-3. If not found (first batch), no special instruction needed.
-
-This prevents progress loss across batches. The sub-agent is responsible for read-merge-write, but the orchestrator MUST tell it that previous progress exists.
-
-#### Apply Scope Contract (MANDATORY)
-
-Every `sdd-apply` launch — batched or not — MUST pin the executor to an exclusive scope. The executor does not read these orchestrator instructions; without an explicit scope in its launch prompt it will drift past the work you intended — implementing later batches, running unsupervised for hours, and reporting work it did not actually do.
-
-When launching `sdd-apply`:
-
-- Enumerate the EXACT assigned task IDs in the prompt (e.g. "Implement ONLY WU-0: T01-T04"). State explicitly: implement only these, then STOP and return; do NOT proceed to any other task, work unit, or batch.
-- Pass the artifact-store mode and the Apply-Progress Continuity instruction as usual.
-
-After `sdd-apply` returns, BEFORE launching the next batch or trusting the report:
-
-- Verify the executor stayed within the assigned scope against the REAL repo state (commits, changed files, the tasks artifact) — not the executor's prose. If the report is internally inconsistent or claims work the commits do not show, treat it as unreliable and reconcile from git/artifacts.
-- If apply overran its scope (implemented beyond the assigned IDs), STOP. Do not launch further batches on top of an unsupervised overrun; surface the real state to the user and decide how to proceed.
-
-Defense in depth: the executor has its own hard boundary (the `sdd-apply` skill's **Assigned Scope — HARD BOUNDARY**), and the orchestrator independently scopes each launch and checks the result.
-
-#### Visual-Aware Apply Split (local policy, MANDATORY)
-
-`sonnet` tends to produce weak visual/UI design. So when a change involves design work, the orchestrator isolates that work into its own `opus` apply.
-
-Before launching the first `sdd-apply`, the orchestrator MUST inspect the tasks artifact and classify each task as **visual/design** or **non-visual**:
-
-- **Visual/design**: UI layout, styling/CSS, component visual design, spacing/typography/color, responsive behavior, matching a design reference (Figma/Zeplin/screenshot), animations/transitions, or any task whose acceptance is "looks right".
-- **Non-visual**: business logic, data layer, API/handlers, state, tests, config, build, infra — anything whose acceptance is "behaves right", independent of appearance.
-
-If there are **no** visual/design tasks, run apply normally (single `sonnet` launch). Nothing changes.
-
-If there **are** visual/design tasks, split apply into sequential slices that preserve the original task order and dependencies, alternating by class:
-
-1. Non-visual tasks up to the first visual task → `sonnet`.
-2. The contiguous visual/design tasks → `opus`.
-3. The remaining non-visual tasks → `sonnet`.
-
-This is the canonical 3-slice shape; if visual and non-visual tasks interleave more than once, produce more slices following the same alternation. The invariant is absolute: **every slice that contains design/visual work runs on `opus`; every purely non-visual slice runs on `sonnet`.** Collapse empty slices (e.g. when the change opens with visual work, slice 1 is empty — start at the `opus` slice).
-
-Each slice is an ordinary `sdd-apply` launch and MUST follow the **Apply-Progress Continuity** protocol above: every slice after the first is a continuation batch, so tell it previous apply-progress exists and instruct it to read-merge-write. Forward Strict TDD to every slice as usual. Verify once, after the last slice.
-
-#### Batched Apply-Verify Cycles (local policy)
-
-**Quiet batch cycle (LOCAL POLICY).** The cycle is only `apply → sdd-verify(batch) → report`.
-
-Long or many-step changes are risky to apply in one shot: a single `sdd-apply` accumulates context until it loses track of what it is doing, and it can run a long time with no checkpoint or report. For such changes the orchestrator runs apply in ordered batches, each followed by its own verify and a concise report, so context stays fresh and problems surface early instead of compounding.
-
-**Trigger (automatic).** Before launching the first `sdd-apply`, the orchestrator inspects the tasks artifact. The change is a batching candidate when it is large or multi-step — heuristics: more than ~8-10 implementation tasks, or several distinct phases. Small changes run as a single apply; nothing changes for them.
-
-Batch boundaries follow coherent, independently verifiable slices — never a changed-line budget. Sizing batches to a line count is what produces split-and-resplit thrash on changes that cross several modules.
-
-**Plan (orchestrator proposes, user confirms).** When the change qualifies, the orchestrator builds a batch plan — an ordered grouping of the tasks into self-contained batches (by phase or by logical cluster, each a coherent, independently verifiable unit) — and presents it for approval. In interactive mode it STOPS and shows the plan (batch count, the tasks in each, the boundaries) and waits for the user to approve or adjust before starting. In automatic mode it proceeds with its proposed plan without pausing, but still reports the plan and every per-batch result. The plan is not a fixed unit size — the orchestrator chooses boundaries that keep each batch coherent and bounded.
-
-**Cycle.** For each batch in order:
-
-1. Launch `sdd-apply` scoped to that batch only. Every batch after the first is a continuation batch, so the **Apply-Progress Continuity** protocol applies (read-merge-write the apply-progress).
-2. Run `sdd-verify` scoped to that batch: validate the batch's implemented tasks against the relevant spec/design slice and the integrity of the work so far. Tasks belonging to later batches are `pending`, not failures.
-3. Report a concise checkpoint to the user: what the batch did, the verify verdict, and what the next batch will do.
-4. If the batch verify reports a CRITICAL issue, STOP and remediate that batch before starting the next. Do not let a broken batch compound into later ones.
-
-Proceed to the next batch only after the current one's verify and report are done. After the last batch, run a final consolidated verify; archive only once all batches are complete and the **Task Completion Gate** passes.
-
-**Composition.** This composes with the **Visual-Aware Apply Split** (a batch that contains design/visual tasks still routes that slice to `opus`; the model rule applies per slice within a batch). Batching governs apply execution checkpoints only.
-
-#### Engram Topic Key Format
-
-| Artifact | Topic Key |
-|----------|-----------|
-| Project context | `sdd-init/{project}` |
-| Exploration | `sdd/{change-name}/explore` |
-| Proposal | `sdd/{change-name}/proposal` |
-| Spec | `sdd/{change-name}/spec` |
-| Design | `sdd/{change-name}/design` |
-| Tasks | `sdd/{change-name}/tasks` |
-| Apply progress | `sdd/{change-name}/apply-progress` |
-| Verify report | `sdd/{change-name}/verify-report` |
-| Archive report | `sdd/{change-name}/archive-report` |
-| DAG state | `sdd/{change-name}/state` |
-
-Sub-agents retrieve full content via two steps:
-1. `mem_search(query: "{topic_key}", project: "{project}")` -> get observation ID
-2. `mem_get_observation(id: {id})` -> full content (REQUIRED -- search results are truncated)
+Sub-agents retrieve full Engram content in two steps: `mem_search(query: "{topic_key}", project: "{project}")`, then `mem_get_observation(id)`.
 
 ### State and Conventions
 
-Convention files under the agent's global skills directory (global) or `.agent/skills/_shared/` (workspace): `engram-convention.md`, `persistence-contract.md`, `openspec-convention.md`, `gh-convention.md`.
+Convention files live under the agent's global skills directory, including `engram-convention.md`, `persistence-contract.md`, and `openspec-convention.md`.
 
-### Recovery Rule
+### Recovery
 
-- `engram` -> `mem_search(...)` -> `mem_get_observation(...)`
-- `openspec` -> read `openspec/changes/*/state.yaml`
-- `none` -> state not persisted -- explain to user
+- `engram` → `mem_search(...)` → `mem_get_observation(...)`.
+- `openspec` → read `openspec/changes/*/state.yaml` and artifacts.
+- `none` → state is not persisted; explain the limitation.
+
+---
 
 ## SDD Testing Workflow
 
@@ -401,10 +389,11 @@ Present all questions together in a single message so the user can answer in one
    In all three cases the resolved cases end up persisted in engram BEFORE `plan-testing`.
 
 2. **Execution engine / persona** — BLOCKING. The user MUST choose; there is no default:
-   - **Sin código (Maestro visual/device)** (the `maestro` engine / `maestro (visual device)` persona) — the agent drives Android, iOS, or web/Chromium flows through Maestro MCP or CLI. It is device-first visual E2E, works with a real device, emulator, simulator, or supported web surface, and only persists `.maestro/**/*.yaml` flows when the user explicitly allows repo writes.
-   - **Playwright (código)** (the `playwright` engine / `playwright (code)` persona) — the agent writes and runs Playwright spec files. Cross-browser, reproducible, leaves artifacts in the repo. Requires repo write access and Playwright installed.
+   - **Sin código (Chrome extension)** (the `chrome-extension` engine / `live (no code)` persona) — Claude drives an open Chrome browser with the user's real session. No scripts are written or committed. Ideal for non-technical users, one-off validation, or flows that require a real logged-in session.
+   - **Playwright (código)** (the `playwright` engine / `playwright (code)` persona) — Claude writes and runs Playwright spec files. Cross-browser, reproducible, leaves artifacts in the repo. Requires repo write access and Playwright installed.
+   - **Maestro (visual device)** (the `maestro` engine / `maestro (visual device)` persona) — Claude drives Android, iOS, or web/Chromium flows through Maestro MCP or CLI. It is device-first visual E2E, can run against a real device, emulator, simulator, or supported web surface, and only persists `.maestro/**/*.yaml` flows when the user explicitly allows repo writes. App source changes are never required.
 
-   Present both options with a brief description. Do NOT pick one based on what tools are available. Wait for the user's explicit choice before proceeding. The chosen engine/persona is passed to `plan-testing` and `run-testing` and overrides any per-case engine assignment where applicable.
+   Present all options with a brief description. Do NOT pick one based on what tools are available. Wait for the user's explicit choice before proceeding. The chosen engine/persona is passed to `plan-testing` and `run-testing` and overrides any per-case engine assignment where applicable.
 
 3. **Target environment** — local / staging / preview / production URL, or the app build / installed app to open when the run is mobile.
 4. **Execution mode** — interactive / automatic. Default **interactive**, which pauses after EACH phase (explore → plan → run → report) to show that phase's result for approval before continuing.
@@ -447,10 +436,10 @@ This binding applies only while you are inside the testing pipeline. For the qui
 
 | Phase | Responsibility |
 |-------|---------------|
-| `explore-testing` | Consult engram first (same-project prior testing + cross-project analogous flows) and read the `suites` artifact if present; read codebase, existing Playwright and `.maestro/**/*.yaml` flows, TESTING_CONTEXT.md, Figma frames, ClickUp task — produce testing scope including likely testing modes; for browser/mobile cases, flag engine sensitivity (multi-browser or Safari coverage → `playwright`; device-first, native-app, or Chromium/web validation → `maestro`) |
+| `explore-testing` | Consult engram first (same-project prior testing + cross-project analogous flows) and read the `suites` artifact if present; read codebase, existing Playwright and `.maestro/**/*.yaml` flows, TESTING_CONTEXT.md, Figma frames, ClickUp task — produce testing scope including likely testing modes; for browser/mobile cases, flag engine sensitivity (real-session Chrome dependency → `chrome-extension`; multi-browser or Safari coverage → `playwright`; device-first or native-app validation → `maestro`) |
 | **suites gate** (orchestrator, not a sub-agent) | MANDATORY human-in-the-loop checkpoint between explore and plan. Resolve test-case suites per the cached source (generate / conversation / engram), SHOW them to the user, collect priority + edge-case decisions, and persist the APPROVED suites to `testing/{project}/{feature}/suites`. Never auto-skip — automatic mode does not bypass it. See "Test-Case Source → Suites resolution gate". |
-| `plan-testing` | DERIVE the executable plan from the `suites` artifact when present (do NOT re-invent cases); otherwise generate from exploration. Structured test cases with IDs, priorities, mode per case, browser targets (browser mode only), engine per case (`playwright` / `maestro` for browser; `maestro` for mobile), visual-diff flags (browser/mobile mode with a design reference only) |
-| `run-testing` | Delegated to the sub-agent for every engine. Branch on the session persona engine: `maestro (visual device)` → Maestro MCP/CLI against the approved Android / iOS / web target, no repo writes unless the user explicitly allows persisted `.maestro/**/*.yaml` flows; `playwright (code)` → Playwright CLI via Bash + spec files. Project test runner for backend; HTTP calls for api; mobile mode runs through Maestro — perform visual diff only when mode is browser or mobile and a design reference is available. **Read-only for application code: failures are recorded as findings, never fixed.** |
+| `plan-testing` | DERIVE the executable plan from the `suites` artifact when present (do NOT re-invent cases); otherwise generate from exploration. Structured test cases with IDs, priorities, mode per case, browser targets (browser mode only), engine per case (`playwright` / `chrome-extension` / `maestro` for browser; `maestro` for mobile), visual-diff flags (browser/mobile mode with a design reference only) |
+| `run-testing` | Delegated to the sub-agent for every engine. Branch on the session persona engine: `live (no code)` → Chrome extension against the deployed / preview URL; `playwright (code)` → Playwright CLI via Bash + spec files; `maestro (visual device)` → Maestro MCP/CLI for Android / iOS / web with optional `.maestro/**/*.yaml` flows when the persona permits persisted artifacts. Project test runner for backend; HTTP calls for api; mobile mode runs through Maestro — perform visual diff only when mode is browser or mobile and a design reference is available. **Read-only for application code: failures are recorded as findings, never fixed.** |
 | `report-testing` | Produce human-readable summary — pass/fail table with Engine column for browser/mobile rows, evidence references (browser/device + screenshot/hierarchy when present), findings grouped by mode when mixed, follow-up items. This is the final phase of the testing pipeline. |
 
 ### Engram pre-flight guard (MANDATORY — blocking)
@@ -459,7 +448,7 @@ Run this BEFORE anything else in the testing pipeline (before `explore-testing`,
 
 1. Verify engram is reachable with a lightweight call (e.g. `mem_current_project` or a trivial `mem_search`).
 2. If it responds → proceed.
-3. If it is NOT available → STOP. Do NOT enter the pipeline. Tell the user plainly that engram (the memory the pipeline depends on) is unavailable and instruct them to repair the Engram MCP registration in Codex configuration. Do not suggest shell or CLI commands. Unlike the tool prerequisites below, this is a hard block — engram absence is not "best-effort continue".
+3. If it is NOT available → STOP. Do NOT enter the pipeline. Tell the user plainly that engram (the memory the pipeline depends on) is unavailable and instruct them to enable or repair the configured Engram plugin/tool integration. Do not suggest shell commands or standalone MCP registration. Unlike the tool prerequisites below, this is a hard block — engram absence is not "best-effort continue".
 
 ### Prerequisites Check
 
@@ -478,6 +467,8 @@ Two checkpoints. Do NOT block the pipeline on missing prerequisites — warn and
 |------|--------|-------------|-------------|-------------------|
 | `browser` | `playwright` | Playwright installed | `npx playwright --version` | "Playwright not found. Run `/setup-testing` or install manually: `npm install -D @playwright/test`" |
 | `browser` | `playwright` | Browser binaries | `npx playwright install --dry-run` | "Some browser binaries may be missing. Run `/setup-testing` or: `npx playwright install`" |
+| `browser` | `chrome-extension` | Chrome extension installed and connected | Check extension status before running | "Chrome extension not detected. Connect it before running, or switch engines if a real Chrome session is not required." |
+| `browser` | `chrome-extension` | Chrome browser open | — | "Chrome must be open for the extension to drive it." |
 | `browser` | `maestro` | Maestro CLI | `maestro --version` | "Maestro CLI not found. Run `/setup-testing` or install Maestro before the run." |
 | `browser` | `maestro` | Maestro MCP helpers | Check whether tools such as `list_devices` / `run` are available before delegating | "Maestro MCP helpers not detected. Continuing with CLI-only Maestro; live inspection helpers may be unavailable." |
 | `browser` | `maestro` | Reachable Maestro web / device target | Prefer `list_devices`; otherwise confirm the Chromium/web target from `TESTING_SETUP.md` or the user | "No Maestro target was confirmed for the web run. Ask the user before provisioning a browser/device session." |
@@ -524,7 +515,7 @@ The orchestrator asks the user for PRODUCT decisions. It does NOT ask for TECHNI
 **Ask the user (PRODUCT decisions):**
 
 - Where do the test cases come from? (this conversation / engram / generate now with `test-suite-generator`)
-- Which execution engine / persona? (`maestro (visual device)` / `maestro` for device-first Android / iOS / web validation, or `playwright (code)` for reproducible cross-browser coverage)
+- Which execution engine / persona? (`live (no code)` for a real Chrome session, `playwright (code)` for reproducible cross-browser coverage, or `maestro (visual device)` for device-first Android / iOS / web validation)
 - Which test cases are `critical` vs `low` priority?
 - Which browsers or device surfaces must be covered (e.g. Safari/WebKit, Android, iOS, or Chromium via Maestro)?
 - Which edge cases matter for this feature (e.g. empty state, error state)?
@@ -568,11 +559,12 @@ A bare `"SUM-03: ¿qué hago?"` with options the user can only guess at is a def
 
 `run-testing` is DELEGATED to the `sdd-run-testing` sub-agent for EVERY engine, with no exception. The orchestrator stays thin and never executes the run itself — that is the whole point of the sub-agent architecture, and it holds for the no-code and code-driven paths equally.
 
-- **`maestro` / `maestro (visual device)` → delegate.** The sub-agent drives Android, iOS, or web/Chromium flows through Maestro. Prefer Maestro MCP tools (`list_devices`, `inspect_screen`, `take_screenshot`, `run`, `cheat_sheet`, `open_maestro_viewer`) when available; otherwise fall back to Maestro CLI (`maestro test`, `maestro hierarchy`) where possible. Do NOT edit app source. Persist `.maestro/**/*.yaml` only when the user explicitly allows repo-backed flows; otherwise keep YAML inline / ephemeral.
+- **`chrome-extension` / `live (no code)` → delegate.** The sub-agent drives the Claude Chrome extension against the deployed / preview URL. This is the real-session web path for non-technical users — it must remain a first-class, delegatable engine.
+- **`maestro` / `maestro (visual device)` → delegate.** The sub-agent drives Android, iOS, or web/Chromium flows through Maestro. Prefer Maestro MCP tools (`list_devices`, `inspect_screen`, `take_screenshot`, `run`, `cheat_sheet`, `open_maestro_viewer`) when available; otherwise fall back to Maestro CLI (`maestro test`, `maestro hierarchy`) where possible. Do NOT edit app source. Persist `.maestro/**/*.yaml` only when the persona explicitly allows repo-backed flows; otherwise keep YAML inline / ephemeral.
 - **`playwright` / `backend` / `api` → delegate.** Bash-driven (`playwright test`, the project test runner, `curl`) plus engram.
 - **`mixed`**: delegated as parallel execution units (see below), one runner per unit, results merged.
 
-There is NO default engine. The engine/persona is a blocking product choice (see Testing Setup Questions). On this agent surface, `maestro (visual device)` means the Maestro visual/device flow, while `playwright (code)` is the reproducible cross-browser suite option.
+There is NO default engine. The engine/persona is a blocking product choice (see Testing Setup Questions). `live (no code)`, `playwright (code)`, and `maestro (visual device)` are peer first-class options; choose the one that fits the target surface and the kind of evidence the user wants.
 
 #### Parallel execution — fan out N runners (read second)
 
@@ -585,24 +577,26 @@ run-testing is NOT a single runner by default. Most test cases are independent (
 **The orchestrator launches one runner per unit, concurrently**, passing each runner only its unit's cases. Bound the fan-out by:
 1. **Data dependencies** — already encapsulated: chains are single units, so ordering is preserved within a runner.
 2. **Shared mutable state** — two units that write the SAME data (same record, same user's state) would collide if concurrent. `plan-testing` flags these as conflicting; the orchestrator serializes conflicting units (or relies on isolated per-unit test data when the plan says it is available). Read-only cases never conflict.
-3. **Engine concurrency** — `playwright` / `backend` / `api` units parallelize freely (isolated processes / browser contexts). `maestro` / `live` units are bounded by how many devices, emulators, simulators, or web targets are actually available and by whether the user wants to watch the run. Do not auto-create or auto-provision extra targets without asking first.
+3. **Engine concurrency** — `playwright` / `backend` / `api` units parallelize freely (isolated processes / browser contexts). `chrome-extension` / `live` units are bounded by how many real browser sessions are available and by the user's wish to observe the run. `maestro` units are bounded by how many devices, emulators, simulators, or web targets are actually available and by whether the user wants to watch the run. Do not auto-create or auto-provision extra targets without asking first.
 4. **A sane concurrency cap** — do not launch dozens at once; batch to a reasonable number of concurrent runners.
 
 **Per-unit model.** Apply the conditional model per runner: a unit whose cases include `visual diff: yes` launches with `opus`; purely mechanical units launch with `sonnet`. So visual units get the strong vision model without paying for it on the rest.
 
 **Result merge (orchestrator-owned).** Each runner writes its own shard observation under `testing/{project}/{feature}/run/{session-id}/{unit-id}` (a sole runner writes the consolidated `testing/{project}/{feature}/run/{session-id}` directly) and returns its `run_digest`. The orchestrator MERGES all shards into the consolidated `testing/{project}/{feature}/run/{session-id}` and ALWAYS writes `testing/{project}/{feature}/run/latest` itself — even for a single runner; runners never write `run/latest`. The `run/latest` content MUST include the top-level fields `session_id: "{session-id}"` and `session_topic_key: "testing/{project}/{feature}/run/{session-id}"`, so `report-testing` can read the `session_id` and resolve one latest run. Surface a combined run digest to the user.
 
-The session **persona engine** (chosen in Testing Setup Questions) takes precedence for browser/mobile cases: `maestro (visual device)` forces `maestro` for browser cases the user chose to validate through Chromium/web and for ALL `mobile` cases; `playwright (code)` forces `playwright` for browser cases. Only when no persona was set does the per-case `engine` determined during `plan-testing` apply. With that precedence in mind, automated test runs dispatch based on the `mode` and, for UI cases, the resolved `engine`:
+The session **persona engine** (chosen in Testing Setup Questions) takes precedence for browser/mobile cases: `live (no code)` forces `chrome-extension` for browser cases (run against the deployed / preview URL, no spec files written); `playwright (code)` forces `playwright` for browser cases; `maestro (visual device)` forces `maestro` for browser cases the user chose to validate through Chromium/web and for ALL `mobile` cases. Only when no persona was set does the per-case `engine` determined during `plan-testing` apply. With that precedence in mind, automated test runs dispatch based on the `mode` and, for UI cases, the resolved `engine`:
 
-- **`browser`**: Two engines are available. The plan assigns one per test case.
+- **`browser`**: Three engines are available. The plan assigns one per test case.
 
   - **`engine: playwright`**: Run via Playwright CLI via Bash, headless or headed. Cross-browser across Chromium / Firefox / WebKit as specified in the test plan. Use for: multiple browsers required, regression suites, repeatable runs, anything needing visual diff across browsers.
 
+  - **`engine: chrome-extension`**: Drive a real Chrome session via the Claude Chrome extension. Single browser only (Chrome). Use for: flows that depend on a real authenticated session, one-shot exploratory validation, or when the user wants to observe the run live in their own Chrome window. Visual diff still works when a design reference is present, but coverage is Chrome-only.
+
   - **`engine: maestro`**: Run web/Chromium or device-proxy flows through Maestro MCP or CLI. Use for: device-first visual E2E, the same flow needing to span mobile + web, or a no-code browser run where Chromium coverage is sufficient. Evidence comes from Maestro screenshots / hierarchy, not Playwright spec files.
 
-  Browser inspection helpers (Playwright MCP or Maestro helpers) may be used for DOM or screen inspection, but they do not replace the chosen execution engine.
+  Browser inspection helpers (Chrome DevTools MCP, Playwright MCP, Maestro helpers) may be used for DOM or screen inspection, but they do not replace the chosen execution engine.
 
-- **`mobile`**: `engine: maestro` only. Drive Android / iOS flows through Maestro MCP or CLI. Requires a reachable device/emulator/simulator (or approved cloud target) plus a known `appId`, bundle ID, app path, or launch target. Prefer inline YAML while refining a run; only write `.maestro/**/*.yaml` when the user explicitly allows persisted flows.
+- **`mobile`**: `engine: maestro` only. Drive Android / iOS flows through Maestro MCP or CLI. Requires a reachable device/emulator/simulator (or approved cloud target) plus a known `appId`, bundle ID, app path, or launch target. Prefer inline YAML while refining a run; only write `.maestro/**/*.yaml` when the persona explicitly allows persisted flows.
 
 - **`backend`**: Invoke the project's test runner via Bash. The command and runner are read from
   `TESTING_SETUP.md` when present; otherwise detect from the repo:
@@ -623,9 +617,9 @@ A design reference can be any of: a Figma frame URL or node ID, a Zeplin link, a
 
 Visual comparison uses a **structured checklist**, not pixel diff.
 
-The checklist extracts typography, color, spacing, and layout specs from the design reference and verifies them against computed DOM styles or device-observed UI properties. Pixel diff screenshots are informative artifacts for human review, NOT a pass/fail criterion. Screenshot persistence is persona-aware: `playwright (code)` saves them under a temporary directory outside the repository tree (e.g. `/tmp/sdd-testing/{feature}/screenshots/`); `maestro (visual device)` / `maestro` prefers Maestro screenshots and hierarchy captures attached to the run artifact or saved to a temporary directory outside the repository tree. `.maestro/**/*.yaml` is the only repo-backed Maestro artifact, and only when the user explicitly permits persisted flows. Screenshots are never written into the repository tree.
+The checklist extracts typography, color, spacing, and layout specs from the design reference and verifies them against computed DOM styles or device-observed UI properties. Pixel diff screenshots are informative artifacts for human review, NOT a pass/fail criterion. Screenshot persistence is persona-aware: `playwright (code)` saves them under a temporary directory outside the repository tree (e.g. `/tmp/sdd-testing/{feature}/screenshots/`); `live (no code)` does NOT write to the repo — the screenshot is described in the run artifact only; `maestro (visual device)` prefers Maestro screenshots and hierarchy captures attached to the run artifact or saved to a temporary directory outside the repository tree. `.maestro/**/*.yaml` is the only repo-backed Maestro artifact, and only when the persona explicitly permits persisted flows. Screenshots are never written into the repository tree.
 
-See `~/.codex/skills/visual-diff/SKILL.md` for the full methodology.
+See `~/.claude/skills/visual-diff/SKILL.md` for the full methodology.
 
 ### Re-runs
 

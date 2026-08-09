@@ -1,5 +1,5 @@
 ---
-description: Implement SDD tasks -- writes code following specs and design
+description: Implement SDD tasks — writes code following specs and design
 ---
 
 If the native `sdd-apply` sub-agent is available, delegate this command to it.
@@ -12,26 +12,26 @@ CONTEXT:
 - Current project: Derive agent-side from the detected working directory basename. Do not use slash-command shell interpolation for this value.
 - Artifact store mode: engram
 
-STATUS GATE:
-Read `~/.claude/skills/_shared/sdd-status-contract.md` and produce structured status before acting. If the change is missing or ambiguous, ask the user to choose and STOP. Continue only when status says apply is `ready`, spec/design/tasks exist, and `actionContext` allows implementation edits. Carry `contextFiles`, task progress, dependency states, and `actionContext` (allowed edit roots) into the sub-agent prompt when delegating.
-
 TASK:
 Implement the remaining incomplete tasks for the active SDD change.
 
+STATUS GATE:
+Read `~/.claude/skills/_shared/sdd-status-contract.md` and produce structured status before acting. If `$ARGUMENTS` is missing or ambiguous, ask the user to choose and STOP. Do not guess. Continue only when status says apply is `ready`, spec/design/tasks exist, and `actionContext` allows implementation edits. If status reports `workspace-planning` with no allowed edit roots, STOP before launching apply or editing inline. Carry `contextFiles`, task progress, dependency states, and `actionContext` into the native sub-agent prompt when delegating.
+
 ENGRAM PERSISTENCE (artifact store mode: engram):
 CRITICAL: mem_search returns 300-char PREVIEWS, not full content. You MUST call mem_get_observation(id) for EVERY artifact.
-STEP A -- SEARCH (get IDs only):
-  mem_search(query: "sdd/{change-name}/spec", project: "{project}") -> save spec_id
-  mem_search(query: "sdd/{change-name}/design", project: "{project}") -> save design_id
-  mem_search(query: "sdd/{change-name}/tasks", project: "{project}") -> save tasks_id
-STEP A2 -- CHECK PREVIOUS PROGRESS (before starting work):
-  mem_search(query: "sdd/{change-name}/apply-progress", project: "{project}") -> if found, save progress_id
-  - Previous apply-progress (if exists): `mem_search(query: "sdd/{change-name}/apply-progress", project: "{project}")` -> read and merge
-STEP B -- RETRIEVE FULL CONTENT (mandatory):
-  mem_get_observation(id: spec_id) -> full spec
-  mem_get_observation(id: design_id) -> full design
-  mem_get_observation(id: tasks_id) -> full tasks (keep tasks_id for updates)
-  IF progress_id exists: mem_get_observation(id: progress_id) -> read previous progress, skip completed tasks, MERGE when saving
+STEP A — SEARCH (get IDs only):
+  mem_search(query: "sdd/{change-name}/spec", project: "{project}") → save spec_id
+  mem_search(query: "sdd/{change-name}/design", project: "{project}") → save design_id
+  mem_search(query: "sdd/{change-name}/tasks", project: "{project}") → save tasks_id
+STEP A2 — CHECK PREVIOUS PROGRESS (before starting work):
+  mem_search(query: "sdd/{change-name}/apply-progress", project: "{project}") → if found, save progress_id
+  - Previous apply-progress (if exists): `mem_search(query: "sdd/{change-name}/apply-progress", project: "{project}")` → read and merge
+STEP B — RETRIEVE FULL CONTENT (mandatory):
+  mem_get_observation(id: spec_id) → full spec
+  mem_get_observation(id: design_id) → full design
+  mem_get_observation(id: tasks_id) → full tasks (keep tasks_id for updates)
+  IF progress_id exists: mem_get_observation(id: progress_id) → read previous progress, skip completed tasks, MERGE when saving
 Update tasks as you complete them:
   mem_update(id: {tasks-observation-id}, content: "{updated tasks with [x] marks}")
 Save progress:
@@ -47,5 +47,20 @@ For each task:
 
 Return a structured result with: status, executive_summary, detailed_report (files changed), artifacts, and next_recommended.
 
-POST-APPLY ROUTING:
-After apply completes, return control to the parent orchestrator. Never auto-launch Judgment Day or open a new review budget; the parent decides whether to route to review.
+REVIEW ROUTING (post-verify, not post-apply):
+Return control to the parent orchestrator. Apply itself never routes to review — `nextRecommended` proceeds to `verify` once tasks are complete; the review offer is a post-verify decision (see sdd-verify.md's post-verify review offer). If the parent later observes a `reviewOffer` block in native status output, it—not the apply executor—begins negotiated review routing with `gentle-ai review status --cwd <repo> --contract gentle-ai.review-integration/v2 --next-transition`. It routes only from the returned `next_transition`: for `execute`, it invokes the exact operation and ordered argument tokens unchanged; for `collect`, it satisfies only the exact named inputs and capture operations before querying STATUS again; for `stop`, it stops without running a lifecycle operation. The parent never substitutes direct START, and the apply executor never launches review.
+
+### Authority-First Terminal Procedure
+
+Use only the compact facade; it appends and reads back native authority before materializing existing compatibility artifacts.
+
+| Order | Operation | Required result | Terminal mirrors |
+|---|---|---|---|
+| 01 | `gentle-ai review status --cwd <repo> --contract gentle-ai.review-integration/v2 --agent claude-code --next-transition` | one provider-owned `next_transition` returned | blocked |
+| 02 | `provider-returned transition` | exact `execute` operation/arguments or `collect` inputs completed; `stop` halts | blocked |
+| 03 | repeat 01–02 | exact returned `review.validate` allows the terminal gate | blocked |
+| 04 | `reconcile-terminal-mirrors` | existing mirrors reconciled | allowed |
+
+After ambiguous output, query STATUS again; native discovery reports the committed authority and its next transition without another budget. Malformed or ambiguous lineage remains invalid.
+
+Reuse a valid receipt; never auto-launch Judgment Day or create another budget at commit/push/PR/release.

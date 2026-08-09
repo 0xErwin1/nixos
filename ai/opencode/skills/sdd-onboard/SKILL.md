@@ -5,25 +5,27 @@ disable-model-invocation: true
 user-invocable: false
 license: MIT
 metadata:
-  author: iperez
+  author: gentleman-programming
   version: "1.0"
-  delegate_only: true
+  delegate_only: false
 ---
 
-> **ORCHESTRATOR GATE**: Do not execute this skill inline. Launch the dedicated
-> `sdd-onboard` executor with a complete preflight decision block.
+> **ORCHESTRATOR NOTE**: This skill is designed to be executed INLINE by the
+> orchestrator. It is an interactive walkthrough — no sub-agent delegation
+> needed.
 
 ## Executor Override
 
 If you ARE the `sdd-onboard` sub-agent (NOT the orchestrator), the gate above does NOT apply to you. Continue with the phase work below. Do NOT delegate. Do NOT call the Skill tool. You are the executor — execute.
 
+
 ## Language Domain Contract
 
-Generated technical artifacts default to English. Do not inherit the user's conversational language for SDD artifacts unless the user explicitly requests that artifact language or the project convention requires it.
+Generated technical artifacts default to English. Do not inherit the user's conversational language or the active persona's regional voice for SDD artifacts unless the user explicitly requests that artifact language or the project convention requires it.
 
 If technical artifacts are explicitly requested in another language, use a neutral/professional register unless the user explicitly requests a different tone or regional variant.
 
-Public and contextual comments follow the target context language by default. Explicit user language or tone overrides win; otherwise use a neutral/professional register unless the target context clearly calls for another tone or regional variant.
+Public/contextual comments follow the target context language by default. Explicit user language or tone overrides win; otherwise use a neutral/professional register unless the target context clearly calls for another tone or regional variant.
 
 ## Purpose
 
@@ -32,20 +34,8 @@ You are a sub-agent responsible for ONBOARDING. You guide the user through a com
 ## What You Receive
 
 From the orchestrator:
-- Artifact store mode and active-store instructions
-- Complete preflight decision block
+- Artifact store mode (`engram | openspec | hybrid | none`)
 - Optional: a suggested improvement or area to focus on
-
-## Preflight and Persistence Contract
-
-The orchestrator owns the complete choice and fallback transport. Treat its
-validated preflight decision block as fixed. Do not replace or infer a choice.
-If it is incomplete, return `blocked` and stop for the orchestrator to resume
-with its canonical choice envelope.
-
-Persist each onboarding artifact and progress update through the active store's
-operation. Do not create repository-local planning artifacts when the store is
-external. Report only observed artifacts and completed work.
 
 ## What to Do
 
@@ -88,7 +78,7 @@ Narrate as you explore:
  Let me look at the relevant code..."
 ```
 
-Perform the exploration yourself: investigate the chosen area, understand the current state, identify what needs to change, and explain the findings in plain language.
+Run `sdd-explore` behavior inline — investigate the chosen area, understand current state, identify what needs to change. Explain your findings to the user in plain language.
 
 Conclude with:
 ```
@@ -102,7 +92,7 @@ Conclude with:
  This becomes the contract for everything that follows."
 ```
 
-Create the proposal through the active artifact store following `sdd-propose` format. After persisting it:
+Create the change folder and write `proposal.md` following `sdd-propose` format. After creating it:
 
 ```
 "Here's the proposal I wrote. Notice the Capabilities section —
@@ -118,7 +108,7 @@ Show the user the proposal and let them review it. Ask if they want to adjust an
  No implementation details — just observable behavior."
 ```
 
-Persist the delta specs through the active artifact store following `sdd-spec` format. After creating them:
+Write the delta specs following `sdd-spec` format. After creating them:
 
 ```
 "See the Given/When/Then format? Each scenario is a potential test case.
@@ -131,7 +121,7 @@ Persist the delta specs through the active artifact store following `sdd-spec` f
 "Step 4: Design — We decide HOW to build it. Architecture decisions, file changes, rationale."
 ```
 
-Persist the design following `sdd-design` format. Highlight the key decisions:
+Write `design.md` following `sdd-design` format. Highlight the key decisions:
 
 ```
 "Notice the Decisions section — we document WHY we chose this approach
@@ -144,7 +134,7 @@ Persist the design following `sdd-design` format. Highlight the key decisions:
 "Step 5: Tasks — We break the work into concrete, checkable steps."
 ```
 
-Persist the task list following `sdd-tasks` format. Explain the structure:
+Write `tasks.md` following `sdd-tasks` format. Explain the structure:
 
 ```
 "Each task is specific enough that you know when it's done.
@@ -191,10 +181,11 @@ Run `sdd-verify` behavior. Explain the compliance matrix:
  The specs now describe the new behavior. The change becomes the audit trail."
 ```
 
-Perform the archive behavior through the active artifact store. Show the result:
+Run `sdd-archive` behavior. Show the result:
 
 ```
-"Done! The active artifact store now reflects the archived change."
+"Done! The change is archived at openspec/changes/archive/YYYY-MM-DD-{name}/
+ And openspec/specs/ now reflects the new behavior."
 ```
 
 ### Phase 10: Summary
@@ -202,16 +193,16 @@ Perform the archive behavior through the active artifact store. Show the result:
 Close the session with a recap:
 
 ```markdown
-## Onboarding Complete
+## Onboarding Complete! 🎉
 
 Here's what we built together:
 
 **Change**: {change-name}
 **Artifacts created**:
-- proposal — the WHY
-- specifications — the WHAT
-- design — the HOW
-- tasks — the STEPS
+- proposal.md — the WHY
+- specs/{capability}/spec.md — the WHAT
+- design.md — the HOW
+- tasks.md — the STEPS
 
 **Code changed**:
 - {list of files}
@@ -224,7 +215,7 @@ Small tweaks? Just code. Features, APIs, architecture decisions? SDD first.
 
 **Next steps**:
 - Try /sdd-new for your next real feature
-- Check the active artifact store — that's your growing source of truth
+- Check openspec/specs/ — that's your growing source of truth
 - Questions? The orchestrator is always available
 ```
 

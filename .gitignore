@@ -8,3 +8,6 @@ thoughts/
 .agent/
 # CodeGraph index
 .codegraph/
+# gentle-ai skill registry: the path is hardcoded upstream and the hook runs
+# with --no-gitignore, so it never adds this entry itself
+.atl/

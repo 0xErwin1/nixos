@@ -1,125 +1,149 @@
 ---
 name: issue-creation
-description: "Create issues that follow the repo's own conventions. Trigger: creating GitHub issues, bug reports, or feature requests."
+description: "Create and triage GitHub issues from repository evidence. Trigger: issue creation, bug reports, feature requests, or issue approval."
 license: Apache-2.0
 metadata:
-  author: iperez
-  version: "2.1"
+  author: gentleman-programming
+  version: "1.2"
 ---
 
-## When to Use
+# Issue Creation
 
-Use this skill when:
-- Creating a GitHub issue (bug report or feature request)
-- Helping a contributor file an issue
-- Triaging issues as a maintainer
+## When To Use
 
----
+Use this skill when creating, drafting, triaging, or approving an issue in the current GitHub repository.
 
-## Core Principle
+## Core Rule
 
-**Follow the repository's own conventions.** Do not impose a fixed template, label taxonomy, or approval gate. Before filing an issue, read what the repo actually expects and match it. Approval workflows, specific labels, and required fields apply only when the repo defines them.
+Discover the repository's actual contribution workflow before proposing or publishing an issue. Templates, labels, approval gates, and Discussions support are repository policy, not universal GitHub behavior.
 
----
+## Safe Discovery
+
+Run read-only checks first:
+
+```bash
+gh auth status
+REPO="$(gh repo view --json nameWithOwner -q .nameWithOwner)"
+REPO_URL="$(gh repo view --json url -q .url)"
+HOST="${REPO_URL#*://}"
+HOST="${HOST%%/*}"
+gh repo view --json nameWithOwner,url,hasDiscussionsEnabled,hasIssuesEnabled,isBlankIssuesEnabled
+git ls-files CONTRIBUTING.md CONTRIBUTING.* .github/CONTRIBUTING.md .github/ISSUE_TEMPLATE
+gh api --hostname "$HOST" --paginate "repos/$REPO/labels?per_page=100" --jq '.[].name'
+```
+
+Also inspect:
+
+- repository instructions such as `CONTRIBUTING.md` and `README.md`;
+- files under `.github/ISSUE_TEMPLATE`;
+- `.github/ISSUE_TEMPLATE/config.yml` when present;
+- issue forms, required fields, and labels declared by each template;
+- existing open and closed issues for duplicates and established wording.
+
+Stop and ask for repository context if authentication, repository resolution, verification that REPO and HOST are non-empty, required metadata is unavailable, hasIssuesEnabled is false, or policy discovery fails. Never continue from failed discovery into issue publication.
+
+A no-template fallback is allowed only when isBlankIssuesEnabled is explicitly true. Otherwise follow discovered contact links or stop and ask; never publish.
+
+After discovery and review, build optional label arguments using only labels that exist and repository policy permits the actor to apply:
+
+```bash
+LABEL_ARGS=()
+# Repeat for each reviewed, permitted discovered label.
+LABEL_ARGS+=(--label "$LABEL")
+```
+
+An empty array applies no label; do not invent labels.
 
 ## Workflow
 
-```
-1. Detect the repo's issue conventions (see below)
-2. Search existing issues for duplicates
-3. Load comment-writer + cognitive-doc-design (see "Writing Style"), then write the body
-4. Use the repo's template if one exists; otherwise write a clear, structured issue
-5. Fill the fields the template/CONTRIBUTING asks for
-6. Apply labels only if the repo maintains a taxonomy
-7. Submit
-```
+1. Describe the problem or request in one sentence and derive a short search query.
+2. Search open and closed issues:
 
----
+   ```bash
+   gh issue list --repo "$HOST/$REPO" --state all --search "$QUERY" --limit 1000
+   ```
 
-## Detecting Repo Conventions
+   If 1000 results are returned or completeness remains uncertain, narrow the search, use read-only API discovery, or stop and ask before publishing.
 
-Before writing the issue, inspect the repo and adopt what you find:
+3. If an issue already covers the same behavior, comment there instead of creating a duplicate.
+4. Choose a repository-provided template only when its purpose matches the report.
+5. Fill every required template field from known evidence. Ask for missing facts rather than inventing them.
+6. Apply labels only when they exist and repository guidance establishes who should apply them.
+7. Publish only after the title, body, target repository, and selected template or fallback have been reviewed, and the pre-submission privacy review below has passed.
 
-| Source | What it tells you |
-|--------|-------------------|
-| `.github/ISSUE_TEMPLATE/` | Available templates, required fields, auto-labels |
-| `.github/ISSUE_TEMPLATE/config.yml` | Whether blank issues are disabled; where questions go (Discussions) |
-| `CONTRIBUTING.md` | Issue rules, approval workflow, triage process |
-| Existing labels (`gh label list`) | Whether a label/status taxonomy exists and which to apply |
-| Recent issues (`gh issue list`) | De-facto norms for titles, structure, and labeling |
+## Pre-submission Privacy Review
 
-If the repo enforces a template, an approval label (e.g. `status:approved`), or routes questions to Discussions, comply with it. If it does not, do **not** invent one — file a clean, well-structured issue and stop.
+Pre-submission privacy review is mandatory. Scan every issue body immediately before `gh issue create`. The scan replaces — never deletes — environment-specific data with explicit placeholders so the reproduction still teaches:
 
-When conventions are absent or unclear, fall back to the defaults below and state what you assumed.
+| Category | Replace with | Example (before → after) |
+|----------|---------------|---------------------------|
+| Private project names | `<project-name>` | `my-private-project-b` → `<project-name>` |
+| Usernames | `<user>` | `C:\Users\my-real-username\go\bin` → `C:\Users\<user>\go\bin` |
+| Hostnames | `<hostname>` | `devbox-macbook.local` → `<hostname>` |
+| Home paths | `/home/<user>` or `C:\Users\<user>` | (covered above) |
+| API keys, tokens, passwords | `<token>` / `<password>` | `ghp_abc123...` → `<token>` |
+| Internal ports / hostnames | `<host>:<port>` | `10.0.0.42:5432` → `<host>:<port>` |
 
----
+Do NOT redact intentionally public identifiers: tool names (`gentle-ai`, `engram`, `go`, `node`, `python`), package names, public documentation URLs, generic example domains (`example.com`, `localhost`). Keep reproduction structure with placeholders — never redact an example into nothingness.
 
-## Writing Style (mandatory)
+**Rule of thumb:** if the reader can run the reproduction step after you replace every identifier with its placeholder, the sanitization is correct. If a step becomes impossible (because the placeholder consumed a needed value), that step needs the value — and you should mark it `<value-required>` and explain in the body what the user should fill in.
 
-An issue is read by other people, so its style is not freeform. Before writing a single line of the title or body, load BOTH writing skills in the current turn and apply them together:
+## Template Paths
 
-- **`cognitive-doc-design`** — shapes the BODY so a maintainer can scan and act fast: lead with the answer (what is wrong / what is wanted, first), chunk the sections, prefer tables and numbered steps over dense prose, signpost with the template's headings.
-- **`comment-writer`** — shapes the VOICE of every prose sentence: warm and direct, useful fast, explain the why behind a request, no filler. It also governs any follow-up replies you post on the issue thread.
+Do not guess a template filename. If multiple templates could apply and repository guidance does not distinguish them, stop and ask which one to use.
 
-Resolve the two skills' guidance into one consistent style: structured and scannable (doc design) AND warm and direct (comment voice). They do not conflict — doc-design owns layout, comment-writer owns tone.
+- .yml and .yaml files are GitHub Issue Forms. Do not parse or render their schema. Open the web issue chooser and stop for human completion:
 
-**Language:** write the issue in the destination repository's primary language, not the chat language — English when the repo is English, even if we are talking in Spanish. `comment-writer` carries the full language rule; defer to it.
+  ```bash
+  gh issue create --repo "$HOST/$REPO" --web "${LABEL_ARGS[@]}"
+  ```
 
-Self-check before submitting: "Did I load both writing skills this turn, and does the issue read as scannable AND warmly direct?" If not, stop and apply them.
+- .md files are Markdown templates. Read the matching template, complete it from known evidence into a reviewed BODY_FILE, then publish it:
 
----
+  ```bash
+  gh issue create --repo "$HOST/$REPO" --title "$TITLE" --body-file "$BODY_FILE" "${LABEL_ARGS[@]}"
+  ```
 
-## Default Issue Structure
+## No-Template Fallback
 
-If the repo has no template, write the issue with a clear structure appropriate to its kind.
+When the repository permits issue creation, provides no matching template, and isBlankIssuesEnabled is explicitly true, prepare a structured body with these sections:
 
-### Bug report (default)
+- problem or requested outcome;
+- reproduction or motivating example;
+- expected behavior;
+- actual behavior or current limitation;
+- environment and relevant evidence;
+- alternatives or workarounds, when applicable.
 
-- **Description** — what's wrong, in one or two sentences.
-- **Steps to reproduce** — numbered, minimal.
-- **Expected behavior** — what should happen.
-- **Actual behavior** — what happens, with errors/logs.
-- **Environment** — OS, tool/client, shell, versions — whatever is relevant.
-
-### Feature request (default)
-
-- **Problem** — the pain point this solves.
-- **Proposed solution** — how it should work from the user's perspective.
-- **Alternatives considered** — other approaches or workarounds (optional).
-
-Always search for duplicates first and link any related issue.
-
----
-
-## Labels and Approval
-
-Apply these only when the repo defines them:
-
-- **Type/status labels** (`bug`, `enhancement`, `status:needs-review`, etc.) — use the repo's taxonomy; many templates auto-apply them.
-- **Approval gate** (`status:approved` or similar) — respect it only if CONTRIBUTING or CI enforces an issue-first workflow. Do not assume one exists.
-- **Priority labels** — apply only as a maintainer following the repo's process.
-
-If the repo has no label system, do not add labels.
-
----
-
-## Commands
+Publish the reviewed fallback explicitly:
 
 ```bash
-# Inspect conventions first
-ls .github/ISSUE_TEMPLATE/ 2>/dev/null
-gh label list 2>/dev/null
-gh issue list --limit 5
-
-# Search for duplicates before creating
-gh issue list --search "keyword"
-
-# Create with a repo template (if one exists)
-gh issue create --template "bug_report.yml" --title "fix(scope): description"
-
-# Create without a template (no template defined)
-gh issue create --title "fix(scope): description" --body "..."
-
-# Apply a label only if the repo uses them
-gh issue edit <number> --add-label "<repo-label>"
+gh issue create --repo "$HOST/$REPO" --title "$TITLE" --body "$BODY" "${LABEL_ARGS[@]}"
 ```
+
+If blank issues are not explicitly enabled, follow discovered contact links or stop and ask. Never publish a no-template fallback.
+
+## Labels And Approval
+
+Treat labels and approval gates as conditional:
+
+- use only labels returned by repository discovery;
+- follow contribution guidance for who may apply each label;
+- wait when repository policy requires maintainer approval before implementation;
+- do not invent a status or priority taxonomy when none is documented.
+
+## Questions And Discussions
+
+Use Discussions only when `hasDiscussionsEnabled` is true and repository guidance routes the question there. Otherwise follow documented support/contact links or ask the user where the question belongs. Never link to another repository's Discussions page.
+
+## Triage Decision
+
+Before approving or closing an issue, verify:
+
+- it describes a concrete bug or scoped improvement rather than an unsupported question;
+- it is not a duplicate;
+- the report contains enough evidence for an implementation decision;
+- the requested behavior is in repository scope;
+- labels and status changes follow the current repository's policy.
+
+If any point is uncertain, keep the issue in the repository's review state and request the smallest missing evidence.

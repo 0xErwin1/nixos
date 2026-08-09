@@ -1,79 +1,53 @@
 ---
 name: judgment-day
-description: "Trigger: judgment day, judgement day, dual review, adversarial review, juzgar. Run blind dual review, fix confirmed issues, then re-judge."
+description: "Trigger: judgment day, dual review, adversarial review, juzgar. Run explicit blind dual review with at most two scoped fix/re-judgment rounds."
 license: Apache-2.0
 metadata:
-  author: iperez
-  version: "1.4"
+  author: gentleman-programming
+  version: "1.7"
 ---
 
 ## Activation Contract
 
-Load this skill only when the user explicitly asks for Judgment Day, Judgement Day, dual/adversarial review, or equivalent Spanish trigger (`juzgar`, `que lo juzguen`). Review a specific target: files, feature, PR, or architecture slice. Judgment Day replaces ordinary 4R for that target; never run both.
+Load only when the user explicitly requests Judgment Day or equivalent dual/adversarial review for a concrete target. Judgment Day is a standalone developer tool: judges run whenever asked, on any runtime, and need no review transaction, runtime identity, or delivery-receipt machinery to start. It replaces ordinary 4R as the adversarial method for that target; never run both.
 
 ## Hard Rules
 
-- Resolve project skills before launching agents: read skill registry, match skill paths by target files/task, and inject the same `Skills to load before work` block into both judge prompts and fix prompts.
-- Launch **two blind judges in parallel** with identical target and criteria; never review the code yourself.
-- Wait for both judges before synthesis; never accept a partial verdict.
-- Classify warnings as `WARNING (real)` only if normal intended use can trigger them; otherwise downgrade to INFO as `WARNING (theoretical)`.
-- Ask before fixing Round 1 confirmed issues.
-- After any fix agent runs, immediately re-launch both judges in parallel before commit/push/done/session summary.
-- Terminal states are only `JUDGMENT: APPROVED` or `JUDGMENT: ESCALATED`.
-- Permit at most two fix rounds and two scoped re-judgments; any issue remaining after round two escalates and stops.
+- Resolve matching project skills before starting and pass the same paths to both judges and any fix actor.
+- Build one complete immutable target, then launch two blind read-only judges in parallel with identical scope and criteria.
+- Each judge returns one neutral findings result and terminates. Wait for both; never accept a partial judgment.
 - Never launch `review-refuter`; two-judge agreement is the corroboration mechanism.
+- Only the parent orchestrator merges/persists findings, launches the fix actor, and launches scoped re-judgment.
+- Fix only severe findings confirmed by both judges. WARNING/SUGGESTION rows remain `info`.
+- Permit at most two fix rounds and two scoped re-judgments. Re-judgment sees only the frozen ledger plus fix delta and may record fix-caused defects.
+- The only terminal verdicts are `APPROVED | ESCALATED`; never reset or extend an exhausted round budget.
+- A judgment issues no receipt and carries no delivery authority: it satisfies no commit, push, PR, or release gate. When the caller explicitly wants delivery authority for the same target, run the ordinary negotiated review lifecycle as its own step; a runtime that cannot uphold receipt guarantees loses the receipt, not the judgment.
 
 ## Decision Gates
 
 | Condition | Action |
 |---|---|
-| Target unclear | Ask for scope; do not launch judges. |
-| No skill registry | Warn, proceed with generic criteria, and record `Skill Resolution: none`. |
-| Both judges find same CRITICAL/real WARNING | Confirmed; ask/fix according to round rules. |
-| One judge finds issue | Suspect; report and triage, do not auto-fix. |
-| Judges contradict | Escalate for manual decision. |
-| Round 2+ has only theoretical warnings/suggestions | Report as INFO; do not re-judge. |
+| Target unclear | Ask one scope question and stop. |
+| Both judges confirm severe finding | Ask before round-one correction; then use the bounded fix actor. |
+| One judge reports it | Record suspect; do not auto-fix. |
+| Judges contradict | Escalate for explicit human decision. |
+| Scoped re-judgment fails before round two | Parent may launch the final bounded fix round. |
+| Any issue remains after round two | Escalate and stop. |
 
 ## Execution Steps
 
-1. Confirm target and optional custom criteria.
-2. Resolve exact skill paths from registry or warn if missing.
-3. Start Judge A and Judge B concurrently via delegation; each runs the exhaustive first pass and emits its own findings ledger.
-4. Synthesize findings into confirmed, suspect, contradiction, and INFO buckets; merge both judges' ledger rows into the persisted ledger and persist per the artifact-store branch.
-5. Ask before Round 1 fixes; delegate a separate fix agent for confirmed approved fixes only. The fix agent reads the persisted ledger, applies only confirmed fixes, and sets addressed ledger ids to `fixed`.
-6. Re-judge in parallel after fixes, scoped to the persisted ledger and the fix diff per the Scoped re-review contract; permit at most two fix rounds and two scoped re-judgments, then escalate and stop.
-7. Before any terminal action, verify every active Judgment Day has a terminal state.
+1. Build the complete immutable target and freeze the scope both judges will inspect.
+2. Launch both read-only judges against the same immutable target.
+3. Merge findings into the frozen ledger and persist it through the selected artifact store.
+4. Ask before round-one correction; run the fix actor only for confirmed severe IDs.
+5. Run both judges again only over the frozen ledger plus immutable fix delta.
+6. Repeat once at most, then run independent final verification and return the terminal verdict.
 
 ## Output Contract
 
-Return `## Judgment Day — {target}` with round number, verdict table, confirmed/suspect/contradiction counts, fixes applied, ledger persistence location, re-judgment result, `Skill Resolution`, and final `JUDGMENT: APPROVED ✅` or `JUDGMENT: ESCALATED ⚠️`.
-
-## Ledger and Re-Judge Contract
-
-**Sweep budget.** Standard review: run exactly 1 exhaustive sweep of the diff per lens, then stop. Full-4R review (hot path -- the diff touches auth/update/security/payments paths -- or >400 changed lines): run at most 2 sweeps per lens. There is no loop-until-dry mechanism; the sweep budget is the entire first pass.
-
-**Findings ledger.** Emit a findings ledger with this schema for every entry:
-
-| Field | Values |
-|-------|--------|
-| `id` | `{LENS}-{NNN}` (e.g. `R1-001`) |
-| `lens` | risk \| readability \| reliability \| resilience \| judgment-day |
-| `location` | `path/to/file.ext:line` or `:start-end` |
-| `severity` | BLOCKER \| CRITICAL \| WARNING \| SUGGESTION |
-| `status` | open \| fixed \| verified \| wont-fix \| info |
-| `evidence` | why it matters |
-
-If the first pass finds nothing, persist an empty ledger record rather than skip persistence.
-
-**Ledger persistence honors the artifact store.**
-- `openspec`: write `openspec/changes/{change-name}/review-ledger.md`.
-- `engram`: upsert topic `sdd/{change-name}/review-ledger` (ad-hoc judgment-day without a change: `review/{target-slug}/ledger`, where `target-slug` = `pr-{number}` when reviewing a PR, else the current branch name kebab-cased, else a kebab-case slug of the user-stated review target).
-- `none`: keep the ledger inline in the response; do not write files or Engram artifacts — the ledger lives only in this conversation; complete the review → fix → re-review loop within the session because it is not persisted across compaction.
-
-**Frozen re-judgment boundary.** Freeze the original corroborated BLOCKER/CRITICAL IDs, initial path set, acceptance criteria, and required regression evidence before correction. The fix agent may address only those IDs and paths. Re-judgment receives the frozen ledger and fix diff, verifies those IDs, the original criteria/tests, and correction regression evidence, and does not conduct general defect discovery or reopen unrelated defects. New observations are non-blocking follow-ups; a failed original criterion escalates the existing judgment.
-
-**Execution mode.** Judgment-day judges run as delegated agents; when the runtime provides named `jd-*` sub-agents, those agents emit their own ledger rows and hand them to the orchestrator, which merges both judges' rows into the persisted ledger. Otherwise, the orchestrator runs both judges via generic delegate and maintains the merged ledger directly.
+Return target identity, round, confirmed/suspect/contradiction/INFO counts, correction work units, scoped re-judgment result, artifact references, skill resolution, and exactly one final `JUDGMENT: APPROVED ✅` or `JUDGMENT: ESCALATED ⚠️`.
 
 ## References
 
-- [references/prompts-and-formats.md](references/prompts-and-formats.md) — judge/fix prompts, warning rubric, verdict tables, and language snippets.
+- [references/prompts-and-formats.md](references/prompts-and-formats.md) — compact judge/fix prompts and verdict shape.
+- [../_shared/review-ledger-contract.md](../_shared/review-ledger-contract.md) — delivery-authority route only: consult it when the caller explicitly opts into the ordinary negotiated review lifecycle; never required to run judges.
