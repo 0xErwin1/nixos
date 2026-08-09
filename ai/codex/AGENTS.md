@@ -868,6 +868,25 @@ Any action that cannot be undone with `git checkout` or by deleting a generated 
 - `aws` — AWS CLI configured with profiles per environment.
 - Common stack: Python, TypeScript/JavaScript, Go; AWS with CDK for IaC; GitHub Actions for CI/CD; PostgreSQL and DynamoDB.
 
+### Reaching for a CLI tool
+
+- `rg`, `fd`, `bat`, `eza`, `jq` and `delta` are installed. Prefer them where they
+  are genuinely better — `rg` and `fd` over `grep -r` and `find` for searching.
+- POSIX `grep`, `sed`, `awk` and `cat` are not banned. Use them for pipelines and
+  scripting where they are the right tool; the point is capability, not purity.
+- **In non-interactive Bash calls, do not use `ls`.** It resolves to `eza` through a
+  shell alias, which rejects several `ls` invocations — multiple paths, trailing
+  slashes — and with stderr suppressed it fails silently and reports nothing found.
+  Use `test -f` / `test -d` for existence, `fd` for listing, or `\ls` to bypass the
+  alias.
+- When a tool is genuinely missing, provision it ephemerally:
+  `nix shell nixpkgs#<pkg> -c <command>`, or enter the project's shell with
+  `nix develop` when the repository provides one.
+- Never install globally to work around a missing tool: no `brew`, no `npm -g`,
+  no `pip install --user`, and never add a package to the Home Manager or NixOS
+  configuration as a side effect of running a command. Adding a package to the
+  configuration is its own change and needs to be requested.
+
 ## Atlas task retrieval
 
 - Use only the configured Atlas MCP tools for Atlas operations in Claude Code. If the tools are unavailable or the connection fails, stop the Atlas operation and report that Atlas MCP is unavailable.

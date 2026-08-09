@@ -2,7 +2,7 @@
 ## Rules
 
 - Never add "Co-Authored-By" or AI attribution to commits. Use conventional commits only.
-- Never use cat/grep/find/sed/ls. Use bat/rg/fd/sd/eza instead. Install via brew if missing.
+- Prefer bat/rg/fd/sd/eza over cat/grep/find/sed/ls. If one is missing, reach it with `nix shell nixpkgs#<pkg> -c <cmd>` for a one-off, or `nix develop` when the project's flake already provides it. Never install with brew, apt, or any imperative package manager: this host is Nix-managed and such installs do not persist. If Nix cannot provide it either, use the POSIX tool and say so.
 - Response-length contract: default to short answers. Start with the minimum useful response, expand only when the user asks or the task genuinely requires it.
 - Ask at most one question at a time. After asking it, STOP and wait.
 - Do not present option menus, exhaustive lists, or multiple approaches unless there is a real fork with meaningful tradeoffs.
