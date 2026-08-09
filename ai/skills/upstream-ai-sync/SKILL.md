@@ -95,7 +95,7 @@ Upstream is the source of truth for structure, asset surface, and content. Local
 ### Stripped from upstream during sync
 
 - "Gentleman" persona text, `persona-gentleman.md`, `output-style-gentleman.md`, persona-mode switching prompts.
-- Branding strings: `el Gentleman`, `gentleman-programming`, `@Gentleman-Programming`, `Gentle AI`, `sdd-orchestrator`. Replace identifiers with neutral equivalents (`sdd-orchestrator`, `iperez`, etc.). Keep `gentle-ai`/`gentle-pi` only when referring to the upstream toolkit by name in documentation.
+- Branding strings: `el Gentleman`, `gentleman-programming`, `@Gentleman-Programming`, `Gentle AI`, `gentle-orchestrator`. Replace identifiers with neutral equivalents (`sdd-orchestrator`, `iperez`, etc.). Keep `gentle-ai`/`gentle-pi` only when referring to the upstream toolkit by name in documentation.
 - Startup banner branding text in gentle-pi's `extensions/startup-banner.ts` (keep any functional behavior; remove only the branded text).
 
 ### Preserved as user customizations (layer back on after upstream copy)

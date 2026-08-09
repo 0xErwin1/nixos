@@ -8,12 +8,12 @@ let
     ;
 
   pname = "opencode";
-  version = "1.18.11";
+  version = "1.18.16";
 
   sources = {
     x86_64-linux = {
       archive = "opencode-linux-x64-baseline.tar.gz";
-      hash = "sha256-O5fvHV8noEYLX9ZKWZGQCdFvth9ROHJbd/71GtLQmiA=";
+      hash = "sha256-sHUlHzc7RfoBzEG3sf1usrYclUQ4PjOZpefxRH0fuV8=";
     };
 
     aarch64-linux = {
