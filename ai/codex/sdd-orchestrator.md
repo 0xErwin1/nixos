@@ -385,7 +385,7 @@ Retrieve full content: `mem_search(query: "{topic_key}")` → `mem_get_observati
 
 ### State and Conventions
 
-Convention files under `~/.codex/skills/_shared/` (global) or `.agent/skills/_shared/` (workspace): `engram-convention.md`, `persistence-contract.md`, `openspec-convention.md`.
+Convention files under `~/.codex/skills/_shared/` (global) or `.agent/skills/_shared/` (workspace): `engram-convention.md`, `persistence-contract.md`, `openspec-convention.md`, `atlas-persistence-contract.md`, `gh-convention.md`.
 
 ### Result contract
 

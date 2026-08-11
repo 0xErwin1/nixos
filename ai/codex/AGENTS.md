@@ -655,7 +655,7 @@ Retrieve full content: `mem_search(query: "{topic_key}")` → `mem_get_observati
 
 ### State and Conventions
 
-Convention files under `~/.codex/skills/_shared/` (global) or `.agent/skills/_shared/` (workspace): `engram-convention.md`, `persistence-contract.md`, `openspec-convention.md`.
+Convention files under `~/.codex/skills/_shared/` (global) or `.agent/skills/_shared/` (workspace): `engram-convention.md`, `persistence-contract.md`, `openspec-convention.md`, `atlas-persistence-contract.md`, `gh-convention.md`.
 
 ### Result contract
 
@@ -864,7 +864,7 @@ Any action that cannot be undone with `git checkout` or by deleting a generated 
 
 ## 15) Local environment & tools
 
-- `gh` — GitHub CLI for PR and issue operations.
+- `gh` — GitHub CLI for PR and issue operations. The active account is bound to the working path: `~/dev/work/Houlak` and every subdirectory use `ignaciohoulak`, every other path uses `0xErwin1`. Run `gh auth status` before any GitHub read or write and `gh auth switch --user <account>` when it differs; never log in interactively or mint a token yourself. Read `gh-convention.md` under the agent's `skills/_shared/` directory for the full contract, including the `gh pr merge --admin` confirmation gate.
 - `aws` — AWS CLI configured with profiles per environment.
 - Common stack: Python, TypeScript/JavaScript, Go; AWS with CDK for IaC; GitHub Actions for CI/CD; PostgreSQL and DynamoDB.
 

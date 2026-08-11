@@ -200,7 +200,7 @@ reaffirms after pushback, that is their call: say so once and do the full thing 
 
 ## 15) Local environment & tools
 
-- `gh` — GitHub CLI for PR and issue operations.
+- `gh` — GitHub CLI for PR and issue operations. The active account is bound to the working path: `~/dev/work/Houlak` and every subdirectory use `ignaciohoulak`, every other path uses `0xErwin1`. Run `gh auth status` before any GitHub read or write and `gh auth switch --user <account>` when it differs; never log in interactively or mint a token yourself. Read `gh-convention.md` under the agent's `skills/_shared/` directory for the full contract, including the `gh pr merge --admin` confirmation gate.
 - `aws` — AWS CLI configured with profiles per environment.
 - Common stack: Python, TypeScript/JavaScript, Go; AWS with CDK for IaC; GitHub Actions for CI/CD; PostgreSQL and DynamoDB.
 - Prefer bat/rg/fd/sd/eza over cat/grep/find/sed/ls. If one is missing, reach it with `nix shell nixpkgs#<pkg> -c <cmd>` for a one-off, or `nix develop` when the project's flake already provides it. Never install with brew, apt, or any imperative package manager: this host is Nix-managed and such installs do not persist. If Nix cannot provide it either, use the POSIX tool and say so.

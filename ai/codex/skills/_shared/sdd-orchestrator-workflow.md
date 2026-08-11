@@ -306,7 +306,7 @@ Sub-agents retrieve full Engram content in two steps: `mem_search(query: "{topic
 
 ### State and Conventions
 
-Convention files live under the agent's global skills directory, including `engram-convention.md`, `persistence-contract.md`, and `openspec-convention.md`.
+Convention files live under the agent's global skills directory, including `engram-convention.md`, `persistence-contract.md`, `openspec-convention.md`, `atlas-persistence-contract.md`, and `gh-convention.md`.
 
 ### Recovery
 
