@@ -58,6 +58,7 @@ let
     libdrm
     libgbm
     libGL
+    libva
     libkrb5
     libnotify
     libuuid
