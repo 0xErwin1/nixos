@@ -1,6 +1,7 @@
 { pkgs, ... }:
 {
   imports = [
+    ./android.nix
     ./hardware-configuration.nix
     ./virtualisation.nix
     ./wireguard.nix
