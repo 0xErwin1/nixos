@@ -18,7 +18,7 @@ let
 
     aarch64-linux = {
       archive = "opencode-linux-arm64.tar.gz";
-      hash = "sha256-iH4rqDcIlejCCg2WSEE6/ercHIGXaF2ozitcelxyuuA=";
+      hash = "sha256-T9zl+byHfZdzBNccDJCtboPvo4H+Dt8KYeYUKmJeHEE=";
     };
   };
 

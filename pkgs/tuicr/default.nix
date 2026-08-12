@@ -16,12 +16,12 @@ let
 
     x86_64-darwin = {
       target = "x86_64-apple-darwin";
-      hash = "sha256-J/pq8Oq4mmo+p7VNY12o95aQDyMpxdsD4E7a03UAQss=";
+      hash = "sha256-J/pq8Oq4mmo+p7VNY12o95aQDyMpxdsD4E7a03UATCs=";
     };
 
     aarch64-darwin = {
       target = "aarch64-apple-darwin";
-      hash = "sha256-2jeY/+bjjcHs4WuM6EL81g0Ns+gMgMMmuRJkQg1a9jQ=";
+      hash = "sha256-2jeY/+bjicHs4WuM6EL81g0Ns+gMgMMmuRJkQg1a9jQ=";
     };
   };
 

@@ -21,7 +21,7 @@ let
     aarch64-linux = {
       platform = "linux-arm64";
       loader = "ld-linux-aarch64.so.1";
-      hash = "sha256-FZ5KUdeW878UZ3V3EA9++4RWEbHOrwwwy9jUZQ2UIYU=";
+      hash = "sha256-/rcV7gZtAqQAydg5QVkvEcjo+mYowePBQmK8Up+VBJg=";
     };
   };
 
