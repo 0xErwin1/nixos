@@ -10,6 +10,7 @@
     ../global/headless-utilities.nix
     ../global/headless-cpu-slices.nix
     ./clip.nix
+    ./fixdisplay.nix
     ./herdr-server.nix
     ./browserless.nix
   ];
