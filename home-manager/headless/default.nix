@@ -9,6 +9,7 @@
     ../global/ai-headless.nix
     ../global/headless-utilities.nix
     ../global/headless-cpu-slices.nix
+    ./clip.nix
     ./herdr-server.nix
     ./browserless.nix
   ];
