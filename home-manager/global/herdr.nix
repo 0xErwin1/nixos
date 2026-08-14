@@ -31,9 +31,9 @@
       reload_config = "prefix+shift+r"
       new_tab = "prefix+c"
       split_vertical = "prefix+v"
-      split_horizontal = "prefix+-"
+      split_horizontal = "prefix+minus"
       close_pane = "prefix+x"
-      fullscreen = "prefix+f"
+      zoom = "prefix+f"
       resize_mode = "prefix+r"
       toggle_sidebar = "prefix+b"
       previous_workspace = "ctrl+shift+k"
@@ -46,7 +46,6 @@
       focus_pane_right = "ctrl+alt+l"
 
       [ui]
-      agent_panel_scope = "all"
       show_agent_labels_on_pane_borders = false
       agent_panel_sort = "priority"
 
