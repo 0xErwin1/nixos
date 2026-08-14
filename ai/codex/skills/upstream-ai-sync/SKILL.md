@@ -4,7 +4,7 @@ description: "Trigger: update skills, commands, agents, orchestrator assets. Syn
 license: Apache-2.0
 metadata:
   author: iperez
-  version: "3.0"
+  version: "3.1"
 ---
 
 ## Activation Contract
@@ -111,6 +111,7 @@ Upstream is the source of truth for structure, asset surface, and content. Local
 | User-authored agents: `bug-hunter`, `pr-reviewer` (claude/opencode) | `claude/agents/`, `opencode/agent/` |
 | `author: iperez` in skill frontmatter | every skill SKILL.md |
 | **No-RDD / no auto-review (LOCAL POLICY)** | All orchestrators and SDD workflows | Do **not** reintroduce: Lifecycle receipt rules, `gentle-ai review *`, Review Execution Contract as default, auto 4R/refuter after apply, phase-contract `sdd-verify` on design, PR/fresh-review auto triggers. Keep **Explicit Review Protocols**: Judgment Day and 4R are separate opt-in triggers only; they may run together only when the user names both. Keep **Automatic Mode Continuity** (inline cheap checks) and **Quiet batch cycle**. NEVER strip on sync. |
+| **OpenCode organic primary routing (LOCAL POLICY)** | `opencode/ORCHESTRATOR.md`, `opencode/opencode.jsonc` | The primary agent executes bounded ordinary work inline and uses delegated-direct workers only at explicit routing boundaries. It becomes coordinator-only after SDD is selected and still delegates every SDD phase. Do not restore `delegate ALL real work` or describe the primary as `delegate-only`. This customization is OpenCode-specific; inspect other providers for conflicts but do not propagate it to them automatically. NEVER strip on sync. |
 | Anti-thrash: **SDD Gate Convergence** (severity floor, 2-round budget, no re-litigation) | `shared/ORCHESTRATOR.md`, `opencode/ORCHESTRATOR.md`, `codex/sdd-orchestrator.md`, `claude/sdd-orchestrator.md`, `grok/ORCHESTRATOR.md`, workflows | Prevents design→verify→design thrash. NEVER strip on sync. |
 | **No PR-delivery routing (LOCAL POLICY)** | All orchestrators and SDD workflows, `skills/_shared/sdd-phase-common.md`, `skills/sdd-tasks`, `skills/sdd-apply`, `skills/work-unit-commits` | SDD does not decide PR shape. Do **not** reintroduce: the preflight PRs question, `delivery_strategy`, `chain_strategy`, `size:exception`, `Chained PRs recommended` / `Decision needed before apply` forecast lines, or any Review Workload **Guard** that blocks `sdd-apply`. The forecast reports `Estimated changed lines` + `Review budget risk` and nothing more. Apply batching is driven by task count and phase boundaries, never by a changed-line budget. The `chained-pr` skill stays installed but is reachable only when the user names it. NEVER reintroduce on sync. |
 | Grok Build client (`ai/grok`) | `AGENTS.md`, `ORCHESTRATOR.md`, `agents/`, `mcp-servers.toml` | Local-only; not from gentle-ai. KEEP on sync. |

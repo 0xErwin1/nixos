@@ -10,7 +10,7 @@
   "agent": {
     "sdd-orchestrator": {
       "model": "openai/gpt-5.6-sol",
-      "description": "SDD delegate-only orchestrator",
+      "description": "Primary router for direct, delegated, and SDD work",
       // "primary" (not "all") so the orchestrator can never be spawned as a sub-agent of itself.
       "mode": "primary",
       "prompt": "{file:/home/iperez/.config/opencode/ORCHESTRATOR.md}",

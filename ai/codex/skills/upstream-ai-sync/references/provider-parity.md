@@ -78,6 +78,8 @@ where the behavior applies, and in `ai/shared/` as the canonical record.
 The sync skill enforces this by always reviewing the **parallel file
 set** below for any single behavioral change.
 
+An explicitly provider-scoped entry in the preserved-customization table is an exception to propagation, not to inspection. Review the parallel set for conflicts, but keep the customization on its named provider. OpenCode organic primary routing is such an exception: ordinary bounded work may execute inline, while selected SDD phases remain coordinator-only and delegated.
+
 ### Parallel file sets (review together)
 
 Engram protocol changes -- inspect ALL of:
@@ -202,6 +204,8 @@ After applying upstream updates (step 8 in SKILL.md):
    `ai/shared/`. Where upstream is the source of truth, propagate; where
    local policy differs (e.g. neutralization), preserve local policy but
    verify the behavior is present.
+   Provider-scoped preserved customizations are inspected across the set
+   but remain only on their named provider.
 3. If the change originates in a v2.0 runtime area (section 6), port only
    the prompt-expressible portion and document the remainder as
    not-reproducible.

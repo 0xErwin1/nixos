@@ -325,6 +325,43 @@
                         raise SystemExit(f'Rendered Engram projection drifted: {path}')
                 PY
 
+                python3 - \
+                  ${./ai/opencode/ORCHESTRATOR.md} \
+                  ${./ai/opencode/opencode.jsonc} <<'PY'
+                import re
+                import sys
+                from pathlib import Path
+
+                orchestrator_path, config_path = map(Path, sys.argv[1:])
+                orchestrator = orchestrator_path.read_text().lower()
+                config = config_path.read_text().lower()
+
+                for forbidden in (
+                    'you are a coordinator, not an executor',
+                    'delegate all real work',
+                    'delegate-only orchestrator',
+                ):
+                    if forbidden in orchestrator or forbidden in config:
+                        raise SystemExit(f'OpenCode primary routing restored forbidden coordinator-only wording: {forbidden}')
+
+                routing_concepts = {
+                    'bounded ordinary work stays inline': ('bounded ordinary work', 'inline'),
+                    'delegated direct work starts only at routing boundaries': ('delegated direct', 'routing boundaries'),
+                    'SDD remains coordinator-only at phase level': ('once sdd is selected', 'coordinator', 'delegate every sdd phase'),
+                }
+                for concept, fragments in routing_concepts.items():
+                    if not all(fragment in orchestrator for fragment in fragments):
+                        raise SystemExit(f'OpenCode orchestrator lost routing semantic: {concept}')
+
+                description_match = re.search(r'"description"\s*:\s*"([^"]+)"', config)
+                if not description_match:
+                    raise SystemExit('OpenCode primary agent description is missing')
+
+                description = description_match.group(1)
+                if not all(fragment in description for fragment in ('direct', 'delegated', 'sdd')):
+                    raise SystemExit('OpenCode primary agent description does not cover direct, delegated, and SDD routing')
+                PY
+
                 touch $out
               '';
 
