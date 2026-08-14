@@ -1,0 +1,10 @@
+keys:
+  - &admin age1t3skcpzps5zct7khyyy37a4z0kqdvh9ktaslg535yza7r8k5g9vs26r0c4
+  - &pi age1y40lvgys4yh9mtvp2uxv74jmu3q2p9wlhztn7w0tr07zhwu0c3ks5aevyr
+
+creation_rules:
+  - path_regex: secrets/pi\.yaml$
+    key_groups:
+      - age:
+          - *admin
+          - *pi

@@ -4,6 +4,11 @@
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
 
+    sops-nix = {
+      url = "git+https://github.com/Mic92/sops-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     atlas.url = "github:0xErwin1/atlas/nightly";
 
     pi-harness = {
@@ -124,34 +129,16 @@
 
       deploy = {
         nodes = {
-          pi-host-bootstrap = {
-            hostname = "10.42.0.2";
-            sshUser = "iperez";
-            remoteBuild = true;
-            autoRollback = true;
-            magicRollback = true;
-            profilesOrder = [ "system" "home" ];
-            profiles = {
-              system = {
-                user = "root";
-                interactiveSudo = true;
-                path = deploy-rs.lib.aarch64-linux.activate.nixos self.nixosConfigurations.pi;
-              };
-              home = {
-                user = "iperez";
-                profilePath = "/home/iperez/.local/state/nix/profiles/home-manager";
-                path = deploy-rs.lib.aarch64-linux.activate.home-manager self.homeConfigurations."iperez@pi";
-              };
-            };
-          };
-
           pi-host = {
-            hostname = "10.0.0.2";
+            hostname = "192.168.1.100";
             sshUser = "iperez";
             remoteBuild = true;
             autoRollback = true;
             magicRollback = true;
-            profilesOrder = [ "system" "home" ];
+            profilesOrder = [
+              "system"
+              "home"
+            ];
             profiles = {
               system = {
                 user = "root";
@@ -184,7 +171,10 @@
 
         pi = nixpkgs.lib.nixosSystem {
           specialArgs = { inherit inputs outputs wireguardLocal; };
-          modules = [ ./hosts/pi ];
+          modules = [
+            ./hosts/pi
+            inputs.sops-nix.nixosModules.sops
+          ];
         };
       };
 
@@ -222,11 +212,11 @@
           # checks) plus the source tree for file-content assertions. Passing them
           # in avoids a self-referential `getFlake`, which pure eval rejects on a
           # store path.
-           flakeView = {
-             inherit (self) homeConfigurations checks;
-             inherit inputs;
-           };
-           aiHarnessResourceMatrix = import ./home-manager/global/ai-harness-resources.nix;
+          flakeView = {
+            inherit (self) homeConfigurations checks;
+            inherit inputs;
+          };
+          aiHarnessResourceMatrix = import ./home-manager/global/ai-harness-resources.nix;
 
           # Force the test's `assert` guards during evaluation, then materialize a
           # trivial output. If any assertion fails, `nix flake check` fails here.
@@ -236,19 +226,21 @@
               evaluated = import testFile testArgs;
             in
             if evaluated ? runtimeTest then
-              pkgs.runCommandLocal name {
-                assertionOutcome = builtins.seq evaluated "passed";
-                nativeBuildInputs = [
-                  pkgs.git
-                  pkgs.gnugrep
-                ];
-              } ''
-                set -eu
+              pkgs.runCommandLocal name
+                {
+                  assertionOutcome = builtins.seq evaluated "passed";
+                  nativeBuildInputs = [
+                    pkgs.git
+                    pkgs.gnugrep
+                  ];
+                }
+                ''
+                  set -eu
 
-                ${evaluated.runtimeTest}
+                  ${evaluated.runtimeTest}
 
-                printf 'ai harness functional test %s: %s\n' ${nixpkgs.lib.escapeShellArg name} "$assertionOutcome" > "$out"
-              ''
+                  printf 'ai harness functional test %s: %s\n' ${nixpkgs.lib.escapeShellArg name} "$assertionOutcome" > "$out"
+                ''
             else
               pkgs.runCommandLocal name { assertionOutcome = builtins.seq evaluated "passed"; } ''
                 printf 'ai harness functional test %s: %s\n' ${nixpkgs.lib.escapeShellArg name} "$assertionOutcome" > "$out"
@@ -403,7 +395,7 @@
         packages = with nixpkgs.legacyPackages.x86_64-linux; [
           nixpkgs.legacyPackages.x86_64-linux.deploy-rs
           devenv
-          secretspec
+          sops
           wireguard-tools
           openssh
           nix

@@ -13,12 +13,9 @@ This is a personal Nix flake for NixOS hosts and Home Manager profiles. Keep mac
 | `delta` | Arch Linux, x86_64 | Standalone Home Manager | `homeConfigurations."iperez@delta"` |
 | `pi` | NixOS, aarch64 | Orange Pi 5 Plus; headless development host | `nixosConfigurations.pi`, `homeConfigurations."iperez@pi"` |
 
-The two deploy-rs nodes refer to the same Pi:
-
-- `pi-host-bootstrap`: LAN/bootstrap endpoint `10.42.0.2`
-- `pi-host`: WireGuard/normal endpoint `10.0.0.2`
-
-Each node activates `system` first and `home` second. See `docs/pi-operations.md` before changing Pi boot, networking, SSH, deployment, or secrets.
+The single `pi-host` deploy-rs node reaches the Pi at `192.168.1.100` and
+activates `system` first, then `home`. See `docs/pi-operations.md` before
+changing Pi boot, networking, SSH, deployment, or secrets.
 
 ## Common Commands
 
@@ -42,13 +39,10 @@ nix flake check --no-build --no-write-lock-file
 For the Pi, enter the flake environment with `direnv allow`, then use the documented deploy tasks:
 
 ```bash
-# Normal deployment over WireGuard
+# Deploy both ordered profiles over the local network
 devenv tasks run pi:deploy --mode single --show-output
 
-# Bootstrap or recovery deployment over LAN
-devenv tasks run pi:deploy-bootstrap --mode single --show-output
-
-# Deploy one Pi profile over WireGuard
+# Deploy one Pi profile
 deploy .#pi-host.system --skip-checks
 deploy .#pi-host.home --skip-checks
 ```
@@ -92,14 +86,19 @@ Do not copy or expand the large global agent policies in `ai/` into repository-l
 
 ## Secrets
 
-Secrets are machine-local and external to Git:
+AI harness secrets are machine-local and external to Git:
 
 - `~/.config/ai-harness/secrets/mcp.env`
 - `~/.config/ai-harness/secrets/api.env`
 
 Both files must exist and be mode `600`; `api.env` may be empty. Required variable names are documented in `ai/support/secrets-env-contract.md`. Never read, print, log, commit, or place secret values in Nix expressions, templates, tests, documentation, command arguments, or the Nix store. Do not bypass activation preflight checks.
 
-WireGuard configuration also depends on external local material. Follow `docs/pi-operations.md` and never expose private keys.
+Pi network secrets are encrypted in `secrets/pi.yaml` with the recipients in
+`.sops.yaml`. `sops-nix` decrypts them on the Pi with
+`/etc/ssh/ssh_host_ed25519_key`; decrypted files exist only under `/run/secrets`.
+Never read, print, log, or place decrypted values in Nix expressions or the Nix
+store. Follow `docs/pi-operations.md` for editing, recipient rotation, migration,
+and rollback.
 
 ## Verification and Safety
 

@@ -1,8 +1,9 @@
-{ pkgs, ... }:
+{ config, pkgs, ... }:
 {
   imports = [
     ./android.nix
     ./hardware-configuration.nix
+    ./secrets.nix
     ./virtualisation.nix
     ./wireguard.nix
   ];
@@ -22,20 +23,44 @@
     useDHCP = false;
     networkmanager = {
       enable = true;
-      unmanaged = [ "interface-name:enP4p65s0" ];
       wifi.powersave = false;
+      ensureProfiles = {
+        environmentFiles = [ config.sops.templates."networkmanager.env".path ];
+        profiles = {
+          pi-wifi = {
+            connection = {
+              id = "pi-wifi";
+              type = "wifi";
+              interface-name = "wlu1";
+              uuid = "4695ce6d-f84f-4354-bd4f-75c7dc65adae";
+            };
+            wifi = {
+              mode = "infrastructure";
+              ssid = "$PI_WIFI_SSID";
+            };
+            wifi-security = {
+              key-mgmt = "wpa-psk";
+              psk = "$PI_WIFI_PSK";
+            };
+            ipv4 = {
+              address1 = "192.168.1.100/24,192.168.1.1";
+              dns = "192.168.1.1;";
+              method = "manual";
+            };
+            ipv6.method = "auto";
+          };
+          pi-ethernet = {
+            connection = {
+              id = "pi-ethernet";
+              type = "ethernet";
+              interface-name = "enP4p65s0";
+            };
+            ipv4.method = "auto";
+            ipv6.method = "auto";
+          };
+        };
+      };
     };
-    interfaces.enP4p65s0.ipv4.addresses = [
-      {
-        address = "10.42.0.2";
-        prefixLength = 24;
-      }
-    ];
-    defaultGateway = "10.42.0.1";
-    nameservers = [
-      "1.1.1.1"
-      "8.8.8.8"
-    ];
   };
 
   services = {

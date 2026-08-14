@@ -12,6 +12,13 @@ let
   source = builtins.readFile (flakePath + "/flake.nix");
   piSystem = pi.pkgs.stdenv.hostPlatform.system;
   piOptions = pi.config;
+  piDeploy = flake.deploy.nodes.pi-host;
+  piSecrets = piOptions.sops.secrets;
+  piNetworkManagerTemplate = piOptions.sops.templates."networkmanager.env";
+  piNetworkProfiles = piOptions.networking.networkmanager.ensureProfiles.profiles;
+  piWifiProfile = piNetworkProfiles.pi-wifi;
+  piEthernetProfile = piNetworkProfiles.pi-ethernet;
+  wireguardSecret = piSecrets."pi/wireguard-private-key";
   piSource = builtins.readFile (flakePath + "/hosts/pi/default.nix");
   hardwareSource = builtins.readFile (flakePath + "/hosts/pi/hardware-configuration.nix");
   virtualisationSource = builtins.readFile (flakePath + "/hosts/pi/virtualisation.nix");
@@ -21,6 +28,20 @@ assert flake ? pkgsPi;
 assert flake.pkgsPi.stdenv.hostPlatform.system == "aarch64-linux";
 assert flake ? nixosConfigurations;
 assert flake ? homeConfigurations;
+assert builtins.hasAttr "sops-nix" flake.inputs;
+assert !(flake.nixosConfigurations.epsilon.options ? sops);
+assert !(flake.nixosConfigurations.zeta.options ? sops);
+assert builtins.attrNames flake.deploy.nodes == [ "pi-host" ];
+assert piDeploy.hostname == "192.168.1.100";
+assert piDeploy.sshUser == "iperez";
+assert
+  piDeploy.profilesOrder == [
+    "system"
+    "home"
+  ];
+assert piDeploy.profiles.system.user == "root";
+assert piDeploy.profiles.home.user == "iperez";
+assert piDeploy.profiles.home.profilePath == "/home/iperez/.local/state/nix/profiles/home-manager";
 assert piSystem == "aarch64-linux";
 assert piHome.pkgs.stdenv.hostPlatform.system == "aarch64-linux";
 assert piHomeOptions.home.username == "iperez";
@@ -110,21 +131,60 @@ assert piOptions.fileSystems."/boot".fsType == "vfat";
 assert piOptions.boot.loader.systemd-boot.enable;
 assert piOptions.boot.loader.efi.canTouchEfiVariables;
 assert piOptions.networking.networkmanager.enable;
-assert piOptions.networking.networkmanager.unmanaged == [ "interface-name:enP4p65s0" ];
+assert piOptions.networking.networkmanager.unmanaged == [ ];
 assert piOptions.networking.networkmanager.wifi.powersave == false;
 assert
-  piOptions.networking.interfaces.enP4p65s0.ipv4.addresses == [
-    {
-      address = "10.42.0.2";
-      prefixLength = 24;
-    }
+  builtins.attrNames piNetworkProfiles == [
+    "pi-ethernet"
+    "pi-wifi"
   ];
-assert piOptions.networking.defaultGateway.address == "10.42.0.1";
+assert piWifiProfile.connection.id == "pi-wifi";
+assert piWifiProfile.connection.type == "wifi";
+assert piWifiProfile.connection.interface-name == "wlu1";
+assert piWifiProfile.connection.uuid == "4695ce6d-f84f-4354-bd4f-75c7dc65adae";
+assert piWifiProfile.wifi.mode == "infrastructure";
+assert piWifiProfile.wifi.ssid == "$PI_WIFI_SSID";
+assert piWifiProfile.wifi-security.key-mgmt == "wpa-psk";
+assert piWifiProfile.wifi-security.psk == "$PI_WIFI_PSK";
+assert piWifiProfile.ipv4.address1 == "192.168.1.100/24,192.168.1.1";
+assert piWifiProfile.ipv4.dns == "192.168.1.1;";
+assert piWifiProfile.ipv4.method == "manual";
+assert piEthernetProfile.connection.id == "pi-ethernet";
+assert piEthernetProfile.connection.type == "ethernet";
+assert piEthernetProfile.connection.interface-name == "enP4p65s0";
+assert piEthernetProfile.ipv4.method == "auto";
+assert piOptions.networking.defaultGateway == null;
+assert piOptions.networking.nameservers == [ ];
+assert !(piOptions.networking.interfaces ? enP4p65s0);
 assert
-  piOptions.networking.nameservers == [
-    "1.1.1.1"
-    "8.8.8.8"
+  piOptions.networking.networkmanager.ensureProfiles.environmentFiles
+  == [ piNetworkManagerTemplate.path ];
+assert piNetworkManagerTemplate.path == "/run/secrets/rendered/networkmanager.env";
+assert piNetworkManagerTemplate.owner == "root";
+assert piNetworkManagerTemplate.group == "root";
+assert piNetworkManagerTemplate.mode == "0400";
+assert
+  piNetworkManagerTemplate.content == ''
+    PI_WIFI_SSID=${piOptions.sops.placeholder."pi/wifi-ssid"}
+    PI_WIFI_PSK=${piOptions.sops.placeholder."pi/wifi-psk"}
+  '';
+assert piNetworkManagerTemplate.restartUnits == [ "NetworkManager-ensure-profiles.service" ];
+assert builtins.elem "sops-install-secrets.service"
+  piOptions.systemd.services.NetworkManager-ensure-profiles.after;
+assert builtins.elem "sops-install-secrets.service"
+  piOptions.systemd.services.NetworkManager-ensure-profiles.requires;
+assert builtins.baseNameOf piOptions.sops.defaultSopsFile == "pi.yaml";
+assert piOptions.sops.useSystemdActivation;
+assert piOptions.sops.age.sshKeyPaths == [ "/etc/ssh/ssh_host_ed25519_key" ];
+assert
+  builtins.attrNames piSecrets == [
+    "pi/wifi-psk"
+    "pi/wifi-ssid"
+    "pi/wireguard-private-key"
   ];
+assert builtins.all (
+  secret: secret.owner == "root" && secret.group == "root" && secret.mode == "0400"
+) (builtins.attrValues piSecrets);
 assert piOptions.services.openssh.enable;
 assert piOptions.services.openssh.settings.PasswordAuthentication == false;
 assert piOptions.services.openssh.settings.KbdInteractiveAuthentication == false;
@@ -145,6 +205,18 @@ assert piOptions.programs.zsh.enable;
 assert piOptions.virtualisation.podman.enable;
 assert piOptions.virtualisation.libvirtd.enable == false;
 assert builtins.elem "wg0" piOptions.networking.firewall.trustedInterfaces;
+assert
+  piOptions.networking.wg-quick.interfaces.wg0.dns == [
+    "10.0.0.1"
+    "1.1.1.1"
+  ];
+assert piOptions.networking.wg-quick.interfaces.wg0.privateKeyFile == wireguardSecret.path;
+assert wireguardSecret.path == "/run/secrets/pi/wireguard-private-key";
+assert wireguardSecret.restartUnits == [ "wg-quick-wg0.service" ];
+assert builtins.elem "sops-install-secrets.service" piOptions.systemd.services.wg-quick-wg0.after;
+assert builtins.elem "sops-install-secrets.service"
+  piOptions.systemd.services.wg-quick-wg0.requires;
+assert !(piOptions.systemd.services.wg-quick-wg0.unitConfig ? ConditionPathExists);
 assert piOptions.services.postgresql.enable == false;
 assert piOptions.services.mysql.enable == false;
 assert piOptions.services.xserver.enable == false;

@@ -1,4 +1,6 @@
-{pkgs ? import <nixpkgs> {}}:
+{
+  pkgs ? import <nixpkgs> { },
+}:
 {
   default = pkgs.mkShell {
     DEVENV_TUI = "false";
@@ -6,7 +8,7 @@
     nativeBuildInputs = with pkgs; [
       deploy-rs
       devenv
-      secretspec
+      sops
       wireguard-tools
       openssh
       nix
