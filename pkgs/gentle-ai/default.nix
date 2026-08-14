@@ -2,13 +2,13 @@
 
 pkgs.buildGoModule rec {
   pname = "gentle-ai";
-  version = "2.3.0";
+  version = "2.4.0-rc.8";
 
   src = pkgs.fetchFromGitHub {
     owner = "Gentleman-Programming";
     repo = "gentle-ai";
     rev = "v${version}";
-    hash = "sha256-APKVSlsz8BOBDXQGNNOCdpgyFKSiZwku1Y1c3ZVzYv8=";
+    hash = "sha256-plB9mxudrfZJBPpHjPRyTFi318TyggiEVQrOxdjwYAc=";
   };
 
   vendorHash = "sha256-qeeD+omJzlqolHGzGx2E60fEucjweb62UQY3N/0xxgs=";
