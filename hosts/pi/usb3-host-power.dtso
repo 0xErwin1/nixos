@@ -1,0 +1,32 @@
+/dts-v1/;
+/plugin/;
+
+/*
+ * The Orange Pi 5 Plus front USB 3.0 type-A ports sit behind an onboard USB3
+ * hub on usb_host1_xhci. The hub and port VBUS are gated by GPIO3_B7 through
+ * the vcc5v0_host rail, which the mainline device tree never defines, leaving
+ * both ports unpowered. This overlay restores the vendor regulator so the hub
+ * enumerates.
+ */
+
+/ {
+	compatible = "xunlong,orangepi-5-plus";
+
+	fragment@0 {
+		target-path = "/";
+
+		__overlay__ {
+			vcc5v0_host: regulator-vcc5v0-host {
+				compatible = "regulator-fixed";
+				regulator-name = "vcc5v0_host";
+				regulator-boot-on;
+				regulator-always-on;
+				regulator-min-microvolt = <5000000>;
+				regulator-max-microvolt = <5000000>;
+				enable-active-high;
+				gpio = <&gpio3 15 0>;
+				vin-supply = <&vcc5v0_sys>;
+			};
+		};
+	};
+};

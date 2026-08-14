@@ -220,10 +220,16 @@ assert !(piOptions.systemd.services.wg-quick-wg0.unitConfig ? ConditionPathExist
 assert piOptions.services.postgresql.enable == false;
 assert piOptions.services.mysql.enable == false;
 assert piOptions.services.xserver.enable == false;
-assert builtins.match ".*rk3588.*" piSource == null;
+# The Pi must stay on mainline nixpkgs; only the mainline DTB name may mention
+# the SoC, never the vendor kernel or the nixos-rk3588 flake.
+assert builtins.match ".*nixos-rk3588.*" piSource == null;
+assert builtins.match ".*linux-rockchip.*" piSource == null;
 assert builtins.match ".*rk3588.*" hardwareSource == null;
 assert builtins.match ".*rk3588.*" virtualisationSource == null;
 assert builtins.match ".*rk3588.*" wireguardSource == null;
+assert piOptions.hardware.deviceTree.name == "rockchip/rk3588-orangepi-5-plus.dtb";
+assert (builtins.head piOptions.hardware.deviceTree.overlays).name == "usb3-host-power";
+assert piOptions.boot.loader.systemd-boot.installDeviceTree;
 assert builtins.match ".*epsilon = nixpkgs.lib.nixosSystem.*" source != null;
 assert builtins.match ".*zeta = nixpkgs.lib.nixosSystem.*" source != null;
 {

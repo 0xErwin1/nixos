@@ -13,9 +13,24 @@
   boot = {
     kernelPackages = pkgs.linuxPackages_latest;
     loader = {
-      systemd-boot.enable = true;
+      systemd-boot = {
+        enable = true;
+        # Boot with the kernel DTB instead of the firmware-provided one so the
+        # usb3-host-power overlay takes effect.
+        installDeviceTree = true;
+      };
       efi.canTouchEfiVariables = true;
     };
+  };
+
+  hardware.deviceTree = {
+    name = "rockchip/rk3588-orangepi-5-plus.dtb";
+    overlays = [
+      {
+        name = "usb3-host-power";
+        dtsFile = ./usb3-host-power.dtso;
+      }
+    ];
   };
 
   networking = {
