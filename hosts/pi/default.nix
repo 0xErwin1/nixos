@@ -20,6 +20,11 @@
   networking = {
     hostName = "pi";
     useDHCP = false;
+    networkmanager = {
+      enable = true;
+      unmanaged = [ "interface-name:enP4p65s0" ];
+      wifi.powersave = false;
+    };
     interfaces.enP4p65s0.ipv4.addresses = [
       {
         address = "10.42.0.2";
@@ -52,7 +57,10 @@
     mutableUsers = true;
     users.iperez = {
       isNormalUser = true;
-      extraGroups = [ "wheel" ];
+      extraGroups = [
+        "networkmanager"
+        "wheel"
+      ];
       shell = pkgs.zsh;
 
       # Home Manager user services (herdr-server, chromium-cdp) must survive

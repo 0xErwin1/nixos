@@ -2,6 +2,8 @@
 {
   boot.initrd.availableKernelModules = [ "nvme" ];
 
+  hardware.enableRedistributableFirmware = true;
+
   fileSystems = {
     "/" = {
       device = "/dev/disk/by-uuid/88e0bafc-fda9-4bb1-8a72-8847b784a016";

@@ -16,7 +16,6 @@
       enable = true;
       commandLineArgs = [
         "--ozone-platform=x11"
-        "--use-gl=desktop"
         "--disable-features=Vulkan"
       ];
     };

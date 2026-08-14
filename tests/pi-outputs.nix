@@ -102,12 +102,16 @@ assert piOptions.system.stateVersion == "26.05";
 assert piOptions.time.timeZone == "America/Montevideo";
 assert piOptions.boot.kernelPackages.kernel.version == pi.pkgs.linuxPackages_latest.kernel.version;
 assert builtins.elem "nvme" piOptions.boot.initrd.availableKernelModules;
+assert piOptions.hardware.enableRedistributableFirmware;
 assert piOptions.fileSystems."/".device == "/dev/disk/by-uuid/88e0bafc-fda9-4bb1-8a72-8847b784a016";
 assert piOptions.fileSystems."/".fsType == "ext4";
 assert piOptions.fileSystems."/boot".device == "/dev/disk/by-uuid/56AD-3F13";
 assert piOptions.fileSystems."/boot".fsType == "vfat";
 assert piOptions.boot.loader.systemd-boot.enable;
 assert piOptions.boot.loader.efi.canTouchEfiVariables;
+assert piOptions.networking.networkmanager.enable;
+assert piOptions.networking.networkmanager.unmanaged == [ "interface-name:enP4p65s0" ];
+assert piOptions.networking.networkmanager.wifi.powersave == false;
 assert
   piOptions.networking.interfaces.enP4p65s0.ipv4.addresses == [
     {
@@ -134,6 +138,7 @@ assert
     "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCWZRjt2GVSLcoBvSOS9AlxAxdQ/vvvFHLeT8m9KN3LEIEDB3ZiioX3sHt2xuIq5iKSZw+Co2iv3N0XYDmJ5ktElp2allK78xeQJ35BQmpNwPZCbiBHVDmJxeLLmRNilLz6NHWkjO+4qgyJGEgRJaUYDz8wg3RSPocDsVNIJhQ8TjmcPzAXTeb0v+tNR6CrvgQ0rux8XK6XQbpdJgv5Xi5Qi3ULTwRPR0v3fvYNJMKl6O9R7BsWUNGkN3/wlkeUfFPCMGU2+XCna6RQtLTGqyJ9o++yIxEcHVuWKNj8/32SnAuu1M0ZiJIo9TN48bN59MZ5msCFW0TmJoaNsIasZYvh"
   ];
 assert builtins.elem "wheel" piOptions.users.users.iperez.extraGroups;
+assert builtins.elem "networkmanager" piOptions.users.users.iperez.extraGroups;
 assert piOptions.users.users.iperez.shell == pi.pkgs.zsh;
 assert builtins.elem "iperez" piOptions.nix.settings.trusted-users;
 assert piOptions.programs.zsh.enable;
