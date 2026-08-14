@@ -262,7 +262,37 @@
         "write": true
       }
     },
-    // Review panel from gentle-ai v2.3. Model is intentionally omitted so these
+    // Fallback sub-agents the orchestrator is already permitted to dispatch to.
+    // Model is intentionally omitted so these inherit the session default; every
+    // model value above is hand-curated.
+    "general": {
+      "description": "General unstructured queries and auxiliary fallback tasks",
+      "hidden": true,
+      "mode": "subagent",
+      "prompt": "You are the general fallback sub-agent. When handling unstructured auxiliary tasks:\n- Read relevant codebase context before drawing conclusions.\n- Perform empirical verification of all claims and code execution paths.\n- Keep changes minimal and targeted when editing files.\n- Do NOT launch child sub-agents autonomously.",
+      "tools": {
+        "bash": true,
+        "edit": true,
+        "read": true,
+        "task": false,
+        "write": true
+      }
+    },
+    "explore": {
+      "description": "Freeform exploration fallback agent",
+      "hidden": true,
+      "mode": "subagent",
+      "prompt": "You are the explore fallback sub-agent aligned with gentle-pi guidance.\n- Independently inspect codebase files and execution paths in full without relying on unverified assumptions.\n- Read relevant code files completely before reaching conclusions.\n- Perform exploration, analysis, and discovery ONLY. Do not create, edit, or delete files.\n- Return concise, structured findings naming affected files, code paths, and clear recommendations.",
+      "tools": {
+        "bash": false,
+        "codegraph_codegraph_explore": true,
+        "edit": false,
+        "read": true,
+        "task": false,
+        "write": false
+      }
+    },
+    // Review panel from gentle-ai v2.4. Model is intentionally omitted so these
     // inherit the session default; every model value above is hand-curated.
     "jd-fix-agent": {
       "description": "Surgical fix agent for judgment-day protocol",
