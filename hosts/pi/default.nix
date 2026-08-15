@@ -9,6 +9,7 @@
   imports = [
     ./android.nix
     ./hardware-configuration.nix
+    ./llm.nix
     ./secrets.nix
     ./virtualisation.nix
     ./wireguard.nix
