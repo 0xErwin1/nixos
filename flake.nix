@@ -66,6 +66,13 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    # Armbian vendor kernel (rk-6.1 BSP) for the Orange Pi 5 Plus, needed for
+    # the rknpu driver that the rkllm/rkllama NPU stack requires.
+    nixos-rk3588 = {
+      url = "github:gnull/nixos-rk3588";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
   };
 
   outputs =

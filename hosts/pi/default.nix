@@ -1,4 +1,10 @@
-{ config, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  inputs,
+  ...
+}:
 {
   imports = [
     ./android.nix
@@ -6,32 +12,61 @@
     ./secrets.nix
     ./virtualisation.nix
     ./wireguard.nix
+    inputs.nixos-rk3588.nixosModules.boards.orangepi5plus.core
   ];
+
+  # The board module builds the Armbian vendor kernel from the package set we
+  # hand it here; using the host's own pkgs keeps the build native on the Pi.
+  _module.args.rk3588 = {
+    inherit (inputs) nixpkgs;
+    pkgsKernel = pkgs;
+  };
 
   nixpkgs.config.allowUnfree = true;
 
+  # The kernel comes from the nixos-rk3588 board module (Armbian vendor
+  # rk-6.1 BSP): it carries the rknpu driver for the NPU and its device tree
+  # already defines vcc5v0_host, so the front USB 3.0 ports are powered
+  # without the overlay that mainline used to need.
   boot = {
-    kernelPackages = pkgs.linuxPackages_latest;
+    # The vendor config enables CONFIG_EFI_STUB, but linuxManualConfig leaves
+    # passthru.features empty and the systemd-boot assertion checks that
+    # metadata, so re-declare the same kernel with the feature flag surfaced.
+    kernelPackages = lib.mkForce (
+      pkgs.linuxPackagesFor (
+        (pkgs.callPackage "${inputs.nixos-rk3588}/pkgs/kernel/vendor.nix" { }).overrideAttrs (old: {
+          passthru = old.passthru // {
+            features = (old.passthru.features or { }) // {
+              efiBootStub = true;
+            };
+          };
+        })
+      )
+    );
+
+    # The Armbian rk-6.1 tree has no driver for the RTL8822BU USB wifi
+    # adapter: rtw88 gained USB support in mainline 6.3 and the vendor tree
+    # carries no rtl8822bu driver either (its CONFIG_RTW88_*U entries are
+    # silently dropped at build). Ship the out-of-tree 88x2bu module instead;
+    # it binds by USB id, so it autoloads on enumeration.
+    extraModulePackages = [ config.boot.kernelPackages.rtl88x2bu ];
+
     loader = {
       systemd-boot = {
         enable = true;
-        # Boot with the kernel DTB instead of the firmware-provided one so the
-        # usb3-host-power overlay takes effect.
+        # Boot with the kernel DTB instead of the firmware-provided one.
         installDeviceTree = true;
+        # The ESP is 511M and each generation stores a kernel plus initrd.
+        configurationLimit = 5;
       };
       efi.canTouchEfiVariables = true;
     };
   };
 
-  hardware.deviceTree = {
-    name = "rockchip/rk3588-orangepi-5-plus.dtb";
-    overlays = [
-      {
-        name = "usb3-host-power";
-        dtsFile = ./usb3-host-power.dtso;
-      }
-    ];
-  };
+  # The board module copies deviceTree.package/rockchip to the ESP wholesale;
+  # unfiltered, the vendor kernel ships DTBs for every RK35xx board and
+  # overflows the 511M partition, so keep only this board's DTB.
+  hardware.deviceTree.filter = "rk3588-orangepi-5-plus.dtb";
 
   # Large links (herdr builds run ld processes over 2 GB) were triggering the
   # OOM killer and freezing the whole host; compressed swap absorbs the spikes.

@@ -121,7 +121,7 @@ assert builtins.match ".*(0\\.0\\.0\\.0|--no-sandbox).*" piChromiumExecStart == 
 assert piOptions.networking.hostName == "pi";
 assert piOptions.system.stateVersion == "26.05";
 assert piOptions.time.timeZone == "America/Montevideo";
-assert piOptions.boot.kernelPackages.kernel.version == pi.pkgs.linuxPackages_latest.kernel.version;
+assert builtins.match ".*-armbian" piOptions.boot.kernelPackages.kernel.version != null;
 assert builtins.elem "nvme" piOptions.boot.initrd.availableKernelModules;
 assert piOptions.hardware.enableRedistributableFirmware;
 assert piOptions.fileSystems."/".device == "/dev/disk/by-uuid/88e0bafc-fda9-4bb1-8a72-8847b784a016";
@@ -224,15 +224,13 @@ assert !(piOptions.systemd.services.wg-quick-wg0.unitConfig ? ConditionPathExist
 assert piOptions.services.postgresql.enable == false;
 assert piOptions.services.mysql.enable == false;
 assert piOptions.services.xserver.enable == false;
-# The Pi must stay on mainline nixpkgs; only the mainline DTB name may mention
-# the SoC, never the vendor kernel or the nixos-rk3588 flake.
-assert builtins.match ".*nixos-rk3588.*" piSource == null;
-assert builtins.match ".*linux-rockchip.*" piSource == null;
-assert builtins.match ".*rk3588.*" hardwareSource == null;
-assert builtins.match ".*rk3588.*" virtualisationSource == null;
-assert builtins.match ".*rk3588.*" wireguardSource == null;
+# The Pi runs the Armbian vendor kernel wired through the nixos-rk3588 board
+# module in flake.nix, for the rknpu driver the rkllm NPU stack requires. The
+# vendor device tree already powers the front USB 3.0 ports (vcc5v0_host), so
+# no local overlay is needed.
+assert builtins.match ".*nixos-rk3588.*" source != null;
 assert piOptions.hardware.deviceTree.name == "rockchip/rk3588-orangepi-5-plus.dtb";
-assert (builtins.head piOptions.hardware.deviceTree.overlays).name == "usb3-host-power";
+assert piOptions.hardware.deviceTree.overlays == [ ];
 assert piOptions.boot.loader.systemd-boot.installDeviceTree;
 assert builtins.match ".*epsilon = nixpkgs.lib.nixosSystem.*" source != null;
 assert builtins.match ".*zeta = nixpkgs.lib.nixosSystem.*" source != null;
