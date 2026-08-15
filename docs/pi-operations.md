@@ -44,12 +44,17 @@ NetworkManager owns both physical interfaces through declarative profiles:
 
 | Profile | Interface | IPv4 behavior |
 |---|---|---|
-| `pi-wifi` | `wlu1` | Static `192.168.1.100/24`, gateway and DNS `192.168.1.1` |
+| `pi-wifi` | `wifi0` | Static `192.168.1.100/24`, gateway and DNS `192.168.1.1` |
 | `pi-ethernet` | `enP4p65s0` | DHCP |
 
 The Wi-Fi profile retains UUID `4695ce6d-f84f-4354-bd4f-75c7dc65adae` so the
 declarative profile replaces the existing runtime identity instead of creating
 a second connection. Wi-Fi powersave remains disabled.
+
+`wifi0` is a stable name assigned by a systemd link file that matches the USB
+wifi adapter's permanent MAC address, so the interface keeps the same name and
+profile on any USB port. If the adapter is ever replaced, update the MAC in
+`hosts/pi/default.nix`.
 
 `wg0` remains `10.0.0.2/24` for VPN-routed development traffic. The deploy-rs
 transport does not use that address; deployment and local recovery use
@@ -166,7 +171,7 @@ secret values:
 ```bash
 hostname
 nmcli connection show
-ip -brief address show wlu1 enP4p65s0 wg0
+ip -brief address show wifi0 enP4p65s0 wg0
 ip route
 stat -c '%U %G %a %n' /run/secrets/pi/wireguard-private-key \
   /run/secrets/rendered/networkmanager.env

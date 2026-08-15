@@ -140,7 +140,11 @@ assert
   ];
 assert piWifiProfile.connection.id == "pi-wifi";
 assert piWifiProfile.connection.type == "wifi";
-assert piWifiProfile.connection.interface-name == "wlu1";
+assert piWifiProfile.connection.interface-name == "wifi0";
+assert
+  piOptions.systemd.network.links."10-usb-wifi".matchConfig.PermanentMACAddress
+  == "20:e1:5d:ab:eb:9d";
+assert piOptions.systemd.network.links."10-usb-wifi".linkConfig.Name == "wifi0";
 assert piWifiProfile.connection.uuid == "4695ce6d-f84f-4354-bd4f-75c7dc65adae";
 assert piWifiProfile.wifi.mode == "infrastructure";
 assert piWifiProfile.wifi.ssid == "$PI_WIFI_SSID";

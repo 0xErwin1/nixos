@@ -33,6 +33,20 @@
     ];
   };
 
+  # Large links (herdr builds run ld processes over 2 GB) were triggering the
+  # OOM killer and freezing the whole host; compressed swap absorbs the spikes.
+  zramSwap = {
+    enable = true;
+    memoryPercent = 50;
+  };
+
+  # Pin a stable name for the USB wifi adapter by its permanent MAC so the
+  # pi-wifi profile keeps matching regardless of which USB port it is on.
+  systemd.network.links."10-usb-wifi" = {
+    matchConfig.PermanentMACAddress = "20:e1:5d:ab:eb:9d";
+    linkConfig.Name = "wifi0";
+  };
+
   networking = {
     hostName = "pi";
     useDHCP = false;
@@ -46,7 +60,7 @@
             connection = {
               id = "pi-wifi";
               type = "wifi";
-              interface-name = "wlu1";
+              interface-name = "wifi0";
               uuid = "4695ce6d-f84f-4354-bd4f-75c7dc65adae";
             };
             wifi = {

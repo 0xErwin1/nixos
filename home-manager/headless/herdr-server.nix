@@ -18,6 +18,9 @@
       ExecStop = "${pkgs.herdr}/bin/herdr server stop";
       Restart = "on-failure";
       RestartSec = 5;
+      # Builds run inside the hosted panes, so an OOM kill of any build process
+      # must not take down the server and every attached session with it.
+      OOMPolicy = "continue";
     };
 
     Install = {
