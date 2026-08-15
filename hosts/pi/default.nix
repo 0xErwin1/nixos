@@ -40,6 +40,17 @@
     memoryPercent = 50;
   };
 
+  # Second-tier overflow for build storms that outgrow RAM plus zram (herdr
+  # links ten multi-GB ld processes in parallel). Lower priority than zram
+  # (5), so the NVMe file is only touched once compressed swap is full.
+  swapDevices = [
+    {
+      device = "/var/lib/swapfile";
+      size = 8192;
+      priority = 0;
+    }
+  ];
+
   # Pin a stable name for the USB wifi adapter by its permanent MAC so the
   # pi-wifi profile keeps matching regardless of which USB port it is on.
   systemd.network.links."10-usb-wifi" = {
