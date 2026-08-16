@@ -1,0 +1,97 @@
+# Claude (Anthropic): a float utilization per named window, ISO reset
+# strings, and an extra-usage cap in minor units with the exponent that
+# places the decimal point.
+
+import std::json
+import std::math
+import "cost.bras"
+import "net.bras"
+import "paths.bras"
+import "provider.bras"
+
+def claudeWindow(w: Option<Json>, label: string, windows: Vector<provider.Window>)
+  let pct = w["utilization"].asFloat() ?? -1.0
+
+  if pct >= 0.0
+    windows.push(provider.Window {
+      label: label,
+      usedPercent: math.round(pct).toInt(),
+      resetAt: w["resets_at"].asString() ?? "",
+    })
+  end
+end
+
+def dollars(amountMinor: int, exponent: int): string
+  let div = math.pow(10.0, exponent.toFloat())
+
+  "$#{(amountMinor.toFloat() / div).toFixed(2)}"
+end
+
+def claudeNotes(data: Json, notes: Vector<provider.Note>)
+  let spend = data["spend"]
+
+  if spend["enabled"].asBool() ?? false
+    let usedMinor = spend["used"]["amount_minor"].asInt() ?? -1
+    let limitMinor = spend["limit"]["amount_minor"].asInt() ?? -1
+
+    if usedMinor >= 0 && limitMinor >= 0
+      let used = dollars(usedMinor, spend["used"]["exponent"].asInt() ?? 2)
+      let limit = dollars(limitMinor, spend["limit"]["exponent"].asInt() ?? 2)
+
+      let value = match spend["percent"].asInt()
+        Some(pct) => "#{used} / #{limit} (#{pct}%)"
+        None => "#{used} / #{limit}"
+      end
+
+      notes.push(provider.Note { label: "Extra usage", value: value })
+    end
+  end
+end
+
+def claudeUsage(token: string, plan: string): provider.Provider
+  let f = net.fetch("https://api.anthropic.com/api/oauth/usage", {
+    "authorization": "Bearer #{token}",
+    "anthropic-beta": "oauth-2025-04-20",
+  })
+
+  if f.status == 0
+    provider.unavailable("claude", "Claude", "network")
+  elsif f.status == 401 || f.status == 403
+    provider.unavailable("claude", "Claude", "auth")
+  elsif f.status < 200 || f.status >= 300
+    provider.unavailable("claude", "Claude", "http-#{f.status}")
+  else
+    let data = json.parse(f.body) catch (e)
+      json.ParseError => json.parse("null")
+    end
+
+    let windows: Vector<provider.Window> = []
+    claudeWindow(data["five_hour"], "5h", windows)
+    claudeWindow(data["seven_day"], "Weekly", windows)
+
+    let notes: Vector<provider.Note> = []
+    claudeNotes(data, notes)
+
+    provider.Provider {
+      id: "claude",
+      name: "Claude",
+      plan: plan,
+      available: true,
+      reason: "",
+      windows: windows,
+      notes: notes,
+      cost: cost.report(paths.cachePath()),
+    }
+  end
+end
+
+pub def read(): provider.Provider
+  let oauth = paths.readJsonOrNull(paths.home(".claude/.credentials.json"))["claudeAiOauth"]
+  let token = oauth["accessToken"].asString() ?? ""
+
+  if token == ""
+    provider.unavailable("claude", "Claude", "no-credentials")
+  else
+    claudeUsage(token, oauth["subscriptionType"].asString() ?? "")
+  end
+end

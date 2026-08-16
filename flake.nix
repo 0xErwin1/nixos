@@ -11,6 +11,11 @@
 
     atlas.url = "github:0xErwin1/atlas/nightly";
 
+    brasa = {
+      url = "github:0xErwin1/brasa";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     pi-harness = {
       url = "github:0xErwin1/pi-harness";
       inputs.nixpkgs.follows = "nixpkgs";

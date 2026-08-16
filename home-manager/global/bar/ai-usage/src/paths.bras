@@ -1,0 +1,45 @@
+# Where this command reads and writes on disk.
+#
+# Credential files are READ and never written: this command does not
+# refresh tokens, so it has no business holding a file the CLIs own.
+# The two paths it does write resolve through XDG the same way the Go
+# command resolved them, so an existing ledger is found rather than
+# silently re-baselined.
+
+import std::env
+import std::fs
+import std::json
+
+# `XDG_STATE_HOME` when set, the default under $HOME otherwise —
+# the same resolution the Go command used, so an existing ledger is
+# found rather than silently re-baselined.
+pub def statePath(): string
+  match env.get("XDG_STATE_HOME")
+    Some(dir) => fs.join(dir, "epsilon-ai-usage/kimi-spend.json")
+    None => home(".local/state/epsilon-ai-usage/kimi-spend.json")
+  end
+end
+
+pub def cachePath(): string
+  match env.get("XDG_CACHE_HOME")
+    Some(dir) => fs.join(dir, "epsilon-ai-usage/claude-cost.json")
+    None => home(".cache/epsilon-ai-usage/claude-cost.json")
+  end
+end
+
+pub def home(rel: string): string
+  fs.join(env.get("HOME") ?? "", rel)
+end
+
+# A credential file as a Json tree; any failure — missing file,
+# unreadable, not JSON — degrades to the `null` node, which no
+# credential file legitimately is.
+pub def readJsonOrNull(path: string): Json
+  let raw = fs.read(path) catch (e)
+    _ => ""
+  end
+
+  json.parse(raw) catch (e)
+    json.ParseError => json.parse("null")
+  end
+end

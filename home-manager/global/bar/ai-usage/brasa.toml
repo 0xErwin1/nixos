@@ -1,0 +1,13 @@
+# The AI usage fetcher the bar's extras panel runs. Replaces the Go
+# command of the same name; `epsilon-ai-usage` is the name the bar
+# execs, so it is the name this must build to.
+
+[project]
+name = "epsilon-ai-usage"
+
+[build]
+entry = "src/main.bras"
+out_dir = "build"
+
+[test]
+globs = ["src/*.bras"]

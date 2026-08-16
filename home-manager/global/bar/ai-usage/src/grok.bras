@@ -1,0 +1,201 @@
+# Grok (xAI): the percentage sits two levels down under `config`, the
+# period is named by an enum, and reaching any of it needs a token
+# picked out of whichever shape the CLI last wrote.
+
+import std::json
+import std::math
+import "net.bras"
+import "paths.bras"
+import "provider.bras"
+
+def grokToken(top: Json): string
+  let none: Map<string, Json> = {}
+  let mut preferred = ""
+  let mut fallback = ""
+
+  for (scopeKey, entry) in top.asObject() ?? none
+    let key = entry["key"].asString() ?? ""
+
+    if key == ""
+      continue
+    end
+
+    if scopeKey.startsWith?("https://auth.x.ai::")
+      preferred = key
+    elsif fallback == ""
+      fallback = key
+    end
+  end
+
+  if preferred != ""
+    preferred
+  else
+    fallback
+  end
+end
+
+def grokPlanLabel(tier: string): string
+  let labels: Map<string, string> = {
+    "xpremiumplus": "X Premium+",
+    "x_premium_plus": "X Premium+",
+    "x-premium-plus": "X Premium+",
+    "xpremium": "X Premium",
+    "x_premium": "X Premium",
+    "x-premium": "X Premium",
+    "supergrok": "SuperGrok",
+    "super_grok": "SuperGrok",
+    "supergrokheavy": "SuperGrok Heavy",
+    "super_grok_heavy": "SuperGrok Heavy",
+  }
+
+  labels[tier.toLower()] ?? tier
+end
+
+# Billing amounts arrive as whole credit units more often than not:
+# compact integers when clean, two decimals otherwise.
+def grokAmount(v: float): string
+  if v >= 1000.0
+    v.toFixed(0)
+  elsif math.abs(v - math.round(v)) < 0.05
+    v.toFixed(0)
+  else
+    v.toFixed(2)
+  end
+end
+
+def grokHeaders(token: string): Map<string, string>
+  {
+    "authorization": "Bearer #{token}",
+    "accept": "application/json",
+    "user-agent": "epsilon-ai-usage",
+  }
+end
+
+def grokWindows(credits: Json, windows: Vector<provider.Window>)
+  let pct = credits["config"]["creditUsagePercent"].asFloat() ?? -1.0
+
+  if pct >= 0.0
+    let period = credits["config"]["currentPeriod"]
+    let periodType = (period["type"].asString() ?? "").toUpper()
+
+    let label = if periodType.contains?("WEEK")
+      "Weekly"
+    elsif periodType.contains?("MONTH")
+      "Monthly"
+    else
+      "Credits"
+    end
+
+    windows.push(provider.Window {
+      label: label,
+      usedPercent: math.round(pct).toInt(),
+      resetAt: provider.secondPrecision(
+        period["end"].asString() ?? credits["config"]["billingPeriodEnd"].asString() ?? "",
+      ),
+    })
+  end
+end
+
+def grokNotes(credits: Json, monthly: Json, notes: Vector<provider.Note>)
+  let used = monthly["config"]["used"]["val"].asFloat() ?? -1.0
+  let limit = monthly["config"]["monthlyLimit"]["val"].asFloat() ?? 0.0
+
+  if used >= 0.0 && limit > 0.0
+    notes.push(provider.Note {
+      label: "Included",
+      value: "#{grokAmount(used)} / #{grokAmount(limit)}",
+    })
+  end
+
+  let onCap = credits["config"]["onDemandCap"]["val"].asFloat() ?? 0.0
+  let onUsed = credits["config"]["onDemandUsed"]["val"].asFloat() ?? -1.0
+
+  if onCap > 0.0 && onUsed >= 0.0
+    notes.push(provider.Note {
+      label: "On-demand",
+      value: "#{grokAmount(onUsed)} / #{grokAmount(onCap)}",
+    })
+  end
+
+  let prepaid = credits["config"]["prepaidBalance"]["val"].asFloat() ?? 0.0
+
+  if prepaid > 0.0
+    notes.push(provider.Note { label: "Prepaid", value: grokAmount(prepaid) })
+  end
+end
+
+def grokUsage(token: string): provider.Provider
+  let user = net.fetch("https://cli-chat-proxy.grok.com/v1/user?include=subscription", grokHeaders(token))
+
+  if user.status == 0
+    provider.unavailable("grok", "Grok", "network")
+  elsif user.status == 401 || user.status == 403
+    provider.unavailable("grok", "Grok", "auth")
+  elsif user.status < 200 || user.status >= 300
+    provider.unavailable("grok", "Grok", "http-#{user.status}")
+  else
+    let userData = json.parse(user.body) catch (e)
+      json.ParseError => json.parse("null")
+    end
+
+    let plan = match userData["subscriptionTier"].asString()
+      Some(tier) => grokPlanLabel(tier)
+      None => ""
+    end
+
+    let creditsF = net.fetch("https://cli-chat-proxy.grok.com/v1/billing?format=credits", grokHeaders(token))
+    let monthlyF = net.fetch("https://cli-chat-proxy.grok.com/v1/billing", grokHeaders(token))
+
+    let windows: Vector<provider.Window> = []
+    let notes: Vector<provider.Note> = []
+
+    if creditsF.status >= 400 && monthlyF.status >= 400
+      # Identity worked; billing failed — still show the plan.
+      notes.push(provider.Note { label: "Billing", value: "unavailable" })
+    else
+      let credits = if creditsF.status >= 200 && creditsF.status < 300
+        json.parse(creditsF.body) catch (e)
+          json.ParseError => json.parse("null")
+        end
+      else
+        json.parse("null")
+      end
+
+      let monthly = if monthlyF.status >= 200 && monthlyF.status < 300
+        json.parse(monthlyF.body) catch (e)
+          json.ParseError => json.parse("null")
+        end
+      else
+        json.parse("null")
+      end
+
+      grokWindows(credits, windows)
+      grokNotes(credits, monthly, notes)
+    end
+
+    if !(userData["hasGrokCodeAccess"].asBool() ?? true)
+      notes.push(provider.Note { label: "Grok Code", value: "no access" })
+    end
+
+    provider.Provider {
+      id: "grok",
+      name: "Grok",
+      plan: plan,
+      available: true,
+      reason: "",
+      windows: windows,
+      notes: notes,
+      cost: json.parse("null"),
+    }
+  end
+end
+
+pub def read(): provider.Provider
+  let token = grokToken(paths.readJsonOrNull(paths.home(".grok/auth.json")))
+
+  if token == ""
+    provider.unavailable("grok", "Grok", "no-credentials")
+  else
+    grokUsage(token)
+  end
+end

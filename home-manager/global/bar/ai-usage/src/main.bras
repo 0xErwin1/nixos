@@ -1,0 +1,53 @@
+#!/usr/bin/env brasa
+# Provider-agnostic AI usage fetcher — the Brasa replica of the bar's
+# epsilon-ai-usage Go command. Reads the local OAuth credentials the
+# Claude Code, Codex, and Grok CLIs maintain (plus the Moonshot key
+# stored by pi), queries each provider's usage endpoint concurrently,
+# and prints one normalized JSON document to stdout.
+#
+# It owns two files and no others: the Claude cost cache, and the Kimi
+# spend ledger — the only state that exists because Moonshot reports a
+# balance and never a consumption. Both are replaced through a
+# temporary file and a rename, so a crash cannot leave a truncated one
+# to be read as empty.
+#
+# Deliberately NOT done, unlike the Go command it replaces: OAuth token
+# refresh. This never writes a credential file. The CLIs refresh their
+# own tokens when they run, so a provider whose CLI has been idle long
+# enough reports `auth` until it is used again — a visible degradation
+# rather than a silent one, and no risk of burning a single-use refresh
+# token that fails to persist. Access tokens are never printed.
+
+import std::env
+import std::fs
+import "claude.bras"
+import std::json
+import "codex.bras"
+import std::time
+import "cost.bras"
+import "ledger.bras"
+import "grok.bras"
+import "kimi.bras"
+import "paths.bras"
+import "provider.bras"
+
+def main()
+  # The four providers fan out as tasks: each blocking request parks on
+  # the scheduler while the others are in flight, so the wall clock is
+  # the slowest provider, not the sum.
+  let providers = concurrent do |scope|
+    let claude = scope.spawn do claude.read() end
+    let codex = scope.spawn do codex.read() end
+    let grok = scope.spawn do grok.read() end
+    let kimi = scope.spawn do kimi.read() end
+
+    [claude.value(), codex.value(), grok.value(), kimi.value()]
+  end
+
+  let document: Map<string, Json> = {
+    "generatedAt": json.of(provider.isoSeconds(time.nowMillis() / 1000)),
+    "providers": json.of(providers.map(|p| provider.providerNode(p))),
+  }
+
+  puts json.stringify(document)
+end

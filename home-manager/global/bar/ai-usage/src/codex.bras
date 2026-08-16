@@ -1,0 +1,94 @@
+# Codex (ChatGPT / OpenAI): the same two facts as Claude, said
+# differently — an epoch-second reset, and a window named by its width
+# in seconds rather than by a key.
+
+import std::json
+import std::math
+import "net.bras"
+import "paths.bras"
+import "provider.bras"
+
+def codexWindow(w: Option<Json>, windows: Vector<provider.Window>)
+  let used = w["used_percent"].asFloat() ?? -1.0
+
+  if used >= 0.0
+    let reset = match w["reset_at"].asInt()
+      Some(sec) => provider.isoSeconds(sec)
+      None => ""
+    end
+
+    windows.push(provider.Window {
+      label: provider.windowLabel(w["limit_window_seconds"].asInt() ?? 0),
+      usedPercent: math.round(used).toInt(),
+      resetAt: reset,
+    })
+  end
+end
+
+def codexNotes(data: Json, notes: Vector<provider.Note>)
+  match data["rate_limit_reset_credits"]["available_count"].asInt()
+    Some(count) => notes.push(provider.Note { label: "Reset credits", value: "#{count}" })
+    None => unit
+  end
+
+  if data["credits"]["has_credits"].asBool() ?? false
+    match data["credits"]["balance"].asString()
+      Some(balance) => notes.push(provider.Note { label: "Credit balance", value: balance })
+      None => unit
+    end
+  end
+end
+
+def codexUsage(token: string, accountId: string): provider.Provider
+  let headers: Map<string, string> = {
+    "authorization": "Bearer #{token}",
+    "user-agent": "epsilon-ai-usage",
+  }
+
+  if accountId != ""
+    headers.insert("chatgpt-account-id", accountId)
+  end
+
+  let f = net.fetch("https://chatgpt.com/backend-api/wham/usage", headers)
+
+  if f.status == 0
+    provider.unavailable("codex", "Codex", "network")
+  elsif f.status == 401 || f.status == 403
+    provider.unavailable("codex", "Codex", "auth")
+  elsif f.status < 200 || f.status >= 300
+    provider.unavailable("codex", "Codex", "http-#{f.status}")
+  else
+    let data = json.parse(f.body) catch (e)
+      json.ParseError => json.parse("null")
+    end
+
+    let windows: Vector<provider.Window> = []
+    codexWindow(data["rate_limit"]["primary_window"], windows)
+    codexWindow(data["rate_limit"]["secondary_window"], windows)
+
+    let notes: Vector<provider.Note> = []
+    codexNotes(data, notes)
+
+    provider.Provider {
+      id: "codex",
+      name: "Codex",
+      plan: data["plan_type"].asString() ?? "",
+      available: true,
+      reason: "",
+      windows: windows,
+      notes: notes,
+      cost: json.parse("null"),
+    }
+  end
+end
+
+pub def read(): provider.Provider
+  let tokens = paths.readJsonOrNull(paths.home(".codex/auth.json"))["tokens"]
+  let token = tokens["access_token"].asString() ?? ""
+
+  if token == ""
+    provider.unavailable("codex", "Codex", "no-credentials")
+  else
+    codexUsage(token, tokens["account_id"].asString() ?? "")
+  end
+end

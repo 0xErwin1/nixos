@@ -1,0 +1,305 @@
+# The Claude transcript cost scan, and the cache that makes it
+# affordable.
+#
+# The walk is seconds over hundreds of megabytes, and the bar asks
+# every three minutes, so the result is cached with a short TTL. The
+# cache is also rejected when it was written on an earlier local day,
+# because "today" has to roll over at midnight rather than whenever
+# the TTL happens to lapse.
+
+import std::env
+import std::fs
+import std::json
+import std::time
+
+#
+# The Go command walks every transcript under ~/.claude/projects and
+# caches the result with a 5-minute TTL. This reads the same corpus
+# directly, which was inexpressible until `fs.stat` landed a
+# modification time: "every .jsonl touched in the last 8 days" is what
+# keeps a 400 MiB walk to the files that can still be in the window.
+
+struct Price
+  input: float
+  output: float
+  cacheWrite: float
+  cacheRead: float
+end
+
+struct Bucket
+  tokens: int
+  usd: float
+end
+
+struct ModelRow
+  model: string
+  tokens: int
+  usd: float
+end
+
+let dayMillis = 86400000
+let windowDays = 7
+let scanMaxAgeDays = 8
+
+# Anthropic list prices per 1M tokens. Subscription usage is flat-rate,
+# so this is an estimate of what the same tokens would cost on the API
+# — which is why the document carries `estimated: true`.
+def priceFor(model: string): Price
+  let m = model.toLower()
+
+  if m.contains?("opus")
+    Price { input: 15.0, output: 75.0, cacheWrite: 18.75, cacheRead: 1.5 }
+  elsif m.contains?("fable")
+    Price { input: 10.0, output: 50.0, cacheWrite: 12.5, cacheRead: 1.0 }
+  elsif m.contains?("haiku")
+    Price { input: 0.8, output: 4.0, cacheWrite: 1.0, cacheRead: 0.08 }
+  else
+    Price { input: 3.0, output: 15.0, cacheWrite: 3.75, cacheRead: 0.3 }
+  end
+end
+
+# Collapses a raw model id to its tier, matching `priceFor`'s buckets.
+# An unknown id keeps its raw string so it stays visible rather than
+# folding silently into the default.
+def modelLabel(model: string): string
+  let m = model.toLower()
+
+  if m.contains?("opus")
+    "Opus"
+  elsif m.contains?("fable")
+    "Fable"
+  elsif m.contains?("sonnet")
+    "Sonnet"
+  elsif m.contains?("haiku")
+    "Haiku"
+  else
+    model
+  end
+end
+
+def addUsage(into: Map<string, Bucket>, key: string, tokens: int, usd: float)
+  let previous = into[key] ?? Bucket { tokens: 0, usd: 0.0 }
+
+  into.insert(key, Bucket {
+    tokens: previous.tokens + tokens,
+    usd: previous.usd + usd,
+  })
+end
+
+def recentTranscripts(root: string): Vector<string>
+  let none: Vector<string> = []
+  let cutoff = time.nowMillis() - scanMaxAgeDays * dayMillis
+  let hits: Vector<string> = []
+
+  for path in fs.tryWalk(root, none).paths
+    if path.endsWith?(".jsonl")
+      let touched = fs.stat(path).modifiedMillis catch (e)
+        _ => 0
+      end
+
+      if touched >= cutoff
+        hits.push(path)
+      end
+    end
+  end
+
+  hits
+end
+
+def scanFile(
+  path: string,
+  dayCutoff: string,
+  seen: Set<string>,
+  perDay: Map<string, Bucket>,
+  perModel: Map<string, Bucket>,
+)
+  let text = fs.read(path) catch (e)
+    _ => ""
+  end
+
+  for line in text.lines()
+    # The cheap test first: parsing every line of a 400 MiB corpus to
+    # discard most of them is the whole cost of this scan.
+    if line.contains?("\"type\":\"assistant\"")
+      let doc = json.parse(line) catch (e)
+        json.ParseError => json.parse("null")
+      end
+
+      # The substring test above is a HEURISTIC — a line can carry that
+      # text inside quoted content without being an assistant turn — so
+      # the parsed document has to confirm it. Trusting the pre-filter
+      # counted foreign turns and inflated two model tiers.
+      let isAssistant = (doc["type"].asString() ?? "") == "assistant"
+      let usage = doc["message"]["usage"]
+
+      if isAssistant && !usage.null?()
+        let key = "#{doc["message"]["id"].asString() ?? ""}|#{doc["requestId"].asString() ?? ""}"
+
+        if key == "|" || !seen.has?(key)
+          if key != "|"
+            seen.add(key)
+          end
+
+          let stamp = time.parseIso(doc["timestamp"].asString() ?? "") catch (e)
+            time.ParseError => 0
+          end
+          # The user's day, not Greenwich's: bucketing by UTC put
+          # evening turns on the next day and threw the 7-day window
+          # off by 15% in one model tier.
+          let date = time.iso(stamp + time.localOffsetMillis(stamp)).slice(0, 10)
+
+          if stamp > 0 && date >= dayCutoff
+            let model = doc["message"]["model"].asString() ?? ""
+            let p = priceFor(model)
+
+            let inTok = usage["input_tokens"].asInt() ?? 0
+            let outTok = usage["output_tokens"].asInt() ?? 0
+            let writeTok = usage["cache_creation_input_tokens"].asInt() ?? 0
+            let readTok = usage["cache_read_input_tokens"].asInt() ?? 0
+
+            let usd = (inTok.toFloat() * p.input
+              + outTok.toFloat() * p.output
+              + writeTok.toFloat() * p.cacheWrite
+              + readTok.toFloat() * p.cacheRead) / 1000000.0
+
+            let tokens = inTok + outTok + writeTok + readTok
+
+            addUsage(perDay, date, tokens, usd)
+            addUsage(perModel, modelLabel(model), tokens, usd)
+          end
+        end
+      end
+    end
+  end
+end
+
+def bucketNode(label: string, b: Bucket): Json
+  let node: Map<string, Json> = {
+    "date": json.of(label),
+    "tokens": json.of(b.tokens),
+    "estUsd": json.of(b.usd),
+  }
+
+  json.of(node)
+end
+
+def modelNode(m: ModelRow): Json
+  let node: Map<string, Json> = {
+    "model": json.of(m.model),
+    "tokens": json.of(m.tokens),
+    "estUsd": json.of(m.usd),
+  }
+
+  json.of(node)
+end
+
+def scan(): Json
+  let root = "#{env.get("HOME") ?? ""}/.claude/projects"
+  let nowMillis = time.nowMillis()
+  let localNow = nowMillis + time.localOffsetMillis(nowMillis)
+  let dayCutoff = time.iso(localNow - (windowDays - 1) * dayMillis).slice(0, 10)
+
+  let seen = Set([""])
+  let perDay: Map<string, Bucket> = {}
+  let perModel: Map<string, Bucket> = {}
+
+  for path in recentTranscripts(root)
+    scanFile(path, dayCutoff, seen, perDay, perModel)
+  end
+
+  let empty = Bucket { tokens: 0, usd: 0.0 }
+
+  # Walking the window backwards from today gives newest-first order
+  # without sorting strings, and skipping the empty ones means a day
+  # with no turns is absent rather than a fabricated zero row.
+  let days: Vector<Json> = []
+  let mut weekTokens = 0
+  let mut weekUsd = 0.0
+
+  for back in 0..windowDays
+    let date = time.iso(localNow - back * dayMillis).slice(0, 10)
+    let bucket = perDay[date] ?? empty
+
+    if bucket.tokens > 0
+      weekTokens += bucket.tokens
+      weekUsd += bucket.usd
+      days.push(bucketNode(date, bucket))
+    end
+  end
+
+  let rows: Vector<ModelRow> = []
+
+  for (label, bucket) in perModel
+    if bucket.tokens > 0
+      rows.push(ModelRow { model: label, tokens: bucket.tokens, usd: bucket.usd })
+    end
+  end
+
+  let today = time.iso(localNow).slice(0, 10)
+
+  let cost: Map<string, Json> = {
+    "today": bucketNode(today, perDay[today] ?? empty),
+    "week": bucketNode("7d", Bucket { tokens: weekTokens, usd: weekUsd }),
+    "days": json.of(days),
+    "models": json.of(rows.sortBy(|m| -m.tokens).map(|m| modelNode(m))),
+    "estimated": json.of(true),
+  }
+
+  json.of(cost)
+end
+# Short enough that the panel is never far behind, long enough that a
+# three-minute poll almost never pays for the walk.
+let ttlMillis = 300000
+
+# The cache wraps the report rather than carrying its own keys inside
+# it: the node this returns is handed straight to the output document,
+# and bookkeeping has no business appearing there.
+def save(path: string, report: Json, now: int)
+  fs.mkdirAll(fs.dir(path))
+
+  let doc: Map<string, Json> = {
+    "writtenAtMillis": json.of(now),
+    "report": report,
+  }
+
+  let temp = "#{path}.tmp"
+
+  fs.write(temp, json.stringify(doc))
+  fs.mv(temp, path)
+end
+
+# The cached report while it is still good, or a fresh walk written
+# back. Rejected on two counts: age, and the calendar day it was
+# written on — "today" has to roll over at midnight rather than
+# whenever the TTL happens to lapse.
+pub def report(cachePath: string): Json
+  let now = time.nowMillis()
+  let today = time.iso(now + time.localOffsetMillis(now)).slice(0, 10)
+
+  let text = fs.read(cachePath) catch (e)
+    _ => ""
+  end
+
+  let cached = json.parse(text) catch (e)
+    json.ParseError => json.parse("null")
+  end
+
+  let report = cached["report"]
+  let writtenAt = cached["writtenAtMillis"].asInt() ?? 0
+  let sameDay = (report["today"]["date"].asString() ?? "") == today
+
+  if !report.null?() && sameDay && now - writtenAt < ttlMillis
+    return report ?? json.parse("null")
+  end
+
+  let fresh = scan()
+
+  # A cache that cannot be written is not a failure of the report: the
+  # walk already produced the answer, and the next poll simply pays for
+  # it again.
+  save(cachePath, fresh, now) catch (e)
+    _ => unit
+  end
+
+  fresh
+end

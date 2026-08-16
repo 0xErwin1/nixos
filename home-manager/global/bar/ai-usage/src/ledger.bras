@@ -1,0 +1,171 @@
+# The Kimi spend ledger.
+#
+# Moonshot exposes no consumption endpoint — only the live balance — so
+# real spend is derived from how that balance moves between polls: a
+# drop is consumption billed across every client sharing the key, a
+# rise is a recharge or a voucher grant. That makes this the only piece
+# of state this command owns, and the only reason it writes anything.
+#
+# Kept under XDG state rather than cache: a cache directory is
+# something a user may empty, and emptying this one silently resets
+# every figure it reports to zero.
+
+import std::fs
+import std::math
+import std::json
+import std::time
+
+# Sub-cent float noise is neither a purchase nor a refund. Without this
+# every poll would record a movement in one direction or the other.
+let epsilon = 0.0005
+
+# A month of day granularity is all the seven-day panel can ask for.
+let keepDays = 31
+
+pub struct State
+  credited: float
+  available: float
+  days: Map<string, float>
+end
+
+pub def read(path: string): State
+  let text = fs.read(path) catch (e)
+    _ => ""
+  end
+
+  let doc = json.parse(text) catch (e)
+    json.ParseError => json.parse("null")
+  end
+
+  let none: Map<string, Json> = {}
+  let days: Map<string, float> = {}
+
+  for (day, spent) in doc["days"].asObject() ?? none
+    days.insert(day, spent.asFloat() ?? 0.0)
+  end
+
+  State {
+    credited: doc["credited"].asFloat() ?? -1.0,
+    available: doc["available"].asFloat() ?? -1.0,
+    days: days,
+  }
+end
+
+# The ledger after observing `available`. A first run — or a ledger that
+# cannot be read — baselines at the current balance, so spend
+# accumulates from here instead of reporting the whole balance as if it
+# had just been spent.
+pub def advance(prior: State, available: float, today: string): State
+  if prior.credited < 0.0
+    let fresh: Map<string, float> = {}
+
+    return State { credited: available, available: available, days: fresh }
+  end
+
+  let delta = available - prior.available
+  let days = prior.days
+
+  # Only a rise moves `credited`: a drop is consumption, which is
+  # already described by `credited` staying where it was.
+  let credited = if delta > epsilon
+    prior.credited + delta
+  else
+    prior.credited
+  end
+
+  if delta < -epsilon
+    days.insert(today, (days[today] ?? 0.0) + -delta)
+  end
+
+  State { credited: credited, available: available, days: days }
+end
+
+pub def prune(state: State, cutoff: string): State
+  let kept: Map<string, float> = {}
+
+  for (day, spent) in state.days
+    if day >= cutoff
+      kept.insert(day, spent)
+    end
+  end
+
+  State { credited: state.credited, available: state.available, days: kept }
+end
+
+# Replaces `path` through a temporary file in the same directory and a
+# rename, so a crash mid-write cannot leave a truncated ledger behind —
+# the reader would take that for a first run and silently baseline away
+# every figure. `fs.mv` is a rename, which is atomic within a
+# filesystem.
+pub def save(path: string, state: State, stamp: string)
+  fs.mkdirAll(fs.dir(path))
+
+  let days: Map<string, Json> = {}
+
+  for (day, spent) in state.days
+    days.insert(day, json.of(spent))
+  end
+
+  let doc: Map<string, Json> = {
+    "credited": json.of(state.credited),
+    "available": json.of(state.available),
+    "days": json.of(days),
+    "updatedAt": json.of(stamp),
+  }
+
+  let temp = "#{path}.tmp"
+
+  fs.write(temp, json.stringify(doc))
+  fs.mv(temp, path)
+end
+
+# Everything ever credited minus what is left. The only answer possible
+# when the provider will say what remains and never what was used.
+pub def spent(state: State, available: float): float
+  state.credited - available
+end
+
+test "a first run baselines, so an existing balance is not read as spend"
+  let fresh: Map<string, float> = {}
+  let after = advance(State { credited: -1.0, available: -1.0, days: fresh }, 20.0, "2026-03-07")
+
+  assertEq after.credited, 20.0
+  assertEq spent(after, 20.0), 0.0
+end
+
+# The recorded amount is asserted within a cent, not exactly: 20.0 -
+# 18.4 is 1.6000000000000014 in binary floating point. That is the
+# ledger's own hazard rather than the test's — money in float is why
+# `epsilon` exists a few lines up — so the test states the tolerance
+# instead of picking numbers that hide it.
+test "a drop is consumption: credited holds, and the day records it"
+  let days: Map<string, float> = {}
+  let after = advance(State { credited: 50.0, available: 20.0, days: days }, 18.4, "2026-03-07")
+
+  assertEq after.credited, 50.0
+  assert math.abs((after.days["2026-03-07"] ?? 0.0) - 1.6) < 0.0001
+end
+
+test "a rise is a recharge: credited grows and no consumption is recorded"
+  let days: Map<string, float> = {}
+  let after = advance(State { credited: 50.0, available: 20.0, days: days }, 25.0, "2026-03-07")
+
+  assertEq after.credited, 55.0
+  assertEq after.days.len(), 0
+end
+
+test "sub-cent float noise is neither a purchase nor a refund"
+  let days: Map<string, float> = {}
+  let after = advance(State { credited: 50.0, available: 20.0, days: days }, 20.0003, "2026-03-07")
+
+  assertEq after.credited, 50.0
+  assertEq after.days.len(), 0
+end
+
+test "pruning keeps the cutoff day itself"
+  let days: Map<string, float> = { "2026-02-01": 1.0, "2026-03-01": 2.0, "2026-03-07": 3.0 }
+  let kept = prune(State { credited: 1.0, available: 1.0, days: days }, "2026-03-01")
+
+  assertEq kept.days.len(), 2
+  assertEq kept.days["2026-03-01"] ?? 0.0, 2.0
+end

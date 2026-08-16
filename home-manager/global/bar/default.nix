@@ -18,23 +18,23 @@ let
   agsPackage = inputs.ags.packages.${system}.default;
   astalPkgs = inputs.astal.packages.${system};
 
-  # Provider-agnostic AI usage fetcher (Claude + Codex + Grok) for the "extras" panel.
-  # Pure Go stdlib (HTTP/TLS/JSON/atomic file writes), so no vendored deps. The
-  # wrapper pins SSL_CERT_FILE so TLS verification works regardless of the
-  # ambient environment the bar service runs in.
-  ai-usage = pkgs.buildGoModule {
-    pname = "epsilon-ai-usage";
-    version = "0.1";
-    src = ./ai-usage;
-    vendorHash = null;
-  };
+  # Provider-agnostic AI usage fetcher (Claude + Codex + Grok + Kimi) for the
+  # "extras" panel, written in Brasa. `writeBrasaProject` reads the entry out
+  # of the project's own `brasa.toml` and bundles it, so the type check and
+  # the whole compiler gate the build: a program that does not compile can
+  # never reach an activated generation.
+  #
+  # No SSL_CERT_FILE wrapper, unlike the Go command this replaces: Brasa's
+  # `std::http` is ureq with rustls and webpki-roots, so the CA bundle is
+  # compiled into the binary and TLS does not consult the environment.
+  # Verified by running it with `env -i` and watching all four providers
+  # answer.
+  brasaPkgs = inputs.brasa.overlays.default pkgs pkgs;
 
-  ai-usage-wrapped = pkgs.runCommandLocal "epsilon-ai-usage" {
-    nativeBuildInputs = [ pkgs.makeWrapper ];
-  } ''
-    makeWrapper ${ai-usage}/bin/epsilon-ai-usage $out/bin/epsilon-ai-usage \
-      --set SSL_CERT_FILE ${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt
-  '';
+  ai-usage-wrapped = brasaPkgs.writeBrasaProject {
+    src = ./ai-usage;
+    name = "epsilon-ai-usage";
+  };
 
   wl-bar = pkgs.stdenv.mkDerivation {
     pname = "wl-bar";

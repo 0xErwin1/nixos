@@ -1,0 +1,157 @@
+# The normalized shape every provider is reduced to, and the JSON
+# document it becomes.
+#
+# Four services answer the same two questions — how much of the
+# allowance is spent, and when does it come back — in four different
+# shapes. Everything downstream of a provider module sees only these
+# types, so the bar never learns which service a row came from.
+
+import std::json
+import std::math
+import std::time
+
+pub struct Window
+  label: string
+  # An int, not the rendered text it used to be: the old emitter
+  # interpolated this field raw so it landed unquoted, and nothing
+  # checked that. `json.of` types it, so the honest type had to show up.
+  usedPercent: int
+  resetAt: string
+end
+
+pub struct Note
+  label: string
+  value: string
+end
+
+pub struct Provider
+  id: string
+  name: string
+  plan: string
+  available: bool
+  reason: string
+  windows: Vector<Window>
+  notes: Vector<Note>
+  # The `cost` object, or the `null` node. It used to be pre-rendered
+  # TEXT: before `json.of` a heterogeneous document had nowhere to
+  # live, since a typed `Map` cannot hold mixed values.
+  cost: Json
+end
+
+pub def unavailable(id: string, name: string, reason: string): Provider
+  let windows: Vector<Window> = []
+  let notes: Vector<Note> = []
+
+  Provider {
+    id: id,
+    name: name,
+    plan: "",
+    available: false,
+    reason: reason,
+    windows: windows,
+    notes: notes,
+    cost: json.parse("null"),
+  }
+end
+
+# ── rendering ──────────────────────────────────────────────────────────
+
+# Every value the document carries is built as a `Json` node and
+# handed to `json.stringify` (BRS-137). The first version of this
+# script predates `json.of`, so it emitted the document by string
+# interpolation with a hand-written escaper — fifteen functions to say
+# what the four below now say.
+
+pub def jnullable(s: string): Json
+  if s == ""
+    json.parse("null")
+  else
+    json.of(s)
+  end
+end
+
+pub def windowNode(w: Window): Json
+  let node: Map<string, Json> = {
+    "label": json.of(w.label),
+    "usedPercent": json.of(w.usedPercent),
+    "resetAt": jnullable(w.resetAt),
+  }
+
+  json.of(node)
+end
+
+pub def noteNode(n: Note): Json
+  let node: Map<string, Json> = {
+    "label": json.of(n.label),
+    "value": json.of(n.value),
+  }
+
+  json.of(node)
+end
+
+pub def providerNode(p: Provider): Json
+  # The Go command emits `null` for empty notes (no slice was built)
+  # and always an array for windows; the bar relies on the latter.
+  let notes = if p.notes.len() == 0
+    json.parse("null")
+  else
+    json.of(p.notes.map(|n| noteNode(n)))
+  end
+
+  let node: Map<string, Json> = {
+    "id": json.of(p.id),
+    "name": json.of(p.name),
+    "plan": jnullable(p.plan),
+    "available": json.of(p.available),
+    "reason": jnullable(p.reason),
+    "windows": json.of(p.windows.map(|w| windowNode(w))),
+    "notes": notes,
+    "cost": p.cost,
+  }
+
+  json.of(node)
+end
+
+# Epoch seconds to the Go command's ISO form (second precision).
+pub def isoSeconds(sec: int): string
+  time.iso(sec * 1000).slice(0, 19) + "Z"
+end
+
+# Grok answers with microsecond precision and a `+00:00` offset; the
+# bar has always been handed second precision with a `Z`. Rendered
+# rather than truncated, so a value that is not a timestamp at all
+# comes back empty instead of sliced into something that looks like
+# one.
+pub def secondPrecision(iso: string): string
+  if iso == ""
+    return ""
+  end
+
+  let stamp = time.parseIso(iso) catch (e)
+    time.ParseError => 0
+  end
+
+  if stamp == 0
+    ""
+  else
+    isoSeconds(stamp / 1000)
+  end
+end
+
+# A human window label derived from its length, like the Go command:
+# hours up to 6h, "Weekly" for 7 days, days otherwise.
+pub def windowLabel(seconds: int): string
+  if seconds <= 0
+    "?"
+  elsif seconds <= 21600
+    "#{math.round(seconds.toFloat() / 3600.0).toInt()}h"
+  else
+    let days = math.round(seconds.toFloat() / 86400.0).toInt()
+
+    if days == 7
+      "Weekly"
+    else
+      "#{days}d"
+    end
+  end
+end

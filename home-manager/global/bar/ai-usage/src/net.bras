@@ -1,0 +1,26 @@
+# The HTTP boundary: every provider reaches the network through here.
+#
+# A request that never produced a response is status 0 rather than a
+# thrown error, so a provider that cannot be reached is reported as
+# unavailable instead of taking the whole document down with it.
+
+import std::http
+
+pub struct Fetched
+  status: int
+  body: string
+end
+
+let timeoutMs = 20000
+
+pub def rawFetch(url: string, headers: Map<string, string>): Fetched
+  let r = http.getWith(url, headers, timeoutMs)
+  Fetched { status: r.status, body: r.body }
+end
+
+# Status 0 means the request never produced a response.
+pub def fetch(url: string, headers: Map<string, string>): Fetched
+  rawFetch(url, headers) catch (e)
+    http.RequestError => Fetched { status: 0, body: "" }
+  end
+end

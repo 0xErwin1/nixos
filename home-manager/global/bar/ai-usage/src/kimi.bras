@@ -1,0 +1,97 @@
+# Kimi (Moonshot AI): the only provider with no consumption endpoint,
+# so its spend is derived from balance movement and kept in a ledger.
+# See `ledger.bras` — this module is the poll, that one is the memory.
+
+import std::json
+import std::time
+import "ledger.bras"
+import "net.bras"
+import "paths.bras"
+import "provider.bras"
+
+def kimiUsage(key: string): provider.Provider
+  let f = net.fetch("https://api.moonshot.ai/v1/users/me/balance", {
+    "authorization": "Bearer #{key}",
+    "user-agent": "epsilon-ai-usage",
+  })
+
+  if f.status == 0
+    provider.unavailable("kimi", "Kimi", "network")
+  elsif f.status == 401 || f.status == 403
+    provider.unavailable("kimi", "Kimi", "auth")
+  elsif f.status < 200 || f.status >= 300
+    provider.unavailable("kimi", "Kimi", "http-#{f.status}")
+  else
+    let data = json.parse(f.body) catch (e)
+      json.ParseError => json.parse("null")
+    end
+
+    let available = data["data"]["available_balance"].asFloat() ?? -1.0
+
+    if available < 0.0
+      provider.unavailable("kimi", "Kimi", "bad-response")
+    else
+      let notes: Vector<provider.Note> = []
+      notes.push(provider.Note { label: "Available", value: "$#{available.toFixed(2)}" })
+
+      # The one place this command owns state. Reading the balance is
+      # what makes the movement observable, so the ledger has to
+      # advance on the same poll that reports it — skipping the write
+      # loses that movement for good.
+      let now = time.nowMillis()
+      let today = time.iso(now + time.localOffsetMillis(now)).slice(0, 10)
+      let cutoff = time.iso(now + time.localOffsetMillis(now) - 31 * 86400000).slice(0, 10)
+
+      let state = ledger.prune(
+        ledger.advance(ledger.read(paths.statePath()), available, today),
+        cutoff,
+      )
+
+      # A ledger that cannot be written still reports correctly this
+      # time; it is the NEXT poll that loses the movement, which is
+      # worth neither failing the provider nor hiding.
+      ledger.save(paths.statePath(), state, time.iso(now)) catch (e)
+        _ => unit
+      end
+
+      notes.push(provider.Note {
+        label: "Spent",
+        value: "$#{ledger.spent(state, available).toFixed(2)}",
+      })
+
+      let voucher = data["data"]["voucher_balance"].asFloat() ?? 0.0
+
+      if voucher > 0.0
+        let cash = data["data"]["cash_balance"].asFloat() ?? 0.0
+
+        notes.push(provider.Note {
+          label: "Cash + voucher",
+          value: "$#{cash.toFixed(2)} + $#{voucher.toFixed(2)}",
+        })
+      end
+
+      let windows: Vector<provider.Window> = []
+
+      provider.Provider {
+        id: "kimi",
+        name: "Kimi",
+        plan: "",
+        available: true,
+        reason: "",
+        windows: windows,
+        notes: notes,
+        cost: json.parse("null"),
+      }
+    end
+  end
+end
+
+pub def read(): provider.Provider
+  let key = paths.readJsonOrNull(paths.home(".pi/agent/auth.json"))["moonshotai"]["key"].asString() ?? ""
+
+  if key == ""
+    provider.unavailable("kimi", "Kimi", "no-credentials")
+  else
+    kimiUsage(key)
+  end
+end
