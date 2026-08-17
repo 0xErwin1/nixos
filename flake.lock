@@ -546,6 +546,30 @@
         "type": "github"
       }
     },
+    "gentle-ai-nix": {
+      "inputs": {
+        "home-manager": [
+          "home-manager"
+        ],
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1786966421,
+        "narHash": "sha256-LpXKRth5mvLVZ/c5yjlTtIGElf4fmLm1dtO9XlIYe/I=",
+        "owner": "0xErwin1",
+        "repo": "gentle-ai-nix",
+        "rev": "84cbd6eb332ce59d4e6c5556f0e95d516d03b306",
+        "type": "github"
+      },
+      "original": {
+        "owner": "0xErwin1",
+        "ref": "feat/consume-declarative-contract",
+        "repo": "gentle-ai-nix",
+        "type": "github"
+      }
+    },
     "ghostty": {
       "flake": false,
       "locked": {
@@ -1230,6 +1254,7 @@
         "dbflux": "dbflux",
         "deploy-rs": "deploy-rs",
         "firefoxAddons": "firefoxAddons",
+        "gentle-ai-nix": "gentle-ai-nix",
         "home-manager": "home-manager",
         "nix-flatpak": "nix-flatpak",
         "nixos-rk3588": "nixos-rk3588",

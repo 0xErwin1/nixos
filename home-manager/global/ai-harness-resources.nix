@@ -33,30 +33,14 @@ in
   inherit agensManagedRoots;
   requiredDeliveryFamilyNames = [
     "shared-skills"
-    "opencode-instructions"
     "opencode-orchestrator"
-    "opencode-agents"
-    "opencode-commands"
     "shared-commands"
-    "opencode-prompts"
-    "opencode-skills"
     "opencode-tui"
-    "opencode-plugins"
-    "claude-instructions"
     "claude-orchestrator"
     "claude-engram-protocol"
-    "claude-agents"
-    "claude-commands"
-    "claude-skills"
-    "claude-output-styles"
-    "codex-instructions"
     "codex-orchestrator"
     "codex-engram-instructions"
     "codex-engram-compact-prompt"
-    "codex-commands"
-    "codex-agents"
-    "codex-skills"
-    "codex-hooks"
     "codex-sdd-strong-profile"
     "codex-sdd-mid-profile"
     "codex-sdd-cheap-profile"
@@ -80,34 +64,11 @@ in
       recursive = true;
     }
     {
-      name = "opencode-instructions";
-      classification = "effective";
-      delivery = "project";
-      source = "opencode/AGENTS.md";
-      target = ".config/opencode/AGENTS.md";
-    }
-    {
       name = "opencode-orchestrator";
       classification = "effective";
       delivery = "project";
       source = "opencode/ORCHESTRATOR.md";
       target = ".config/opencode/ORCHESTRATOR.md";
-    }
-    {
-      name = "opencode-agents";
-      classification = "effective";
-      delivery = "project";
-      source = "opencode/agent";
-      target = ".config/opencode/agent";
-      recursive = true;
-    }
-    {
-      name = "opencode-commands";
-      classification = "effective";
-      delivery = "project";
-      source = "opencode/commands";
-      target = ".config/opencode/commands";
-      recursive = true;
     }
     {
       name = "shared-commands";
@@ -118,42 +79,11 @@ in
       recursive = true;
     }
     {
-      name = "opencode-prompts";
-      classification = "effective";
-      delivery = "project";
-      source = "opencode/prompts";
-      target = ".config/opencode/prompts";
-      recursive = true;
-    }
-    {
-      name = "opencode-skills";
-      classification = "effective";
-      delivery = "project";
-      source = "opencode/skills";
-      target = ".config/opencode/skills";
-      recursive = true;
-    }
-    {
       name = "opencode-tui";
       classification = "effective";
       delivery = "project";
       source = "opencode/tui.json";
       target = ".config/opencode/tui.json";
-    }
-    {
-      name = "opencode-plugins";
-      classification = "effective";
-      delivery = "project";
-      source = "opencode/plugins";
-      target = ".config/opencode/plugins";
-      recursive = true;
-    }
-    {
-      name = "claude-instructions";
-      classification = "effective";
-      delivery = "project";
-      source = "claude/CLAUDE.md";
-      target = ".claude/CLAUDE.md";
     }
     {
       name = "claude-orchestrator";
@@ -168,37 +98,6 @@ in
       delivery = "project";
       source = "claude/engram-protocol.md";
       target = ".claude/engram-protocol.md";
-    }
-    {
-      name = "claude-agents";
-      classification = "effective";
-      delivery = "project";
-      source = "claude/agents";
-      target = ".claude/agents";
-      recursive = true;
-    }
-    {
-      name = "claude-commands";
-      classification = "effective";
-      delivery = "project";
-      source = "claude/commands";
-      target = ".claude/commands";
-      recursive = true;
-    }
-    {
-      name = "claude-skills";
-      classification = "effective";
-      delivery = "project";
-      source = "claude/skills";
-      target = ".claude/skills";
-      recursive = true;
-    }
-    {
-      name = "codex-instructions";
-      classification = "effective";
-      delivery = "project";
-      source = "codex/AGENTS.md";
-      target = ".codex/AGENTS.md";
     }
     {
       name = "codex-orchestrator";
@@ -220,45 +119,6 @@ in
       delivery = "project";
       source = "codex/engram-compact-prompt.md";
       target = ".codex/engram-compact-prompt.md";
-    }
-    {
-      name = "codex-commands";
-      classification = "effective";
-      delivery = "project";
-      source = "codex/commands";
-      target = ".codex/commands";
-      recursive = true;
-    }
-    {
-      name = "codex-agents";
-      classification = "effective";
-      delivery = "project";
-      source = "codex/agents";
-      target = ".codex/agents";
-      recursive = true;
-    }
-    {
-      name = "claude-output-styles";
-      classification = "effective";
-      delivery = "project";
-      source = "claude/output-styles";
-      target = ".claude/output-styles";
-      recursive = true;
-    }
-    {
-      name = "codex-skills";
-      classification = "effective";
-      delivery = "project";
-      source = "codex/skills";
-      target = ".codex/skills";
-      recursive = true;
-    }
-    {
-      name = "codex-hooks";
-      classification = "effective";
-      delivery = "project";
-      source = "codex/hooks.json";
-      target = ".codex/hooks.json";
     }
     {
       name = "codex-sdd-strong-profile";

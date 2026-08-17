@@ -11,6 +11,12 @@
 
     atlas.url = "github:0xErwin1/atlas/nightly";
 
+    gentle-ai-nix = {
+      url = "github:0xErwin1/gentle-ai-nix/feat/consume-declarative-contract";
+      inputs.nixpkgs.follows = "nixpkgs";
+      inputs.home-manager.follows = "home-manager";
+    };
+
     brasa = {
       url = "github:0xErwin1/brasa";
       inputs.nixpkgs.follows = "nixpkgs";

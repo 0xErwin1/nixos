@@ -3,6 +3,7 @@
   imports = [
     inputs.pi-harness.homeModules.default
     ./ai-harness.nix
+    ./ai-harness-gentle-ai.nix
   ];
 
   programs = {
@@ -56,11 +57,13 @@
     };
   };
 
+  # gentle-ai is installed by ai-harness-gentle-ai.nix: the package that renders
+  # the configuration is the one that goes on PATH, so what runs is what
+  # rendered. Listing it here as well put two versions in one buildEnv.
   home.packages = with pkgs; [
     ccstatusline
     codegraph
     engram
-    gentle-ai
     grok-build
     maestro
     pi-coding-agent
