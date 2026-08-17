@@ -556,11 +556,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1786981776,
-        "narHash": "sha256-VkCyprTXHHfuNsdF13UMdnZPEVVvmit8ikkUJKF2FMk=",
+        "lastModified": 1786985040,
+        "narHash": "sha256-OO2zEAEsuMvONSP4OXuGEpQgpMhNLf5lf8m/7YE7iR0=",
         "ref": "feat/consume-declarative-contract",
-        "rev": "f04ee960eafdf478f65db12b7163fc44965ed708",
-        "revCount": 15,
+        "rev": "2a10c9df5fcd8793ad04fdb1ee6e2ff93d05981d",
+        "revCount": 16,
         "type": "git",
         "url": "file:///home/iperez/dev/personal/gentle-ai-nix"
       },

@@ -129,6 +129,7 @@ in
     secrets = {
       merge = [
         ".claude.json"
+        ".claude/settings.json"
         ".codex/config.toml"
       ];
 
@@ -176,8 +177,58 @@ in
     # What ai/claude/settings-merge.json used to merge in at activation. The
     # deny list it also carried is exactly Gentle AI's own guardrails, which the
     # permissions component already writes.
+    # Settings this configuration owns. Claude Code writes into the same file --
+    # a theme picked in the UI lands there -- which is why it is merged rather
+    # than replaced below.
     extensions.claude-code = {
       outputStyle = "Par";
+      "model" = "opus[1m]";
+      "workflowKeywordTriggerEnabled" = false;
+      "statusLine" = {
+        "type" = "command";
+        "command" = "ccstatusline";
+        "padding" = 0;
+        "refreshInterval" = 10;
+      };
+      "enabledPlugins" = {
+        "figma@claude-plugins-official" = true;
+        "rust-analyzer-lsp@claude-plugins-official" = false;
+        "warp@claude-code-warp" = true;
+        "engram@engram" = true;
+      };
+      "extraKnownMarketplaces" = {
+        "claude-code-plugins" = {
+          "source" = {
+            "source" = "github";
+            "repo" = "anthropics/claude-code";
+          };
+        };
+        "claude-plugins-official" = {
+          "source" = {
+            "source" = "github";
+            "repo" = "anthropics/claude-plugins-official";
+          };
+        };
+        "claude-code-warp" = {
+          "source" = {
+            "source" = "github";
+            "repo" = "warpdotdev/claude-code-warp";
+          };
+        };
+        "engram" = {
+          "source" = {
+            "source" = "github";
+            "repo" = "Gentleman-Programming/engram";
+          };
+        };
+      };
+      "effortLevel" = "medium";
+      "tui" = "fullscreen";
+      "skipDangerousModePermissionPrompt" = true;
+      "theme" = "dark-daltonized";
+      "editorMode" = "vim";
+      "agentPushNotifEnabled" = true;
+
       hooks.UserPromptSubmit = [
         {
           matcher = "";
