@@ -28,20 +28,32 @@
 let
   vendored = ../../ai;
 
-  # Layered on top of the render rather than replacing it. `fill` copies only
-  # what Gentle AI did not produce, so the agents, skills and commands that are
-  # ours arrive while a stale copy of one Gentle AI also ships stays out of the
-  # way. That is what lets this tree keep its own additions without pinning the
-  # generated ones to whatever version it was last synced from.
-  ownTree = target: source: {
-    inherit target source;
+  # ai/custom holds what is ours and nothing else: the agents, commands,
+  # prompts and skills Gentle AI does not ship. Keeping it a separate tree is
+  # what makes the boundary a stated fact rather than the outcome of a
+  # collision, and it is why a copy of a file Gentle AI also ships can no longer
+  # end up shadowing the current one -- there are none in here to shadow with.
+  #
+  # Layered as fill so that if Gentle AI ever starts shipping something at one
+  # of these paths, its version wins and the duplicate here becomes visible as
+  # dead weight rather than silently overriding an upstream change.
+  ownTree = target: provider: {
+    inherit target;
+    source = "${vendored}/custom/${provider}";
     mode = "fill";
   };
 
-  # Our own voice, added after everything Gentle AI generated. The persona is
-  # declared custom so Gentle AI writes none of its own, and these carry ours.
-  ownPolicy = target: source: {
-    inherit target source;
+  # ai/custom/policy holds our rules and persona with the two blocks Gentle AI
+  # regenerates under this document -- sdd-orchestrator and strict-tdd-mode --
+  # taken out. Appending the vendored file whole instead would land both copies
+  # of everything Gentle AI writes.
+  #
+  # Our persona lives in these files rather than in Gentle AI's persona slot
+  # because the slot was where it always lived: the component is told to write
+  # none of its own, and this supplies it.
+  ownPolicy = target: provider: {
+    inherit target;
+    source = "${vendored}/custom/policy/${provider}.md";
     mode = "append";
   };
 in
@@ -100,23 +112,13 @@ in
         source = "${vendored}/opencode/plugins/engram.ts";
       };
 
-      opencode-agents = ownTree ".config/opencode/agent" "${vendored}/opencode/agent";
-      opencode-commands = ownTree ".config/opencode/commands" "${vendored}/opencode/commands";
-      opencode-prompts = ownTree ".config/opencode/prompts" "${vendored}/opencode/prompts";
-      opencode-skills = ownTree ".config/opencode/skills" "${vendored}/opencode/skills";
+      opencode-own = ownTree ".config/opencode" "opencode";
+      claude-own = ownTree ".claude" "claude";
+      codex-own = ownTree ".codex" "codex";
 
-      claude-agents = ownTree ".claude/agents" "${vendored}/claude/agents";
-      claude-commands = ownTree ".claude/commands" "${vendored}/claude/commands";
-      claude-skills = ownTree ".claude/skills" "${vendored}/claude/skills";
-      claude-output-styles = ownTree ".claude/output-styles" "${vendored}/claude/output-styles";
-
-      codex-agents = ownTree ".codex/agents" "${vendored}/codex/agents";
-      codex-commands = ownTree ".codex/commands" "${vendored}/codex/commands";
-      codex-skills = ownTree ".codex/skills" "${vendored}/codex/skills";
-
-      opencode-policy = ownPolicy ".config/opencode/AGENTS.md" "${vendored}/opencode/AGENTS.md";
-      claude-policy = ownPolicy ".claude/CLAUDE.md" "${vendored}/claude/CLAUDE.md";
-      codex-policy = ownPolicy ".codex/AGENTS.md" "${vendored}/codex/AGENTS.md";
+      opencode-policy = ownPolicy ".config/opencode/AGENTS.md" "opencode";
+      claude-policy = ownPolicy ".claude/CLAUDE.md" "claude";
+      codex-policy = ownPolicy ".codex/AGENTS.md" "codex";
     };
   };
 
