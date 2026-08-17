@@ -136,6 +136,10 @@ in
         enable = true;
         mcpServers = serversFor "pi";
         provisionPackages = true;
+
+        # Pi resolves a theme against the ones its packages ship, so the theme
+        # here is gentle-pi's own rather than the name Gentle AI uses elsewhere.
+        settings.theme = "Gentle";
       };
     };
 
@@ -176,10 +180,15 @@ in
         ".claude/settings.json"
         ".codex/config.toml"
 
-        # Pi writes its own model, provider, theme and changelog state here, and
-        # npm rewrites the package file, so both are merged into rather than
-        # replaced even though neither carries a credential.
-        ".pi/agent/settings.json"
+        # Pi writes its own model, provider and changelog state here, and npm
+        # rewrites the package file, so both are merged into rather than
+        # replaced even though neither carries a credential. The package list is
+        # Pi's own: it rebuilds it as it installs, so it accumulates instead of
+        # being cut back to the one entry the document names.
+        {
+          path = ".pi/agent/settings.json";
+          unionLists = [ "packages" ];
+        }
         ".pi/npm/package.json"
       ];
 
