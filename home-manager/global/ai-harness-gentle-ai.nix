@@ -11,6 +11,7 @@
 {
   config,
   inputs,
+  lib,
   ...
 }:
 
@@ -25,6 +26,13 @@ let
     inherit target;
     source = "${vendored}/custom/${provider}";
     mode = "fill";
+  };
+
+  # A contract of ours at a path Gentle AI does not render, so it is the whole
+  # content there rather than a layer over generated content.
+  own = target: path: {
+    inherit target;
+    source = "${vendored}/${path}";
   };
 
   # Our rules and persona, with the blocks Gentle AI regenerates taken out.
@@ -81,9 +89,29 @@ let
         client
       ];
     };
+
+  secretEnvFiles = [
+    "${secretsDirectory}/mcp.env"
+    "${secretsDirectory}/api.env"
+  ];
 in
 {
   imports = [ inputs.gentle-ai-nix.homeManagerModules.default ];
+
+  # A missing env file leaves every placeholder unresolved rather than emptied,
+  # so nothing is destroyed, but the result is a harness whose servers cannot
+  # authenticate and say nothing about why. Refusing before the write boundary
+  # is the point at which that is still one message instead of a debugging
+  # session.
+  home.activation.gentleAiSecretsPreflight = lib.hm.dag.entryBefore [ "writeBoundary" ] ''
+    for secret_env_file in ${lib.escapeShellArgs secretEnvFiles}; do
+      if [ ! -f "$secret_env_file" ]; then
+        echo "AI harness required env file is missing: $secret_env_file" >&2
+        echo "Create it locally with mode 600 before switching; never commit token values." >&2
+        exit 1
+      fi
+    done
+  '';
 
   programs.gentle-ai = {
     enable = true;
@@ -99,6 +127,15 @@ in
       codex = {
         enable = true;
         mcpServers = serversFor "codex";
+      };
+
+      # Pi keeps its harness in packages its own tool installs rather than in
+      # files, so rendering produces the configuration around it and activation
+      # runs the installation Gentle AI declares for it.
+      pi = {
+        enable = true;
+        mcpServers = serversFor "pi";
+        provisionPackages = true;
       };
     };
 
@@ -131,17 +168,21 @@ in
         ".claude.json"
         ".claude/settings.json"
         ".codex/config.toml"
+
+        # Pi writes its own model, provider, theme and changelog state here, and
+        # npm rewrites the package file, so both are merged into rather than
+        # replaced even though neither carries a credential.
+        ".pi/agent/settings.json"
+        ".pi/npm/package.json"
       ];
 
       paths = [
         ".config/opencode/opencode.json"
+        ".pi/agent/mcp.json"
       ]
       ++ map (name: ".claude/mcp/${name}.json") (builtins.attrNames (serversFor "claude"));
 
-      envFiles = [
-        "${secretsDirectory}/mcp.env"
-        "${secretsDirectory}/api.env"
-      ];
+      envFiles = secretEnvFiles;
     };
 
     # Neither has a Gentle AI adapter, and both read the same kind of harness.
@@ -259,6 +300,26 @@ in
       opencode-policy = ownPolicy ".config/opencode/AGENTS.md" "opencode";
       claude-policy = ownPolicy ".claude/CLAUDE.md" "claude";
       codex-policy = ownPolicy ".codex/AGENTS.md" "codex";
+
+      # Contracts of our own at paths Gentle AI does not render. They used to
+      # reach these targets through the Pi harness module, which projected files
+      # for every client and not only for Pi; they are declared here now that
+      # the module is gone.
+      shared-skills = own ".agents/skills" "skills";
+
+      opencode-orchestrator = own ".config/opencode/ORCHESTRATOR.md" "opencode/ORCHESTRATOR.md";
+      opencode-commands = own ".config/opencode/command" "command";
+      opencode-tui = own ".config/opencode/tui.json" "opencode/tui.json";
+
+      claude-orchestrator = own ".claude/sdd-orchestrator.md" "claude/sdd-orchestrator.md";
+      claude-engram-protocol = own ".claude/engram-protocol.md" "claude/engram-protocol.md";
+
+      codex-orchestrator = own ".codex/sdd-orchestrator.md" "codex/sdd-orchestrator.md";
+      codex-engram-instructions = own ".codex/engram-instructions.md" "codex/engram-instructions.md";
+      codex-engram-compact-prompt = own ".codex/engram-compact-prompt.md" "codex/engram-compact-prompt.md";
+      codex-sdd-strong = own ".codex/sdd-strong.config.toml" "codex/sdd-strong.config.toml";
+      codex-sdd-mid = own ".codex/sdd-mid.config.toml" "codex/sdd-mid.config.toml";
+      codex-sdd-cheap = own ".codex/sdd-cheap.config.toml" "codex/sdd-cheap.config.toml";
     };
   };
 }

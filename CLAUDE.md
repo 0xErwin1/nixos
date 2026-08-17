@@ -66,7 +66,7 @@ Put a setting in a host/profile directory when it is machine- or role-specific. 
 
 ## AI Harness
 
-`home-manager/global/ai-harness.nix` connects canonical assets under `ai/` to Pi, OpenCode, Claude Code, Codex, and Grok Build.
+`home-manager/global/ai-harness-gentle-ai.nix` declares the harness Gentle AI renders for Pi, OpenCode, Claude Code and Codex, and layers our own assets under `ai/` onto it. Grok and Agens take a copy of another client's rendered harness.
 
 - Static skills, agents, commands, prompts, and policy files are projected by Home Manager, generally as Nix store symlinks.
 - Fully owned secret-bearing configs are rendered at activation from tracked placeholder templates.
@@ -77,7 +77,7 @@ Put a setting in a host/profile directory when it is machine- or role-specific. 
 Safe AI harness workflow:
 
 1. Edit the canonical source in `ai/`, not projected files under `~/.config/opencode`, `~/.claude`, `~/.codex`, `~/.grok`, or `~/.pi`.
-2. Update `home-manager/global/ai-harness.nix` only when projection, render, merge, or secret-contract wiring changes.
+2. Update `home-manager/global/ai-harness-gentle-ai.nix` only when the declared harness, the extra files layered onto it, or the secret contract changes.
 3. Keep tracked templates placeholder-only; never add rendered credentials.
 4. Run `nix flake check --no-build --no-write-lock-file` for shared harness changes.
 5. Read `ai/support/` when changing projection or secret behavior.

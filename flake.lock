@@ -556,11 +556,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1786999707,
-        "narHash": "sha256-nruLzRbDqU2XDTcdP63Bm/Eb8kc72BxauQ2X2JDgiRs=",
+        "lastModified": 1787001956,
+        "narHash": "sha256-9ScpxlXmIX4whjuwORZ0HNnBL5gKMmTYJ+oByGQ33i0=",
         "owner": "0xErwin1",
         "repo": "gentle-ai-nix",
-        "rev": "50d7ffd9eec45e57320272831b65c66967208698",
+        "rev": "557161fa8247882af91893e3fd12db7a912d2910",
         "type": "github"
       },
       "original": {
@@ -1183,26 +1183,6 @@
         "type": "github"
       }
     },
-    "pi-harness": {
-      "inputs": {
-        "nixpkgs": [
-          "nixpkgs"
-        ]
-      },
-      "locked": {
-        "lastModified": 1785416254,
-        "narHash": "sha256-w+adICaoIWFLFWcwzI9wlrXh2FAd70c6CRakqlap0LM=",
-        "owner": "0xErwin1",
-        "repo": "pi-harness",
-        "rev": "2709439c542c491b78cd2482251d78404e17f3fc",
-        "type": "github"
-      },
-      "original": {
-        "owner": "0xErwin1",
-        "repo": "pi-harness",
-        "type": "github"
-      }
-    },
     "pre-commit-hooks": {
       "inputs": {
         "flake-compat": [
@@ -1259,7 +1239,6 @@
         "nixos-rk3588": "nixos-rk3588",
         "nixpkgs": "nixpkgs_6",
         "nixvim": "nixvim",
-        "pi-harness": "pi-harness",
         "rofiAyuDarkTheme": "rofiAyuDarkTheme",
         "sops-nix": "sops-nix",
         "spicetify-nix": "spicetify-nix",

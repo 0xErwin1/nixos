@@ -83,7 +83,7 @@ nix flake check --no-build
 
 ## AI Harness
 
-Shared configuration for the local AI coding agents (`pi`, `opencode`, Claude Code, Codex), wired through `home-manager/global/ai-harness.nix`. Canonical assets live in `ai/`; secret values never do.
+Shared configuration for the local AI coding agents (`pi`, `opencode`, Claude Code, Codex), declared in `home-manager/global/ai-harness-gentle-ai.nix` and rendered by Gentle AI itself. Assets of our own live in `ai/`; secret values never do.
 
 ### First-time setup
 

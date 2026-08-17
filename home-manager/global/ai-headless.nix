@@ -1,8 +1,6 @@
-{ pkgs, inputs, ... }:
+{ pkgs, ... }:
 {
   imports = [
-    inputs.pi-harness.homeModules.default
-    ./ai-harness.nix
     ./ai-harness-gentle-ai.nix
   ];
 
@@ -16,47 +14,12 @@
       enable = true;
       package = pkgs.opencode;
     };
-    pi.coding-agent = {
-      enable = true;
-      package = inputs.pi-harness.packages.${pkgs.stdenv.hostPlatform.system}.default;
-      settings = {
-        extensions = [ ];
-        packages = [ ];
-        harness = {
-          managedBy = "home-manager";
-          source = "pi-harness";
-        };
-      };
-      resources = [
-        {
-          source = inputs.pi-harness.assets.agents;
-          target = ".pi/agent/agents";
-          recursive = true;
-        }
-        {
-          source = inputs.pi-harness.assets.chains;
-          target = ".pi/agent/chains";
-          recursive = true;
-        }
-        {
-          source = inputs.pi-harness.assets.support;
-          target = ".pi/agent/support";
-          recursive = true;
-        }
-        {
-          source = inputs.pi-harness.assets.extensions;
-          target = ".pi/agent/extensions";
-          recursive = true;
-        }
-        {
-          source = inputs.pi-harness.assets.packages;
-          target = ".pi/agent/packages";
-          recursive = true;
-        }
-      ];
-    };
   };
 
+  # Pi's harness comes from Gentle AI now, declared in ai-harness-gentle-ai.nix
+  # like every other client's. The Pi binary stays a plain package below: Gentle
+  # AI installs a harness into an already-present Pi, never Pi itself.
+  #
   # gentle-ai is installed by ai-harness-gentle-ai.nix: the package that renders
   # the configuration is the one that goes on PATH, so what runs is what
   # rendered. Listing it here as well put two versions in one buildEnv.

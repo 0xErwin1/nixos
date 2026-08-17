@@ -22,11 +22,6 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    pi-harness = {
-      url = "github:0xErwin1/pi-harness";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-
     home-manager = {
       url = "github:nix-community/home-manager/release-26.05";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -234,8 +229,6 @@
             inherit (self) homeConfigurations checks;
             inherit inputs;
           };
-          aiHarnessResourceMatrix = import ./home-manager/global/ai-harness-resources.nix;
-
           # Force the test's `assert` guards during evaluation, then materialize a
           # trivial output. If any assertion fails, `nix flake check` fails here.
           functionalCheck =
@@ -280,7 +273,7 @@
                 grep -F /home/iperez/.config/ai-harness/secrets/api.env ${./ai/support/secrets-env-contract.md} >/dev/null
                 grep -F AI_HARNESS_MCP_ENV_FILE ${./ai/support/secrets-env-contract.md} >/dev/null
                 grep -F AI_HARNESS_API_ENV_FILE ${./ai/support/secrets-env-contract.md} >/dev/null
-                grep -F "AI harness required env file is missing" ${./home-manager/global/ai-harness.nix} >/dev/null
+                grep -F "AI harness required env file is missing" ${./home-manager/global/ai-harness-gentle-ai.nix} >/dev/null
 
                 if find ${./ai} -type l -print -quit | grep -q .; then
                   echo "Managed AI asset tree must not contain symlinks." >&2
@@ -288,13 +281,13 @@
                   exit 1
                 fi
 
-                if grep -R -F "/.tabularium/AI" ${./ai} ${./home-manager/global/ai-harness.nix} ${./home-manager/global/ai.nix} ${./tests/ai-harness-projections.nix}; then
+                if grep -R -F "/.tabularium/AI" ${./ai} ${./home-manager/global/ai-harness-gentle-ai.nix} ${./home-manager/global/ai.nix}; then
                   echo "Managed AI harness files must not reference Tabularium as the canonical source." >&2
                   exit 1
                 fi
 
                 token_pattern='(Bearer[[:space:]]+[A-Za-z0-9._~+/=-]{20,}|sk-[A-Za-z0-9]{20,}|gh[pousr]_[A-Za-z0-9_]{20,}|xox[baprs]-[A-Za-z0-9-]{20,}|(api[_-]?key|token|secret|password)[[:space:]]*[:=][[:space:]]*"?[A-Za-z0-9_./+-]{16,})'
-                if grep -R -E -i "$token_pattern" ${./ai} ${./home-manager/global/ai-harness.nix} ${./home-manager/global/ai.nix} ${./tests/ai-harness-projections.nix}; then
+                if grep -R -E -i "$token_pattern" ${./ai} ${./home-manager/global/ai-harness-gentle-ai.nix} ${./home-manager/global/ai.nix}; then
                   echo "Token-like literal value detected in managed AI harness files." >&2
                   exit 1
                 fi
@@ -336,22 +329,21 @@
                 PY
 
                 python3 - \
-                  ${./ai/opencode/ORCHESTRATOR.md} \
-                  ${./ai/opencode/opencode.jsonc} <<'PY'
-                import re
+                  ${./ai/opencode/ORCHESTRATOR.md} <<'PY'
                 import sys
                 from pathlib import Path
 
-                orchestrator_path, config_path = map(Path, sys.argv[1:])
+                # The OpenCode agent definition is rendered by Gentle AI now, so
+                # what is ours to assert on is the orchestrator contract alone.
+                orchestrator_path = Path(sys.argv[1])
                 orchestrator = orchestrator_path.read_text().lower()
-                config = config_path.read_text().lower()
 
                 for forbidden in (
                     'you are a coordinator, not an executor',
                     'delegate all real work',
                     'delegate-only orchestrator',
                 ):
-                    if forbidden in orchestrator or forbidden in config:
+                    if forbidden in orchestrator:
                         raise SystemExit(f'OpenCode primary routing restored forbidden coordinator-only wording: {forbidden}')
 
                 routing_concepts = {
@@ -362,49 +354,15 @@
                 for concept, fragments in routing_concepts.items():
                     if not all(fragment in orchestrator for fragment in fragments):
                         raise SystemExit(f'OpenCode orchestrator lost routing semantic: {concept}')
-
-                description_match = re.search(r'"description"\s*:\s*"([^"]+)"', config)
-                if not description_match:
-                    raise SystemExit('OpenCode primary agent description is missing')
-
-                description = description_match.group(1)
-                if not all(fragment in description for fragment in ('direct', 'delegated', 'sdd')):
-                    raise SystemExit('OpenCode primary agent description does not cover direct, delegated, and SDD routing')
                 PY
 
                 touch $out
               '';
 
-          pi-harness-wiring = functionalCheck "pi-harness-wiring" ./tests/pi-harness-wiring.nix {
-            flake = flakeView;
-          };
-
-          # BRANCH-SCOPED: disabled on experiment/gentle-ai-full-harness only.
-          # This check encodes local harness policy (thin SDD commands, own
-          # orchestrator wording, validated preflight blocks) that upstream
-          # gentle-ai contradicts by design, so ~94 assertions no longer hold.
-          # Relaxing them one by one would leave a test that still looks
-          # authoritative while validating almost nothing. Restore this block
-          # verbatim before merging anything back to main.
-          # ai-harness-projections =
-          #   functionalCheck "ai-harness-projections" ./tests/ai-harness-projections.nix
-          #     {
-          #        flake = flakeView;
-          #        flakePath = self.outPath;
-          #        resourceMatrix = aiHarnessResourceMatrix;
-          #        runRuntimeTests = true;
-          #     };
-
           atlas-desktop = functionalCheck "atlas-desktop" ./tests/atlas-desktop.nix {
             flake = flakeView;
           };
 
-          pi-outputs = functionalCheck "pi-outputs" ./tests/pi-outputs.nix {
-            flake = self // {
-              inherit pkgsPi;
-            };
-            flakePath = self.outPath;
-          };
         }
         // deploy-rs.lib.x86_64-linux.deployChecks self.deploy;
 
