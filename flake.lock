@@ -556,11 +556,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1786994031,
-        "narHash": "sha256-LVYXGz3KsGD83HsiHtYHH+eZEd6JSXOtGDiTUCpzm40=",
+        "lastModified": 1786999707,
+        "narHash": "sha256-nruLzRbDqU2XDTcdP63Bm/Eb8kc72BxauQ2X2JDgiRs=",
         "owner": "0xErwin1",
         "repo": "gentle-ai-nix",
-        "rev": "9ad2639dcb5cae7de94b1c22e3d527458e545394",
+        "rev": "50d7ffd9eec45e57320272831b65c66967208698",
         "type": "github"
       },
       "original": {
