@@ -156,6 +156,13 @@ in
       strictTdd = true;
     };
 
+    # Both clients that express it run their sub-agents in the background,
+    # which is what the orchestration policy in their prompts is written for.
+    backgroundSubagents = {
+      opencode = "on";
+      pi = "on";
+    };
+
     mcpServers = serversFor "claude";
 
     # Every path here holds a credential once the placeholders resolve, so none
