@@ -556,18 +556,18 @@
         ]
       },
       "locked": {
-        "lastModified": 1786966421,
-        "narHash": "sha256-LpXKRth5mvLVZ/c5yjlTtIGElf4fmLm1dtO9XlIYe/I=",
-        "owner": "0xErwin1",
-        "repo": "gentle-ai-nix",
-        "rev": "84cbd6eb332ce59d4e6c5556f0e95d516d03b306",
-        "type": "github"
+        "lastModified": 1786981776,
+        "narHash": "sha256-VkCyprTXHHfuNsdF13UMdnZPEVVvmit8ikkUJKF2FMk=",
+        "ref": "feat/consume-declarative-contract",
+        "rev": "f04ee960eafdf478f65db12b7163fc44965ed708",
+        "revCount": 15,
+        "type": "git",
+        "url": "file:///home/iperez/dev/personal/gentle-ai-nix"
       },
       "original": {
-        "owner": "0xErwin1",
         "ref": "feat/consume-declarative-contract",
-        "repo": "gentle-ai-nix",
-        "type": "github"
+        "type": "git",
+        "url": "file:///home/iperez/dev/personal/gentle-ai-nix"
       }
     },
     "ghostty": {

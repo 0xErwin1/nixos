@@ -1,61 +1,86 @@
-# The Gentle AI harness, rendered by Gentle AI itself.
+# The AI harness, rendered by Gentle AI itself.
 #
-# What used to live here as a projection of a vendored copy of Gentle AI's
-# assets is now asked for: the document below states the desired installation
-# and `gentle-ai config render` produces the tree. A change to how Gentle AI
-# renders arrives with the package instead of needing the vendored copy updated.
+# The desired installation is declared here and `gentle-ai config render`
+# produces the tree, so a change to how Gentle AI renders arrives with the
+# package rather than needing a vendored copy re-synced.
 #
-# What this module deliberately does not take over, and why:
-#
-#   - Anything carrying a secret. The MCP configuration for every client is
-#     rendered at activation with tokens substituted from the secret env files,
-#     which a Nix store path cannot hold. Those files stay on ai-harness.nix:
-#     .claude.json, .codex/config.toml, .grok/config.toml, opencode.jsonc,
-#     .pi/agent/mcp.json and the agens config.
-#   - The Engram component, because it is what writes .codex/config.toml, and
-#     that file must stay writable for the token substitution above.
-#   - Providers Gentle AI has no adapter for: grok and agens.
-#
-# Everything the harness content is made of — agents, skills, commands, prompts
-# and instructions for OpenCode, Claude Code and Codex — comes from the render.
+# Clients Gentle AI has no adapter for -- grok and agens -- receive the harness
+# another client produced. Files carrying a credential are written at
+# activation, and the two the client also writes are merged into rather than
+# replaced, because they hold state Claude Code and Codex own themselves.
 {
   config,
   inputs,
-  lib,
   ...
 }:
 
 let
   vendored = ../../ai;
 
-  # ai/custom holds what is ours and nothing else: the agents, commands,
-  # prompts and skills Gentle AI does not ship. Keeping it a separate tree is
-  # what makes the boundary a stated fact rather than the outcome of a
-  # collision, and it is why a copy of a file Gentle AI also ships can no longer
-  # end up shadowing the current one -- there are none in here to shadow with.
-  #
-  # Layered as fill so that if Gentle AI ever starts shipping something at one
-  # of these paths, its version wins and the duplicate here becomes visible as
-  # dead weight rather than silently overriding an upstream change.
+  # ai/custom holds what is ours and nothing else. Layered as fill so that if
+  # Gentle AI ever ships something at one of these paths, its version wins and
+  # the duplicate here becomes visible as dead weight rather than silently
+  # overriding an upstream change.
   ownTree = target: provider: {
     inherit target;
     source = "${vendored}/custom/${provider}";
     mode = "fill";
   };
 
-  # ai/custom/policy holds our rules and persona with the two blocks Gentle AI
-  # regenerates under this document -- sdd-orchestrator and strict-tdd-mode --
-  # taken out. Appending the vendored file whole instead would land both copies
-  # of everything Gentle AI writes.
-  #
-  # Our persona lives in these files rather than in Gentle AI's persona slot
-  # because the slot was where it always lived: the component is told to write
-  # none of its own, and this supplies it.
+  # Our rules and persona, with the blocks Gentle AI regenerates taken out.
   ownPolicy = target: provider: {
     inherit target;
     source = "${vendored}/custom/policy/${provider}.md";
     mode = "append";
   };
+
+  secretsDirectory = "${config.home.homeDirectory}/.config/ai-harness/secrets";
+
+  remote = url: headers: { inherit url headers; };
+  local = command: args: { inherit command args; };
+
+  # Every client gets these. The token placeholders resolve at activation from
+  # the secret env files below, so nothing here reaches the Nix store as a
+  # credential.
+  sharedServers = {
+    atlas = remote "https://atlas.iperez.dev/mcp" {
+      Authorization = "Bearer @ATLAS_TOKEN@";
+    };
+    context7 = remote "https://mcp.context7.com/mcp" {
+      CONTEXT7_API_KEY = "@CONTEXT7_API_KEY@";
+    };
+    penpot = remote "https://penpot.iperez.dev/mcp/stream?userToken=@PENPOT_API_KEY@" { };
+
+    aws = (local "uvx" [ "awslabs.aws-documentation-mcp-server@latest" ]) // {
+      env = {
+        AWS_DOCUMENTATION_PARTITION = "aws";
+        FASTMCP_LOG_LEVEL = "ERROR";
+      };
+    };
+    maestro = local "maestro" [ "mcp" ];
+    obsidian = local "pnpx" [
+      "@mauricio.wolff/mcp-obsidian@latest"
+      "${config.home.homeDirectory}/Atlas"
+    ];
+    clickup = local "npx" [
+      "-y"
+      "mcp-remote"
+      "https://mcp.clickup.com/mcp"
+    ];
+  };
+
+  # dbflux is told which client connected, so it is the one server that cannot
+  # be shared: each client names itself.
+  serversFor =
+    client:
+    sharedServers
+    // {
+      dbflux = local "dbflux" [
+        "mcp"
+        "--client-id"
+        client
+      ];
+    };
 in
 {
   imports = [ inputs.gentle-ai-nix.homeManagerModules.default ];
@@ -64,9 +89,17 @@ in
     enable = true;
 
     providers = {
-      opencode.enable = true;
+      opencode = {
+        enable = true;
+        mcpServers = serversFor "opencode";
+      };
+
       claude-code.enable = true;
-      codex.enable = true;
+
+      codex = {
+        enable = true;
+        mcpServers = serversFor "codex";
+      };
     };
 
     components = {
@@ -75,15 +108,69 @@ in
       permissions.enable = true;
       sdd.enable = true;
       theme.enable = true;
+      engram.enable = true;
     };
 
-    # Our own persona lives in the appended policy below, so Gentle AI is told
-    # to write none of its own rather than one being overwritten after the fact.
+    # Our own persona is appended below, so Gentle AI writes none of its own.
     persona = "custom";
 
     sdd = {
       mode = "multi";
       strictTdd = true;
+    };
+
+    mcpServers = serversFor "claude";
+
+    # Every path here holds a credential once the placeholders resolve, so none
+    # can be a store symlink. The first two are shared with the client itself --
+    # Claude Code keeps its OAuth session and project history in .claude.json,
+    # Codex its per-project trust levels in config.toml -- so they are merged
+    # into rather than replaced.
+    secrets = {
+      merge = [
+        ".claude.json"
+        ".codex/config.toml"
+      ];
+
+      paths = [
+        ".config/opencode/opencode.json"
+      ]
+      ++ map (name: ".claude/mcp/${name}.json") (builtins.attrNames (serversFor "claude"));
+
+      envFiles = [
+        "${secretsDirectory}/mcp.env"
+        "${secretsDirectory}/api.env"
+      ];
+    };
+
+    # Neither has a Gentle AI adapter, and both read the same kind of harness.
+    # Agens takes copies because its loader opens agents and skills with
+    # O_NOFOLLOW and rejects anything reached through a symbolic link.
+    customProviders = {
+      # Grok reads agents from `agents/`, where OpenCode uses `agent/`, so the
+      # directory is renamed on the way rather than the harness being rebuilt
+      # for it.
+      grok = {
+        root = ".grok";
+        from = "opencode";
+        assets = {
+          agent = "agents";
+          commands = "commands";
+          skills = "skills";
+        };
+      };
+
+      agens = {
+        root = ".config/agens";
+        from = "claude-code";
+        delivery = "copy";
+        assets = {
+          "CLAUDE.md" = "AGENTS.md";
+          agents = "agents";
+          commands = "commands";
+          skills = "skills";
+        };
+      };
     };
 
     # What ai/claude/settings-merge.json used to merge in at activation. The
@@ -105,12 +192,14 @@ in
     };
 
     extraFiles = {
-      # The Engram plugin comes with the component this module leaves out, so it
-      # is layered from the vendored copy that ai-harness.nix used to project.
+      # The Engram plugin ships with Engram itself rather than with Gentle AI,
+      # so it is layered from the copy this repository vendors.
       opencode-engram-plugin = {
         target = ".config/opencode/plugins/engram.ts";
-        source = "${vendored}/opencode/plugins/engram.ts";
+        source = "${vendored}/custom/opencode/plugins/engram.ts";
       };
+
+      grok-own = ownTree ".grok" "grok";
 
       opencode-own = ownTree ".config/opencode" "opencode";
       claude-own = ownTree ".claude" "claude";
@@ -121,15 +210,4 @@ in
       codex-policy = ownPolicy ".codex/AGENTS.md" "codex";
     };
   };
-
-  # The rendered tree is what the readiness test inspects, so it is exposed
-  # under a stable name rather than reached through the module's internals.
-  home.sessionVariables.GENTLE_AI_RENDERED = "${config.programs.gentle-ai.rendered}/tree";
-
-  assertions = [
-    {
-      assertion = !(lib.hasAttr "engram" config.programs.gentle-ai.components);
-      message = "the engram component writes .codex/config.toml, which ai-harness.nix renders with secrets; leave it to that module";
-    }
-  ];
 }

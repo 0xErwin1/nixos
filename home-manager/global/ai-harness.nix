@@ -226,36 +226,4 @@ in
     ${copyCommands}
   '';
 
-  home.activation.aiHarnessSecretConfigRender = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-    set -eu
-
-    ${sourceSecretEnvFiles}
-
-    render_secret_config() {
-      template="$1"
-      target="$2"
-
-      if [ -L "$target" ]; then
-        rm "$target"
-      fi
-
-      mkdir -p "$(dirname "$target")"
-
-      ${pkgs.python3}/bin/python3 ${./ai-harness-render.py} "$template" "$target"
-    }
-
-    merge_secret_config() {
-      kind="$1"
-      template="$2"
-      target="$3"
-
-      mkdir -p "$(dirname "$target")"
-
-      ${pkgs.python3}/bin/python3 ${./ai-harness-merge.py} "$kind" "$template" "$target"
-    }
-
-    ${renderCommands}
-
-    ${mergeCommands}
-  '';
 }
