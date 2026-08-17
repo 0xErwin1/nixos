@@ -12,8 +12,7 @@
     atlas.url = "github:0xErwin1/atlas/nightly";
 
     gentle-ai-nix = {
-      # Local while the branch is in flight; move to github once it lands.
-      url = "git+file:///home/iperez/dev/personal/gentle-ai-nix?ref=feat/consume-declarative-contract";
+      url = "github:0xErwin1/gentle-ai-nix";
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.home-manager.follows = "home-manager";
     };

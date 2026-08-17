@@ -556,18 +556,17 @@
         ]
       },
       "locked": {
-        "lastModified": 1786985040,
+        "lastModified": 1786986356,
         "narHash": "sha256-OO2zEAEsuMvONSP4OXuGEpQgpMhNLf5lf8m/7YE7iR0=",
-        "ref": "feat/consume-declarative-contract",
-        "rev": "2a10c9df5fcd8793ad04fdb1ee6e2ff93d05981d",
-        "revCount": 16,
-        "type": "git",
-        "url": "file:///home/iperez/dev/personal/gentle-ai-nix"
+        "owner": "0xErwin1",
+        "repo": "gentle-ai-nix",
+        "rev": "0cefff894214563b5212c2cd049bab2e2903f35a",
+        "type": "github"
       },
       "original": {
-        "ref": "feat/consume-declarative-contract",
-        "type": "git",
-        "url": "file:///home/iperez/dev/personal/gentle-ai-nix"
+        "owner": "0xErwin1",
+        "repo": "gentle-ai-nix",
+        "type": "github"
       }
     },
     "ghostty": {
