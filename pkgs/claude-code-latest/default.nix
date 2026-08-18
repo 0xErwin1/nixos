@@ -63,25 +63,7 @@ pkgs.buildFHSEnv {
     stdenv.cc.cc.lib
   ];
 
-  # Claude Code will not keep `permissions.defaultMode` in its settings file: an
-  # interactive session writes back the mode it actually ran with, so a declared
-  # bypass survives until the next session and no longer. The mode is passed per
-  # session instead, which is the one place the client does not overwrite --
-  # verified: a session started this way leaves the settings file untouched.
-  #
-  # An explicit --permission-mode still wins, so `claude --permission-mode plan`
-  # works as it always did.
-  runScript = pkgs.writeShellScript "claude-code-entrypoint" ''
-    for argument in "$@"; do
-      case "$argument" in
-        --permission-mode|--permission-mode=*|--dangerously-skip-permissions)
-          exec ${rawPackage}/libexec/claude-code/claude "$@"
-          ;;
-      esac
-    done
-
-    exec ${rawPackage}/libexec/claude-code/claude --permission-mode bypassPermissions "$@"
-  '';
+  runScript = "${rawPackage}/libexec/claude-code/claude";
 
   profile = ''
     export DISABLE_AUTOUPDATER="\''${DISABLE_AUTOUPDATER:-1}"
