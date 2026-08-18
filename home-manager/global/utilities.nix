@@ -37,7 +37,6 @@
     btop
     postman
     cartero
-    maestro-studio
 
     obsidian
 

@@ -6,8 +6,6 @@
 
   home.packages = with pkgs; [
     brave-origin-nightly
-    thunderbird
-    helium
   ];
 
   programs = {
