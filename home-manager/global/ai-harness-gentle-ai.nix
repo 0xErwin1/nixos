@@ -122,6 +122,19 @@ let
       ];
     };
 
+  # The work profile needs the same settings as the personal one -- status line,
+  # permission mode, output style -- but it cannot take them as a store symlink,
+  # because Claude Code writes its own session state into that file. Copying it
+  # into the tree here makes it a merge target like the personal one, which is
+  # the only shape that lets both write.
+  withWorkSettings =
+    tree:
+    pkgs.runCommandLocal "gentle-ai-config-with-work-settings" { } ''
+      cp -r --no-preserve=mode,ownership ${tree} "$out"
+      mkdir -p "$out/tree/.claude-work"
+      cp "$out/tree/.claude/settings.json" "$out/tree/.claude-work/settings.json"
+    '';
+
   secretEnvFiles = [
     "${secretsDirectory}/mcp.env"
     "${secretsDirectory}/api.env"
@@ -217,6 +230,7 @@ in
       merge = [
         ".claude.json"
         ".claude/settings.json"
+        ".claude-work/settings.json"
         ".codex/config.toml"
 
         # Pi writes its own model, provider and changelog state here, and npm
@@ -356,6 +370,8 @@ in
         }
       ];
     };
+
+    overrideRendered = withWorkSettings;
 
     extraFiles = {
       # The Engram plugin ships with Engram itself rather than with Gentle AI,
