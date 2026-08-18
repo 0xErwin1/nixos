@@ -257,6 +257,25 @@ in
         };
       };
 
+      # The work profile is Claude Code with its own config directory. It shares
+      # the harness -- same agents, skills, commands and policy -- and keeps its
+      # own MCP set and its own session state, which is why those two are not
+      # listed here and stay whatever that directory already holds.
+      claude-work = {
+        root = ".claude-work";
+        from = "claude-code";
+        assets = {
+          "CLAUDE.md" = "CLAUDE.md";
+          agents = "agents";
+          commands = "commands";
+          skills = "skills";
+          hooks = "hooks";
+          output-styles = "output-styles";
+          "sdd-orchestrator.md" = "sdd-orchestrator.md";
+          "engram-protocol.md" = "engram-protocol.md";
+        };
+      };
+
       agens = {
         root = ".config/agens";
         from = "claude-code";
