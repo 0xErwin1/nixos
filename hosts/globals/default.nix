@@ -2,6 +2,7 @@
 {
   nixpkgs.config.allowUnfree = true;
   imports = [
+    ./claude-code-policy.nix
     ./locale.nix
     ./users.nix
   ];
