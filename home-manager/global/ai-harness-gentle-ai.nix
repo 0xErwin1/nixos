@@ -204,6 +204,13 @@ in
       engram.enable = true;
     };
 
+    # CodeGraph's guidance and its wiring come from the harness; the binary
+    # comes from Nix rather than the package manager Gentle AI would reach for.
+    communityTools.codegraph = {
+      enable = true;
+      package = pkgs.codegraph;
+    };
+
     # Our own persona is appended below, so Gentle AI writes none of its own.
     persona = "custom";
 

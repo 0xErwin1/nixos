@@ -12,7 +12,7 @@
 # for aarch64, which kept CodeGraph off the Pi; the prebuilt path works on both.
 stdenv.mkDerivation (finalAttrs: {
   pname = "codegraph";
-  version = "1.1.6";
+  version = "1.5.0";
 
   src =
     finalAttrs.passthru.sources.${stdenv.hostPlatform.system}
@@ -61,7 +61,7 @@ stdenv.mkDerivation (finalAttrs: {
     };
     "x86_64-linux" = fetchurl {
       url = "https://github.com/colbymchenry/codegraph/releases/download/v${finalAttrs.version}/codegraph-linux-x64.tar.gz";
-      hash = "sha256-+rfx9stB8oJkiLRBHy68Ntp5km0ryg04IPT1EKvP0UM=";
+      hash = "sha256-K6Zeh6EhC3BrseZ9Xki1/EoZNeQ9uz+18xxVl4QNLlg=";
     };
   };
 

@@ -25,7 +25,6 @@
   # rendered. Listing it here as well put two versions in one buildEnv.
   home.packages = with pkgs; [
     ccstatusline
-    codegraph
     engram
     grok-build
     maestro
