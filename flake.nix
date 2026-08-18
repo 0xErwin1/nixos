@@ -105,6 +105,7 @@
             ccstatusline = final.callPackage "${self}/pkgs/ccstatusline" { };
             helium = final.callPackage "${self}/pkgs/helium" { };
             moshi-hook = final.callPackage "${self}/pkgs/moshi-hook" { };
+            agent-integrations = final.callPackage "${self}/pkgs/agent-integrations";
             engram = final.callPackage "${self}/pkgs/engram" { };
             gentle-ai = final.callPackage "${self}/pkgs/gentle-ai" { };
             opencode = final.callPackage "${self}/pkgs/opencode" { };

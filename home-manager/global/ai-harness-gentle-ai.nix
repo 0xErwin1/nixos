@@ -12,6 +12,7 @@
   config,
   inputs,
   lib,
+  pkgs,
   ...
 }:
 
@@ -43,6 +44,37 @@ let
   };
 
   secretsDirectory = "${config.home.homeDirectory}/.config/ai-harness/secrets";
+
+  # Moshi and herdr both register themselves inside the clients, in the same
+  # files this harness renders. Their own installers write those files directly,
+  # which the next activation would undo; generating them instead makes them
+  # content the harness layers, still authored by the tool that owns them.
+  integrations = pkgs.agent-integrations { inherit (config.home) homeDirectory; };
+
+  registered = target: source: {
+    inherit target;
+    source = "${integrations}/${source}";
+  };
+
+  # Claude Code and Codex keep their hooks inside a settings file the harness
+  # also writes, so those two are merged rather than laid over. Each hook event
+  # is an array both sides add to, which is why they accumulate.
+  claudeHookEvents = [
+    "PermissionRequest"
+    "PostToolUse"
+    "PreToolUse"
+    "SessionEnd"
+    "SessionStart"
+    "Stop"
+    "UserPromptSubmit"
+  ];
+
+  codexHookEvents = [
+    "PermissionRequest"
+    "SessionStart"
+    "Stop"
+    "UserPromptSubmit"
+  ];
 
   remote = url: headers: { inherit url headers; };
   local = command: args: { inherit command args; };
@@ -343,6 +375,37 @@ in
       codex-sdd-strong = own ".codex/sdd-strong.config.toml" "codex/sdd-strong.config.toml";
       codex-sdd-mid = own ".codex/sdd-mid.config.toml" "codex/sdd-mid.config.toml";
       codex-sdd-cheap = own ".codex/sdd-cheap.config.toml" "codex/sdd-cheap.config.toml";
+
+      moshi-claude-hooks = {
+        target = ".claude/settings.json";
+        source = "${integrations}/.claude/settings.json";
+        mode = "merge";
+        unionLists = map (event: "hooks.${event}") claudeHookEvents;
+      };
+
+      moshi-codex-feature = {
+        target = ".codex/config.toml";
+        source = "${integrations}/.codex/config.toml";
+        mode = "merge";
+      };
+
+      # Codex keeps its hooks in a file of their own, but Gentle AI writes its
+      # skill-registry hook into that same file, so this merges too.
+      moshi-codex-hooks = {
+        target = ".codex/hooks.json";
+        source = "${integrations}/.codex/hooks.json";
+        mode = "merge";
+        unionLists = map (event: "hooks.${event}") codexHookEvents;
+      };
+
+      herdr-claude-hook = registered ".claude/hooks/herdr-agent-state.sh" ".claude/hooks/herdr-agent-state.sh";
+      herdr-codex-hook = registered ".codex/herdr-agent-state.sh" ".codex/herdr-agent-state.sh";
+
+      moshi-opencode-plugin = registered ".config/opencode/plugins/moshi-hooks.ts" ".config/opencode/plugins/moshi-hooks.ts";
+      herdr-opencode-plugin = registered ".config/opencode/plugins/herdr-agent-state.js" ".config/opencode/plugins/herdr-agent-state.js";
+
+      moshi-pi-extension = registered ".pi/agent/extensions/moshi-hooks.ts" ".pi/agent/extensions/moshi-hooks.ts";
+      herdr-pi-extension = registered ".pi/agent/extensions/herdr-agent-state.ts" ".pi/agent/extensions/herdr-agent-state.ts";
     };
   };
 }
