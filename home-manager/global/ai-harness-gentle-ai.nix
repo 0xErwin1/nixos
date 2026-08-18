@@ -137,6 +137,13 @@ in
         mcpServers = serversFor "pi";
         provisionPackages = true;
 
+        # gentle-pi's postinstall downloads a Gentle AI of its own and extracts
+        # it with /usr/bin/tar or /bin/tar, by absolute path and never through
+        # PATH. A host without those refuses, and the failure takes the whole
+        # activation with it. Gentle AI is a package here, so the copy that
+        # postinstall wants is one this machine already has by another name.
+        provisionEnvironment.GENTLE_PI_SKIP_GENTLE_AI_INSTALL = "1";
+
         # Pi resolves a theme against the ones its packages ship, so the theme
         # here is gentle-pi's own rather than the name Gentle AI uses elsewhere.
         settings.theme = "Gentle";
