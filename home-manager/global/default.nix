@@ -7,7 +7,6 @@
     ./gpg.nix
     ./tmux.nix
     ./herdr.nix
-    ./moshi.nix
     ./direnv.nix
     ./zathura.nix
     ./ai.nix

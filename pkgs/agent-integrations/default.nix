@@ -1,11 +1,10 @@
-# The agent-side hooks Moshi and herdr install into the coding clients.
+# The agent-side hooks herdr installs into the coding clients.
 #
-# Both tools ship an installer that writes into the same files the AI harness
-# renders, so left to themselves they either lose to the next activation or win
-# over it, depending on who ran last. Running their installers here instead
-# turns the result into content the harness can layer, and keeps the hooks
-# theirs: a version bump regenerates them rather than leaving a transcription
-# from whenever this was written.
+# herdr's installer writes into the same files the AI harness renders, so left
+# to itself it either loses to the next activation or wins over it, depending on
+# who ran last. Running it here instead turns the result into content the
+# harness can layer, and keeps the hooks herdr's own: a version bump regenerates
+# them rather than leaving a transcription from whenever this was written.
 #
 # The generated content records the absolute path of the home directory it was
 # built for, so it is generated against a placeholder and rebased, exactly as
@@ -33,7 +32,6 @@ in
 pkgs.runCommandLocal "agent-integrations"
   {
     nativeBuildInputs = [
-      pkgs.moshi-hook
       pkgs.herdr
     ];
 
@@ -47,7 +45,6 @@ pkgs.runCommandLocal "agent-integrations"
     # herdr refuses to install for a client whose directory does not exist,
     # which is the check that a real machine passes by having the client. Here
     # the directories are the whole point, so they are created first.
-    moshi-hook install --target ${lib.escapeShellArg (lib.concatStringsSep "," targets)}
     ${lib.concatMapStringsSep "\n" (target: ''
       herdr integration install ${lib.escapeShellArg target}
     '') targets}

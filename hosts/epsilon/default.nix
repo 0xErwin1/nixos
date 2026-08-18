@@ -15,7 +15,6 @@
     ../globals/wireguard
     ./flatpak.nix
     ./cloudflare-tunnel.nix
-    ./moshi.nix
   ];
 
   boot = {
