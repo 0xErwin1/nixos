@@ -104,6 +104,7 @@
             claude-desktop = final.callPackage "${self}/pkgs/claude-desktop" { };
             ccstatusline = final.callPackage "${self}/pkgs/ccstatusline" { };
             helium = final.callPackage "${self}/pkgs/helium" { };
+            moshi-hook = final.callPackage "${self}/pkgs/moshi-hook" { };
             engram = final.callPackage "${self}/pkgs/engram" { };
             gentle-ai = final.callPackage "${self}/pkgs/gentle-ai" { };
             opencode = final.callPackage "${self}/pkgs/opencode" { };

@@ -2,6 +2,11 @@
 {
   home.packages = with pkgs; [
     herdr
+
+    # The Moshi app pairs and sends its agent notifications through this, and it
+    # reaches it over a non-interactive SSH session, so it has to sit on the
+    # same PATH herdr does rather than in a shell profile.
+    moshi-hook
   ];
 
   xdg.configFile."herdr/config.toml" = {
