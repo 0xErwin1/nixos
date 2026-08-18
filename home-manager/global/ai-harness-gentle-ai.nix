@@ -167,7 +167,14 @@ in
         mcpServers = serversFor "opencode";
       };
 
-      claude-code.enable = true;
+      # The package goes through Gentle AI so every session starts in bypass:
+      # Claude Code rewrites that setting in its own settings file, so the only
+      # place it holds is the command line. ai-headless.nix installs the wrapped
+      # copy this produces.
+      claude-code = {
+        enable = true;
+        package = pkgs.claude-code-latest;
+      };
 
       codex = {
         enable = true;

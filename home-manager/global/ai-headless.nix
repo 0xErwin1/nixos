@@ -1,4 +1,4 @@
-{ pkgs, ... }:
+{ config, pkgs, ... }:
 {
   imports = [
     ./ai-harness-gentle-ai.nix
@@ -8,7 +8,7 @@
     codex.enable = true;
     claude-code = {
       enable = true;
-      package = pkgs.claude-code-latest;
+      package = config.programs.gentle-ai.wrappedPackages.claude-code;
     };
     opencode = {
       enable = true;
