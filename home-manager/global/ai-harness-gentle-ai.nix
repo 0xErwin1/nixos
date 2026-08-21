@@ -224,6 +224,11 @@ in
       strictTdd = true;
     };
 
+    # Receipt-driven development, declared rather than left to whatever each
+    # machine happened to have been told. Off is the default, so without this
+    # the two hosts could disagree and neither would say so.
+    review.mode = "on";
+
     # Both clients that express it run their sub-agents in the background,
     # which is what the orchestration policy in their prompts is written for.
     backgroundSubagents = {
