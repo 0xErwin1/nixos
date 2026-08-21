@@ -25,7 +25,9 @@
   };
 
   home.packages = with pkgs; [
+    anki-bin
     calibre
+    mpv
     gnupg
     ncdu
     tokei

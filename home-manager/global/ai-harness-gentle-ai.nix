@@ -192,6 +192,11 @@ in
         # Pi resolves a theme against the ones its packages ship, so the theme
         # here is gentle-pi's own rather than the name Gentle AI uses elsewhere.
         settings.theme = "Gentle";
+
+        # Pi runs on the Codex models, so it takes Codex's own profile rather
+        # than reasoning levels alone.
+        modelPreset = "recommended";
+        modelFamily = "codex";
       };
     };
 
