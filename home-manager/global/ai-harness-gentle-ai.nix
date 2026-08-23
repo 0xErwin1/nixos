@@ -161,6 +161,12 @@ in
   programs.gentle-ai = {
     enable = true;
 
+    # Gentle AI's beta channel is the tip of main, not a release candidate, and
+    # the build this harness renders through is main with the declarative
+    # configuration contract on top. Declaring it keeps the recorded channel and
+    # the installed build saying the same thing.
+    install.channel = "beta";
+
     providers = {
       opencode = {
         enable = true;

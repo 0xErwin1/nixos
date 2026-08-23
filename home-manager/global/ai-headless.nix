@@ -20,12 +20,12 @@
   # like every other client's. The Pi binary stays a plain package below: Gentle
   # AI installs a harness into an already-present Pi, never Pi itself.
   #
-  # gentle-ai is installed by ai-harness-gentle-ai.nix: the package that renders
-  # the configuration is the one that goes on PATH, so what runs is what
-  # rendered. Listing it here as well put two versions in one buildEnv.
+  # gentle-ai and engram are installed by ai-harness-gentle-ai.nix: the package
+  # that renders the configuration is the one that goes on PATH, so what runs is
+  # what rendered, and engram comes from the same flake as the component that
+  # configures it. Listing either here as well put two versions in one buildEnv.
   home.packages = with pkgs; [
     ccstatusline
-    engram
     grok-build
     maestro
     pi-coding-agent
