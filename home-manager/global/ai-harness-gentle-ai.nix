@@ -266,11 +266,17 @@ in
           unionLists = [ "packages" ];
         }
         ".pi/npm/package.json"
+
+        # Gentle AI never renders Pi's engram configuration: its adapter
+        # short-circuits the shared injection and defers mcp.json to
+        # `pi-engram init`, which activation runs as a provisioning command.
+        # Replacing the file here would drop the entry that step wrote, so the
+        # declared servers merge into it instead.
+        ".pi/agent/mcp.json"
       ];
 
       paths = [
         ".config/opencode/opencode.json"
-        ".pi/agent/mcp.json"
       ]
       ++ map (name: ".claude/mcp/${name}.json") (builtins.attrNames (serversFor "claude"));
 
