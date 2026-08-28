@@ -32,26 +32,6 @@ style (**Par**), which loads every session.
 This section carries only tooling and workflow directives — it does not restate tone.
 <!-- /gentle-ai:persona -->
 
-<!-- gentle-ai:engram-protocol -->
-## Engram Persistent Memory
-
-Engram persistent memory is ACTIVE. The full protocol (save format, lifecycle,
-search flow, after-compaction steps) is delivered every session by the Engram
-MCP server instructions and the SessionStart hook. Always-on rules:
-
-- Call `mem_save` PROACTIVELY after any decision, bugfix, discovery, convention,
-  or config change — do not wait to be asked. Use `capture_prompt: false` for
-  automated/SDD artifacts.
-- On any reference to past work: `mem_context` → `mem_search` → `mem_get_observation`.
-- Before saying "done", call `mem_session_summary`.
-- Saving to memory is bookkeeping, never the reply: it NEVER counts as answering.
-  End every turn with the complete user-facing answer as the final message (no
-  tool calls after it), and save memory before composing it — never collapse the
-  answer into a "saved / done" acknowledgement.
-- If a memory call fails or times out, deliver the answer anyway — memory
-  failures never block or replace the reply.
-<!-- /gentle-ai:engram-protocol -->
-
 <!-- gentle-ai:agent-routing -->
 ## Implementation Routing
 
