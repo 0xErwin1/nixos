@@ -324,6 +324,12 @@ in
         from = "claude-code";
         delivery = "copy";
 
+        # Agens requires `mode:` in every agent definition and skips one that
+        # lacks it, silently, into discovery diagnostics -- the Claude Code
+        # dialect these files arrive in has no such field. Filled only where
+        # missing, so a definition that states its own mode keeps it.
+        frontmatterDefaults.agents.mode = "subagent";
+
         # The copies arrive readable, but the harness cross-references itself by
         # path, and those paths named .claude. Every one of them resolves to a
         # store symlink, which is the shape agens refuses, so it was being sent
