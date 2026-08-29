@@ -323,6 +323,13 @@ in
         root = ".config/agens";
         from = "claude-code";
         delivery = "copy";
+
+        # The copies arrive readable, but the harness cross-references itself by
+        # path, and those paths named .claude. Every one of them resolves to a
+        # store symlink, which is the shape agens refuses, so it was being sent
+        # to files it cannot open while holding a readable copy of each one.
+        rewriteReferences = true;
+
         assets = {
           "CLAUDE.md" = "AGENTS.md";
           agents = "agents";
