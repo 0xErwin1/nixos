@@ -20,14 +20,14 @@ let
     ;
 
   pname = "brave-origin-nightly";
-  version = "1.95.53";
+  version = "1.96.37";
 
   commandLineArgs = "--ozone-platform=wayland --disable-features=OutdatedBuildDetector,Vulkan";
 
   sources = {
     x86_64-linux = {
       target = "amd64";
-      hash = "sha256-OHwTo45xFAVNu+h4Jlzo2xXGnU3hS7y0MnQYwJzsaTc=";
+      hash = "sha256-OMvymn0S0TusHPmRPPUReXVCgH8B4KK8s2kvmS42Cik=";
     };
 
     aarch64-linux = {
