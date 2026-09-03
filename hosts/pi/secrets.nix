@@ -6,12 +6,6 @@
     age.sshKeyPaths = [ "/etc/ssh/ssh_host_ed25519_key" ];
 
     secrets = {
-      "pi/wireguard-private-key" = {
-        owner = "root";
-        group = "root";
-        mode = "0400";
-        restartUnits = [ "wg-quick-wg0.service" ];
-      };
       "pi/wifi-ssid" = {
         owner = "root";
         group = "root";

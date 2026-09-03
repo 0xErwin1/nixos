@@ -11,8 +11,8 @@
     ../globals/bluetooth.nix
     ../globals/pipewire.nix
     ./packages.nix
-    ../globals/mesh/local.nix
     ../globals/mesh
+    ../globals/mesh/secret.nix
     ./flatpak.nix
     ./cloudflare-tunnel.nix
   ];
@@ -25,6 +25,10 @@
     };
     binfmt.emulatedSystems = [ "aarch64-linux" ];
   };
+
+  # Laptops have no stable host key for sops; the operator's age key unlocks
+  # their secrets instead.
+  sops.age.keyFile = "/home/iperez/.config/sops/age/keys.txt";
 
   networking = {
     # Syncthing listens on every address but is only reachable over the mesh.

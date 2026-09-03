@@ -130,10 +130,6 @@
         overlays = [ overlays.default ];
       };
 
-      # Read the mesh local config at flake evaluation time (requires --impure).
-      # Returns {} if the file does not exist, so builds work on machines without it.
-      meshLocalPath = "/home/iperez/.ssh/mesh/default.nix";
-      meshLocal = if builtins.pathExists meshLocalPath then import meshLocalPath else { };
     in
     {
       inherit overlays pkgsPi;
@@ -168,20 +164,24 @@
 
       nixosConfigurations = {
         epsilon = nixpkgs.lib.nixosSystem {
-          specialArgs = { inherit inputs outputs meshLocal; };
+          specialArgs = { inherit inputs outputs; };
           modules = [
             ./hosts/epsilon
             nix-flatpak.nixosModules.nix-flatpak
+            inputs.sops-nix.nixosModules.sops
           ];
         };
 
         zeta = nixpkgs.lib.nixosSystem {
-          specialArgs = { inherit inputs outputs meshLocal; };
-          modules = [ ./hosts/zeta ];
+          specialArgs = { inherit inputs outputs; };
+          modules = [
+            ./hosts/zeta
+            inputs.sops-nix.nixosModules.sops
+          ];
         };
 
         pi = nixpkgs.lib.nixosSystem {
-          specialArgs = { inherit inputs outputs meshLocal; };
+          specialArgs = { inherit inputs outputs; };
           modules = [
             ./hosts/pi
             inputs.sops-nix.nixosModules.sops

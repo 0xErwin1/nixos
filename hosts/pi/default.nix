@@ -12,7 +12,8 @@
     ./llm.nix
     ./secrets.nix
     ./virtualisation.nix
-    ./wireguard.nix
+    ../globals/mesh
+    ../globals/mesh/secret.nix
     inputs.nixos-rk3588.nixosModules.boards.orangepi5plus.core
   ];
 
@@ -24,6 +25,9 @@
   };
 
   nixpkgs.config.allowUnfree = true;
+
+  # The Pi exposes its services to the other mesh nodes, as it did over wg0.
+  networking.firewall.trustedInterfaces = [ "tailscale0" ];
 
   # The kernel comes from the nixos-rk3588 board module (Armbian vendor
   # rk-6.1 BSP): it carries the rknpu driver for the NPU and its device tree
