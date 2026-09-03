@@ -21,6 +21,31 @@ def claudeWindow(w: Option<Json>, label: string, windows: Vector<provider.Window
   end
 end
 
+# A plan can carry a weekly allowance scoped to one model on top of the
+# account-wide windows — Max x20 caps Fable separately. Those live only
+# in `limits`, as `weekly_scoped` entries naming the model; the
+# `seven_day_*` keys beside them stay null. Every other kind in that
+# array restates `five_hour` or `seven_day`, so only the scoped ones
+# are read here.
+def claudeScopedWindows(data: Json, windows: Vector<provider.Window>)
+  let none: Vector<Json> = []
+
+  for entry in data["limits"].asArray() ?? none
+    if (entry["kind"].asString() ?? "") == "weekly_scoped"
+      let model = entry["scope"]["model"]["display_name"].asString() ?? ""
+      let pct = entry["percent"].asInt() ?? -1
+
+      if model != "" && pct >= 0
+        windows.push(provider.Window {
+          label: "#{model} weekly",
+          usedPercent: pct,
+          resetAt: entry["resets_at"].asString() ?? "",
+        })
+      end
+    end
+  end
+end
+
 def dollars(amountMinor: int, exponent: int): string
   let div = math.pow(10.0, exponent.toFloat())
 
@@ -68,6 +93,7 @@ def claudeUsage(token: string, plan: string): provider.Provider
     let windows: Vector<provider.Window> = []
     claudeWindow(data["five_hour"], "5h", windows)
     claudeWindow(data["seven_day"], "Weekly", windows)
+    claudeScopedWindows(data, windows)
 
     let notes: Vector<provider.Note> = []
     claudeNotes(data, notes)

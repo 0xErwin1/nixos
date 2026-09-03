@@ -2,8 +2,8 @@
 {
   imports = [
     ./hardware-configuration.nix
-    ../globals/wireguard/local.nix
-    ../globals/wireguard
+    ../globals/mesh/local.nix
+    ../globals/mesh
     ../globals
     ../globals/android.nix
     ../globals/bluetooth.nix
@@ -14,6 +14,8 @@
 
   systemd.services."NetworkManager-wait-online".enable = false;
   networking = {
+    # Syncthing listens on every address but is only reachable over the mesh.
+    firewall.interfaces.tailscale0.allowedTCPPorts = [ 22000 ];
     hostName = "zeta";
     networkmanager = {
       enable = true;

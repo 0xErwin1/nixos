@@ -188,6 +188,12 @@ in
         mcpServers = serversFor "pi";
         provisionPackages = true;
 
+        # The install commands name packages without naming versions, so their
+        # text never changes while what npm resolves them to does. Stamped by
+        # that text they run once, which froze gentle-pi at the version the
+        # first activation happened to install.
+        provisionRefresh = true;
+
         # gentle-pi's postinstall downloads a Gentle AI of its own and extracts
         # it with /usr/bin/tar or /bin/tar, by absolute path and never through
         # PATH. A host without those refuses, and the failure takes the whole

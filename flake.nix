@@ -131,10 +131,10 @@
         overlays = [ overlays.default ];
       };
 
-      # Read wireguard local config at flake evaluation time (requires --impure).
+      # Read the mesh local config at flake evaluation time (requires --impure).
       # Returns {} if the file does not exist, so builds work on machines without it.
-      wireguardLocalPath = "/home/iperez/.ssh/wireguard/default.nix";
-      wireguardLocal = if builtins.pathExists wireguardLocalPath then import wireguardLocalPath else { };
+      meshLocalPath = "/home/iperez/.ssh/mesh/default.nix";
+      meshLocal = if builtins.pathExists meshLocalPath then import meshLocalPath else { };
     in
     {
       inherit overlays pkgsPi;
@@ -169,7 +169,7 @@
 
       nixosConfigurations = {
         epsilon = nixpkgs.lib.nixosSystem {
-          specialArgs = { inherit inputs outputs wireguardLocal; };
+          specialArgs = { inherit inputs outputs meshLocal; };
           modules = [
             ./hosts/epsilon
             nix-flatpak.nixosModules.nix-flatpak
@@ -177,12 +177,12 @@
         };
 
         zeta = nixpkgs.lib.nixosSystem {
-          specialArgs = { inherit inputs outputs wireguardLocal; };
+          specialArgs = { inherit inputs outputs meshLocal; };
           modules = [ ./hosts/zeta ];
         };
 
         pi = nixpkgs.lib.nixosSystem {
-          specialArgs = { inherit inputs outputs wireguardLocal; };
+          specialArgs = { inherit inputs outputs meshLocal; };
           modules = [
             ./hosts/pi
             inputs.sops-nix.nixosModules.sops

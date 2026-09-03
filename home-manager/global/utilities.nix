@@ -1,4 +1,9 @@
-{ pkgs, lib, ... }:
+{
+  config,
+  pkgs,
+  lib,
+  ...
+}:
 {
   programs = {
     uv.enable = true;
@@ -52,5 +57,13 @@
     openssl
 
     python3
+
+    sccache
   ];
+
+  home.sessionVariables = {
+    RUSTC_WRAPPER = "sccache";
+    SCCACHE_DIR = "${config.xdg.cacheHome}/sccache";
+    SCCACHE_CACHE_SIZE = "40G";
+  };
 }
