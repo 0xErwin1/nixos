@@ -2,8 +2,8 @@
 {
   imports = [
     ./hardware-configuration.nix
-    ../globals/mesh/local.nix
     ../globals/mesh
+    ../globals/mesh/secret.nix
     ../globals
     ../globals/android.nix
     ../globals/bluetooth.nix
@@ -13,6 +13,10 @@
   ];
 
   systemd.services."NetworkManager-wait-online".enable = false;
+  # Laptops have no stable host key for sops; the operator's age key unlocks
+  # their secrets instead.
+  sops.age.keyFile = "/home/iperez/.config/sops/age/keys.txt";
+
   networking = {
     # Syncthing listens on every address but is only reachable over the mesh.
     firewall.interfaces.tailscale0.allowedTCPPorts = [ 22000 ];

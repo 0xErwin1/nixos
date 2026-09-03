@@ -8,3 +8,8 @@ creation_rules:
       - age:
           - *admin
           - *pi
+  - path_regex: secrets/mesh\.yaml$
+    key_groups:
+      - age:
+          - *admin
+          - *pi
