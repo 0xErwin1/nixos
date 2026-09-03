@@ -11,8 +11,8 @@
     ../globals/bluetooth.nix
     ../globals/pipewire.nix
     ./packages.nix
-    ../globals/wireguard/local.nix
-    ../globals/wireguard
+    ../globals/mesh/local.nix
+    ../globals/mesh
     ./flatpak.nix
     ./cloudflare-tunnel.nix
   ];
@@ -27,6 +27,8 @@
   };
 
   networking = {
+    # Syncthing listens on every address but is only reachable over the mesh.
+    firewall.interfaces.tailscale0.allowedTCPPorts = [ 22000 ];
     hostName = "epsilon";
     networkmanager = {
       enable = true;
