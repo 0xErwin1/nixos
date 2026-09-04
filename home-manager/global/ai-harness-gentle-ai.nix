@@ -115,7 +115,7 @@ let
     client:
     sharedServers
     // {
-      dbflux = local "dbflux" [
+      dbflux = local "dbflux-nightly" [
         "mcp"
         "--client-id"
         client
