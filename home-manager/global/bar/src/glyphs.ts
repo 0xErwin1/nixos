@@ -31,10 +31,19 @@ export const WIFI_OFF = "\u{f05aa}"; // md-wifi_off — radio disabled
 export const WIFI_UNAVAILABLE = "\u{f092e}"; // md-wifi_strength_off_outline
 export const WIFI_SYNC = "\u{f16c7}"; // md-wifi_sync — associating
 export const WIFI_PORTAL = "\u{f16bf}"; // md-wifi_lock — captive portal
-export const VPN = "\u{f0582}"; // md-vpn — panel row, where the linework reads
-// Badge-scale tunnel marker. md-vpn's strokes turn to mush overlaid on another
-// glyph, so the bar uses a solid silhouette that survives the downscale.
+// Tunnel glyphs, one pair per kind: the panel row shows the linework variant,
+// where the detail reads at full size, and the bar badge is overlaid on the
+// medium icon at a fraction of that size. md-vpn's strokes turn to mush once
+// downscaled, so every badge is a shield silhouette — solid enough to survive
+// the downscale — and only the mark inside it changes per kind.
+export const VPN = "\u{f0582}"; // md-vpn
 export const VPN_BADGE = "\u{f0565}"; // md-shield_check
+export const MESH = "\u{f0318}"; // md-lan_connect — Tailscale/headscale mesh
+export const MESH_BADGE = "\u{f0d3c}"; // md-shield_link_variant
+export const OPENVPN = "\u{f0341}"; // md-lock_outline
+export const OPENVPN_BADGE = "\u{f099d}"; // md-shield_lock
+export const WIREGUARD = "\u{f0306}"; // md-key_variant
+export const WIREGUARD_BADGE = "\u{f0bc4}"; // md-shield_key
 
 // Reachability glyphs for wired: the font has no ethernet variants, so the
 // degraded wired states borrow the "web" family, which names the thing that is

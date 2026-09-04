@@ -54,7 +54,7 @@ let
       pkgs.typescript
       pkgs.gtk4
       pkgs.gtk4-layer-shell
-      # AstalNetwork does not model VPN tunnels, so the network module reads
+      # AstalNetwork does not model VPN tunnels, so the tunnel module reads
       # NM.Client's active connections directly. astal-network does not propagate
       # the NM typelib, so it has to be pulled in explicitly for `gi://NM`.
       pkgs.networkmanager
@@ -83,6 +83,11 @@ let
     # for the calendar panel), epsilon-ai-usage (AI usage for the extras panel)
     # and notify-send (AI-usage threshold/reset alerts, delivered to our own
     # notifd).
+    #
+    # `tailscale` is deliberately absent: the tunnel module talks to it only to
+    # read mesh state, and the CLI has to match the running tailscaled, which is
+    # a system package here. Pinning our own copy would put a second version in
+    # PATH ahead of it.
     preFixup = ''
       gappsWrapperArgs+=(
         --prefix PATH : ${
