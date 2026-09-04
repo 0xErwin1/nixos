@@ -9,19 +9,19 @@ let
     ;
 
   pname = "claude-code-latest";
-  version = "2.1.257";
+  version = "2.1.260";
 
   sources = {
     x86_64-linux = {
       platform = "linux-x64";
       loader = "ld-linux-x86-64.so.2";
-      hash = "sha256-mmS9qdhyKh+gW++aWWHQfgMxuZWX7ani9qcy86D/fwU=";
+      hash = "sha256-ei/cdLaDbqPRg/ZluGnw7juuvJcTy+v/5YONpOp72C4=";
     };
 
     aarch64-linux = {
       platform = "linux-arm64";
       loader = "ld-linux-aarch64.so.1";
-      hash = "sha256-IvfUjxcZOVLDwtC4vy8x2yzQj9X7CaN0+jIUlrcR0Bc=";
+      hash = "sha256-mBGvtflyJMLF09DuHowxYRfSmNXsPgldX/DB3Q6InKU=";
     };
   };
 
