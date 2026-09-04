@@ -5,8 +5,6 @@ import { createBinding, createComputed, createState, For, onCleanup } from "ags"
 import { execAsync, subprocess } from "ags/process";
 
 import {
-  VPN,
-  VPN_BADGE,
   WIFI_LOCK,
   WIFI_ACTIVE,
   WIFI_REFRESH,
@@ -18,6 +16,7 @@ import {
   reachLabel,
   statusTooltip,
 } from "./network-state";
+import { tunnelBadgeGlyph, tunnelGlyph, tunnelLabel } from "./tunnel-state";
 import {
   openDashboard,
   closeDashboard,
@@ -212,7 +211,7 @@ function WifiTabInner({ wifi }: { wifi: AstalNetwork.Wifi }) {
         ? `${status.wiredSpeed} Mb/s`
         : "",
   );
-  const vpnText = networkStatus((status) => status.vpn.join(", "));
+  const vpnTunnels = networkStatus((status) => status.vpn);
 
   return (
     <box
@@ -236,20 +235,24 @@ function WifiTabInner({ wifi }: { wifi: AstalNetwork.Wifi }) {
           label={signalText}
           visible={signalText((t) => !!t)}
         />
-        <box
-          cssClasses={["wifi-vpn-row"]}
-          halign={Gtk.Align.CENTER}
-          spacing={6}
-          visible={vpnText((t) => !!t)}
-        >
-          <label cssClasses={["wifi-vpn-glyph"]} label={VPN} />
-          <label
-            cssClasses={["wifi-vpn-name"]}
-            label={vpnText}
-            maxWidthChars={24}
-            ellipsize={Pango.EllipsizeMode.END}
-          />
-        </box>
+        {/* One row per tunnel: a mesh and a work VPN can be up at once, and
+            collapsing them into a single line would hide which is which. */}
+        <For each={vpnTunnels}>
+          {(tunnel) => (
+            <box cssClasses={["wifi-vpn-row"]} halign={Gtk.Align.CENTER} spacing={6}>
+              <label
+                cssClasses={["wifi-vpn-glyph"]}
+                label={tunnelGlyph(tunnel.kind)}
+              />
+              <label
+                cssClasses={["wifi-vpn-name"]}
+                label={tunnelLabel(tunnel)}
+                maxWidthChars={24}
+                ellipsize={Pango.EllipsizeMode.END}
+              />
+            </box>
+          )}
+        </For>
         <box cssClasses={["wifi-active-row"]} visible={activeSsid((s) => !!s)}>
           <label
             cssClasses={["wifi-active-ssid"]}
@@ -379,7 +382,11 @@ export function WifiTab() {
 export function WifiTrigger() {
   const glyph = networkStatus(networkGlyph);
   const tooltip = networkStatus(statusTooltip);
-  const vpnActive = networkStatus((status) => status.vpn.length > 0);
+  // The badge names the first tunnel's kind: with more than one up, the icon
+  // can only carry "a tunnel is up" anyway, and the tooltip lists them all.
+  const vpnBadge = networkStatus((status) =>
+    status.vpn.length > 0 ? tunnelBadgeGlyph(status.vpn[0].kind) : "",
+  );
 
   // One state class at a time so the stylesheet can colour the icon by
   // reachability (degraded states read as warnings) without any inline styling.
@@ -422,10 +429,10 @@ export function WifiTrigger() {
         <label
           $type="overlay"
           cssClasses={["wifi-vpn-badge"]}
-          label={VPN_BADGE}
+          label={vpnBadge}
           halign={Gtk.Align.END}
           valign={Gtk.Align.END}
-          visible={vpnActive}
+          visible={vpnBadge((badge) => !!badge)}
         />
       </overlay>
     </box>

@@ -2,11 +2,10 @@
 //
 // AstalNetwork covers the medium (wired/wifi), signal strength and NetworkManager's
 // connectivity check, which is what separates "associated" from "actually reaching
-// the internet". It does not model VPNs at all, so tunnels are read straight from
-// NM.Client's active connections: WireGuard profiles report a "wireguard" connection
-// type with `vpn` false, while plugin-based VPNs report `vpn` true.
+// the internet". It does not model VPNs at all, so the active tunnels come from
+// ./tunnel-state, which merges NetworkManager profiles with the tailscale mesh and
+// any other tunnel NetworkManager never learned about.
 import AstalNetwork from "gi://AstalNetwork";
-import NM from "gi://NM";
 import { createBinding, createComputed } from "ags";
 
 import {
@@ -21,6 +20,7 @@ import {
   wifiSignalGlyph,
   wifiSignalAlertGlyph,
 } from "../glyphs";
+import { Tunnel, tunnelLabel, tunnels } from "./tunnel-state";
 
 const network = AstalNetwork.get_default();
 
@@ -43,8 +43,8 @@ export interface NetStatus {
   ssid: string | null;
   /** Wired link speed in Mbit/s; 0 when not on wired. */
   wiredSpeed: number;
-  /** Names of the active VPN or WireGuard profiles, empty when no tunnel is up. */
-  vpn: string[];
+  /** Every tunnel currently up, empty when there is none. */
+  vpn: Tunnel[];
 }
 
 const CONNECTING_DEVICE_STATES = new Set<AstalNetwork.DeviceState>([
@@ -92,7 +92,7 @@ function deriveStatus(
   wired: AstalNetwork.Wired | null,
   wifi: AstalNetwork.Wifi | null,
   connectivity: AstalNetwork.Connectivity,
-  vpn: string[],
+  vpn: Tunnel[],
 ): NetStatus {
   const base = { strength: 0, ssid: null, wiredSpeed: 0, vpn } as const;
 
@@ -193,35 +193,21 @@ export function statusTooltip(status: NetStatus): string {
   }
 
   lines.push(reachLabel(status));
-  if (status.vpn.length > 0) lines.push(`VPN: ${status.vpn.join(", ")}`);
+  for (const tunnel of status.vpn) lines.push(tunnelLabel(tunnel));
 
   return lines.join("\n");
-}
-
-function activeTunnels(client: NM.Client): string[] {
-  return client
-    .get_active_connections()
-    .filter(
-      (ac) =>
-        (ac.get_vpn() || ac.get_connection_type() === "wireguard") &&
-        ac.get_state() === NM.ActiveConnectionState.ACTIVATED,
-    )
-    .map((ac) => ac.get_id() ?? "VPN");
 }
 
 /**
  * Reactive network status, shared by the bar trigger and the panel.
  *
  * Every source is a GObject property, so the value recomputes on NetworkManager
- * events with no polling. Tunnels come from the client's active-connection list,
- * which changes whenever a tunnel is brought up or torn down. It lives at module
- * scope because the status is global and outlives any single widget.
+ * events with no polling, except the tunnel list, which has its own source in
+ * ./tunnel-state. It lives at module scope because the status is global and
+ * outlives any single widget.
  */
 function createNetworkStatus() {
   const connectivity = createBinding(network, "connectivity");
-  const vpn = createBinding(network.client, "activeConnections")(() =>
-    activeTunnels(network.client),
-  );
 
   const wired = network.wired;
   const wifi = network.wifi;
@@ -231,7 +217,7 @@ function createNetworkStatus() {
   // would not re-run the computation.
   const sources = [
     connectivity,
-    vpn,
+    tunnels,
     ...(wired
       ? [
           createBinding(wired, "state"),
@@ -251,7 +237,7 @@ function createNetworkStatus() {
   ];
 
   return createComputed(sources, () =>
-    deriveStatus(wired, wifi, connectivity.get(), vpn.get()),
+    deriveStatus(wired, wifi, connectivity.get(), tunnels.get()),
   );
 }
 
