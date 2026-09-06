@@ -103,6 +103,7 @@
             claude-code-latest = final.callPackage "${self}/pkgs/claude-code-latest" { };
             claude-desktop = final.callPackage "${self}/pkgs/claude-desktop" { };
             ccstatusline = final.callPackage "${self}/pkgs/ccstatusline" { };
+            gentle-pi-runtime-repair = final.callPackage "${self}/pkgs/gentle-pi-runtime-repair" { };
             helium = final.callPackage "${self}/pkgs/helium" { };
             agent-integrations = final.callPackage "${self}/pkgs/agent-integrations";
             opencode = final.callPackage "${self}/pkgs/opencode" { };
@@ -359,6 +360,11 @@
 
           atlas-desktop = functionalCheck "atlas-desktop" ./tests/atlas-desktop.nix {
             flake = flakeView;
+          };
+
+          gentle-pi-runtime-repair = functionalCheck "gentle-pi-runtime-repair" ./tests/gentle-pi-runtime-repair.nix {
+            flake = flakeView;
+            inherit pkgs;
           };
 
         }

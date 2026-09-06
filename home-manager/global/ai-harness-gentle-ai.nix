@@ -194,11 +194,10 @@ in
         # first activation happened to install.
         provisionRefresh = true;
 
-        # gentle-pi's postinstall downloads a Gentle AI of its own and extracts
-        # it with /usr/bin/tar or /bin/tar, by absolute path and never through
-        # PATH. A host without those refuses, and the failure takes the whole
-        # activation with it. Gentle AI is a package here, so the copy that
-        # postinstall wants is one this machine already has by another name.
+        # gentle-pi's postinstall downloads its private, package-pinned Gentle AI
+        # binary and extracts it with /usr/bin/tar or /bin/tar by absolute path.
+        # NixOS lacks those host paths, so normal provisioning defers that lifecycle
+        # to the compatibility repair below; the global CLI is not an equivalent.
         provisionEnvironment.GENTLE_PI_SKIP_GENTLE_AI_INSTALL = "1";
 
         # Pi resolves a theme against the ones its packages ship, so the theme
@@ -486,4 +485,13 @@ in
       herdr-pi-extension = registered ".pi/agent/extensions/herdr-agent-state.ts" ".pi/agent/extensions/herdr-agent-state.ts";
     };
   };
+
+  # Provisioning keeps its skip because a fresh gentle-pi install otherwise
+  # reaches an absolute host tar path that NixOS does not provide. Once that
+  # package exists, rerun only its original lifecycle in a private FHS that
+  # supplies /usr/bin/tar. Its installer retains the signed integrity decision
+  # and is a no-op when the bundled Gentle AI is already valid.
+  home.activation.gentlePiRuntimeRepair = lib.hm.dag.entryAfter [ "gentleAiProvisionPackages" ] ''
+    run ${lib.getExe pkgs.gentle-pi-runtime-repair} --prefix ${lib.escapeShellArg "${config.home.homeDirectory}/.pi/agent/npm"}
+  '';
 }
