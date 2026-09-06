@@ -43,6 +43,18 @@ let
     mode = "append";
   };
 
+  # Par is authored as Claude Code's output style. Other clients take its body
+  # without Claude's YAML frontmatter, so there is one source of persona text.
+  parPersonaBody = pkgs.runCommandLocal "par-persona-body" { } ''
+    sed '1,/^---$/d' ${vendored}/custom/claude/output-styles/Par.md > "$out"
+  '';
+
+  parPersona = target: {
+    inherit target;
+    source = parPersonaBody;
+    mode = "append";
+  };
+
   secretsDirectory = "${config.home.homeDirectory}/.config/ai-harness/secrets";
 
   # herdr registers itself inside the clients, in the same files this harness
@@ -208,6 +220,30 @@ in
         # than reasoning levels alone.
         modelPreset = "recommended";
         modelFamily = "codex";
+        models =
+          let
+            luna = thinking: {
+              model = "openai-codex/gpt-5.6-luna";
+              inherit thinking;
+            };
+            terra = thinking: {
+              model = "openai-codex/gpt-5.6-terra";
+              inherit thinking;
+            };
+          in
+          {
+            sdd-init = luna "low";
+            sdd-status = luna "low";
+            sdd-sync = luna "low";
+            sdd-explore = terra "medium";
+            sdd-research = terra "medium";
+            sdd-verify = terra "medium";
+            sdd-spec = terra "high";
+            sdd-tasks = terra "high";
+            gentle-ai-explore = terra "high";
+            gentle-ai-verify = terra "high";
+            gentle-ai-worker = terra "medium";
+          };
       };
     };
 
@@ -435,6 +471,15 @@ in
       opencode-policy = ownPolicy ".config/opencode/AGENTS.md" "opencode";
       claude-policy = ownPolicy ".claude/CLAUDE.md" "claude";
       codex-policy = ownPolicy ".codex/AGENTS.md" "codex";
+
+      # Agens borrows Claude's post-overlay CLAUDE.md, while Grok owns AGENTS.md
+      # outside its borrowed assets. These append projections keep every client on
+      # the one Claude-authored body without a provider-specific copy.
+      pi-shared-par-persona = parPersona ".pi/agent/AGENTS.md";
+      opencode-shared-par-persona = parPersona ".config/opencode/AGENTS.md";
+      codex-shared-par-persona = parPersona ".codex/AGENTS.md";
+      grok-shared-par-persona = parPersona ".grok/AGENTS.md";
+      claude-shared-par-persona = parPersona ".claude/CLAUDE.md";
 
       # Contracts of our own at paths Gentle AI does not render. They used to
       # reach these targets through the Pi harness module, which projected files

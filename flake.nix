@@ -264,6 +264,12 @@
                   pkgs.gnugrep
                   pkgs.python3
                 ];
+                # These are the sources Home Manager actually delivers, rather
+                # than an independently named renderer output.
+                deliveryRoot = self.homeConfigurations."iperez@epsilon".config.home.file.gentle-ai.source;
+                workClaudeDelivery = self.homeConfigurations."iperez@epsilon".config.home.file.gentle-ai-custom-0.source;
+                renderedRoot = self.homeConfigurations."iperez@epsilon".config.programs.gentle-ai.rendered;
+                agensActivation = self.homeConfigurations."iperez@epsilon".activationPackage;
               }
               ''
                 set -eu
@@ -325,6 +331,76 @@
                         raise SystemExit(f'Rendered Engram projection contains section markers: {path}')
                     if actual != content:
                         raise SystemExit(f'Rendered Engram projection drifted: {path}')
+                PY
+
+                # Building the activation package forces the Agens copy source
+                # derivation, which is intentionally not exposed as home.file.
+                test -x "$agensActivation/activate"
+
+                python3 - \
+                  ${./ai/custom/claude/output-styles/Par.md} \
+                  "$deliveryRoot" \
+                  "$workClaudeDelivery" \
+                  "$renderedRoot/tree" <<'PY'
+                import json
+                import sys
+                from pathlib import Path
+
+                canonical_path, delivery_root, work_claude_delivery, rendered_root = map(Path, sys.argv[1:])
+                canonical = canonical_path.read_text()
+                if not canonical.startswith("---\n"):
+                    raise SystemExit("Par output style must start with Claude frontmatter")
+                _, body = canonical.split("\n---\n", 1)
+
+                persona_targets = {
+                    "Pi": ".pi/agent/AGENTS.md",
+                    "OpenCode": ".config/opencode/AGENTS.md",
+                    "Codex": ".codex/AGENTS.md",
+                    "Grok": ".grok/AGENTS.md",
+                }
+                for client, relative in persona_targets.items():
+                    delivered = (delivery_root / relative).read_text()
+                    if delivered.count(body) != 1 or not delivered.endswith(body):
+                        raise SystemExit(f"{client} must append the canonical Par body exactly once: {relative}")
+
+                agens_source = (delivery_root / ".claude/CLAUDE.md").read_text()
+                if agens_source.count(body) != 1 or not agens_source.endswith(body):
+                    raise SystemExit("Agens copy source must append the canonical Par body exactly once")
+
+                work_claude = work_claude_delivery.read_text()
+                if work_claude.count(body) != 1 or not work_claude.endswith(body):
+                    raise SystemExit("Work Claude delivery must append the canonical Par body exactly once")
+
+                for relative in (
+                    ".claude/settings.json",
+                    ".claude-work/settings.json",
+                ):
+                    if json.loads((rendered_root / relative).read_text()).get("outputStyle") != "Par":
+                        raise SystemExit(f"Claude output style selection drifted: {relative}")
+
+                if (rendered_root / ".claude/output-styles/Par.md").read_text() != canonical:
+                    raise SystemExit("Claude output style content drifted")
+
+                for client, relative in {
+                    "OpenCode": ".config/opencode/AGENTS.md",
+                    "Codex": ".codex/AGENTS.md",
+                }.items():
+                    delivered = (delivery_root / relative).read_text()
+                    for preserved in (
+                        "## 0) A question is a question",
+                        "## Contextual Skill Loading (MANDATORY)",
+                        "Generated technical artifacts default to English",
+                        "The user leads and verifies; you execute under direction.",
+                        "Correctness and maintainability over speed theater.",
+                    ):
+                        if preserved not in delivered:
+                            raise SystemExit(f"{client} lost appended policy instruction: {preserved}")
+
+                grok = (delivery_root / ".grok/AGENTS.md").read_text()
+                if "Maintain a neutral technical personality." in grok:
+                    raise SystemExit("Grok retains a stale conversational-tone conflict")
+                if "appended shared Par policy governs conversational tone" not in grok:
+                    raise SystemExit("Grok must defer conversational tone to shared Par")
                 PY
 
                 python3 - \

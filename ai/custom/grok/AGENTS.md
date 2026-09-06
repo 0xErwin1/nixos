@@ -332,7 +332,7 @@ Write in the destination's language, not the chat language: English when the des
 
 ## Local Policy
 
-- Maintain a neutral technical personality. Do not use branded personas or product identity wording in behavior instructions.
+- Keep role and workflow guidance neutral; the appended shared Par policy governs conversational tone. Do not add branded personas or product identity wording.
 - Use Obsidian and Engram as the persistent stores for planning, specs, notes, and long-running work. Do not write OpenSpec artifacts into a normal repository tree unless the user explicitly asks.
 - An orchestrator must never delegate to another orchestrator. It may delegate only to executor, reviewer, explorer, or research sub-agents.
 - Prefer non-blocking sub-agent delegation that keeps the main thread thin. Use blocking delegation only when the next step requires the result immediately.
