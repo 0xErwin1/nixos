@@ -139,7 +139,11 @@ let
   withWorkSettings =
     tree:
     pkgs.runCommandLocal "gentle-ai-config-with-work-settings" { } ''
-      cp -r --no-preserve=mode,ownership ${tree} "$out"
+      # Modes stay: the tree carries executables such as the Pi engram plugin's
+      # entry point, and dropping them here is what a permission denied at
+      # activation looks like.
+      cp -r --no-preserve=ownership ${tree} "$out"
+      chmod -R u+w "$out"
       mkdir -p "$out/tree/.claude-work"
       cp "$out/tree/.claude/settings.json" "$out/tree/.claude-work/settings.json"
     '';
