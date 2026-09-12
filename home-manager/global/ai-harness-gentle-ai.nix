@@ -435,7 +435,7 @@ in
     # Settings this configuration owns. Claude Code writes into the same file --
     # a theme picked in the UI lands there -- which is why it is merged rather
     # than replaced below.
-    extensions.claude-code = {
+    providers.claude-code.settings = {
       "model" = "opus[1m]";
       "workflowKeywordTriggerEnabled" = false;
       "statusLine" = {
@@ -487,18 +487,6 @@ in
       "theme" = "dark-daltonized";
       "editorMode" = "vim";
       "agentPushNotifEnabled" = true;
-
-      hooks.UserPromptSubmit = [
-        {
-          matcher = "";
-          hooks = [
-            {
-              type = "command";
-              command = "gentle-ai skill-registry refresh --quiet --no-gitignore --cwd \"\${CLAUDE_PROJECT_DIR:-$PWD}\" || true";
-            }
-          ];
-        }
-      ];
     };
 
     # Preserve the writable work-profile settings merge for client-owned state.
@@ -618,23 +606,6 @@ in
   # package exists, rerun only its original lifecycle in a private FHS that
   # supplies /usr/bin/tar. Its installer retains the signed integrity decision
   # and is a no-op when the bundled Gentle AI is already valid.
-  # Switching a Pi package away from npm installs the new source next to the
-  # old one, and Pi loads both. Retire the displaced npm entries first, only
-  # when Pi still lists them, since pi remove fails on a package it does not
-  # have. Pi spawns npm by PATH, so the profile goes first the way the module's
-  # own provisioning step does.
-  home.activation.gentlePiSourceSwitch = lib.hm.dag.entryBetween [ "gentleAiProvisionPackages" ] [ "installPackages" ] ''
-    settings=${lib.escapeShellArg "${config.home.homeDirectory}/.pi/agent/settings.json"}
-    if [ -f "$settings" ]; then
-      for displaced in npm:gentle-pi npm:gentle-engram npm:gentle-engram@0.1.12; do
-        if ${pkgs.jq}/bin/jq -e --arg p "$displaced" '(.packages // []) | index($p) != null' "$settings" >/dev/null; then
-          PATH=${lib.escapeShellArg "${config.home.profileDirectory}/bin"}:"$PATH" \
-            run pi remove "$displaced"
-        fi
-      done
-    fi
-  '';
-
   # gentle-pi's postinstall needs the FHS tar paths, wherever the package
   # landed: the npm prefix for the stable channel, the git checkout for main.
   home.activation.gentlePiRuntimeRepair = lib.hm.dag.entryAfter [ "gentleAiProvisionPackages" ] ''
