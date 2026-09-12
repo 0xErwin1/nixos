@@ -259,6 +259,15 @@
         {
           ai-harness-readiness =
             pkgs.runCommandLocal "ai-harness-readiness"
+              (let
+                homeFiles = builtins.attrValues self.homeConfigurations."iperez@epsilon".config.home.file;
+                sourceForTarget = target:
+                  (nixpkgs.lib.findFirst
+                    (entry: entry.target == target)
+                    (throw "Home Manager delivery is missing target: ${target}")
+                    homeFiles
+                  ).source;
+              in
               {
                 nativeBuildInputs = [
                   pkgs.gnugrep
@@ -267,10 +276,13 @@
                 # These are the sources Home Manager actually delivers, rather
                 # than an independently named renderer output.
                 deliveryRoot = self.homeConfigurations."iperez@epsilon".config.home.file.gentle-ai.source;
-                workClaudeDelivery = self.homeConfigurations."iperez@epsilon".config.home.file.gentle-ai-custom-0.source;
+                workClaudeDelivery = sourceForTarget ".claude-work/CLAUDE.md";
+                workClaudeSkillsDelivery = sourceForTarget ".claude-work/skills";
+                grokPolicyDelivery = sourceForTarget ".grok/AGENTS.md";
+                grokSkillsDelivery = sourceForTarget ".grok/skills";
                 renderedRoot = self.homeConfigurations."iperez@epsilon".config.programs.gentle-ai.rendered;
                 agensActivation = self.homeConfigurations."iperez@epsilon".activationPackage;
-              }
+              })
               ''
                 set -eu
 
@@ -298,47 +310,12 @@
                 fi
 
                 python3 - \
-                  ${./ai/shared/engram-protocol.md} \
-                  ${./ai/claude/engram-protocol.md} \
-                  ${./ai/codex/engram-instructions.md} \
-                  ${./ai/codex/engram-compact-prompt.md} <<'PY'
-                import re
-                import sys
-                from pathlib import Path
-
-                protocol, claude, codex, compact = map(Path, sys.argv[1:])
-                text = protocol.read_text()
-                sections = dict(
-                    re.findall(
-                        r'<!-- section:([a-z-]+) -->\n(.*?)\n<!-- /section:\1 -->',
-                        text,
-                        re.S,
-                    )
-                )
-                required = {'full', 'slim', 'passive-capture', 'compact'}
-                missing = required - sections.keys()
-                if missing:
-                    raise SystemExit(f'Engram protocol missing sections: {sorted(missing)}')
-
-                expected = {
-                    claude: sections['full'] + '\n',
-                    codex: sections['full'] + '\n\n' + sections['passive-capture'] + '\n',
-                    compact: sections['compact'] + '\n',
-                }
-                for path, content in expected.items():
-                    actual = path.read_text()
-                    if '<!-- section:' in actual or '<!-- /section:' in actual:
-                        raise SystemExit(f'Rendered Engram projection contains section markers: {path}')
-                    if actual != content:
-                        raise SystemExit(f'Rendered Engram projection drifted: {path}')
-                PY
-
-                # Building the activation package forces the Agens copy source
-                # derivation, which is intentionally not exposed as home.file.
-                test -x "$agensActivation/activate"
-
-                python3 - \
-                  ${./ai/custom/claude/output-styles/Par.md} \
+                  ${./ai/custom/claude/skills/sdd-testing-context/SKILL.md} \
+                  ${./ai/custom/codex/skills/sdd-testing-context/SKILL.md} \
+                  ${./ai/custom/opencode/skills/sdd-testing-context/SKILL.md} \
+                  "$workClaudeSkillsDelivery" \
+                  "$grokPolicyDelivery" \
+                  "$grokSkillsDelivery" \
                   "$deliveryRoot" \
                   "$workClaudeDelivery" \
                   "$renderedRoot/tree" <<'PY'
@@ -346,89 +323,96 @@
                 import sys
                 from pathlib import Path
 
-                canonical_path, delivery_root, work_claude_delivery, rendered_root = map(Path, sys.argv[1:])
-                canonical = canonical_path.read_text()
-                if not canonical.startswith("---\n"):
-                    raise SystemExit("Par output style must start with Claude frontmatter")
-                _, body = canonical.split("\n---\n", 1)
+                (
+                    claude_skill,
+                    codex_skill,
+                    opencode_skill,
+                    work_claude_skills_delivery,
+                    grok_policy_delivery,
+                    grok_skills_delivery,
+                    delivery_root,
+                    work_claude_delivery,
+                    rendered_root,
+                ) = map(Path, sys.argv[1:])
 
-                persona_targets = {
-                    "Pi": ".pi/agent/AGENTS.md",
-                    "OpenCode": ".config/opencode/AGENTS.md",
-                    "Codex": ".codex/AGENTS.md",
-                    "Grok": ".grok/AGENTS.md",
+                skill_targets = {
+                    rendered_root / ".claude/skills/sdd-testing-context/SKILL.md": claude_skill,
+                    rendered_root / ".codex/skills/sdd-testing-context/SKILL.md": codex_skill,
+                    rendered_root / ".config/opencode/skills/sdd-testing-context/SKILL.md": opencode_skill,
+                    grok_skills_delivery / "sdd-testing-context/SKILL.md": opencode_skill,
+                    work_claude_skills_delivery / "sdd-testing-context/SKILL.md": claude_skill,
                 }
-                for client, relative in persona_targets.items():
-                    delivered = (delivery_root / relative).read_text()
-                    if delivered.count(body) != 1 or not delivered.endswith(body):
-                        raise SystemExit(f"{client} must append the canonical Par body exactly once: {relative}")
+                for target, source in skill_targets.items():
+                    if not target.is_file() or target.read_text() != source.read_text():
+                        raise SystemExit(f"custom skill was not delivered through a skills-only overlay: {target}")
 
-                agens_source = (delivery_root / ".claude/CLAUDE.md").read_text()
-                if agens_source.count(body) != 1 or not agens_source.endswith(body):
-                    raise SystemExit("Agens copy source must append the canonical Par body exactly once")
+                shared_skill = delivery_root / ".agents/skills/_shared/gh-convention.md"
+                if not shared_skill.is_file():
+                    raise SystemExit("shared skills are no longer delivered")
+                if not (Path(__import__("os").environ["agensActivation"]) / "activate").is_file():
+                    raise SystemExit("Agens copy activation was not generated")
 
-                work_claude = work_claude_delivery.read_text()
-                if work_claude.count(body) != 1 or not work_claude.endswith(body):
-                    raise SystemExit("Work Claude delivery must append the canonical Par body exactly once")
+                policies = {
+                    "OpenCode": delivery_root / ".config/opencode/AGENTS.md",
+                    "Claude": delivery_root / ".claude/CLAUDE.md",
+                    "Codex": delivery_root / ".codex/AGENTS.md",
+                    "Grok": grok_policy_delivery,
+                    "Claude work": work_claude_delivery,
+                }
+                retired_policy_markers = (
+                    "## Questions and personal notes",
+                    "appended shared Par policy governs conversational tone",
+                    "The single highest-value thing you provide is the trap.",
+                )
+                for client, policy in policies.items():
+                    if not policy.is_file() or not policy.read_text().strip():
+                        raise SystemExit(f"{client} lacks an upstream-delivered policy: {policy}")
+                    content = policy.read_text()
+                    if any(marker in content for marker in retired_policy_markers):
+                        raise SystemExit(f"{client} retains a retired local policy marker: {policy}")
+
+                gentleman_style = rendered_root / ".claude/output-styles/gentleman.md"
+                if not gentleman_style.is_file() or "name: Gentleman" not in gentleman_style.read_text():
+                    raise SystemExit("Claude upstream Gentleman output style was not rendered")
+
+                for relative in (".claude/settings.json", ".claude-work/settings.json"):
+                    settings = json.loads((rendered_root / relative).read_text())
+                    if settings.get("outputStyle") != "Gentleman":
+                        raise SystemExit(f"Claude upstream Gentleman output style was not selected: {relative}")
+                    retired_settings = (
+                        "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS",
+                        "ccstatusline",
+                        "opus[1m]",
+                        "dark-daltonized",
+                        "agentPushNotifEnabled",
+                    )
+                    if any(marker in json.dumps(settings) for marker in retired_settings):
+                        raise SystemExit(f"Claude retains a retired local setting: {relative}")
 
                 for relative in (
-                    ".claude/settings.json",
-                    ".claude-work/settings.json",
+                    ".claude/hooks/herdr-agent-state.sh",
+                    ".codex/herdr-agent-state.sh",
+                    ".config/opencode/plugins/herdr-agent-state.js",
+                    ".pi/agent/extensions/herdr-agent-state.ts",
                 ):
-                    if json.loads((rendered_root / relative).read_text()).get("outputStyle") != "Par":
-                        raise SystemExit(f"Claude output style selection drifted: {relative}")
+                    if (rendered_root / relative).exists():
+                        raise SystemExit(f"retired custom Herdr asset remains rendered: {relative}")
 
-                if (rendered_root / ".claude/output-styles/Par.md").read_text() != canonical:
-                    raise SystemExit("Claude output style content drifted")
+                if policies["Grok"].read_text() != policies["OpenCode"].read_text():
+                    raise SystemExit("Grok policy must be mapped from upstream OpenCode assets")
 
-                for client, relative in {
-                    "OpenCode": ".config/opencode/AGENTS.md",
-                    "Codex": ".codex/AGENTS.md",
-                }.items():
-                    delivered = (delivery_root / relative).read_text()
-                    for preserved in (
-                        "## 0) A question is a question",
-                        "## Contextual Skill Loading (MANDATORY)",
-                        "Generated technical artifacts default to English",
-                        "The user leads and verifies; you execute under direction.",
-                        "Correctness and maintainability over speed theater.",
-                    ):
-                        if preserved not in delivered:
-                            raise SystemExit(f"{client} lost appended policy instruction: {preserved}")
+                for name in ("atlas", "aws", "clickup", "context7", "dbflux", "maestro", "obsidian", "penpot"):
+                    if not (rendered_root / f".claude/mcp/{name}.json").is_file():
+                        raise SystemExit(f"Claude MCP was not rendered: {name}")
+                if not (rendered_root / ".config/opencode/opencode.json").is_file():
+                    raise SystemExit("OpenCode MCP configuration was not rendered")
+                if not (rendered_root / ".pi/agent/mcp.json").is_file():
+                    raise SystemExit("Pi MCP configuration was not rendered")
 
-                grok = (delivery_root / ".grok/AGENTS.md").read_text()
-                if "Maintain a neutral technical personality." in grok:
-                    raise SystemExit("Grok retains a stale conversational-tone conflict")
-                if "appended shared Par policy governs conversational tone" not in grok:
-                    raise SystemExit("Grok must defer conversational tone to shared Par")
-                PY
-
-                python3 - \
-                  ${./ai/opencode/ORCHESTRATOR.md} <<'PY'
-                import sys
-                from pathlib import Path
-
-                # The OpenCode agent definition is rendered by Gentle AI now, so
-                # what is ours to assert on is the orchestrator contract alone.
-                orchestrator_path = Path(sys.argv[1])
-                orchestrator = orchestrator_path.read_text().lower()
-
-                for forbidden in (
-                    'you are a coordinator, not an executor',
-                    'delegate all real work',
-                    'delegate-only orchestrator',
-                ):
-                    if forbidden in orchestrator:
-                        raise SystemExit(f'OpenCode primary routing restored forbidden coordinator-only wording: {forbidden}')
-
-                routing_concepts = {
-                    'bounded ordinary work stays inline': ('bounded ordinary work', 'inline'),
-                    'delegated direct work starts only at routing boundaries': ('delegated direct', 'routing boundaries'),
-                    'SDD remains coordinator-only at phase level': ('once sdd is selected', 'coordinator', 'delegate every sdd phase'),
-                }
-                for concept, fragments in routing_concepts.items():
-                    if not all(fragment in orchestrator for fragment in fragments):
-                        raise SystemExit(f'OpenCode orchestrator lost routing semantic: {concept}')
+                manifest = json.loads((rendered_root.parent / "manifest.json").read_text())
+                resources = manifest["manifest"]["resources"]
+                if not any(resource.get("component") == "engram" for resource in resources):
+                    raise SystemExit("Engram upstream component provisioning was not rendered")
                 PY
 
                 touch $out
