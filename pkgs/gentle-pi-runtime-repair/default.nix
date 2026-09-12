@@ -5,20 +5,34 @@ let
     name = "gentle-pi-runtime-repair";
     runtimeInputs = [ pkgs.nodejs ];
     text = ''
-      if [ "$#" -ne 2 ] || [ "$1" != "--prefix" ]; then
-        echo "usage: gentle-pi-runtime-repair --prefix PATH" >&2
+      usage() {
+        echo "usage: gentle-pi-runtime-repair --prefix PATH | --package-dir PATH" >&2
         exit 2
-      fi
-
-      prefix="$2"
-      package="$prefix/node_modules/gentle-pi/package.json"
-      if [ ! -f "$package" ]; then
-        echo "gentle-pi is not installed in $prefix" >&2
-        exit 1
-      fi
-
+      }
+      [ "$#" -eq 2 ] || usage
       export GENTLE_PI_SKIP_GENTLE_AI_INSTALL=0
-      exec npm rebuild --offline --ignore-scripts=false --prefix "$prefix" gentle-pi
+      case "$1" in
+        --prefix)
+          # An npm install: gentle-pi sits under node_modules and npm can
+          # re-run its lifecycle scripts in place.
+          if [ ! -f "$2/node_modules/gentle-pi/package.json" ]; then
+            echo "gentle-pi is not installed under $2; nothing to repair" >&2
+            exit 0
+          fi
+          exec npm rebuild --offline --ignore-scripts=false --prefix "$2" gentle-pi
+          ;;
+        --package-dir)
+          # A git install: the checkout is the package itself, so the
+          # postinstall runs from its own directory.
+          if [ ! -f "$2/package.json" ]; then
+            echo "no package at $2; nothing to repair" >&2
+            exit 0
+          fi
+          cd "$2"
+          exec npm run postinstall
+          ;;
+        *) usage ;;
+      esac
     '';
   };
 in

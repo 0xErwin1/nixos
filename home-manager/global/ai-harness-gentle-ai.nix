@@ -312,6 +312,11 @@ in
 
     review.mode = "on";
 
+    # gentle-pi from the tip of its main branch, pinned by gentle-ai-nix, and
+    # Engram's release candidate for both the binary and Pi's plugin.
+    gentlePiRelease = "main";
+    engramRelease = "rc";
+
     backgroundSubagents = {
       opencode = "on";
       pi = "on";
@@ -613,7 +618,25 @@ in
   # package exists, rerun only its original lifecycle in a private FHS that
   # supplies /usr/bin/tar. Its installer retains the signed integrity decision
   # and is a no-op when the bundled Gentle AI is already valid.
+  # Switching a Pi package away from npm installs the new source next to the
+  # old one, and Pi loads both. Retire the displaced npm entries first, only
+  # when Pi still lists them, since pi remove fails on a package it does not
+  # have.
+  home.activation.gentlePiSourceSwitch = lib.hm.dag.entryBetween [ "gentleAiProvisionPackages" ] [ "installPackages" ] ''
+    settings=${lib.escapeShellArg "${config.home.homeDirectory}/.pi/agent/settings.json"}
+    if [ -f "$settings" ]; then
+      for displaced in npm:gentle-pi npm:gentle-engram npm:gentle-engram@0.1.12; do
+        if ${pkgs.jq}/bin/jq -e --arg p "$displaced" '(.packages // []) | index($p) != null' "$settings" >/dev/null; then
+          run ${config.home.profileDirectory}/bin/pi remove "$displaced"
+        fi
+      done
+    fi
+  '';
+
+  # gentle-pi's postinstall needs the FHS tar paths, wherever the package
+  # landed: the npm prefix for the stable channel, the git checkout for main.
   home.activation.gentlePiRuntimeRepair = lib.hm.dag.entryAfter [ "gentleAiProvisionPackages" ] ''
     run ${lib.getExe pkgs.gentle-pi-runtime-repair} --prefix ${lib.escapeShellArg "${config.home.homeDirectory}/.pi/agent/npm"}
+    run ${lib.getExe pkgs.gentle-pi-runtime-repair} --package-dir ${lib.escapeShellArg "${config.home.homeDirectory}/.pi/agent/git/github.com/Gentleman-Programming/gentle-pi"}
   '';
 }
