@@ -19,15 +19,16 @@
 let
   vendored = ../../ai;
 
-  # ai/custom holds what is ours and nothing else. Layered as fill so that if
-  # Gentle AI ever ships something at one of these paths, its version wins and
-  # the duplicate here becomes visible as dead weight rather than silently
-  # overriding an upstream change.
-  ownTree = target: provider: {
-    inherit target;
-    source = "${vendored}/custom/${provider}";
-    mode = "fill";
-  };
+  /*
+      Disabled custom whole-provider overlay. Retain the source assets for possible
+      future re-enablement, but let Gentle AI own agents, policies, commands, and
+      plugins. The active overlays below are limited to local skills.
+    ownTree = target: provider: {
+      inherit target;
+      source = "${vendored}/custom/${provider}";
+      mode = "fill";
+    };
+  */
 
   # A contract of ours at a path Gentle AI does not render, so it is the whole
   # content there rather than a layer over generated content.
@@ -36,57 +37,54 @@ let
     source = "${vendored}/${path}";
   };
 
-  # Our rules and persona, with the blocks Gentle AI regenerates taken out.
-  ownPolicy = target: provider: {
-    inherit target;
-    source = "${vendored}/custom/policy/${provider}.md";
-    mode = "append";
-  };
+  /*
+      Disabled local policy and persona append helpers. The upstream policy and
+      persona component remain active without an appended local suffix.
+    ownPolicy = target: provider: {
+      inherit target;
+      source = "${vendored}/custom/policy/${provider}.md";
+      mode = "append";
+    };
 
-  # Par is authored as Claude Code's output style. Other clients take its body
-  # without Claude's YAML frontmatter, so there is one source of persona text.
-  parPersonaBody = pkgs.runCommandLocal "par-persona-body" { } ''
-    sed '1,/^---$/d' ${vendored}/custom/claude/output-styles/Par.md > "$out"
-  '';
+    parPersonaBody = pkgs.runCommandLocal "par-persona-body" { } ''
+      sed '1,/^---$/d' ${vendored}/custom/claude/output-styles/Par.md > "$out"
+    '';
 
-  parPersona = target: {
-    inherit target;
-    source = parPersonaBody;
-    mode = "append";
-  };
+    parPersona = target: {
+      inherit target;
+      source = parPersonaBody;
+      mode = "append";
+    };
+  */
 
   secretsDirectory = "${config.home.homeDirectory}/.config/ai-harness/secrets";
 
-  # herdr registers itself inside the clients, in the same files this harness
-  # renders. Its own installer writes those files directly, which the next
-  # activation would undo; generating them instead makes them content the
-  # harness layers, still authored by the tool that owns them.
-  integrations = pkgs.agent-integrations { inherit (config.home) homeDirectory; };
+  /*
+    Disabled Herdr integration helpers and registrations.
+    integrations = pkgs.agent-integrations { inherit (config.home) homeDirectory; };
 
-  registered = target: source: {
-    inherit target;
-    source = "${integrations}/${source}";
-  };
+    registered = target: source: {
+      inherit target;
+      source = "${integrations}/${source}";
+    };
 
-  # Claude Code and Codex keep their hooks inside a settings file the harness
-  # also writes, so those two are merged rather than laid over. A hook event is
-  # an array both sides add to, which is why they accumulate.
-  claudeHookEvents = [
-    "PermissionRequest"
-    "PostToolUse"
-    "PreToolUse"
-    "SessionEnd"
-    "SessionStart"
-    "Stop"
-    "UserPromptSubmit"
-  ];
+    claudeHookEvents = [
+      "PermissionRequest"
+      "PostToolUse"
+      "PreToolUse"
+      "SessionEnd"
+      "SessionStart"
+      "Stop"
+      "UserPromptSubmit"
+    ];
 
-  codexHookEvents = [
-    "PermissionRequest"
-    "SessionStart"
-    "Stop"
-    "UserPromptSubmit"
-  ];
+    codexHookEvents = [
+      "PermissionRequest"
+      "SessionStart"
+      "Stop"
+      "UserPromptSubmit"
+    ];
+  */
 
   remote = url: headers: { inherit url headers; };
   local = command: args: { inherit command args; };
@@ -134,11 +132,10 @@ let
       ];
     };
 
-  # The work profile needs the same settings as the personal one -- status line,
-  # permission mode, output style -- but it cannot take them as a store symlink,
-  # because Claude Code writes its own session state into that file. Copying it
-  # into the tree here makes it a merge target like the personal one, which is
-  # the only shape that lets both write.
+  # The work profile starts from the rendered personal settings, but it cannot
+  # take them as a store symlink because Claude Code writes its own session state
+  # into that file. Copying it into the tree makes it a merge target like the
+  # personal profile, preserving mutable state without adding local preferences.
   withWorkSettings =
     tree:
     pkgs.runCommandLocal "gentle-ai-config-with-work-settings" { } ''
@@ -185,7 +182,15 @@ in
         mcpServers = serversFor "opencode";
       };
 
-      claude-code.enable = true;
+      claude-code = {
+        enable = true;
+        settings = {
+          env = {
+            DISABLE_AUTOUPDATER = "1";
+            CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS = "1";
+          };
+        };
+      };
 
       codex = {
         enable = true;
@@ -211,39 +216,80 @@ in
         # NixOS lacks those host paths, so normal provisioning defers that lifecycle
         # to the compatibility repair below; the global CLI is not an equivalent.
         provisionEnvironment.GENTLE_PI_SKIP_GENTLE_AI_INSTALL = "1";
-
-        # Pi resolves a theme against the ones its packages ship, so the theme
-        # here is gentle-pi's own rather than the name Gentle AI uses elsewhere.
         settings.theme = "Gentle";
-
-        # Pi runs on the Codex models, so it takes Codex's own profile rather
-        # than reasoning levels alone.
         modelPreset = "recommended";
         modelFamily = "codex";
-        models =
+        # gentle-pi agent profiles carry the whole routing: the orchestrator Pi
+        # itself runs on and the model each phase agent gets. Naming one active
+        # is the declarative form of applying it in /gentle:profiles, so a
+        # switch is what a profile change takes. An agent a profile does not
+        # name inherits whatever routing is in force outside the profile.
+        profiles =
           let
-            luna = thinking: {
-              model = "openai-codex/gpt-5.6-luna";
-              inherit thinking;
+            on = model: effort: {
+              provider = "openai-codex";
+              inherit model effort;
             };
-            terra = thinking: {
-              model = "openai-codex/gpt-5.6-terra";
-              inherit thinking;
-            };
+            sol = on "gpt-5.6-sol";
+            luna = on "gpt-5.6-luna";
+            terra = on "gpt-5.6-terra";
+            astra = on "gpt-6-astra";
           in
           {
-            sdd-init = luna "low";
-            sdd-status = luna "low";
-            sdd-sync = luna "low";
-            sdd-explore = terra "medium";
-            sdd-research = terra "medium";
-            sdd-verify = terra "medium";
-            sdd-spec = terra "high";
-            sdd-tasks = terra "high";
-            gentle-ai-explore = terra "high";
-            gentle-ai-verify = terra "high";
-            gentle-ai-worker = terra "medium";
+            codex = {
+              orchestrator = astra "high";
+              phases = {
+                jd-judge-a = astra "low";
+                jd-judge-b = astra "low";
+                sdd-design = astra "low";
+                sdd-proposal = astra "low";
+                sdd-init = luna "low";
+                sdd-status = luna "low";
+                sdd-sync = luna "low";
+                sdd-explore = terra "medium";
+                sdd-research = terra "medium";
+                sdd-verify = terra "medium";
+                sdd-spec = terra "high";
+                sdd-tasks = terra "high";
+                gentle-ai-explore = terra "high";
+                gentle-ai-verify = terra "high";
+                gentle-ai-worker = terra "medium";
+              };
+            };
+
+            # Heavier phases on terra at high effort, judgment and review on
+            # astra at low; sdd-research is left out on purpose so it inherits.
+            performance = {
+              orchestrator = astra "high";
+              phases = {
+                sdd-init = sol "medium";
+                sdd-onboard = sol "medium";
+                sdd-status = sol "medium";
+                sdd-sync = sol "medium";
+                sdd-explore = terra "high";
+                sdd-spec = terra "high";
+                sdd-tasks = terra "high";
+                sdd-apply = terra "high";
+                sdd-archive = luna "high";
+                sdd-proposal = astra "low";
+                sdd-design = astra "low";
+                sdd-verify = astra "low";
+                jd-judge-a = astra "low";
+                jd-judge-b = astra "low";
+                jd-fix-agent = terra "high";
+                gentle-ai-explore = terra "high";
+                gentle-ai-verify = astra "low";
+                gentle-ai-worker = terra "high";
+                review-readability = astra "low";
+                review-refuter = astra "low";
+                review-reliability = astra "low";
+                review-resilience = astra "low";
+                review-risk = astra "low";
+                review-validator = astra "low";
+              };
+            };
           };
+        activeProfile = "performance";
       };
     };
 
@@ -256,26 +302,16 @@ in
       engram.enable = true;
     };
 
-    # CodeGraph's guidance and its wiring come from the harness, and so does the
-    # binary now: gentle-ai-nix packages it the way it packages engram, so there
-    # is nothing to name here.
     communityTools.codegraph.enable = true;
-
-    # Our own persona is appended below, so Gentle AI writes none of its own.
-    persona = "custom";
+    persona = "neutral";
 
     sdd = {
       mode = "multi";
       strictTdd = true;
     };
 
-    # Receipt-driven development, declared rather than left to whatever each
-    # machine happened to have been told. Off is the default, so without this
-    # the two hosts could disagree and neither would say so.
     review.mode = "on";
 
-    # Both clients that express it run their sub-agents in the background,
-    # which is what the orchestration policy in their prompts is written for.
     backgroundSubagents = {
       opencode = "on";
       pi = "on";
@@ -333,6 +369,7 @@ in
         root = ".grok";
         from = "opencode";
         assets = {
+          "AGENTS.md" = "AGENTS.md";
           agent = "agents";
           commands = "commands";
           skills = "skills";
@@ -351,10 +388,13 @@ in
           agents = "agents";
           commands = "commands";
           skills = "skills";
-          hooks = "hooks";
           output-styles = "output-styles";
-          "sdd-orchestrator.md" = "sdd-orchestrator.md";
-          "engram-protocol.md" = "engram-protocol.md";
+
+          # Upstream embeds these contracts in CLAUDE.md/settings.json rather
+          # than rendering separate files; mapping them would create broken links.
+          # hooks = "hooks";
+          # "sdd-orchestrator.md" = "sdd-orchestrator.md";
+          # "engram-protocol.md" = "engram-protocol.md";
         };
       };
 
@@ -391,7 +431,6 @@ in
     # a theme picked in the UI lands there -- which is why it is merged rather
     # than replaced below.
     extensions.claude-code = {
-      outputStyle = "Par";
       "model" = "opus[1m]";
       "workflowKeywordTriggerEnabled" = false;
       "statusLine" = {
@@ -399,6 +438,11 @@ in
         "command" = "ccstatusline";
         "padding" = 0;
         "refreshInterval" = 10;
+      };
+      "attribution" = {
+        "commit" = "";
+        "pr" = "";
+        "sessionUrl" = false;
       };
       "enabledPlugins" = {
         "figma@claude-plugins-official" = true;
@@ -452,82 +496,115 @@ in
       ];
     };
 
+    # Preserve the writable work-profile settings merge for client-owned state.
     overrideRendered = withWorkSettings;
 
     extraFiles = {
-      # The Engram plugin ships with Engram itself rather than with Gentle AI,
-      # so it is layered from the copy this repository vendors.
-      opencode-engram-plugin = {
-        target = ".config/opencode/plugins/engram.ts";
-        source = "${vendored}/custom/opencode/plugins/engram.ts";
-      };
+      /*
+        Disabled custom Engram plugin; the engram component renders upstream
+           integration and protocol defaults.
+        opencode-engram-plugin = {
+          target = ".config/opencode/plugins/engram.ts";
+          source = "${vendored}/custom/opencode/plugins/engram.ts";
+        };
+      */
 
-      grok-own = ownTree ".grok" "grok";
+      /*
+        Disabled custom whole-provider overlays.
+        grok-own = ownTree ".grok" "grok";
+        opencode-own = ownTree ".config/opencode" "opencode";
+        claude-own = ownTree ".claude" "claude";
+        codex-own = ownTree ".codex" "codex";
+      */
 
-      opencode-own = ownTree ".config/opencode" "opencode";
-      claude-own = ownTree ".claude" "claude";
-      codex-own = ownTree ".codex" "codex";
-
-      opencode-policy = ownPolicy ".config/opencode/AGENTS.md" "opencode";
-      claude-policy = ownPolicy ".claude/CLAUDE.md" "claude";
-      codex-policy = ownPolicy ".codex/AGENTS.md" "codex";
+      /*
+        Disabled custom policy append projections.
+        opencode-policy = ownPolicy ".config/opencode/AGENTS.md" "opencode";
+        claude-policy = ownPolicy ".claude/CLAUDE.md" "claude";
+        codex-policy = ownPolicy ".codex/AGENTS.md" "codex";
+      */
 
       # Agens borrows Claude's post-overlay CLAUDE.md, while Grok owns AGENTS.md
-      # outside its borrowed assets. These append projections keep every client on
-      # the one Claude-authored body without a provider-specific copy.
-      pi-shared-par-persona = parPersona ".pi/agent/AGENTS.md";
-      opencode-shared-par-persona = parPersona ".config/opencode/AGENTS.md";
-      codex-shared-par-persona = parPersona ".codex/AGENTS.md";
-      grok-shared-par-persona = parPersona ".grok/AGENTS.md";
-      claude-shared-par-persona = parPersona ".claude/CLAUDE.md";
+      # outside its borrowed assets. Pi and Grok receive the compact local appendix
+      # before Par, which must remain the exact suffix for each delivered policy.
+      /*
+        Disabled local Pi/Grok policy and Par persona projections. Grok now maps
+           the upstream OpenCode AGENTS.md through customProviders.
+        pi-local-policy = ownPolicy ".pi/agent/AGENTS.md" "pi-grok";
+        grok-policy = ownPolicy ".grok/AGENTS.md" "pi-grok";
+        pi-shared-par-persona = parPersona ".pi/agent/AGENTS.md";
+        opencode-shared-par-persona = parPersona ".config/opencode/AGENTS.md";
+        codex-shared-par-persona = parPersona ".codex/AGENTS.md";
+        grok-shared-par-persona = parPersona ".grok/AGENTS.md";
+        claude-shared-par-persona = parPersona ".claude/CLAUDE.md";
+      */
 
-      # Contracts of our own at paths Gentle AI does not render. They used to
-      # reach these targets through the Pi harness module, which projected files
-      # for every client and not only for Pi; they are declared here now that
-      # the module is gone.
+      # Keep locally authored skills as narrow fill overlays; upstream owns every
+      # non-skill asset at these roots.
+      opencode-custom-skills = {
+        target = ".config/opencode/skills";
+        source = "${vendored}/custom/opencode/skills";
+        mode = "fill";
+      };
+      claude-custom-skills = {
+        target = ".claude/skills";
+        source = "${vendored}/custom/claude/skills";
+        mode = "fill";
+      };
+      codex-custom-skills = {
+        target = ".codex/skills";
+        source = "${vendored}/custom/codex/skills";
+        mode = "fill";
+      };
+
+      # Shared skills are outside a provider root and remain managed directly.
       shared-skills = own ".agents/skills" "skills";
 
-      opencode-orchestrator = own ".config/opencode/ORCHESTRATOR.md" "opencode/ORCHESTRATOR.md";
-      opencode-commands = own ".config/opencode/command" "command";
-      opencode-tui = own ".config/opencode/tui.json" "opencode/tui.json";
+      /*
+        Disabled custom orchestration, commands, TUI, Engram protocol/config,
+           hooks, plugins, and Herdr registrations.
+        opencode-orchestrator = own ".config/opencode/ORCHESTRATOR.md" "opencode/ORCHESTRATOR.md";
+        opencode-commands = own ".config/opencode/command" "command";
+        opencode-tui = own ".config/opencode/tui.json" "opencode/tui.json";
 
-      claude-orchestrator = own ".claude/sdd-orchestrator.md" "claude/sdd-orchestrator.md";
-      claude-engram-protocol = own ".claude/engram-protocol.md" "claude/engram-protocol.md";
+        claude-orchestrator = own ".claude/sdd-orchestrator.md" "claude/sdd-orchestrator.md";
+        claude-engram-protocol = own ".claude/engram-protocol.md" "claude/engram-protocol.md";
 
-      codex-orchestrator = own ".codex/sdd-orchestrator.md" "codex/sdd-orchestrator.md";
-      codex-engram-instructions = own ".codex/engram-instructions.md" "codex/engram-instructions.md";
-      codex-engram-compact-prompt = own ".codex/engram-compact-prompt.md" "codex/engram-compact-prompt.md";
-      codex-sdd-strong = own ".codex/sdd-strong.config.toml" "codex/sdd-strong.config.toml";
-      codex-sdd-mid = own ".codex/sdd-mid.config.toml" "codex/sdd-mid.config.toml";
-      codex-sdd-cheap = own ".codex/sdd-cheap.config.toml" "codex/sdd-cheap.config.toml";
+        codex-orchestrator = own ".codex/sdd-orchestrator.md" "codex/sdd-orchestrator.md";
+        codex-engram-instructions = own ".codex/engram-instructions.md" "codex/engram-instructions.md";
+        codex-engram-compact-prompt = own ".codex/engram-compact-prompt.md" "codex/engram-compact-prompt.md";
+        codex-sdd-strong = own ".codex/sdd-strong.config.toml" "codex/sdd-strong.config.toml";
+        codex-sdd-mid = own ".codex/sdd-mid.config.toml" "codex/sdd-mid.config.toml";
+        codex-sdd-cheap = own ".codex/sdd-cheap.config.toml" "codex/sdd-cheap.config.toml";
 
-      herdr-claude-hooks = {
-        target = ".claude/settings.json";
-        source = "${integrations}/.claude/settings.json";
-        mode = "merge";
-        unionLists = map (event: "hooks.${event}") claudeHookEvents;
-      };
+        herdr-claude-hooks = {
+          target = ".claude/settings.json";
+          source = "${integrations}/.claude/settings.json";
+          mode = "merge";
+          unionLists = map (event: "hooks.${event}") claudeHookEvents;
+        };
 
-      herdr-codex-feature = {
-        target = ".codex/config.toml";
-        source = "${integrations}/.codex/config.toml";
-        mode = "merge";
-      };
+        herdr-codex-feature = {
+          target = ".codex/config.toml";
+          source = "${integrations}/.codex/config.toml";
+          mode = "merge";
+        };
 
-      # Codex keeps its hooks in a file of their own, but Gentle AI writes its
-      # skill-registry hook into that same file, so this merges too.
-      herdr-codex-hooks = {
-        target = ".codex/hooks.json";
-        source = "${integrations}/.codex/hooks.json";
-        mode = "merge";
-        unionLists = map (event: "hooks.${event}") codexHookEvents;
-      };
+        # Codex keeps its hooks in a file of their own, but Gentle AI writes its
+        # skill-registry hook into that same file, so this merges too.
+        herdr-codex-hooks = {
+          target = ".codex/hooks.json";
+          source = "${integrations}/.codex/hooks.json";
+          mode = "merge";
+          unionLists = map (event: "hooks.${event}") codexHookEvents;
+        };
 
-      herdr-claude-hook = registered ".claude/hooks/herdr-agent-state.sh" ".claude/hooks/herdr-agent-state.sh";
-      herdr-codex-hook = registered ".codex/herdr-agent-state.sh" ".codex/herdr-agent-state.sh";
+        herdr-claude-hook = registered ".claude/hooks/herdr-agent-state.sh" ".claude/hooks/herdr-agent-state.sh";
+        herdr-codex-hook = registered ".codex/herdr-agent-state.sh" ".codex/herdr-agent-state.sh";
 
-      herdr-opencode-plugin = registered ".config/opencode/plugins/herdr-agent-state.js" ".config/opencode/plugins/herdr-agent-state.js";
-      herdr-pi-extension = registered ".pi/agent/extensions/herdr-agent-state.ts" ".pi/agent/extensions/herdr-agent-state.ts";
+        herdr-opencode-plugin = registered ".config/opencode/plugins/herdr-agent-state.js" ".config/opencode/plugins/herdr-agent-state.js";
+        herdr-pi-extension = registered ".pi/agent/extensions/herdr-agent-state.ts" ".pi/agent/extensions/herdr-agent-state.ts";
+      */
     };
   };
 
