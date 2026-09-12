@@ -5,6 +5,14 @@
   systemd.packages = [ pkgs.cloudflare-warp ];
   systemd.services.warp-svc.enable = true;
 
+  # warp-svc 2026.7 applies its firewall rules by executing the absolute path
+  # /usr/sbin/nft, which no PATH wrapper can redirect and which NixOS does not
+  # provide. Without this symlink every connect fails with FirewallUpdateFailed.
+  systemd.tmpfiles.rules = [
+    "d /usr/sbin 0755 root root -"
+    "L+ /usr/sbin/nft - - - - ${pkgs.nftables}/bin/nft"
+  ];
+
   services.cloudflared = {
     enable = true;
     tunnels = {
