@@ -23,6 +23,6 @@
     cloudflared
     seahorse
     gnome-keyring
-    gcr
+    gcr_4
   ];
 }
