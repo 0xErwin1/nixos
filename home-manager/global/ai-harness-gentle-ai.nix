@@ -185,6 +185,51 @@ in
       claude-code = {
         enable = true;
         settings = {
+          model = "opus[1m]";
+          workflowKeywordTriggerEnabled = false;
+          statusLine = {
+            type = "command";
+            command = "ccstatusline";
+            padding = 0;
+            refreshInterval = 10;
+          };
+          attribution = {
+            commit = "";
+            pr = "";
+            sessionUrl = false;
+          };
+          enabledPlugins = {
+            "figma@claude-plugins-official" = true;
+            "rust-analyzer-lsp@claude-plugins-official" = false;
+            "warp@claude-code-warp" = true;
+            "engram@engram" = true;
+          };
+          extraKnownMarketplaces = {
+            claude-code-plugins = {
+              source = {
+                source = "github";
+                repo = "anthropics/claude-code";
+              };
+            };
+            claude-plugins-official = {
+              source = {
+                source = "github";
+                repo = "anthropics/claude-plugins-official";
+              };
+            };
+            engram = {
+              source = {
+                source = "github";
+                repo = "Gentleman-Programming/engram";
+              };
+            };
+          };
+          effortLevel = "medium";
+          tui = "fullscreen";
+          skipDangerousModePermissionPrompt = true;
+          theme = "dark-daltonized";
+          editorMode = "vim";
+          agentPushNotifEnabled = true;
           env = {
             DISABLE_AUTOUPDATER = "1";
             CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS = "1";
@@ -203,6 +248,9 @@ in
       pi = {
         enable = true;
         mcpServers = serversFor "pi";
+        packages = {
+          "@gtrabanco/pi-nan-provider" = "npm:@gtrabanco/pi-nan-provider";
+        };
         provisionPackages = true;
 
         # The install commands name packages without naming versions, so their
@@ -427,66 +475,6 @@ in
           skills = "skills";
         };
       };
-    };
-
-    # What ai/claude/settings-merge.json used to merge in at activation. The
-    # deny list it also carried is exactly Gentle AI's own guardrails, which the
-    # permissions component already writes.
-    # Settings this configuration owns. Claude Code writes into the same file --
-    # a theme picked in the UI lands there -- which is why it is merged rather
-    # than replaced below.
-    providers.claude-code.settings = {
-      "model" = "opus[1m]";
-      "workflowKeywordTriggerEnabled" = false;
-      "statusLine" = {
-        "type" = "command";
-        "command" = "ccstatusline";
-        "padding" = 0;
-        "refreshInterval" = 10;
-      };
-      "attribution" = {
-        "commit" = "";
-        "pr" = "";
-        "sessionUrl" = false;
-      };
-      "enabledPlugins" = {
-        "figma@claude-plugins-official" = true;
-        "rust-analyzer-lsp@claude-plugins-official" = false;
-        "warp@claude-code-warp" = true;
-        "engram@engram" = true;
-      };
-      "extraKnownMarketplaces" = {
-        "claude-code-plugins" = {
-          "source" = {
-            "source" = "github";
-            "repo" = "anthropics/claude-code";
-          };
-        };
-        "claude-plugins-official" = {
-          "source" = {
-            "source" = "github";
-            "repo" = "anthropics/claude-plugins-official";
-          };
-        };
-        "claude-code-warp" = {
-          "source" = {
-            "source" = "github";
-            "repo" = "warpdotdev/claude-code-warp";
-          };
-        };
-        "engram" = {
-          "source" = {
-            "source" = "github";
-            "repo" = "Gentleman-Programming/engram";
-          };
-        };
-      };
-      "effortLevel" = "medium";
-      "tui" = "fullscreen";
-      "skipDangerousModePermissionPrompt" = true;
-      "theme" = "dark-daltonized";
-      "editorMode" = "vim";
-      "agentPushNotifEnabled" = true;
     };
 
     # Preserve the writable work-profile settings merge for client-owned state.
