@@ -621,13 +621,15 @@ in
   # Switching a Pi package away from npm installs the new source next to the
   # old one, and Pi loads both. Retire the displaced npm entries first, only
   # when Pi still lists them, since pi remove fails on a package it does not
-  # have.
+  # have. Pi spawns npm by PATH, so the profile goes first the way the module's
+  # own provisioning step does.
   home.activation.gentlePiSourceSwitch = lib.hm.dag.entryBetween [ "gentleAiProvisionPackages" ] [ "installPackages" ] ''
     settings=${lib.escapeShellArg "${config.home.homeDirectory}/.pi/agent/settings.json"}
     if [ -f "$settings" ]; then
       for displaced in npm:gentle-pi npm:gentle-engram npm:gentle-engram@0.1.12; do
         if ${pkgs.jq}/bin/jq -e --arg p "$displaced" '(.packages // []) | index($p) != null' "$settings" >/dev/null; then
-          run ${config.home.profileDirectory}/bin/pi remove "$displaced"
+          PATH=${lib.escapeShellArg "${config.home.profileDirectory}/bin"}:"$PATH" \
+            run pi remove "$displaced"
         fi
       done
     fi
