@@ -37,7 +37,7 @@ Use Atlas when the user wants information to be visible and durable in an Atlas 
 
 ## MCP Surface
 
-Use only the configured Atlas MCP tools for Atlas operations. If the tools are unavailable or the connection fails, stop the Atlas operation and report that Atlas MCP is unavailable. Never run or recommend a CLI, shell command, socket-server command, direct client, direct HTTP/API/database access, local checkout, MCP registration or repair command, or restart or reconnect command for Atlas. Connection recovery is outside the agent's tool surface.
+Use only the configured Atlas MCP tools for Atlas operations in your client. If the tools are unavailable or the connection fails, stop the Atlas operation and report that Atlas MCP is unavailable. Never run or recommend a CLI, shell command, socket-server command, direct client, direct HTTP/API/database access, local checkout, MCP registration or repair command, or restart or reconnect command for Atlas. Connection recovery is outside your client's tool surface.
 
 The Atlas MCP server exposes tools and resources; it does not expose prompts.
 
@@ -73,7 +73,7 @@ atlas:///{workspace}/{slug}
 
 ## MCP Tool Capabilities
 
-Use the configured Atlas MCP tool names. They are shown below with an `atlas_` prefix.
+Use the configured Atlas MCP tool names for your client. Tool prefixes vary per client; they are shown below with an `atlas_` prefix as an example.
 
 ### Discovery and reads
 

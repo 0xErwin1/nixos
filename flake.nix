@@ -310,9 +310,7 @@
                 fi
 
                 python3 - \
-                  ${./ai/custom/claude/skills/sdd-testing-context/SKILL.md} \
-                  ${./ai/custom/codex/skills/sdd-testing-context/SKILL.md} \
-                  ${./ai/custom/opencode/skills/sdd-testing-context/SKILL.md} \
+                  ${./ai/skills} \
                   "$workClaudeSkillsDelivery" \
                   "$grokPolicyDelivery" \
                   "$grokSkillsDelivery" \
@@ -324,9 +322,7 @@
                 from pathlib import Path
 
                 (
-                    claude_skill,
-                    codex_skill,
-                    opencode_skill,
+                    canonical_skills,
                     work_claude_skills_delivery,
                     grok_policy_delivery,
                     grok_skills_delivery,
@@ -335,20 +331,48 @@
                     rendered_root,
                 ) = map(Path, sys.argv[1:])
 
-                skill_targets = {
-                    rendered_root / ".claude/skills/sdd-testing-context/SKILL.md": claude_skill,
-                    rendered_root / ".codex/skills/sdd-testing-context/SKILL.md": codex_skill,
-                    rendered_root / ".config/opencode/skills/sdd-testing-context/SKILL.md": opencode_skill,
-                    grok_skills_delivery / "sdd-testing-context/SKILL.md": opencode_skill,
-                    work_claude_skills_delivery / "sdd-testing-context/SKILL.md": claude_skill,
-                }
-                for target, source in skill_targets.items():
-                    if not target.is_file() or target.read_text() != source.read_text():
-                        raise SystemExit(f"custom skill was not delivered through a skills-only overlay: {target}")
+                # Every locally authored skill now lives once, at ai/skills, and
+                # must reach every client's own skills directory byte for byte --
+                # this is what proves the single fill overlay in
+                # home-manager/global/ai-harness-gentle-ai.nix actually lands the
+                # same skill set everywhere instead of drifting back into four
+                # copies.
+                local_skill_names = sorted(
+                    p.name for p in canonical_skills.iterdir() if p.is_dir() and p.name != "_shared"
+                )
+                if not local_skill_names:
+                    raise SystemExit("no locally authored skills found under ai/skills")
+                if "upstream-ai-sync" in local_skill_names:
+                    raise SystemExit("upstream-ai-sync must be removed from ai/skills")
 
-                shared_skill = delivery_root / ".agents/skills/_shared/gh-convention.md"
-                if not shared_skill.is_file():
-                    raise SystemExit("shared skills are no longer delivered")
+                # agens is excluded here: its `delivery = "copy"` materializes
+                # skills imperatively at activation, not as a Nix store path this
+                # build-time check can read; the activation-script assertion below
+                # is what covers it.
+                client_skills_dirs = {
+                    "claude-code": rendered_root / ".claude/skills",
+                    "opencode": rendered_root / ".config/opencode/skills",
+                    "codex": rendered_root / ".codex/skills",
+                    "pi": rendered_root / ".pi/agent/skills",
+                    "grok": grok_skills_delivery,
+                    "claude-work": work_claude_skills_delivery,
+                }
+
+                for client, skills_dir in client_skills_dirs.items():
+                    if (skills_dir / "upstream-ai-sync").exists():
+                        raise SystemExit(f"{client} still delivers the removed upstream-ai-sync skill")
+                    for name in local_skill_names:
+                        source_dir = canonical_skills / name
+                        for source_file in sorted(f for f in source_dir.rglob("*") if f.is_file()):
+                            rel = source_file.relative_to(source_dir)
+                            target_file = skills_dir / name / rel
+                            if not target_file.is_file():
+                                raise SystemExit(f"{client} is missing local skill file {name}/{rel} at {target_file}")
+                            if target_file.read_bytes() != source_file.read_bytes():
+                                raise SystemExit(f"{client}'s {name}/{rel} does not match the canonical ai/skills copy")
+
+                if (delivery_root / ".agents/skills").exists():
+                    raise SystemExit(".agents/skills is retired and must no longer be delivered")
                 if not (Path(__import__("os").environ["agensActivation"]) / "activate").is_file():
                     raise SystemExit("Agens copy activation was not generated")
 

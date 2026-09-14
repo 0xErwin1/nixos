@@ -37,6 +37,51 @@ let
     source = "${vendored}/${path}";
   };
 
+  # Locally authored skills live once, at ai/skills, and reach every client
+  # through this one fill overlay per skills directory Gentle AI (or, for
+  # Pi, this repo) actually reads -- fill only adds what is not already
+  # there, so an upstream-rendered skill of the same name always wins and
+  # our copy never shadows it.
+  #
+  # claude-code, opencode and codex each have their own skills directory in
+  # gentle-ai-nix's internal/skills package (`internal/skills/skills.go`'s
+  # `skillsDirs` table). Pi has none there -- its own package doc says so
+  # explicitly ("Pi has no injectable skills concept at all") -- so
+  # `.pi/agent/skills` is not an upstream target at all; this entry is what
+  # puts our skills there, matching the directory
+  # `ai/support/projection-preflight.md` already documents as managed.
+  #
+  # `~/.agents/skills` ("shared-skills", now removed) had no reader: no
+  # client's own directory table in gentle-ai-nix names it, and it is not
+  # referenced anywhere in that flake's source. Its only remaining reference
+  # in this repo was the `upstream-ai-sync` skill (now deleted), which
+  # described it as where an old, now-obsolete external asset hub used to
+  # sync skills -- not a path any current client reads.
+  #
+  # grok, claude-work and agens need no entry here: `customProviders` copies
+  # their harness from `programs.gentle-ai.rendered`, the tree *after*
+  # extraFiles is applied (see docs/options.md's `rendered` and
+  # `customProviders.<name>.from` entries), so the skills this overlay
+  # places under opencode's and claude-code's directories are already
+  # present in what grok (from opencode) and claude-work/agens (from
+  # claude-code) copy. A second entry for them would only risk the same
+  # skill landing twice for one client.
+  localSkillsTargets = {
+    claude-code = ".claude/skills";
+    opencode = ".config/opencode/skills";
+    codex = ".codex/skills";
+    pi = ".pi/agent/skills";
+  };
+
+  localSkills = lib.mapAttrs' (
+    name: target:
+    lib.nameValuePair "${name}-skills" {
+      inherit target;
+      source = "${vendored}/skills";
+      mode = "fill";
+    }
+  ) localSkillsTargets;
+
   /*
       Disabled local policy and persona append helpers. The upstream policy and
       persona component remain active without an appended local suffix.
@@ -484,7 +529,7 @@ in
     # Preserve the writable work-profile settings merge for client-owned state.
     overrideRendered = withWorkSettings;
 
-    extraFiles = {
+    extraFiles = localSkills // {
       /*
         Disabled custom Engram plugin; the engram component renders upstream
            integration and protocol defaults.
@@ -524,26 +569,10 @@ in
         claude-shared-par-persona = parPersona ".claude/CLAUDE.md";
       */
 
-      # Keep locally authored skills as narrow fill overlays; upstream owns every
-      # non-skill asset at these roots.
-      opencode-custom-skills = {
-        target = ".config/opencode/skills";
-        source = "${vendored}/custom/opencode/skills";
-        mode = "fill";
-      };
-      claude-custom-skills = {
-        target = ".claude/skills";
-        source = "${vendored}/custom/claude/skills";
-        mode = "fill";
-      };
-      codex-custom-skills = {
-        target = ".codex/skills";
-        source = "${vendored}/custom/codex/skills";
-        mode = "fill";
-      };
-
-      # Shared skills are outside a provider root and remain managed directly.
-      shared-skills = own ".agents/skills" "skills";
+      # Locally authored skills are wired above, through `localSkills`, into
+      # every client that has a skills directory (or, for Pi, should have
+      # one). See its comment for why grok/claude-work/agens and
+      # `.agents/skills` need nothing here.
 
       /*
         Disabled custom orchestration, commands, TUI, Engram protocol/config,

@@ -1,126 +1,110 @@
 # Obsidian Storage Convention (SDD artifacts)
 
-This is the convention for the `obsidian` artifact-store mode. It applies when
-the orchestrator passes `artifact_store.mode: obsidian`.
+## Directory Structure
 
-## How the mode works
-
-In `obsidian` mode, SDD artifacts are persisted to two places:
-
-- **The Obsidian vault** — the full, human-readable artifact, written via the
-  Obsidian MCP tools (`mcp__obsidian__*`). This is the copy a person reads and
-  annotates.
-- **Engram** — a brief summary plus a pointer back to the vault note, for
-  cross-session recovery and compaction survival.
-
-The vault is governed by its own `AGENTS.md`. Read that file and respect the
-vault's general conventions (frontmatter style, links, quality rules). SDD
-artifacts live in a dedicated `sdd/` area that is separate from the vault's
-knowledge-wiki content — do not file them as wiki pages.
-
-Never write artifacts into the project repository tree in this mode.
-
-## Directory structure
-
-SDD artifacts go under `sdd/` in the vault, one folder per project:
+**ALWAYS** save SDD artifacts to Obsidian using MCP under:
 
 ```
-sdd/
-└── {project}/
-    └── {change}-{artifact}-{date}.md
+projects/{project-name}/spec/{artifact-name}
 ```
 
-- `{project}` — the project name (detected or passed by the orchestrator).
-- `{change}` — the change slug.
-- `{artifact}` — the artifact type (see table below).
-- `{date}` — the date the artifact was produced, `YYYY-MM-DD`.
+### Path Naming Rules
 
-The `sdd-init` artifact has no change slug; name it `init-{date}.md`.
+```
+projects/
+└── {project-name}/              ← Project name (detected or passed)
+    └── spec/
+        └── {change-name}--{artifact-type}.md
+            ├── {change-name}--proposal.md
+            ├── {change-name}--spec.md
+            ├── {change-name}--design.md
+            └── {change-name}--tasks.md
+```
 
-### Artifact types
+### Artifact Types (in filename)
 
-| Type | Produced by | Example filename |
-|------|-------------|------------------|
-| `init` | sdd-init | `init-2026-05-09.md` |
-| `exploration` | sdd-explore | `oauth-login-exploration-2026-05-09.md` |
-| `proposal` | sdd-propose | `oauth-login-proposal-2026-05-09.md` |
-| `spec` | sdd-spec | `oauth-login-spec-2026-05-09.md` |
-| `design` | sdd-design | `oauth-login-design-2026-05-09.md` |
-| `tasks` | sdd-tasks | `oauth-login-tasks-2026-05-09.md` |
-| `delivery-strategy` | sdd-tasks | `oauth-login-delivery-strategy-2026-05-09.md` |
-| `apply-progress` | sdd-apply | `oauth-login-apply-progress-2026-05-09.md` |
-| `verify-report` | sdd-verify | `oauth-login-verify-report-2026-05-09.md` |
-| `archive-report` | sdd-archive | `oauth-login-archive-report-2026-05-09.md` |
+| Type | Produced By | Example |
+|------|-------------|---------|
+| `proposal` | sdd-propose | `my-feature--proposal.md` |
+| `spec` | sdd-spec | `my-feature--spec.md` |
+| `design` | sdd-design | `my-feature--design.md` |
+| `tasks` | sdd-tasks | `my-feature--tasks.md` |
+| `apply` | sdd-apply | `my-feature--apply-progress.md` |
+| `verify` | sdd-verify | `my-feature--verify-report.md` |
 
-## What gets saved
+## What Gets Saved
 
-### To the Obsidian vault
+### To Obsidian (ALWAYS)
+- **Full, complete artifact** with all details
+- Markdown format with YAML frontmatter
+- Ready for human review and annotation in Obsidian vault
 
-- The full, complete artifact in Markdown, ready for human review.
-- A light YAML frontmatter block:
+### To Engram (ALWAYS)
+- **Brief summary** (1-2 paragraphs)
+- Observation ID for recovery after context compaction
+- Path to the Obsidian note (for quick navigation)
+- Metadata for orchestrator state recovery
+- Topic key for upsert capability
+
+## Frontmatter Format
+
+Every artifact saved to Obsidian MUST include:
 
 ```yaml
 ---
-type: sdd-{artifact}        # sdd-proposal, sdd-spec, sdd-design, ...
-change: {change}
-project: {project}
-created: {YYYY-MM-DD}
-updated: {YYYY-MM-DD}
+type: sdd-{artifact-type}       # sdd-proposal, sdd-spec, sdd-design, etc
+change: {change-name}
+project: {project-name}
+created: {ISO 8601 timestamp}
+updated: {ISO 8601 timestamp}
 status: draft | in-progress | complete
 ---
 ```
 
-### To Engram
+## Write Protocol (ALWAYS)
 
-- A brief summary (1-2 paragraphs).
-- The vault path of the note, for navigation.
-- A `topic_key` for upsert and orchestrator state recovery.
+1. Format artifact as Markdown with YAML frontmatter (see Frontmatter Format below)
+2. Call Obsidian MCP to write to: `projects/{project-name}/spec/{change-name}--{type}.md`
+3. Call Engram `mem_save()` with summary + link back to Obsidian file
+4. If mode is `openspec`: also write to `openspec/changes/{change-name}/`
+5. Return summary with paths (Obsidian + Engram observation ID) to orchestrator
 
-## Write protocol
+## Read Protocol
 
-1. Format the artifact as Markdown with the frontmatter above.
-2. Use the Obsidian MCP to write it to `sdd/{project}/{change}-{artifact}-{date}.md`.
-3. Call Engram `mem_save()` with the summary and the vault path.
-4. Return the vault path and the Engram observation ID to the orchestrator.
-
-## Read protocol
-
-1. When a skill needs a previous artifact, read it from the vault via the
-   Obsidian MCP (full content).
-2. If it is not found there, fall back to Engram for a quick summary.
-
-## Recovery after compaction
-
-The orchestrator persists state to Engram with the vault paths:
-
-```yaml
-artifacts:
-  proposal: sdd/oauth-login/oauth-login-proposal-2026-05-09.md
-  spec: sdd/oauth-login/oauth-login-spec-2026-05-09.md
-  design: sdd/oauth-login/oauth-login-design-2026-05-09.md
-```
-
-Skills can then read directly from the vault using the stored paths.
+1. When a skill needs a previous artifact, check Obsidian first (full content)
+2. If not found, fallback to Engram (quick retrieval)
+3. Always use the observation ID from Engram to get latest version if updated
 
 ## Example
 
-Vault note path:
-
+**Obsidian file path:**
 ```
-sdd/oauth-login/oauth-login-spec-2026-05-09.md
+projects/my-app/spec/add-dark-mode--spec.md
 ```
 
-Engram summary:
-
+**Engram summary:**
 ```
-title: sdd/oauth-login/spec
-topic_key: sdd/oauth-login/spec
-project: oauth-login
+title: sdd/add-dark-mode/spec
+topic_key: sdd/add-dark-mode/spec
+project: my-app
 content: |
-  Spec saved to Obsidian: sdd/oauth-login/oauth-login-spec-2026-05-09.md
+  Spec saved to Obsidian: projects/my-app/spec/add-dark-mode--spec.md
 
-  Summary: GitHub OAuth login flow with token refresh and session binding.
+  Summary: Added dark mode toggle in settings, with localStorage persistence and three color schemes (light, dark, auto).
 
   Requirements: 5 (all added)
   Scenarios: 8 total (6 happy path, 2 edge cases)
 ```
+
+## Recovery After Compaction
+
+The orchestrator saves state to Engram with Obsidian paths:
+
+```yaml
+artifacts:
+  proposal: projects/my-app/spec/add-dark-mode--proposal.md
+  spec: projects/my-app/spec/add-dark-mode--spec.md
+  design: projects/my-app/spec/add-dark-mode--design.md
+```
+
+Skills can then read directly from Obsidian using the stored paths.
