@@ -366,7 +366,7 @@ in
                 sdd-explore = terra "high";
                 sdd-spec = terra "high";
                 sdd-tasks = terra "high";
-                sdd-apply = terra "high";
+                sdd-apply = astra "low";
                 sdd-archive = luna "high";
                 sdd-proposal = astra "low";
                 sdd-design = astra "low";
