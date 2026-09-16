@@ -215,11 +215,11 @@
         "rust-overlay": "rust-overlay_4"
       },
       "locked": {
-        "lastModified": 1789472935,
-        "narHash": "sha256-nJspwf3GzdwnI+RxoSOayGvEmx1UUbOv2WmBsJeNdng=",
+        "lastModified": 1789549697,
+        "narHash": "sha256-psO6kAIq7h/NtJ8z8hCYa30FHYhg534Ht1ZoLl1I8Q0=",
         "owner": "0xErwin1",
         "repo": "dbflux",
-        "rev": "d37b5a5dfc9eac355f6a94e1a4623537885bcdd1",
+        "rev": "ba11a540b44101edd5da8eb72f67bea6acb1292a",
         "type": "github"
       },
       "original": {
@@ -556,11 +556,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1789513834,
-        "narHash": "sha256-NtDJzpaLPBJYLQ7dSHcEpj3TPpDd9YndHUf+4ZrEF3I=",
+        "lastModified": 1789558207,
+        "narHash": "sha256-oOu8ShCVYhAxdwC3llJFxE3q07E+xSFR3Zxp20BFn5M=",
         "owner": "0xErwin1",
         "repo": "gentle-ai-nix",
-        "rev": "bcc013af2a2b6824acf5ba78d79a0d3285c00876",
+        "rev": "9203a4a58481687ce009637ee9f92c71f5cb9418",
         "type": "github"
       },
       "original": {
