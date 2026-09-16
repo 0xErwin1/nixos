@@ -665,8 +665,14 @@ in
   # and is a no-op when the bundled Gentle AI is already valid.
   # gentle-pi's postinstall needs the FHS tar paths, wherever the package
   # landed: the npm prefix for the stable channel, the git checkout for main.
+  # The checkout is named after the repository Pi clones -- gentle-shell, since
+  # the rename -- while the package keeps its gentle-pi identity, so the two
+  # spellings differ here on purpose. A path that stops existing is the quiet
+  # failure this step exists to prevent: the repair reports nothing to do and
+  # exits 0, and the bundled binary its postinstall would have extracted stays
+  # missing, taking the native review preflight with it.
   home.activation.gentlePiRuntimeRepair = lib.hm.dag.entryAfter [ "gentleAiProvisionPackages" ] ''
     run ${lib.getExe pkgs.gentle-pi-runtime-repair} --prefix ${lib.escapeShellArg "${config.home.homeDirectory}/.pi/agent/npm"}
-    run ${lib.getExe pkgs.gentle-pi-runtime-repair} --package-dir ${lib.escapeShellArg "${config.home.homeDirectory}/.pi/agent/git/github.com/Gentleman-Programming/gentle-pi"}
+    run ${lib.getExe pkgs.gentle-pi-runtime-repair} --package-dir ${lib.escapeShellArg "${config.home.homeDirectory}/.pi/agent/git/github.com/Gentleman-Programming/gentle-shell"}
   '';
 }

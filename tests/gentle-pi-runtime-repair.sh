@@ -58,13 +58,47 @@ if FAIL_POSTINSTALL=1 "$repair" --prefix "$prefix"; then
   exit 1
 fi
 
-if "$repair" --invalid "$prefix"; then
-  echo "repair accepted invalid arguments" >&2
+# The other home: main installs gentle-pi as a git checkout, where the checkout
+# is the package rather than a directory under node_modules.
+checkout="$temporary_root/checkout"
+checkout_marker="$temporary_root/checkout-postinstall.log"
+mkdir -p "$checkout"
+cat > "$checkout/package.json" <<'JSON'
+{
+  "name": "gentle-pi",
+  "version": "2.4.0",
+  "scripts": {
+    "postinstall": "test -x /usr/bin/tar && printf '%s\\n' \"$GENTLE_PI_SKIP_GENTLE_AI_INSTALL\" >> \"$CHECKOUT_MARKER\" && test \"${FAIL_POSTINSTALL:-0}\" != 1"
+  }
+}
+JSON
+export CHECKOUT_MARKER="$checkout_marker"
+
+"$repair" --package-dir "$checkout"
+
+test "$(cat "$checkout_marker")" = "0"
+
+if FAIL_POSTINSTALL=1 "$repair" --package-dir "$checkout"; then
+  echo "repair accepted a failing gentle-pi postinstall from a git checkout" >&2
   exit 1
 fi
 
+# Activation runs both homes on every switch and only one of them holds
+# gentle-pi, so the other one is nothing to repair rather than a failure. Both
+# markers are read before and after, because tolerating a missing package by
+# repairing something else would be the silent version of the same mistake.
 missing_prefix="$temporary_root/missing-prefix"
-if "$repair" --prefix "$missing_prefix"; then
-  echo "repair accepted a missing gentle-pi package" >&2
+missing_checkout="$temporary_root/missing-checkout"
+prefix_before="$(cat "$marker")"
+checkout_before="$(cat "$checkout_marker")"
+
+"$repair" --prefix "$missing_prefix"
+"$repair" --package-dir "$missing_checkout"
+
+test "$(cat "$marker")" = "$prefix_before"
+test "$(cat "$checkout_marker")" = "$checkout_before"
+
+if "$repair" --invalid "$prefix"; then
+  echo "repair accepted invalid arguments" >&2
   exit 1
 fi
