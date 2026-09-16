@@ -323,102 +323,102 @@ in
         # name inherits whatever routing is in force outside the profile.
         profiles =
           let
-            onCodex = model: effort: {
-              provider = "openai-codex";
-              inherit model effort;
+            # The provider ids Pi resolves on this machine; `for` turns each one
+            # into the constructor the profiles below name their models with, so
+            # a binding reads as the model rather than as the pair it builds.
+            models = inputs.gentle-ai-nix.lib.models;
+            providers = models.for {
+              codex = "openai-codex";
+              nan = "nan";
             };
-            sol = onCodex "gpt-5.6-sol";
-            luna = onCodex "gpt-5.6-luna";
-            terra = onCodex "gpt-5.6-terra";
-            astra = onCodex "gpt-6-astra";
-            onNan = model: effort: {
-              provider = "nan";
-              inherit model effort;
-            };
-            glm53flash = onNan "glm5.3-flash";
-            deepseekV4Flash = onNan "deepseek-v4-flash";
-            qwen38Flash = onNan "qwen3.8-flash";
+            sol = providers.onCodex "gpt-5.6-sol";
+            luna = providers.onCodex "gpt-5.6-luna";
+            terra = providers.onCodex "gpt-5.6-terra";
+            astra = providers.onCodex "gpt-6-astra";
+            glm53flash = providers.onNan "glm5.3-flash";
+            deepseekV4Flash = providers.onNan "deepseek-v4-flash";
+            qwen38Flash = providers.onNan "qwen3.8-flash";
           in
           {
             codex = {
-              orchestrator = astra "high";
+              orchestrator = models.effort.high astra;
               phases = {
-                jd-judge-a = astra "low";
-                jd-judge-b = astra "low";
-                sdd-design = astra "low";
-                sdd-proposal = astra "low";
-                sdd-init = luna "low";
-                sdd-status = luna "low";
-                sdd-sync = luna "low";
-                sdd-explore = terra "medium";
-                sdd-research = terra "medium";
-                sdd-verify = terra "medium";
-                sdd-spec = terra "high";
-                sdd-tasks = terra "high";
-                gentle-ai-explore = terra "high";
-                gentle-ai-verify = terra "high";
-                gentle-ai-worker = terra "medium";
+                jd-judge-a = models.effort.low astra;
+                jd-judge-b = models.effort.low astra;
+                sdd-design = models.effort.low astra;
+                sdd-proposal = models.effort.low astra;
+                sdd-init = models.effort.low luna;
+                sdd-status = models.effort.low luna;
+                sdd-sync = models.effort.low luna;
+                sdd-explore = models.effort.medium terra;
+                sdd-research = models.effort.medium terra;
+                sdd-verify = models.effort.medium terra;
+                sdd-spec = models.effort.high terra;
+                sdd-tasks = models.effort.high terra;
+                gentle-ai-explore = models.effort.high terra;
+                gentle-ai-verify = models.effort.high terra;
+                gentle-ai-worker = models.effort.medium terra;
               };
             };
 
             nan = {
-              orchestrator = astra "high";
+              orchestrator = models.effort.high astra;
               phases = {
-                sdd-explore = glm53flash "high";
-                sdd-spec = glm53flash "high";
-                sdd-design = glm53flash "high";
-                sdd-verify = glm53flash "high";
-                sdd-sync = glm53flash "high";
-                sdd-archive = glm53flash "high";
-                sdd-apply = glm53flash "high";
-                jd-judge-a = glm53flash "high";
-                jd-judge-b = deepseekV4Flash "high";
-                jd-fix-agent = glm53flash "high";
-                gentle-ai-worker = glm53flash "high";
-                review-risk = glm53flash "high";
-                review-refuter = deepseekV4Flash "high";
-                sdd-research = deepseekV4Flash "high";
-                sdd-proposal = deepseekV4Flash "high";
-                sdd-tasks = deepseekV4Flash "high";
-                sdd-onboard = deepseekV4Flash "high";
-                gentle-ai-explore = deepseekV4Flash "high";
-                review-readability = deepseekV4Flash "high";
-                review-reliability = deepseekV4Flash "high";
-                review-resilience = deepseekV4Flash "high";
-                review-validator = deepseekV4Flash "high";
-                sdd-status = deepseekV4Flash "high";
-                gentle-ai-verify = deepseekV4Flash "high";
-                sdd-init = qwen38Flash "high";
+                sdd-explore = glm53flash;
+                sdd-spec = glm53flash;
+                sdd-design = glm53flash;
+                sdd-verify = glm53flash;
+                sdd-sync = glm53flash;
+                sdd-archive = glm53flash;
+                sdd-apply = glm53flash;
+                jd-judge-a = glm53flash;
+                jd-judge-b = deepseekV4Flash;
+                jd-fix-agent = glm53flash;
+                gentle-ai-worker = glm53flash;
+                review-risk = glm53flash;
+                review-refuter = deepseekV4Flash;
+                sdd-research = deepseekV4Flash;
+                sdd-proposal = deepseekV4Flash;
+                sdd-tasks = deepseekV4Flash;
+                sdd-onboard = deepseekV4Flash;
+                gentle-ai-explore = deepseekV4Flash;
+                review-readability = deepseekV4Flash;
+                review-reliability = deepseekV4Flash;
+                review-resilience = deepseekV4Flash;
+                review-validator = deepseekV4Flash;
+                sdd-status = deepseekV4Flash;
+                gentle-ai-verify = deepseekV4Flash;
+                sdd-init = qwen38Flash;
               };
             };
 
             performance = {
-              orchestrator = astra "high";
+              orchestrator = models.effort.high astra;
               phases = {
-                sdd-init = sol "medium";
-                sdd-onboard = sol "medium";
-                sdd-status = sol "medium";
-                sdd-sync = sol "medium";
-                sdd-explore = terra "high";
-                sdd-spec = terra "high";
-                sdd-tasks = terra "high";
-                sdd-apply = astra "low";
-                sdd-archive = luna "high";
-                sdd-proposal = astra "low";
-                sdd-design = astra "low";
-                sdd-verify = astra "low";
-                jd-judge-a = astra "low";
-                jd-judge-b = astra "low";
-                jd-fix-agent = terra "high";
-                gentle-ai-explore = terra "high";
-                gentle-ai-verify = astra "low";
-                gentle-ai-worker = terra "high";
-                review-readability = astra "low";
-                review-refuter = astra "low";
-                review-reliability = astra "low";
-                review-resilience = astra "low";
-                review-risk = astra "low";
-                review-validator = astra "low";
+                sdd-init = models.effort.medium sol;
+                sdd-onboard = models.effort.medium sol;
+                sdd-status = models.effort.medium sol;
+                sdd-sync = models.effort.medium sol;
+                sdd-explore = models.effort.high terra;
+                sdd-spec = models.effort.high terra;
+                sdd-tasks = models.effort.high terra;
+                sdd-apply = models.effort.low astra;
+                sdd-archive = models.effort.high luna;
+                sdd-proposal = models.effort.low astra;
+                sdd-design = models.effort.low astra;
+                sdd-verify = models.effort.low astra;
+                jd-judge-a = models.effort.low astra;
+                jd-judge-b = models.effort.low astra;
+                jd-fix-agent = models.effort.high terra;
+                gentle-ai-explore = models.effort.high terra;
+                gentle-ai-verify = models.effort.low astra;
+                gentle-ai-worker = models.effort.high terra;
+                review-readability = models.effort.low astra;
+                review-refuter = models.effort.low astra;
+                review-reliability = models.effort.low astra;
+                review-resilience = models.effort.low astra;
+                review-risk = models.effort.low astra;
+                review-validator = models.effort.low astra;
               };
             };
           };
