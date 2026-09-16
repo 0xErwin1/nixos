@@ -335,7 +335,7 @@ in
             luna = providers.onCodex "gpt-5.6-luna";
             terra = providers.onCodex "gpt-5.6-terra";
             astra = providers.onCodex "gpt-6-astra";
-            glm53flash = providers.onNan "glm5.3-flash";
+            glm53Flash = providers.onNan "glm5.3-flash";
             deepseekV4Flash = providers.onNan "deepseek-v4-flash";
             qwen38Flash = providers.onNan "qwen3.8-flash";
           in
@@ -362,32 +362,32 @@ in
             };
 
             nan = {
-              orchestrator = models.effort.high astra;
+              orchestrator = deepseekV4Flash;
               phases = {
-                sdd-explore = glm53flash;
-                sdd-spec = glm53flash;
-                sdd-design = glm53flash;
-                sdd-verify = glm53flash;
-                sdd-sync = glm53flash;
-                sdd-archive = glm53flash;
-                sdd-apply = glm53flash;
-                jd-judge-a = glm53flash;
+                sdd-explore = glm53Flash;
+                sdd-spec = glm53Flash;
+                sdd-design = glm53Flash;
+                sdd-verify = glm53Flash;
+                sdd-sync = glm53Flash;
+                sdd-archive = glm53Flash;
+                sdd-apply = glm53Flash;
+                jd-judge-a = glm53Flash;
                 jd-judge-b = deepseekV4Flash;
-                jd-fix-agent = glm53flash;
-                gentle-ai-worker = glm53flash;
-                review-risk = glm53flash;
+                jd-fix-agent = glm53Flash;
+                review-risk = glm53Flash;
                 review-refuter = deepseekV4Flash;
                 sdd-research = deepseekV4Flash;
                 sdd-proposal = deepseekV4Flash;
                 sdd-tasks = deepseekV4Flash;
                 sdd-onboard = deepseekV4Flash;
+                gentle-ai-worker = deepseekV4Flash;
                 gentle-ai-explore = deepseekV4Flash;
+                gentle-ai-verify = deepseekV4Flash;
                 review-readability = deepseekV4Flash;
                 review-reliability = deepseekV4Flash;
                 review-resilience = deepseekV4Flash;
                 review-validator = deepseekV4Flash;
                 sdd-status = deepseekV4Flash;
-                gentle-ai-verify = deepseekV4Flash;
                 sdd-init = qwen38Flash;
               };
             };
