@@ -323,14 +323,21 @@ in
         # name inherits whatever routing is in force outside the profile.
         profiles =
           let
-            on = model: effort: {
+            onCodex = model: effort: {
               provider = "openai-codex";
               inherit model effort;
             };
-            sol = on "gpt-5.6-sol";
-            luna = on "gpt-5.6-luna";
-            terra = on "gpt-5.6-terra";
-            astra = on "gpt-6-astra";
+            sol = onCodex "gpt-5.6-sol";
+            luna = onCodex "gpt-5.6-luna";
+            terra = onCodex "gpt-5.6-terra";
+            astra = onCodex "gpt-6-astra";
+            onNan = model: effort: {
+              provider = "nan";
+              inherit model effort;
+            };
+            glm53flash = onNan "glm5.3-flash";
+            deepseekV4Flash = onNan "deepseek-v4-flash";
+            qwen38Flash = onNan "qwen3.8-flash";
           in
           {
             codex = {
@@ -354,8 +361,37 @@ in
               };
             };
 
-            # Heavier phases on terra at high effort, judgment and review on
-            # astra at low; sdd-research is left out on purpose so it inherits.
+            nan = {
+              orchestrator = astra "high";
+              phases = {
+                sdd-explore = glm53flash "high";
+                sdd-spec = glm53flash "high";
+                sdd-design = glm53flash "high";
+                sdd-verify = glm53flash "high";
+                sdd-sync = glm53flash "high";
+                sdd-archive = glm53flash "high";
+                sdd-apply = glm53flash "high";
+                jd-judge-a = glm53flash "high";
+                jd-judge-b = deepseekV4Flash "high";
+                jd-fix-agent = glm53flash "high";
+                gentle-ai-worker = glm53flash "high";
+                review-risk = glm53flash "high";
+                review-refuter = deepseekV4Flash "high";
+                sdd-research = deepseekV4Flash "high";
+                sdd-proposal = deepseekV4Flash "high";
+                sdd-tasks = deepseekV4Flash "high";
+                sdd-onboard = deepseekV4Flash "high";
+                gentle-ai-explore = deepseekV4Flash "high";
+                review-readability = deepseekV4Flash "high";
+                review-reliability = deepseekV4Flash "high";
+                review-resilience = deepseekV4Flash "high";
+                review-validator = deepseekV4Flash "high";
+                sdd-status = deepseekV4Flash "high";
+                gentle-ai-verify = deepseekV4Flash "high";
+                sdd-init = qwen38Flash "high";
+              };
+            };
+
             performance = {
               orchestrator = astra "high";
               phases = {
@@ -386,7 +422,7 @@ in
               };
             };
           };
-        activeProfile = "performance";
+        activeProfile = "nan";
       };
     };
 
