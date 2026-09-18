@@ -426,7 +426,7 @@ in
       skills.enable = true;
       persona.enable = true;
       permissions.enable = true;
-      sdd.enable = true;
+      sdd.enable = false;
       theme.enable = true;
       engram.enable = true;
     };
