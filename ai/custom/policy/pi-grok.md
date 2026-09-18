@@ -7,11 +7,11 @@
 
 ## GitHub CLI
 
-Before any `gh` operation, read `~/.agents/skills/_shared/gh-convention.md`. It is the account and authorization contract. Do not duplicate or infer its account rules here.
+Before any `gh` operation, read `gh-convention.md` under the agent's `skills/_shared/` directory, beside this policy file. It is the account and authorization contract. Do not duplicate or infer its account rules here.
 
 ## Atlas
 
-Use only the configured Atlas MCP tools. When an Atlas task informs planning, implementation, status, editing, verification, or exact quoting, first retrieve each relevant task with `atlas_get_task` at `detail: "full"`, then obtain useful linked context. Read `~/.agents/skills/_shared/atlas-persistence-contract.md` before Atlas work and follow its current contract.
+Use only the configured Atlas MCP tools. When an Atlas task informs planning, implementation, status, editing, verification, or exact quoting, first retrieve each relevant task with `atlas_get_task` at `detail: "full"`, then obtain useful linked context. Read `atlas-persistence-contract.md` under the agent's `skills/_shared/` directory, beside this policy file, before Atlas work and follow its current contract.
 
 ## External prose
 
