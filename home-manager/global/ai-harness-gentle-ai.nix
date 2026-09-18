@@ -296,6 +296,11 @@ in
       # runs the installation Gentle AI declares for it.
       pi = {
         enable = true;
+
+        # The tip of gentle-shell's main branch, pinned by gentle-ai-nix,
+        # instead of the npm release that flake supports.
+        release = "main";
+
         mcpServers = serversFor "pi";
         packages = {
           "@gtrabanco/pi-nan-provider" = "npm:@gtrabanco/pi-nan-provider";
@@ -445,10 +450,10 @@ in
 
     review.mode = "on";
 
-    # gentle-pi from the tip of its main branch, pinned by gentle-ai-nix, and
-    # Engram's release candidate for both the binary and Pi's plugin.
-    gentlePiRelease = "main";
-    engramRelease = "rc";
+    # Engram takes the channel `components.engram.release` starts at: `stable`,
+    # the newest tagged release, whose Pi plugin comes from npm pinned to the
+    # exact version that release ships. Naming it is only for taking `main`,
+    # which is where the plugin line moves ahead of the last tag.
 
     backgroundSubagents = {
       opencode = "on";
