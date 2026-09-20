@@ -66,7 +66,7 @@ Put a setting in a host/profile directory when it is machine- or role-specific. 
 
 ## AI Harness
 
-`home-manager/global/ai-harness-gentle-ai.nix` declares the harness Gentle AI renders for Pi, OpenCode, Claude Code and Codex, and layers our own assets under `ai/` onto it. Grok and Agens take a copy of another client's rendered harness.
+`home-manager/global/ai-harness-gentle-ai.nix` declares the harness Gentle AI renders for Pi, OpenCode, Claude Code and Codex, and layers our own assets under `ai/` onto it. Grok takes the harness from another client's render, under its own directory names.
 
 - Static skills, agents, commands, prompts, and policy files are projected by Home Manager, generally as Nix store symlinks.
 - Fully owned secret-bearing configs are rendered at activation from tracked placeholder templates.

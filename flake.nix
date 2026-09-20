@@ -281,7 +281,6 @@
                 grokPolicyDelivery = sourceForTarget ".grok/AGENTS.md";
                 grokSkillsDelivery = sourceForTarget ".grok/skills";
                 renderedRoot = self.homeConfigurations."iperez@epsilon".config.programs.gentle-ai.rendered;
-                agensActivation = self.homeConfigurations."iperez@epsilon".activationPackage;
               })
               ''
                 set -eu
@@ -345,10 +344,6 @@
                 if "upstream-ai-sync" in local_skill_names:
                     raise SystemExit("upstream-ai-sync must be removed from ai/skills")
 
-                # agens is excluded here: its `delivery = "copy"` materializes
-                # skills imperatively at activation, not as a Nix store path this
-                # build-time check can read; the activation-script assertion below
-                # is what covers it.
                 client_skills_dirs = {
                     "claude-code": rendered_root / ".claude/skills",
                     "opencode": rendered_root / ".config/opencode/skills",
@@ -373,8 +368,6 @@
 
                 if (delivery_root / ".agents/skills").exists():
                     raise SystemExit(".agents/skills is retired and must no longer be delivered")
-                if not (Path(__import__("os").environ["agensActivation"]) / "activate").is_file():
-                    raise SystemExit("Agens copy activation was not generated")
 
                 policies = {
                     "OpenCode": delivery_root / ".config/opencode/AGENTS.md",

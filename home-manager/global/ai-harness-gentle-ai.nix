@@ -4,7 +4,7 @@
 # produces the tree, so a change to how Gentle AI renders arrives with the
 # package rather than needing a vendored copy re-synced.
 #
-# Clients Gentle AI has no adapter for -- grok and agens -- receive the harness
+# A client Gentle AI has no adapter for -- grok -- receives the harness
 # another client produced. Files carrying a credential are written at
 # activation, and the two the client also writes are merged into rather than
 # replaced, because they hold state Claude Code and Codex own themselves.
@@ -53,12 +53,12 @@ let
   # described it as where an old, now-obsolete external asset hub used to
   # sync skills -- not a path any current client reads.
   #
-  # grok, claude-work and agens need no entry here: `customProviders` copies
+  # grok and claude-work need no entry here: `customProviders` copies
   # their harness from `programs.gentle-ai.rendered`, the tree *after*
   # extraFiles is applied (see docs/options.md's `rendered` and
   # `customProviders.<name>.from` entries), so the skills this overlay
   # places under opencode's and claude-code's directories are already
-  # present in what grok (from opencode) and claude-work/agens (from
+  # present in what grok (from opencode) and claude-work (from
   # claude-code) copy. A second entry for them would only risk the same
   # skill landing twice for one client.
   localSkillsTargets = {
@@ -458,8 +458,6 @@ in
     };
 
     # Neither has a Gentle AI adapter, and both read the same kind of harness.
-    # Agens takes copies because its loader opens agents and skills with
-    # O_NOFOLLOW and rejects anything reached through a symbolic link.
     customProviders = {
       # Grok reads agents from `agents/`, where OpenCode uses `agent/`, so the
       # directory is renamed on the way rather than the harness being rebuilt
@@ -495,31 +493,6 @@ in
           # "engram-protocol.md" = "engram-protocol.md";
         };
       };
-
-      agens = {
-        root = ".config/agens";
-        from = "claude-code";
-        delivery = "copy";
-
-        # Agens requires `mode:` in every agent definition and skips one that
-        # lacks it, silently, into discovery diagnostics -- the Claude Code
-        # dialect these files arrive in has no such field. Filled only where
-        # missing, so a definition that states its own mode keeps it.
-        frontmatterDefaults.agents.mode = "subagent";
-
-        # The copies arrive readable, but the harness cross-references itself by
-        # path, and those paths named .claude. Every one of them resolves to a
-        # store symlink, which is the shape agens refuses, so it was being sent
-        # to files it cannot open while holding a readable copy of each one.
-        rewriteReferences = true;
-
-        assets = {
-          "CLAUDE.md" = "AGENTS.md";
-          agents = "agents";
-          commands = "commands";
-          skills = "skills";
-        };
-      };
     };
 
     # Preserve the writable work-profile settings merge for client-owned state.
@@ -539,7 +512,7 @@ in
       claude-policy = ownPolicy ".claude/CLAUDE.md" "claude";
       codex-policy = ownPolicy ".codex/AGENTS.md" "codex";
 
-      # Agens borrows Claude's post-overlay CLAUDE.md, while Grok owns AGENTS.md
+      # Grok owns AGENTS.md
       # outside its borrowed assets. Pi and Grok receive the compact local appendix
       # before Par, which must remain the exact suffix for each delivered policy.
       pi-local-policy = ownPolicy ".pi/agent/AGENTS.md" "pi-grok";
@@ -552,7 +525,7 @@ in
 
       # Locally authored skills are wired above, through `localSkills`, into
       # every client that has a skills directory (or, for Pi, should have
-      # one). See its comment for why grok/claude-work/agens and
+      # one). See its comment for why grok/claude-work and
       # `.agents/skills` need nothing here.
 
       opencode-commands = own ".config/opencode/command" "command";
