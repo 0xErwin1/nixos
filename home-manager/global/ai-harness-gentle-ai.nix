@@ -534,7 +534,6 @@ in
       grok-own = ownTree ".grok" "grok";
       opencode-own = ownTree ".config/opencode" "opencode";
       claude-own = ownTree ".claude" "claude";
-      codex-own = ownTree ".codex" "codex";
 
       opencode-policy = ownPolicy ".config/opencode/AGENTS.md" "opencode";
       claude-policy = ownPolicy ".claude/CLAUDE.md" "claude";

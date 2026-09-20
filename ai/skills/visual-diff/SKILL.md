@@ -1,6 +1,6 @@
 ---
 name: visual-diff
-description: "Compare a design reference (Figma, Zeplin, XD, screenshot, URL) against a live web or mobile UI via structured checklist. Trigger: visual diff in sdd-run-testing."
+description: "Compare a design reference (Figma, Zeplin, XD, screenshot, URL) against a live web or mobile UI via structured checklist. Trigger: visual diff during a testing run."
 license: Apache-2.0
 metadata:
   author: iperez
@@ -8,7 +8,7 @@ metadata:
 ---
 
 > NOTE: This skill is DRAFT. The checklist approach and output format are defined here, but the
-> implementation inside `sdd-run-testing` is still best-effort. The agent follows this spec to the
+> implementation inside the testing run is still best-effort. The agent follows this spec to the
 > extent that available tools allow. Actual automation depth depends on the active engine and tools.
 
 ## Engine Compatibility
@@ -24,7 +24,7 @@ Cross-browser visual coverage (Chromium + Firefox + WebKit) still requires `engi
 
 ## When to Use
 
-Apply this skill in `sdd-run-testing` when:
+Apply this skill during a testing run when:
 
 - The test plan marks a test case as `visual diff: yes`.
 - A design reference is available in the plan or in `TESTING_CONTEXT.md`.
@@ -115,10 +115,10 @@ Do NOT check:
 - Animation timing
 - Content that varies by user or session (avatars, names, dates)
 
-## Integration with `sdd-run-testing`
+## Integration with the testing run
 
-The `sdd-run-testing` agent calls this skill's logic inline. It does not invoke a sub-agent.
+The testing run calls this skill's logic inline. It does not invoke a sub-agent.
 The agent reads this file, applies the checklist methodology, and includes the checklist output
-in the run artifact that `sdd-report-testing` reads.
+in the run artifact the report step reads.
 
 > NOTE: When no MCP or tool can extract specs from the design reference, the agent falls back to visual inspection from a screenshot or rendered URL. If no reference is accessible at all, note the gap in the run artifact and skip visual diff for that test case. It MUST NOT fail the entire run.
