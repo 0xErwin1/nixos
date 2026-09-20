@@ -16,7 +16,7 @@ from pathlib import Path
 
 REPOSITORY = Path(__file__).resolve().parent.parent
 CANONICAL_AI = REPOSITORY / "ai"
-REQUIRED_CLIENT_SKILLS = {"sdd-testing-context", "setup-testing", "visual-diff"}
+REQUIRED_CLIENT_SKILLS = {"setup-testing", "visual-diff"}
 UNSUPPORTED_CLAUDE_SYNTAX = (
     "AskUserQuestion",
     "## Model Assignments",

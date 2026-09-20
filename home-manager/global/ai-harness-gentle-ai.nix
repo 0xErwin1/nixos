@@ -341,16 +341,6 @@ in
               phases = {
                 jd-judge-a = models.effort.low astra;
                 jd-judge-b = models.effort.low astra;
-                sdd-design = models.effort.low astra;
-                sdd-proposal = models.effort.low astra;
-                sdd-init = models.effort.low luna;
-                sdd-status = models.effort.low luna;
-                sdd-sync = models.effort.low luna;
-                sdd-explore = models.effort.medium terra;
-                sdd-research = models.effort.medium terra;
-                sdd-verify = models.effort.medium terra;
-                sdd-spec = models.effort.high terra;
-                sdd-tasks = models.effort.high terra;
                 gentle-ai-explore = models.effort.high terra;
                 gentle-ai-verify = models.effort.high terra;
                 gentle-ai-worker = models.effort.medium terra;
@@ -360,22 +350,11 @@ in
             nan = {
               orchestrator = models.effort.high deepseekV4Flash;
               phases = {
-                sdd-explore = models.effort.high glm53Flash;
-                sdd-spec = models.effort.high glm53Flash;
-                sdd-design = models.effort.high deepseekV4Flash;
-                sdd-verify = models.effort.high deepseekV4Flash;
-                sdd-sync = models.effort.high glm53Flash;
-                sdd-archive = models.effort.medium glm53Flash;
-                sdd-apply = models.effort.high glm53Flash;
                 jd-judge-a = models.effort.high glm53Flash;
                 jd-judge-b = models.effort.high deepseekV4Flash;
                 jd-fix-agent = models.effort.high glm53Flash;
                 review-risk = models.effort.high glm53Flash;
                 review-refuter = models.effort.high deepseekV4Flash;
-                sdd-research = models.effort.high deepseekV4Flash;
-                sdd-proposal = models.effort.high deepseekV4Flash;
-                sdd-tasks = models.effort.high deepseekV4Flash;
-                sdd-onboard = models.effort.high deepseekV4Flash;
                 gentle-ai-worker = models.effort.high glm53Flash;
                 gentle-ai-explore = models.effort.high deepseekV4Flash;
                 gentle-ai-verify = models.effort.high deepseekV4Flash;
@@ -383,26 +362,12 @@ in
                 review-reliability = models.effort.high deepseekV4Flash;
                 review-resilience = models.effort.high deepseekV4Flash;
                 review-validator = models.effort.high deepseekV4Flash;
-                sdd-status = models.effort.high deepseekV4Flash;
-                sdd-init = models.effort.high qwen38Flash;
               };
             };
 
             performance = {
               orchestrator = models.effort.high astra;
               phases = {
-                sdd-init = models.effort.medium sol;
-                sdd-onboard = models.effort.medium sol;
-                sdd-status = models.effort.medium sol;
-                sdd-sync = models.effort.medium sol;
-                sdd-explore = models.effort.high terra;
-                sdd-spec = models.effort.high terra;
-                sdd-tasks = models.effort.high terra;
-                sdd-apply = models.effort.low astra;
-                sdd-archive = models.effort.high luna;
-                sdd-proposal = models.effort.low astra;
-                sdd-design = models.effort.low astra;
-                sdd-verify = models.effort.low astra;
                 jd-judge-a = models.effort.low astra;
                 jd-judge-b = models.effort.low astra;
                 jd-fix-agent = models.effort.high terra;
@@ -527,7 +492,6 @@ in
           # Upstream embeds these contracts in CLAUDE.md/settings.json rather
           # than rendering separate files; mapping them would create broken links.
           # hooks = "hooks";
-          # "sdd-orchestrator.md" = "sdd-orchestrator.md";
           # "engram-protocol.md" = "engram-protocol.md";
         };
       };
@@ -592,19 +556,13 @@ in
       # one). See its comment for why grok/claude-work/agens and
       # `.agents/skills` need nothing here.
 
-      opencode-orchestrator = own ".config/opencode/ORCHESTRATOR.md" "opencode/ORCHESTRATOR.md";
       opencode-commands = own ".config/opencode/command" "command";
       opencode-tui = own ".config/opencode/tui.json" "opencode/tui.json";
 
-      claude-orchestrator = own ".claude/sdd-orchestrator.md" "claude/sdd-orchestrator.md";
       claude-engram-protocol = own ".claude/engram-protocol.md" "claude/engram-protocol.md";
 
-      codex-orchestrator = own ".codex/sdd-orchestrator.md" "codex/sdd-orchestrator.md";
       codex-engram-instructions = own ".codex/engram-instructions.md" "codex/engram-instructions.md";
       codex-engram-compact-prompt = own ".codex/engram-compact-prompt.md" "codex/engram-compact-prompt.md";
-      codex-sdd-strong = own ".codex/sdd-strong.config.toml" "codex/sdd-strong.config.toml";
-      codex-sdd-mid = own ".codex/sdd-mid.config.toml" "codex/sdd-mid.config.toml";
-      codex-sdd-cheap = own ".codex/sdd-cheap.config.toml" "codex/sdd-cheap.config.toml";
 
       herdr-claude-hooks = {
         target = ".claude/settings.json";

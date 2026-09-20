@@ -357,15 +357,6 @@ These gates are independent of the opt-in SDD routing above and fire on intent f
 3. **Sequential mode for irreversible operations.** When a task touches production or is irreversible (gate 2), disable parallel fan-out: run one worker per step, synthesize its result back to the user, and confirm before the next step. The "delegate heavy work" default and parallel launches are for reversible work only. Never let the user lose the thread of what changed and when — if they have to ask "when did this happen?", the fan-out was already wrong.
 4. **Plan approval for substantial + irreversible work.** When a change is both large — a broad change carrying open design decisions — and irreversible (gate 2), you MUST surface an explicit, approvable plan — the SDD path, or an inline plan the user signs off on — before the first write or destructive command. Skipping straight to execution on this class of work is a defect regardless of how ready the plan looks.
 
-### SDD Workflow & Testing (lazy-loaded)
-
-The detailed SDD procedure, execution-mode selection, sub-agent bindings, and the full testing pipeline are intentionally NOT embedded here, to keep the always-on file thin. The orchestrator role and delegation rules above stay always active.
-
-Before handling an explicit `/sdd-*` command, explicit natural-language SDD request, an accepted proposal, or a testing-pipeline intent, read `~/.grok/ORCHESTRATOR.md` and follow it (plus `judgment-day` when the user explicitly asks for juicio):
-
-- Use it for explicit SDD commands, SDD or Judgment-Day / 4R phase delegation, and testing-pipeline requests.
-
-
 <!-- gentle-ai:codegraph-guidance -->
 ## CodeGraph
 
