@@ -291,7 +291,6 @@ in
         # The tip of gentle-shell's main branch, pinned by gentle-ai-nix,
         # instead of the npm release that flake supports.
         release = "main";
-
         mcpServers = serversFor "pi";
         packages = {
           "@gtrabanco/pi-nan-provider" = "npm:@gtrabanco/pi-nan-provider";
@@ -317,6 +316,7 @@ in
         # is the declarative form of applying it in /gentle:profiles, so a
         # switch is what a profile change takes. An agent a profile does not
         # name inherits whatever routing is in force outside the profile.
+        activeProfile = "codex";
         profiles =
           let
             # The provider ids Pi resolves on this machine; `for` turns each one
@@ -327,8 +327,8 @@ in
               codex = "openai-codex";
               nan = "nan";
             };
-            sol = providers.onCodex "gpt-5.6-sol";
-            luna = providers.onCodex "gpt-5.6-luna";
+            sol = providers.onCodex "gpt-6-sol";
+            luna = providers.onCodex "gpt-6-luna";
             terra = providers.onCodex "gpt-5.6-terra";
             astra = providers.onCodex "gpt-6-astra";
             glm53Flash = providers.onNan "glm5.3-flash";
@@ -337,13 +337,20 @@ in
           in
           {
             codex = {
-              orchestrator = models.effort.high astra;
+              orchestrator = models.effort.medium sol;
               phases = {
-                jd-judge-a = models.effort.low astra;
-                jd-judge-b = models.effort.low astra;
-                gentle-ai-explore = models.effort.high terra;
-                gentle-ai-verify = models.effort.high terra;
-                gentle-ai-worker = models.effort.medium terra;
+                jd-judge-a = models.effort.high sol;
+                jd-judge-b = models.effort.high sol;
+                jd-fix-agent = models.effort.low sol;
+                gentle-ai-explore = models.effort.high luna;
+                gentle-ai-verify = models.effort.high sol;
+                gentle-ai-worker = models.effort.low sol;
+                review-readability = models.effort.high sol;
+                review-refuter = models.effort.high sol;
+                review-reliability = models.effort.high sol;
+                review-resilience = models.effort.high sol;
+                review-risk = models.effort.high sol;
+                review-validator = models.effort.high sol;
               };
             };
 
@@ -354,10 +361,10 @@ in
                 jd-judge-b = models.effort.high deepseekV4Flash;
                 jd-fix-agent = models.effort.high glm53Flash;
                 review-risk = models.effort.high glm53Flash;
-                review-refuter = models.effort.high deepseekV4Flash;
                 gentle-ai-worker = models.effort.high glm53Flash;
                 gentle-ai-explore = models.effort.high deepseekV4Flash;
                 gentle-ai-verify = models.effort.high deepseekV4Flash;
+                review-refuter = models.effort.high deepseekV4Flash;
                 review-readability = models.effort.high deepseekV4Flash;
                 review-reliability = models.effort.high deepseekV4Flash;
                 review-resilience = models.effort.high deepseekV4Flash;
@@ -365,15 +372,15 @@ in
               };
             };
 
-            performance = {
+            mixed = {
               orchestrator = models.effort.high astra;
               phases = {
                 jd-judge-a = models.effort.low astra;
-                jd-judge-b = models.effort.low astra;
-                jd-fix-agent = models.effort.high terra;
-                gentle-ai-explore = models.effort.high terra;
+                jd-judge-b = models.effort.high deepseekV4Flash;
+                jd-fix-agent = models.effort.high glm53Flash;
+                gentle-ai-explore = models.effort.high deepseekV4Flash;
+                gentle-ai-worker = models.effort.high glm53Flash;
                 gentle-ai-verify = models.effort.low astra;
-                gentle-ai-worker = models.effort.high terra;
                 review-readability = models.effort.low astra;
                 review-refuter = models.effort.low astra;
                 review-reliability = models.effort.low astra;
@@ -383,7 +390,6 @@ in
               };
             };
           };
-        activeProfile = "nan";
       };
     };
 
@@ -439,7 +445,12 @@ in
           path = ".pi/agent/settings.json";
           unionLists = [ "packages" ];
         }
-        ".pi/npm/package.json"
+        # Pi's npm manifest moved under the agent directory (upstream's Pi
+        # adapter now writes <agentDir>/npm/package.json, citing Pi's own
+        # package-manager.ts), so this merge target follows it; the old
+        # .pi/npm/package.json is no longer rendered and left the merge step
+        # without a fragment to merge.
+        ".pi/agent/npm/package.json"
 
         # Gentle AI never renders Pi's engram configuration: its adapter
         # short-circuits the shared injection and defers mcp.json to
@@ -497,7 +508,7 @@ in
 
     # Preserve the writable work-profile settings merge for client-owned state.
     overrideRendered = withWorkSettings;
-
+    runtimeWritablePaths = [ ".pi/gentle-ai/profiles.json" ];
     extraFiles = localSkills // {
       opencode-engram-plugin = {
         target = ".config/opencode/plugins/engram.ts";
