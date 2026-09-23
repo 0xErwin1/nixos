@@ -10,8 +10,18 @@ let
     hash = "sha256-vKYQuDCOjZnzLm/kGX5+wBZ5Jk7+0MrJFA/pwp8fv30=";
   };
 
+  cudaPackages = pkgs.cudaPackages_13.overrideScope (
+    _final: prev: {
+      cccl = prev.cccl.overrideAttrs (old: {
+        patches = builtins.filter
+          (patch: !(pkgs.lib.hasInfix "fix-invalid-cpp-syntax" (toString patch)))
+          (old.patches or [ ]);
+      });
+    }
+  );
+
   runtimeLibraryPath = pkgs.lib.makeLibraryPath (
-    (with pkgs.cudaPackages_13; [
+    (with cudaPackages; [
       cuda_cudart
       cuda_nvrtc
       libcublas
