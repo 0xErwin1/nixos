@@ -129,9 +129,6 @@ let
   # the secret env files below, so nothing here reaches the Nix store as a
   # credential.
   sharedServers = {
-    atlas = remote "https://atlas.iperez.dev/mcp" {
-      Authorization = "Bearer @ATLAS_TOKEN@";
-    };
     context7 = remote "https://mcp.context7.com/mcp" {
       CONTEXT7_API_KEY = "@CONTEXT7_API_KEY@";
     };
@@ -155,12 +152,23 @@ let
     ];
   };
 
-  # dbflux is told which client connected, so it is the one server that cannot
-  # be shared: each client names itself.
+  # Pi authenticates to Atlas with its own token, every other client shares one.
+  atlasFor =
+    client:
+    let
+      token = if client == "pi" then "PI_ATLAS_TOKEN" else "CLAUDE_ATLAS_TOKEN";
+    in
+    remote "https://atlas.iperez.dev/mcp" {
+      Authorization = "Bearer @${token}@";
+    };
+
+  # atlas and dbflux depend on which client connected, so they cannot be
+  # shared: dbflux is told the client's name and atlas picks its token from it.
   serversFor =
     client:
     sharedServers
     // {
+      atlas = atlasFor client;
       dbflux = local "dbflux-nightly" [
         "mcp"
         "--client-id"
