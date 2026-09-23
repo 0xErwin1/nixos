@@ -17,6 +17,15 @@ in
   programs = {
     eza.enable = true;
     bat.enable = true;
+    atuin = {
+      enable = true;
+      enableZshIntegration = true;
+      flags = [ "--disable-up-arrow" ];
+      settings = {
+        auto_sync = false;
+        update_check = false;
+      };
+    };
     fzf = {
       enable = true;
       enableZshIntegration = true;
