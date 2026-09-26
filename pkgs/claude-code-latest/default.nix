@@ -67,6 +67,16 @@ pkgs.buildFHSEnv {
 
   profile = ''
     export DISABLE_AUTOUPDATER="\''${DISABLE_AUTOUPDATER:-1}"
+
+    # The bwrap sandbox has no /etc/subuid and sets no_new_privs, so a local
+    # rootless podman would create a single-UID pause namespace that every
+    # later podman call of this user then joins. Route through the host API.
+    podman_socket="''${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/podman/podman.sock"
+    if [ -S "$podman_socket" ]; then
+      export CONTAINER_HOST="''${CONTAINER_HOST:-unix://$podman_socket}"
+      export DOCKER_HOST="''${DOCKER_HOST:-unix://$podman_socket}"
+    fi
+    unset podman_socket
   '';
 
   extraInstallCommands = ''
