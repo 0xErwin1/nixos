@@ -302,6 +302,7 @@ in
         mcpServers = serversFor "pi";
         packages = {
           "@gtrabanco/pi-nan-provider" = "npm:@gtrabanco/pi-nan-provider";
+          "pi-claude-bridge" = "npm:pi-claude-bridge";
         };
         provisionPackages = true;
 
@@ -334,6 +335,7 @@ in
             providers = models.for {
               codex = "openai-codex";
               nan = "nan";
+              claude = "claude-bridge";
             };
             sol = providers.onCodex "gpt-6-sol";
             luna = providers.onCodex "gpt-6-luna";
@@ -342,6 +344,8 @@ in
             glm53Flash = providers.onNan "glm5.3-flash";
             deepseekV4Flash = providers.onNan "deepseek-v4-flash";
             qwen38Flash = providers.onNan "qwen3.8-flash";
+            opus = providers.onClaude "claude-opus-5-5";
+            sonnet = providers.onClaude "claude-sonnet-5";
           in
           {
             codex = {
@@ -380,21 +384,57 @@ in
               };
             };
 
-            mixed = {
-              orchestrator = models.effort.high astra;
+            mixedCodex = {
+              orchestrator = models.effort.medium sol;
               phases = {
-                jd-judge-a = models.effort.low astra;
+                jd-judge-a = models.effort.high sol;
                 jd-judge-b = models.effort.high deepseekV4Flash;
                 jd-fix-agent = models.effort.high glm53Flash;
                 gentle-ai-explore = models.effort.high deepseekV4Flash;
                 gentle-ai-worker = models.effort.high glm53Flash;
-                gentle-ai-verify = models.effort.low astra;
-                review-readability = models.effort.low astra;
-                review-refuter = models.effort.low astra;
-                review-reliability = models.effort.low astra;
-                review-resilience = models.effort.low astra;
-                review-risk = models.effort.low astra;
-                review-validator = models.effort.low astra;
+                gentle-ai-verify = models.effort.high sol;
+                review-readability = models.effort.high sol;
+                review-refuter = models.effort.high sol;
+                review-reliability = models.effort.high sol;
+                review-resilience = models.effort.high sol;
+                review-risk = models.effort.high sol;
+                review-validator = models.effort.high sol;
+              };
+            };
+
+            mixedClaude = {
+              orchestrator = models.effort.high opus;
+              phases = {
+                jd-judge-a = models.effort.high opus;
+                jd-judge-b = models.effort.high deepseekV4Flash;
+                jd-fix-agent = models.effort.high deepseekV4Flash;
+                gentle-ai-explore = models.effort.high deepseekV4Flash;
+                gentle-ai-worker = models.effort.high glm53Flash;
+                gentle-ai-verify = models.effort.high opus;
+                review-readability = models.effort.high opus;
+                review-refuter = models.effort.high opus;
+                review-reliability = models.effort.high opus;
+                review-resilience = models.effort.high opus;
+                review-risk = models.effort.high opus;
+                review-validator = models.effort.high opus;
+              };
+            };
+
+            claude = {
+              orchestrator = models.effort.high opus;
+              phases = {
+                gentle-ai-explore = models.effort.high sonnet;
+                gentle-ai-worker = models.effort.high sonnet;
+                gentle-ai-verify = models.effort.high opus;
+                jd-judge-a = models.effort.high opus;
+                jd-judge-b = models.effort.high opus;
+                jd-fix-agent = models.effort.high sonnet;
+                review-readability = models.effort.high opus;
+                review-refuter = models.effort.high opus;
+                review-reliability = models.effort.high opus;
+                review-resilience = models.effort.high opus;
+                review-risk = models.effort.high opus;
+                review-validator = models.effort.high opus;
               };
             };
           };
@@ -516,7 +556,10 @@ in
 
     # Preserve the writable work-profile settings merge for client-owned state.
     overrideRendered = withWorkSettings;
-    runtimeWritablePaths = [ ".pi/gentle-ai/profiles.json" ];
+    runtimeWritablePaths = [
+      ".pi/gentle-ai/profiles.json"
+      ".pi/gentle-ai/models.json"
+    ];
     extraFiles = localSkills // {
       opencode-engram-plugin = {
         target = ".config/opencode/plugins/engram.ts";
