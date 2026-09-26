@@ -168,11 +168,11 @@ in
         "v." = "nvim .";
         zed = "zeditor";
         "z." = "zeditor .";
-        ls = "eza --group-directories-first --icons";
+        ls = "eza --group-directories-first --icons=auto";
         la = "eza --group-directories-first --icons -a";
         ll = "eza --group-directories-first --icons -l";
         c = "bat --style=plain --color=always --paging=never";
-        tree = "eza -T --icons";
+        tree = "eza -T --icons=auto";
         up = "docker compose up";
         upt = "docker compose -f docker-compose.test.yml up --abort-on-container-exit";
         down = "docker compose down";
