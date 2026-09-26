@@ -8,17 +8,17 @@ let
     ;
 
   pname = "opencode";
-  version = "1.18.27";
+  version = "1.18.32";
 
   sources = {
     x86_64-linux = {
       archive = "opencode-linux-x64-baseline.tar.gz";
-      hash = "sha256-eYEKWc0KgF6syJdTTVUU4ooEKpCGedA3hEeiBRhBvRA=";
+      hash = "sha256-djrzhu+IqMqxjfAPzwVWkOWlXjGnCIvqvgIwcUKmrc4=";
     };
 
     aarch64-linux = {
       archive = "opencode-linux-arm64.tar.gz";
-      hash = "sha256-jLwTTrXhALr2HucZYVD1A+NSBW5wMnbi2GN8OLr9LDk=";
+      hash = "sha256-VoRht9TYwZhlyX6aEQLmEwScYDnQH+dyFU3oc8GGWEA=";
     };
   };
 
