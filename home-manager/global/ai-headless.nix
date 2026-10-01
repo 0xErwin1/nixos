@@ -28,7 +28,7 @@
     ccstatusline
     grok-build
     maestro
-    pi-coding-agent
+    pi-coding-agent-latest
     tuicr
   ];
 }

@@ -6,6 +6,7 @@
     ../global
     ../global/git.nix
     ../global/xdg.nix
+    ../global/phone-automount.nix
     ../global/zed
     ../global/font.nix
     ../global/window-managers/hyprland

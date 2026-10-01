@@ -101,11 +101,22 @@
             dbflux-nightly = inputs.dbflux.packages.${final.stdenv.hostPlatform.system}.dbflux-nightly;
             brave-origin-nightly = final.callPackage "${self}/pkgs/brave-origin-nightly" { };
             claude-code-latest = final.callPackage "${self}/pkgs/claude-code-latest" { };
+            pi-coding-agent-latest = final.callPackage "${self}/pkgs/pi-coding-agent-latest" { };
             claude-desktop = final.callPackage "${self}/pkgs/claude-desktop" { };
             ccstatusline = final.callPackage "${self}/pkgs/ccstatusline" { };
             gentle-pi-runtime-repair = final.callPackage "${self}/pkgs/gentle-pi-runtime-repair" { };
             helium = final.callPackage "${self}/pkgs/helium" { };
-            agent-integrations = final.callPackage "${self}/pkgs/agent-integrations";
+            herdr =
+              if final.stdenv.hostPlatform.isLinux then
+                prev.herdr.overrideAttrs (old: {
+                  # BFD rejects overlapping FDEs in the Zig-built Ghostty archive.
+                  nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [ final.llvmPackages.lld ];
+                  env = (old.env or { }) // {
+                    RUSTFLAGS = "${(old.env or { }).RUSTFLAGS or (old.RUSTFLAGS or "")} -C link-arg=-fuse-ld=lld";
+                  };
+                })
+              else
+                prev.herdr;
             opencode = final.callPackage "${self}/pkgs/opencode" { };
             tuicr = final.callPackage "${self}/pkgs/tuicr" { };
             maestro-studio = final.callPackage "${self}/pkgs/maestro-studio" { };
@@ -423,7 +434,7 @@
                         raise SystemExit(f"Claude MCP was not rendered: {name}")
                 if not (rendered_root / ".config/opencode/opencode.json").is_file():
                     raise SystemExit("OpenCode MCP configuration was not rendered")
-                if not (rendered_root / ".pi/agent/mcp.json").is_file():
+                if not (rendered_root / ".pi/agent/mcp-adapter.json").is_file():
                     raise SystemExit("Pi MCP configuration was not rendered")
 
                 manifest = json.loads((rendered_root.parent / "manifest.json").read_text())

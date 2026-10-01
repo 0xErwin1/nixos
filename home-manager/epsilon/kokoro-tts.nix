@@ -11,7 +11,24 @@ let
   };
 
   cudaPackages = pkgs.cudaPackages_13.overrideScope (
-    _final: prev: {
+    _final: prev:
+    let
+      normalizePropagatedBuildOutputs = package: package.overrideAttrs (old: {
+        # CUDA's preFixup hook assigns a string without clearing the array type.
+        # Keep the Nix list, but normalize before that hook and output propagation.
+        preFixup = (old.preFixup or "") + ''
+          unset propagatedBuildOutputs
+          export propagatedBuildOutputs=${pkgs.lib.escapeShellArg (pkgs.lib.concatStringsSep " " old.propagatedBuildOutputs)}
+        '';
+      });
+    in
+    {
+      cuda_nvrtc = normalizePropagatedBuildOutputs prev.cuda_nvrtc;
+      libcublas = normalizePropagatedBuildOutputs prev.libcublas;
+      libcufft = normalizePropagatedBuildOutputs prev.libcufft;
+      libcurand = normalizePropagatedBuildOutputs prev.libcurand;
+      libnvjitlink = normalizePropagatedBuildOutputs prev.libnvjitlink;
+      cudnn = normalizePropagatedBuildOutputs prev.cudnn;
       cccl = prev.cccl.overrideAttrs (old: {
         patches = builtins.filter
           (patch: !(pkgs.lib.hasInfix "fix-invalid-cpp-syntax" (toString patch)))

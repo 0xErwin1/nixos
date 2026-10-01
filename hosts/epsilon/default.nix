@@ -40,6 +40,8 @@
   };
 
   services = {
+    gvfs.enable = true;
+    usbmuxd.enable = true;
     seatd.enable = true;
     xserver = {
       enable = true;

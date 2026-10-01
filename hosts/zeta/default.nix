@@ -27,6 +27,8 @@
   };
 
   services = {
+    gvfs.enable = true;
+    usbmuxd.enable = true;
     fprintd.enable = true;
     resolved.enable = true;
     fwupd.enable = true;

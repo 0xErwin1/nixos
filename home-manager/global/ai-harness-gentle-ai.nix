@@ -95,33 +95,6 @@ let
 
   secretsDirectory = "${config.home.homeDirectory}/.config/ai-harness/secrets";
 
-  # herdr's own installer writes into the same files this harness renders, so
-  # the hooks are generated once here against a placeholder home and then
-  # layered as content, keeping them reproducible and rebasing their paths.
-  integrations = pkgs.agent-integrations { inherit (config.home) homeDirectory; };
-
-  registered = target: source: {
-    inherit target;
-    source = "${integrations}/${source}";
-  };
-
-  claudeHookEvents = [
-    "PermissionRequest"
-    "PostToolUse"
-    "PreToolUse"
-    "SessionEnd"
-    "SessionStart"
-    "Stop"
-    "UserPromptSubmit"
-  ];
-
-  codexHookEvents = [
-    "PermissionRequest"
-    "SessionStart"
-    "Stop"
-    "UserPromptSubmit"
-  ];
-
   remote = url: headers: { inherit url headers; };
   local = command: args: { inherit command args; };
 
@@ -133,7 +106,6 @@ let
       CONTEXT7_API_KEY = "@CONTEXT7_API_KEY@";
     };
     penpot = remote "https://penpot.iperez.dev/mcp/stream?userToken=@PENPOT_API_KEY@" { };
-
     aws = (local "uvx" [ "awslabs.aws-documentation-mcp-server@latest" ]) // {
       env = {
         AWS_DOCUMENTATION_PARTITION = "aws";
@@ -145,10 +117,9 @@ let
       "@mauricio.wolff/mcp-obsidian@latest"
       "${config.home.homeDirectory}/Atlas"
     ];
-    clickup = local "npx" [
-      "-y"
-      "mcp-remote"
-      "https://mcp.clickup.com/mcp"
+    "dbflux-ui" = local "/home/iperez/dev/personal/Rust/dbflux-worktree/main/target/debug/gpui-mcp" [
+      "--app-id"
+      "dbflux"
     ];
   };
 
@@ -232,6 +203,7 @@ in
 
       claude-code = {
         enable = true;
+        mcpServers = serversFor "claude";
         settings = {
           model = "opus[1m]";
           workflowKeywordTriggerEnabled = false;
@@ -318,14 +290,12 @@ in
         # to the compatibility repair below; the global CLI is not an equivalent.
         provisionEnvironment.GENTLE_PI_SKIP_GENTLE_AI_INSTALL = "1";
         settings.theme = "Gentle";
-        modelPreset = "recommended";
-        modelFamily = "codex";
         # gentle-pi agent profiles carry the whole routing: the orchestrator Pi
         # itself runs on and the model each phase agent gets. Naming one active
         # is the declarative form of applying it in /gentle:profiles, so a
         # switch is what a profile change takes. An agent a profile does not
         # name inherits whatever routing is in force outside the profile.
-        activeProfile = "codex";
+        activeProfile = "mixedCodex";
         profiles =
           let
             # The provider ids Pi resolves on this machine; `for` turns each one
@@ -337,7 +307,7 @@ in
               nan = "nan";
               claude = "claude-bridge";
             };
-            sol = providers.onCodex "gpt-6-sol";
+            sol = providers.onCodex "gpt-6.1-sol";
             luna = providers.onCodex "gpt-6-luna";
             terra = providers.onCodex "gpt-5.6-terra";
             astra = providers.onCodex "gpt-6-astra";
@@ -423,12 +393,12 @@ in
             claude = {
               orchestrator = models.effort.high opus;
               phases = {
-                gentle-ai-explore = models.effort.high sonnet;
-                gentle-ai-worker = models.effort.high sonnet;
+                gentle-ai-explore = models.effort.low opus;
+                gentle-ai-worker = models.effort.low opus;
                 gentle-ai-verify = models.effort.high opus;
                 jd-judge-a = models.effort.high opus;
                 jd-judge-b = models.effort.high opus;
-                jd-fix-agent = models.effort.high sonnet;
+                jd-fix-agent = models.effort.low opus;
                 review-readability = models.effort.high opus;
                 review-refuter = models.effort.high opus;
                 review-reliability = models.effort.high opus;
@@ -470,8 +440,6 @@ in
       pi = "on";
     };
 
-    mcpServers = serversFor "claude";
-
     # Every path here holds a credential once the placeholders resolve, so none
     # can be a store symlink. The first two are shared with the client itself --
     # Claude Code keeps its OAuth session and project history in .claude.json,
@@ -500,12 +468,10 @@ in
         # without a fragment to merge.
         ".pi/agent/npm/package.json"
 
-        # Gentle AI never renders Pi's engram configuration: its adapter
-        # short-circuits the shared injection and defers mcp.json to
-        # `pi-engram init`, which activation runs as a provisioning command.
-        # Replacing the file here would drop the entry that step wrote, so the
-        # declared servers merge into it instead.
-        ".pi/agent/mcp.json"
+        # Merge declared servers into the Pi MCP adapter's configuration so
+        # activation preserves any servers already present there. The separate
+        # mcp.json used by Pi and `pi-engram init` is not a rendered fragment.
+        ".pi/agent/mcp-adapter.json"
       ];
 
       paths = [
@@ -598,33 +564,6 @@ in
       codex-engram-instructions = own ".codex/engram-instructions.md" "codex/engram-instructions.md";
       codex-engram-compact-prompt = own ".codex/engram-compact-prompt.md" "codex/engram-compact-prompt.md";
 
-      herdr-claude-hooks = {
-        target = ".claude/settings.json";
-        source = "${integrations}/.claude/settings.json";
-        mode = "merge";
-        unionLists = map (event: "hooks.${event}") claudeHookEvents;
-      };
-
-      herdr-codex-feature = {
-        target = ".codex/config.toml";
-        source = "${integrations}/.codex/config.toml";
-        mode = "merge";
-      };
-
-      # Codex keeps its hooks in a file of their own, but Gentle AI writes its
-      # skill-registry hook into that same file, so this merges too.
-      herdr-codex-hooks = {
-        target = ".codex/hooks.json";
-        source = "${integrations}/.codex/hooks.json";
-        mode = "merge";
-        unionLists = map (event: "hooks.${event}") codexHookEvents;
-      };
-
-      herdr-claude-hook = registered ".claude/hooks/herdr-agent-state.sh" ".claude/hooks/herdr-agent-state.sh";
-      herdr-codex-hook = registered ".codex/herdr-agent-state.sh" ".codex/herdr-agent-state.sh";
-
-      herdr-opencode-plugin = registered ".config/opencode/plugins/herdr-agent-state.js" ".config/opencode/plugins/herdr-agent-state.js";
-      herdr-pi-extension = registered ".pi/agent/extensions/herdr-agent-state.ts" ".pi/agent/extensions/herdr-agent-state.ts";
     };
   };
 

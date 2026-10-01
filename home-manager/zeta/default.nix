@@ -5,6 +5,7 @@
     ../global/browser.nix
     ../global/terminal.nix
     ../global/xdg.nix
+    ../global/phone-automount.nix
     ../global/font.nix
     ../global/window-managers/hyprland
     ../global/audio.nix
