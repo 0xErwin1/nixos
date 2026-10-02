@@ -29,6 +29,18 @@
   # The Pi exposes its services to the other mesh nodes, as it did over wg0.
   networking.firewall.trustedInterfaces = [ "tailscale0" ];
 
+  # Offer only this host as an exit node while retaining the VPS subnet routes.
+  # tailscaled manages forwarding and SNAT with the existing iptables backend.
+  services.tailscale = {
+    useRoutingFeatures = lib.mkForce "both";
+    extraUpFlags = [ "--advertise-exit-node" ];
+    # Apply to an already enrolled node too: autoconnect skips `up` when Running.
+    extraSetFlags = [ "--advertise-exit-node" ];
+  };
+
+  # Reapply the advertised role after tailscaled restarts, not just at boot.
+  systemd.services.tailscaled-set.partOf = [ "tailscaled.service" ];
+
   # The kernel comes from the nixos-rk3588 board module (Armbian vendor
   # rk-6.1 BSP): it carries the rknpu driver for the NPU and its device tree
   # already defines vcc5v0_host, so the front USB 3.0 ports are powered
