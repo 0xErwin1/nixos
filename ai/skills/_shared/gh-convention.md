@@ -35,6 +35,11 @@ Before any command that reads from or writes to GitHub:
 - All GitHub content authored through `gh` (PR titles and bodies, issue text, review and reply comments) is written in English. Route the wording through `comment-writer` (comments) and `cognitive-doc-design` (PR/issue bodies and docs).
 - Never print, log, or commit tokens. Redact `gho_`, `ghp_`, and `github_pat_` values in any output you surface.
 
+### 5. Protocol to be used
+
+- SSH is ALWAYS prioritized over HTTP.
+- Never push with GH unless the user says otherwise.
+
 ## Decision Table
 
 | Situation | Action |

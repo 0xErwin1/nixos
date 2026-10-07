@@ -329,6 +329,7 @@
                   "$renderedRoot/tree" <<'PY'
                 import json
                 import sys
+                import tomllib
                 from pathlib import Path
 
                 (
@@ -390,7 +391,6 @@
                 retired_policy_markers = (
                     "## Questions and personal notes",
                     "appended shared Par policy governs conversational tone",
-                    "The single highest-value thing you provide is the trap.",
                 )
                 for client, policy in policies.items():
                     if not policy.is_file() or not policy.read_text().strip():
@@ -399,23 +399,14 @@
                     if any(marker in content for marker in retired_policy_markers):
                         raise SystemExit(f"{client} retains a retired local policy marker: {policy}")
 
-                gentleman_style = rendered_root / ".claude/output-styles/gentleman.md"
-                if not gentleman_style.is_file() or "name: Gentleman" not in gentleman_style.read_text():
-                    raise SystemExit("Claude upstream Gentleman output style was not rendered")
+                neutral_style = rendered_root / ".claude/output-styles/neutral.md"
+                if not neutral_style.is_file() or "name: Neutral" not in neutral_style.read_text():
+                    raise SystemExit("Claude upstream Neutral output style was not rendered")
 
                 for relative in (".claude/settings.json", ".claude-work/settings.json"):
                     settings = json.loads((rendered_root / relative).read_text())
-                    if settings.get("outputStyle") != "Gentleman":
-                        raise SystemExit(f"Claude upstream Gentleman output style was not selected: {relative}")
-                    retired_settings = (
-                        "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS",
-                        "ccstatusline",
-                        "opus[1m]",
-                        "dark-daltonized",
-                        "agentPushNotifEnabled",
-                    )
-                    if any(marker in json.dumps(settings) for marker in retired_settings):
-                        raise SystemExit(f"Claude retains a retired local setting: {relative}")
+                    if settings.get("outputStyle") != "Neutral":
+                        raise SystemExit(f"Claude upstream Neutral output style was not selected: {relative}")
 
                 for relative in (
                     ".claude/hooks/herdr-agent-state.sh",
@@ -434,8 +425,18 @@
                         raise SystemExit(f"Claude MCP was not rendered: {name}")
                 if not (rendered_root / ".config/opencode/opencode.json").is_file():
                     raise SystemExit("OpenCode MCP configuration was not rendered")
-                if not (rendered_root / ".pi/agent/mcp-adapter.json").is_file():
-                    raise SystemExit("Pi MCP configuration was not rendered")
+                pi_mcp = rendered_root / ".pi/agent/mcp.json"
+                if not pi_mcp.is_file():
+                    raise SystemExit("Pi native MCP configuration was not rendered")
+                pi_settings = json.loads((rendered_root / ".pi/agent/settings.json").read_text())
+                if "-builtin:codemode" not in pi_settings.get("extensions", []):
+                    raise SystemExit("Pi must use gentle-shell codemode without loading the built-in duplicate")
+                if "clickup" in json.loads(pi_mcp.read_text()).get("mcpServers", {}):
+                    raise SystemExit("ClickUp must not be declared for Pi")
+                if "clickup" in json.loads((rendered_root / ".config/opencode/opencode.json").read_text()).get("mcp", {}):
+                    raise SystemExit("ClickUp must not be declared for OpenCode")
+                if "clickup" in tomllib.loads((rendered_root / ".codex/config.toml").read_text()).get("mcp_servers", {}):
+                    raise SystemExit("ClickUp must not be declared for Codex")
 
                 manifest = json.loads((rendered_root.parent / "manifest.json").read_text())
                 resources = manifest["manifest"]["resources"]

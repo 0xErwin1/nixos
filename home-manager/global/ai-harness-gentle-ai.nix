@@ -145,6 +145,13 @@ let
         "--client-id"
         client
       ];
+    }
+    // lib.optionalAttrs (client == "claude") {
+      clickup = local "npx" [
+        "-y"
+        "mcp-remote"
+        "https://mcp.clickup.com/mcp"
+      ];
     };
 
   # The work profile starts from the rendered personal settings, but it cannot
@@ -290,6 +297,9 @@ in
         # to the compatibility repair below; the global CLI is not an equivalent.
         provisionEnvironment.GENTLE_PI_SKIP_GENTLE_AI_INSTALL = "1";
         settings.theme = "Gentle";
+        # gentle-shell provides the compact codemode tool; loading Pi's built-in
+        # implementation as well emits an extension collision at startup.
+        settings.extensions = [ "-builtin:codemode" ];
         # gentle-pi agent profiles carry the whole routing: the orchestrator Pi
         # itself runs on and the model each phase agent gets. Naming one active
         # is the declarative form of applying it in /gentle:profiles, so a
@@ -379,7 +389,7 @@ in
                 jd-judge-b = models.effort.high deepseekV4Flash;
                 jd-fix-agent = models.effort.high deepseekV4Flash;
                 gentle-ai-explore = models.effort.high deepseekV4Flash;
-                gentle-ai-worker = models.effort.high glm53Flash;
+                gentle-ai-worker = models.effort.high deepseekV4Flash;
                 gentle-ai-verify = models.effort.high opus;
                 review-readability = models.effort.high opus;
                 review-refuter = models.effort.high opus;
@@ -461,17 +471,13 @@ in
           path = ".pi/agent/settings.json";
           unionLists = [ "packages" ];
         }
-        # Pi's npm manifest moved under the agent directory (upstream's Pi
-        # adapter now writes <agentDir>/npm/package.json, citing Pi's own
-        # package-manager.ts), so this merge target follows it; the old
-        # .pi/npm/package.json is no longer rendered and left the merge step
-        # without a fragment to merge.
-        ".pi/agent/npm/package.json"
+        # Pi owns its npm manifest at runtime; the native-MCP renderer has
+        # no npm/package.json fragment to merge into that live file.
 
-        # Merge declared servers into the Pi MCP adapter's configuration so
-        # activation preserves any servers already present there. The separate
-        # mcp.json used by Pi and `pi-engram init` is not a rendered fragment.
-        ".pi/agent/mcp-adapter.json"
+        # Merge declared servers into Pi's native MCP configuration so
+        # activation preserves servers already present there. The retired
+        # adapter's configuration is migrated before its package is removed.
+        ".pi/agent/mcp.json"
       ];
 
       paths = [
@@ -583,5 +589,20 @@ in
   home.activation.gentlePiRuntimeRepair = lib.hm.dag.entryAfter [ "gentleAiProvisionPackages" ] ''
     run ${lib.getExe pkgs.gentle-pi-runtime-repair} --prefix ${lib.escapeShellArg "${config.home.homeDirectory}/.pi/agent/npm"}
     run ${lib.getExe pkgs.gentle-pi-runtime-repair} --package-dir ${lib.escapeShellArg "${config.home.homeDirectory}/.pi/agent/git/github.com/Gentleman-Programming/gentle-shell"}
+  '';
+
+  # Native Pi migration copies legacy servers before retiring the adapter.
+  # Retire only ClickUp from the two persisted Pi configs and Codex afterward;
+  # otherwise a later migration would bring it back. Claude keeps its own
+  # declared ClickUp MCP server, and unrelated client entries remain intact.
+  home.activation.gentleAiRetireClickUpOutsideClaude = lib.hm.dag.entryAfter [
+    "gentleAiMergedSecrets"
+    "gentleAiMigratePiMCP"
+    "gentleAiRetireDisplacedPiPackages"
+  ] ''
+    run ${lib.getExe pkgs.python3} ${vendored}/support/retire-clickup-mcp.py \
+      --agent-dir ${lib.escapeShellArg "${config.home.homeDirectory}/.pi/agent"} \
+      --codex-home ${lib.escapeShellArg "${config.home.homeDirectory}/.codex"} \
+      --codex-bin ${lib.escapeShellArg "${config.home.profileDirectory}/bin/codex"}
   '';
 }
