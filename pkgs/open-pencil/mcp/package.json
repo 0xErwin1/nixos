@@ -1,0 +1,8 @@
+{
+  "name": "open-pencil-mcp-pinned",
+  "version": "0.15.1",
+  "private": true,
+  "dependencies": {
+    "@open-pencil/mcp": "0.15.1"
+  }
+}

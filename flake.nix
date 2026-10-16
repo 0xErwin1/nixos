@@ -120,6 +120,8 @@
             opencode = final.callPackage "${self}/pkgs/opencode" { };
             tuicr = final.callPackage "${self}/pkgs/tuicr" { };
             maestro-studio = final.callPackage "${self}/pkgs/maestro-studio" { };
+            open-pencil = final.callPackage "${self}/pkgs/open-pencil" { };
+            open-pencil-mcp = final.callPackage "${self}/pkgs/open-pencil/mcp" { };
             orca = final.callPackage "${self}/pkgs/orca/package.nix" { };
           };
       };

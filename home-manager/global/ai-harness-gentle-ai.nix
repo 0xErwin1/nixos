@@ -113,6 +113,7 @@ let
       };
     };
     maestro = local "maestro" [ "mcp" ];
+    "open-pencil" = local (lib.getExe pkgs.open-pencil-mcp) [ ];
     obsidian = local "pnpx" [
       "@mauricio.wolff/mcp-obsidian@latest"
       "${config.home.homeDirectory}/Atlas"
@@ -280,7 +281,6 @@ in
         release = "main";
         mcpServers = serversFor "pi";
         packages = {
-          "@gtrabanco/pi-nan-provider" = "npm:@gtrabanco/pi-nan-provider";
           "pi-claude-bridge" = "npm:pi-claude-bridge";
         };
         provisionPackages = true;
@@ -296,7 +296,7 @@ in
         # NixOS lacks those host paths, so normal provisioning defers that lifecycle
         # to the compatibility repair below; the global CLI is not an equivalent.
         provisionEnvironment.GENTLE_PI_SKIP_GENTLE_AI_INSTALL = "1";
-        settings.theme = "Gentle";
+        settings.theme = "Gentleman-Cute";
         # gentle-shell provides the compact codemode tool; loading Pi's built-in
         # implementation as well emits an extension collision at startup.
         settings.extensions = [ "-builtin:codemode" ];
@@ -305,7 +305,7 @@ in
         # is the declarative form of applying it in /gentle:profiles, so a
         # switch is what a profile change takes. An agent a profile does not
         # name inherits whatever routing is in force outside the profile.
-        activeProfile = "mixedCodex";
+        activeProfile = "claude";
         profiles =
           let
             # The provider ids Pi resolves on this machine; `for` turns each one
@@ -331,18 +331,18 @@ in
             codex = {
               orchestrator = models.effort.medium sol;
               phases = {
-                jd-judge-a = models.effort.high sol;
-                jd-judge-b = models.effort.high sol;
+                jd-judge-a = models.effort.medium sol;
+                jd-judge-b = models.effort.medium sol;
                 jd-fix-agent = models.effort.low sol;
-                gentle-ai-explore = models.effort.high luna;
-                gentle-ai-verify = models.effort.high sol;
+                gentle-ai-explore = models.effort.medium luna;
+                gentle-ai-verify = models.effort.medium sol;
                 gentle-ai-worker = models.effort.low sol;
-                review-readability = models.effort.high sol;
-                review-refuter = models.effort.high sol;
-                review-reliability = models.effort.high sol;
-                review-resilience = models.effort.high sol;
-                review-risk = models.effort.high sol;
-                review-validator = models.effort.high sol;
+                review-readability = models.effort.medium sol;
+                review-refuter = models.effort.medium sol;
+                review-reliability = models.effort.medium sol;
+                review-resilience = models.effort.medium sol;
+                review-risk = models.effort.medium sol;
+                review-validator = models.effort.medium sol;
               };
             };
 
@@ -383,38 +383,38 @@ in
             };
 
             mixedClaude = {
-              orchestrator = models.effort.high opus;
+              orchestrator = models.effort.medium opus;
               phases = {
-                jd-judge-a = models.effort.high opus;
+                jd-judge-a = models.effort.medium opus;
                 jd-judge-b = models.effort.high deepseekV4Flash;
                 jd-fix-agent = models.effort.high deepseekV4Flash;
                 gentle-ai-explore = models.effort.high deepseekV4Flash;
                 gentle-ai-worker = models.effort.high deepseekV4Flash;
-                gentle-ai-verify = models.effort.high opus;
-                review-readability = models.effort.high opus;
-                review-refuter = models.effort.high opus;
-                review-reliability = models.effort.high opus;
-                review-resilience = models.effort.high opus;
-                review-risk = models.effort.high opus;
-                review-validator = models.effort.high opus;
+                gentle-ai-verify = models.effort.medium opus;
+                review-readability = models.effort.medium opus;
+                review-refuter = models.effort.medium opus;
+                review-reliability = models.effort.medium opus;
+                review-resilience = models.effort.medium opus;
+                review-risk = models.effort.medium opus;
+                review-validator = models.effort.medium opus;
               };
             };
 
             claude = {
-              orchestrator = models.effort.high opus;
+              orchestrator = models.effort.medium opus;
               phases = {
                 gentle-ai-explore = models.effort.low opus;
                 gentle-ai-worker = models.effort.low opus;
-                gentle-ai-verify = models.effort.high opus;
-                jd-judge-a = models.effort.high opus;
-                jd-judge-b = models.effort.high opus;
+                gentle-ai-verify = models.effort.medium opus;
+                jd-judge-a = models.effort.medium opus;
+                jd-judge-b = models.effort.medium opus;
                 jd-fix-agent = models.effort.low opus;
-                review-readability = models.effort.high opus;
-                review-refuter = models.effort.high opus;
-                review-reliability = models.effort.high opus;
-                review-resilience = models.effort.high opus;
-                review-risk = models.effort.high opus;
-                review-validator = models.effort.high opus;
+                review-readability = models.effort.medium opus;
+                review-refuter = models.effort.medium opus;
+                review-reliability = models.effort.medium opus;
+                review-resilience = models.effort.medium opus;
+                review-risk = models.effort.medium opus;
+                review-validator = models.effort.medium opus;
               };
             };
           };

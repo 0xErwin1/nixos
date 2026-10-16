@@ -1,5 +1,6 @@
 let
   bind = import ./bind.nix;
+  rules = import ./rules.nix;
 in
 {
   imports = [
@@ -202,6 +203,8 @@ in
       inherit (bind) bindel;
       inherit (bind) bindm;
       inherit (bind) bindl;
+
+      inherit (rules) windowrule;
     };
   };
 }

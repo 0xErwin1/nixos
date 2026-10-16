@@ -46,6 +46,7 @@ in
       syntaxHighlighting.enable = true;
       initContent = ''
         [[ -s "/etc/grc.zsh" ]] && source /etc/grc.zsh
+        setopt HIST_IGNORE_SPACE
         export FZF_DEFAULTS_OPTS="${lib.concatStringsSep " " fzfDefaultOptions}"
         export DEVELOPMENT="$HOME/dev"
         export HOULAK_DIR="$HOME/dev/work/Houlak"

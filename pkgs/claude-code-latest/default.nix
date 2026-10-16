@@ -9,19 +9,19 @@ let
     ;
 
   pname = "claude-code-latest";
-  version = "2.1.293";
+  version = "2.1.301";
 
   sources = {
     x86_64-linux = {
       platform = "linux-x64";
       loader = "ld-linux-x86-64.so.2";
-      hash = "sha256-iWhAXibbR4r0TqvEY1q1ylVwV7cCpURgpZwT4bJT6Xg=";
+      hash = "sha256-OSBImlEJz/V4aho5LCUndAj/Irx5bV7bnBamDloXGPA=";
     };
 
     aarch64-linux = {
       platform = "linux-arm64";
       loader = "ld-linux-aarch64.so.1";
-      hash = "sha256-pDYp6Ijwp9lsXo3mKr9EhSQzp/8kgVdGiNs+W2OZSR8=";
+      hash = "sha256-5Nr3k9HnT7DZh03QnphpC7/XvlFfeKh/0FueK0uzOwM=";
     };
   };
 
@@ -67,6 +67,12 @@ pkgs.buildFHSEnv {
 
   profile = ''
     export DISABLE_AUTOUPDATER="\''${DISABLE_AUTOUPDATER:-1}"
+
+    # buildFHSEnv prepends /usr/lib and /usr/include to the cc wrapper flags.
+    # A Nix dev shell entered from here (direnv, nix develop) would then link
+    # against the FHS glibc while the binary loads the dev shell's older
+    # loader, failing at startup with "GLIBC_2.xx not found".
+    unset NIX_CFLAGS_COMPILE NIX_CFLAGS_LINK NIX_LDFLAGS PKG_CONFIG_PATH
 
     # The bwrap sandbox has no /etc/subuid and sets no_new_privs, so a local
     # rootless podman would create a single-UID pause namespace that every
