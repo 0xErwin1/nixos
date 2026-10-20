@@ -106,17 +106,7 @@
             ccstatusline = final.callPackage "${self}/pkgs/ccstatusline" { };
             gentle-pi-runtime-repair = final.callPackage "${self}/pkgs/gentle-pi-runtime-repair" { };
             helium = final.callPackage "${self}/pkgs/helium" { };
-            herdr =
-              if final.stdenv.hostPlatform.isLinux then
-                prev.herdr.overrideAttrs (old: {
-                  # BFD rejects overlapping FDEs in the Zig-built Ghostty archive.
-                  nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [ final.llvmPackages.lld ];
-                  env = (old.env or { }) // {
-                    RUSTFLAGS = "${(old.env or { }).RUSTFLAGS or (old.RUSTFLAGS or "")} -C link-arg=-fuse-ld=lld";
-                  };
-                })
-              else
-                prev.herdr;
+            herdr = final.callPackage "${self}/pkgs/herdr-bin" { };
             opencode = final.callPackage "${self}/pkgs/opencode" { };
             tuicr = final.callPackage "${self}/pkgs/tuicr" { };
             maestro-studio = final.callPackage "${self}/pkgs/maestro-studio" { };
