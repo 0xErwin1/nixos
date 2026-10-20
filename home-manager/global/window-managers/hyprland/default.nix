@@ -190,8 +190,8 @@ in
       "$mod" = "SUPER";
       "$terminal" = "kitty";
       "$fileManager" = "pcmanfm";
-      "$menu" = "wofi --show drun";
-      "$menuWindow" = "wofi --show window";
+      "$menu" = "app-launcher";
+      "$menuWindow" = "window-switcher";
       "$browser" = "brave-origin-nightly";
       "$workBrowser" = "firefox";
       "$screenshot" =
