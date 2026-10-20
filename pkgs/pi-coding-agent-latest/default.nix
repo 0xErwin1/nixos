@@ -4,16 +4,16 @@ let
   inherit (pkgs) lib stdenv fetchurl glibc;
 
   pname = "pi-coding-agent-latest";
-  version = "1.2.0";
+  version = "1.3.0";
 
   sources = {
     x86_64-linux = {
       platform = "linux-x64";
-      hash = "sha256-APw2z/3rzupaSCMNpizz+0YxePj+GFdmZS+WACokaEc=";
+      hash = "sha256-JPW+Motm1No2h2KWmJUBl09Dq4Q0+7V8NcUjo+pQXe0=";
     };
     aarch64-linux = {
       platform = "linux-arm64";
-      hash = "sha256-2Fl+46IFBZLTjmf2tgmrVROd7tfoIAINkQ2E8Xu3q9Y=";
+      hash = "sha256-f9LqFPyjkOv59HQ4uq7wfEs9E9t8yORZgxEYORt+pls=";
     };
   };
 
