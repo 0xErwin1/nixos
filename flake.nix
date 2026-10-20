@@ -100,6 +100,7 @@
           // {
             dbflux-nightly = inputs.dbflux.packages.${final.stdenv.hostPlatform.system}.dbflux-nightly;
             brave-origin-nightly = final.callPackage "${self}/pkgs/brave-origin-nightly" { };
+            calibre = final.callPackage "${self}/pkgs/calibre-bin" { };
             claude-code-latest = final.callPackage "${self}/pkgs/claude-code-latest" { };
             pi-coding-agent-latest = final.callPackage "${self}/pkgs/pi-coding-agent-latest" { };
             claude-desktop = final.callPackage "${self}/pkgs/claude-desktop" { };
