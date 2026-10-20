@@ -30,9 +30,7 @@
       "kvm-intel"
       "thinkpad_acpi"
       "fuse"
-      "acpi_call"
     ];
-    extraModulePackages = with config.boot.kernelPackages; [ acpi_call ];
 
     blacklistedKernelModules = [ "pcspkr" ];
 
