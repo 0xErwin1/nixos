@@ -20,7 +20,6 @@
     ../global/music.nix
     ../global/voxtype.nix
     ../global/bar/default.nix
-    ../global/calendar.nix
     #../global/x11
     #./x11.nix
     #./monitor.nix

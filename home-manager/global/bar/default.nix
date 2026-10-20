@@ -79,10 +79,9 @@ let
     # Runtime CLIs the bar shells out to: brightnessctl (brightness widget, no
     # Astal service), pactl (bluetooth A2DP/HFP profile switching — wpctl does
     # not cleanly enumerate bluez card profiles, and pactl is otherwise absent on
-    # this host), curl (Open-Meteo weather + geocoding), khal (calendar events
-    # for the calendar panel), epsilon-ai-usage (AI usage for the extras panel)
-    # and notify-send (AI-usage threshold/reset alerts, delivered to our own
-    # notifd).
+    # this host), curl (Open-Meteo weather + geocoding), epsilon-ai-usage (AI
+    # usage for the extras panel) and notify-send (AI-usage threshold/reset
+    # alerts, delivered to our own notifd).
     #
     # `tailscale` is deliberately absent: the tunnel module talks to it only to
     # read mesh state, and the CLI has to match the running tailscaled, which is
@@ -96,7 +95,6 @@ let
             pkgs.pulseaudio
             pkgs.wireplumber
             pkgs.curl
-            pkgs.khal
             pkgs.libnotify
             ai-usage-wrapped
           ]

@@ -15,7 +15,6 @@
     ../global/music.nix
     ../global/voxtype.nix
     ../global/bar/default.nix
-    ../global/calendar.nix
     ../global/communication.nix
     ../global/database.nix
     ../global/x11
