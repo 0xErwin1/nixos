@@ -87,6 +87,15 @@ let
     sed '1,/^---$/d' ${vendored}/custom/claude/output-styles/Par.md > "$out"
   '';
 
+  # Pi gets Par from an extension instead of an AGENTS.md append: context files
+  # land before gentle-pi's harness prompt, whose persona and reply-shape rules
+  # then outrank Par. The extension appends Par after that harness.
+  parPersonaPiPackage = pkgs.runCommandLocal "par-persona-pi" { } ''
+    cp -r ${vendored}/custom/pi/par-persona "$out"
+    chmod -R u+w "$out"
+    cp ${parPersonaBody} "$out/par.md"
+  '';
+
   parPersona = target: {
     inherit target;
     source = parPersonaBody;
@@ -214,6 +223,10 @@ in
         mcpServers = serversFor "claude";
         settings = {
           model = "opus[1m]";
+          # Par is the reply voice everywhere. pi-claude-bridge loads these user
+          # settings, so Pi sessions on the Claude bridge get it as their output
+          # style too instead of the persona's Neutral.
+          outputStyle = "Par";
           workflowKeywordTriggerEnabled = false;
           statusLine = {
             type = "command";
@@ -282,6 +295,7 @@ in
         mcpServers = serversFor "pi";
         packages = {
           "pi-claude-bridge" = "npm:pi-claude-bridge";
+          "par-persona" = "${parPersonaPiPackage}";
         };
         provisionPackages = true;
 
@@ -551,7 +565,6 @@ in
       # before Par, which must remain the exact suffix for each delivered policy.
       pi-local-policy = ownPolicy ".pi/agent/AGENTS.md" "pi-grok";
       grok-policy = ownPolicy ".grok/AGENTS.md" "pi-grok";
-      pi-shared-par-persona = parPersona ".pi/agent/AGENTS.md";
       opencode-shared-par-persona = parPersona ".config/opencode/AGENTS.md";
       codex-shared-par-persona = parPersona ".codex/AGENTS.md";
       grok-shared-par-persona = parPersona ".grok/AGENTS.md";

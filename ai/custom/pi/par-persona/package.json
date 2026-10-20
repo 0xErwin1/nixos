@@ -1,0 +1,9 @@
+{
+  "name": "par-persona",
+  "private": true,
+  "type": "module",
+  "keywords": ["pi-package"],
+  "pi": {
+    "extensions": ["./extensions/par-persona.ts"]
+  }
+}
