@@ -1,5 +1,16 @@
-{ pkgs, config, ... }:
 {
+  pkgs,
+  lib,
+  config,
+  ...
+}:
+let
+  palettes = import ./theme/palettes.nix;
+in
+{
+  # The colors come from the active wl-theme.
+  imports = [ ./theme ];
+
   services.mpd = {
     enable = true;
     musicDirectory = "${config.home.homeDirectory}/Music";
@@ -25,7 +36,7 @@
       (
         address: "127.0.0.1:6600",
         password: None,
-        theme: Some("ayu"),
+        theme: Some("wl"),
         cache_dir: Some("~/.cache/rmpc"),
         on_song_change: None,
         volume_step: 5,
@@ -41,125 +52,136 @@
     '';
   };
 
-  # Create Ayu theme for rmpc - Minimal but complete
-  xdg.configFile."rmpc/themes/ayu.ron".text = ''
-    #![enable(implicit_some)]
-    #![enable(unwrap_newtypes)]
-    #![enable(unwrap_variant_newtypes)]
-    (
-      show_song_table_header: true,
-      draw_borders: true,
-      browser_column_widths: [20, 38, 42],
-      
-      symbols: (
-        song: "♪",
-        dir: "📁",
-        playlist: "📋",
-        marker: "●",
-        ellipsis: "...",
-        song_style: None,
-        dir_style: None,
-        playlist_style: None,
-      ),
-      
-      tab_bar: (
-        active_style: (fg: "black", bg: "blue", modifiers: "Bold"),
-        inactive_style: (),
-      ),
-      
-      highlighted_item_style: (fg: "blue", modifiers: "Bold"),
-      current_item_style: (fg: "black", bg: "blue", modifiers: "Bold"),
-      borders_style: (fg: "blue"),
-      highlight_border_style: (fg: "blue"),
-      
-      progress_bar: (
-        symbols: ["[", "━", "▶", " ", "]"],
-        track_style: (fg: "#6e7681"),
-        elapsed_style: (fg: "#73d0ff"),
-        thumb_style: (fg: "#73d0ff", bg: "#0a0e14"),
-        use_track_when_empty: false,
-      ),
-      
-      scrollbar: (
-        symbols: ["│", "█", "▲", "▼"],
-        track_style: (),
-        ends_style: (),
-        thumb_style: (fg: "blue"),
-      ),
-      
-      song_table_format: [
-        (
-          prop: (kind: Property(Artist),
-            default: (kind: Text("Unknown"))
-          ),
-          width: "20%",
+  # rmpc theme, rendered once per desktop theme; `rmpc/themes/wl.ron` follows
+  # the active one (wl-theme). Named colors come from the terminal palette.
+  xdg.configFile = lib.mkMerge (
+    [
+      {
+        "rmpc/themes/wl.ron".source =
+          config.lib.file.mkOutOfStoreSymlink "${config.xdg.stateHome}/wl-theme/current/rmpc.ron";
+      }
+    ]
+    ++ lib.mapAttrsToList (id: p: {
+      "wl-theme/themes/${id}/rmpc.ron".text = ''
+      #![enable(implicit_some)]
+      #![enable(unwrap_newtypes)]
+      #![enable(unwrap_variant_newtypes)]
+      (
+        show_song_table_header: true,
+        draw_borders: true,
+        browser_column_widths: [20, 38, 42],
+
+        symbols: (
+          song: "♪",
+          dir: "📁",
+          playlist: "📋",
+          marker: "●",
+          ellipsis: "...",
+          song_style: None,
+          dir_style: None,
+          playlist_style: None,
         ),
-        (
-          prop: (kind: Property(Title),
-            default: (kind: Text("Unknown"))
-          ),
-          width: "35%",
+
+        tab_bar: (
+          active_style: (fg: "black", bg: "blue", modifiers: "Bold"),
+          inactive_style: (),
         ),
-        (
-          prop: (kind: Property(Album), style: (fg: "#bfbab0"),
-            default: (kind: Text("Unknown Album"), style: (fg: "#6e7681"))
-          ),
-          width: "30%",
+
+        highlighted_item_style: (fg: "blue", modifiers: "Bold"),
+        current_item_style: (fg: "black", bg: "blue", modifiers: "Bold"),
+        borders_style: (fg: "blue"),
+        highlight_border_style: (fg: "blue"),
+
+        progress_bar: (
+          symbols: ["[", "━", "▶", " ", "]"],
+          track_style: (fg: "${p.muted}"),
+          elapsed_style: (fg: "${p.blue}"),
+          thumb_style: (fg: "${p.blue}", bg: "${p.background}"),
+          use_track_when_empty: false,
         ),
-        (
-          prop: (kind: Property(Duration),
-            default: (kind: Text("-"))
-          ),
-          width: "15%",
-          alignment: Right,
+
+        scrollbar: (
+          symbols: ["│", "█", "▲", "▼"],
+          track_style: (),
+          ends_style: (),
+          thumb_style: (fg: "blue"),
         ),
-      ],
-      
-      header: (
-        rows: [
+
+        song_table_format: [
           (
-            left: [
-              (kind: Text("["), style: (fg: "yellow", modifiers: "Bold")),
-              (kind: Property(Status(StateV2(playing_label: "▶", paused_label: "⏸", stopped_label: "⏹"))), style: (fg: "yellow", modifiers: "Bold")),
-              (kind: Text("] "), style: (fg: "yellow", modifiers: "Bold")),
-              (kind: Property(Song(Artist)), style: (fg: "#bfbab0"), default: (kind: Text("Unknown Artist"), style: (fg: "#6e7681"))),
-            ],
-            center: [
-              (kind: Property(Song(Title)), style: (fg: "#bfbab0", modifiers: "Bold"), default: (kind: Text("No Song"), style: (fg: "#6e7681", modifiers: "Bold"))),
-            ],
-            right: [
-              (kind: Property(Widget(Volume)), style: (fg: "blue")),
-              (kind: Text("  "), style: (fg: "#0a0e14")),
-              (kind: Property(Widget(ScanStatus)), style: (fg: "green")),
-            ],
+            prop: (kind: Property(Artist),
+              default: (kind: Text("Unknown"))
+            ),
+            width: "20%",
+          ),
+          (
+            prop: (kind: Property(Title),
+              default: (kind: Text("Unknown"))
+            ),
+            width: "35%",
+          ),
+          (
+            prop: (kind: Property(Album), style: (fg: "${p.foreground}"),
+              default: (kind: Text("Unknown Album"), style: (fg: "${p.muted}"))
+            ),
+            width: "30%",
+          ),
+          (
+            prop: (kind: Property(Duration),
+              default: (kind: Text("-"))
+            ),
+            width: "15%",
+            alignment: Right,
           ),
         ],
-      ),
-      
-      browser_song_format: [
-        (
-          kind: Group([
-            (kind: Property(Track)),
-            (kind: Text(" ")),
-          ])
+
+        header: (
+          rows: [
+            (
+              left: [
+                (kind: Text("["), style: (fg: "yellow", modifiers: "Bold")),
+                (kind: Property(Status(StateV2(playing_label: "▶", paused_label: "⏸", stopped_label: "⏹"))), style: (fg: "yellow", modifiers: "Bold")),
+                (kind: Text("] "), style: (fg: "yellow", modifiers: "Bold")),
+                (kind: Property(Song(Artist)), style: (fg: "${p.foreground}"), default: (kind: Text("Unknown Artist"), style: (fg: "${p.muted}"))),
+              ],
+              center: [
+                (kind: Property(Song(Title)), style: (fg: "${p.foreground}", modifiers: "Bold"), default: (kind: Text("No Song"), style: (fg: "${p.muted}", modifiers: "Bold"))),
+              ],
+              right: [
+                (kind: Property(Widget(Volume)), style: (fg: "blue")),
+                (kind: Text("  "), style: (fg: "${p.background}")),
+                (kind: Property(Widget(ScanStatus)), style: (fg: "green")),
+              ],
+            ),
+          ],
         ),
-        (
-          kind: Group([
-            (kind: Property(Artist)),
-            (kind: Text(" - ")),
-            (kind: Property(Title)),
-          ]),
-          default: (kind: Property(Filename))
+
+        browser_song_format: [
+          (
+            kind: Group([
+              (kind: Property(Track)),
+              (kind: Text(" ")),
+            ])
+          ),
+          (
+            kind: Group([
+              (kind: Property(Artist)),
+              (kind: Text(" - ")),
+              (kind: Property(Title)),
+            ]),
+            default: (kind: Property(Filename))
+          ),
+        ],
+
+        lyrics: (
+          timestamp: false
         ),
-      ],
-      
-      lyrics: (
-        timestamp: false
-      ),
-      
-      components: {},
-    )
-  '';
+
+        components: {},
+      )
+      '';
+    }) palettes.themes
+  );
 
   home.packages = with pkgs; [
     mpc

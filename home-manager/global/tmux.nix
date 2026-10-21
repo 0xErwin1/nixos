@@ -1,4 +1,4 @@
-{ pkgs, ... }:
+{ pkgs, config, ... }:
 let
   agentStatusScript = pkgs.writeShellScript "tmux-agent-status" ''
     set -uo pipefail
@@ -24,14 +24,10 @@ let
   '';
 
   tmuxAyuThemeScript = pkgs.writeShellScript "tmux-ayu-theme.tmux" ''
-    ayu_black="#101521"
-    ayu_blue="#5CCFE6"
-    ayu_yellow="#E6B450"
-    ayu_red="#F28779"
-    ayu_white="#CBCCC6"
-    ayu_green="#BAE67E"
-    ayu_visual_grey="#607080"
-    ayu_comment_grey="#5C6773"
+    # Colors come from the active desktop theme (wl-theme), which reruns this
+    # script through ~/.config/tmux/wl-theme.tmux when it switches.
+    # shellcheck disable=SC1091
+    . ${config.xdg.stateHome}/wl-theme/current/tmux.sh
 
     get() {
        local option=$1
@@ -97,18 +93,18 @@ let
     set "status-bg" "$ayu_black"
     set "status-fg" "$ayu_white"
 
-    set "@prefix_highlight_fg" "$ayu_black"
+    set "@prefix_highlight_fg" "$ayu_on"
     set "@prefix_highlight_bg" "$ayu_green"
-    set "@prefix_highlight_copy_mode_attr" "fg=$ayu_black,bg=$ayu_green"
+    set "@prefix_highlight_copy_mode_attr" "fg=$ayu_on,bg=$ayu_green"
     set "@prefix_highlight_output_prefix" "  "
 
     status_widgets=$(get "@ayu_widgets")
 
-    set "status-right" "#(${agentStatusScript})#[fg=$ayu_visual_grey,bg=$ayu_black]#[fg=$ayu_visual_grey,bg=$ayu_visual_grey]#[fg=$ayu_white, bg=$ayu_visual_grey]''${status_widgets} #[fg=$ayu_green,bg=$ayu_visual_grey,nobold,nounderscore,noitalics]#[fg=$ayu_black,bg=$ayu_green,bold] #h "
-    set "status-left" "#[fg=$ayu_black,bg=$ayu_green,bold]   #S #{prefix_highlight}#[fg=$ayu_green,bg=$ayu_black,nobold,nounderscore,noitalics]"
+    set "status-right" "#(${agentStatusScript})#[fg=$ayu_visual_grey,bg=$ayu_black]#[fg=$ayu_visual_grey,bg=$ayu_visual_grey]#[fg=$ayu_white, bg=$ayu_visual_grey]''${status_widgets} #[fg=$ayu_green,bg=$ayu_visual_grey,nobold,nounderscore,noitalics]#[fg=$ayu_on,bg=$ayu_green,bold] #h "
+    set "status-left" "#[fg=$ayu_on,bg=$ayu_green,bold]   #S #{prefix_highlight}#[fg=$ayu_green,bg=$ayu_black,nobold,nounderscore,noitalics]"
 
     set "window-status-format" "#[fg=$ayu_black,bg=$ayu_black,nobold,nounderscore,noitalics]#[fg=$ayu_white,bg=$ayu_black] #I  #W#{?#{==:#{@win_agent_state},blocked}, #[fg=$ayu_red]x#[fg=$ayu_white],#{?#{==:#{@win_agent_state},working}, #[fg=$ayu_yellow]o#[fg=$ayu_white],}} #[fg=$ayu_black,bg=$ayu_black,nobold,nounderscore,noitalics]"
-    set "window-status-current-format" "#[fg=$ayu_black,bg=$ayu_yellow,nobold,nounderscore,noitalics]#[fg=$ayu_black,bg=$ayu_yellow,nobold] #I  #W#{?#{==:#{@win_agent_state},blocked}, #[fg=$ayu_red]x#[fg=$ayu_black],#{?#{==:#{@win_agent_state},working}, #[fg=$ayu_blue]o#[fg=$ayu_black],}} #[fg=$ayu_yellow,bg=$ayu_black,nobold,nounderscore,noitalics]"
+    set "window-status-current-format" "#[fg=$ayu_on,bg=$ayu_yellow,nobold,nounderscore,noitalics]#[fg=$ayu_on,bg=$ayu_yellow,nobold] #I  #W#{?#{==:#{@win_agent_state},blocked}, #[fg=$ayu_red]x#[fg=$ayu_on],#{?#{==:#{@win_agent_state},working}, #[fg=$ayu_blue]o#[fg=$ayu_on],}} #[fg=$ayu_yellow,bg=$ayu_black,nobold,nounderscore,noitalics]"
   '';
 
   tmuxConfig =
@@ -136,6 +132,12 @@ let
       (builtins.readFile ../../dotfiles/.config/tmux/tmux.conf);
 in
 {
+  # The colors come from the active wl-theme.
+  imports = [ ./theme ];
+
+  # Stable path `wl-theme set` runs to restyle a live tmux server.
+  xdg.configFile."tmux/wl-theme.tmux".source = tmuxAyuThemeScript;
+
   programs.tmux = {
     shortcut = "a";
     enable = true;
