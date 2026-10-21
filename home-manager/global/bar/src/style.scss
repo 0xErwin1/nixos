@@ -920,9 +920,9 @@ entry placeholder {
   font-weight: bold;
 }
 
-// Day cells: square-ish, chrome stripped, with a small event dot beneath the
-// number. Days outside the current month are muted; today and the selected day
-// get accent treatments (today wins when they coincide).
+// Day cells: square-ish, chrome stripped. Days outside the current month are
+// muted; today and the selected day get accent treatments (today wins when they
+// coincide).
 .cal-day {
   all: unset;
   min-width: 2rem;
@@ -949,48 +949,6 @@ entry placeholder {
   background-color: $blue;
   color: $background;
   font-weight: bold;
-}
-
-.cal-day-dot {
-  min-width: 4px;
-  min-height: 4px;
-  margin-top: 1px;
-  border-radius: 999px;
-  background-color: $blue;
-}
-
-.cal-day-today .cal-day-dot {
-  background-color: $background;
-}
-
-.cal-events {
-  margin-top: 0.3rem;
-}
-
-.cal-events-title {
-  font-weight: bold;
-  font-size: 0.85rem;
-  opacity: 0.85;
-}
-
-.cal-event {
-  padding: 0.1rem 0;
-}
-
-.cal-event-time {
-  color: $blue;
-  font-size: 0.82rem;
-  font-weight: bold;
-  min-width: 3rem;
-}
-
-.cal-event-title {
-  font-size: 0.88rem;
-}
-
-.cal-events-empty {
-  font-size: 0.82rem;
-  opacity: 0.5;
 }
 
 .cal-divider {

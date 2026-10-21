@@ -2,7 +2,6 @@ import GLib from "gi://GLib";
 import app from "ags/gtk4/app";
 import { Astal, Gdk, Gtk } from "ags/gtk4";
 import { For, With, createComputed, createState } from "ags";
-import { execAsync } from "ags/process";
 
 import {
   calendarVisible,
@@ -38,18 +37,11 @@ const WEEKDAYS = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"];
 
 const SEARCH_DEBOUNCE_MS = 300;
 
-interface CalEvent {
-  time: string;
-  title: string;
-  calendar: string;
-}
-
 interface DayCell {
   day: number;
   dateStr: string;
   inMonth: boolean;
   isToday: boolean;
-  hasEvents: boolean;
 }
 
 function pad(n: number): string {
@@ -65,63 +57,11 @@ function todayKey(): string {
   return dateKey(t.getFullYear(), t.getMonth(), t.getDate());
 }
 
-// khal prints only the days that actually have events: a bare "YYYY-MM-DD"
-// header line (from --day-format) followed by one "start|end|title|calendar"
-// line per event (from --format). Anything else (khal missing, no calendars) is
-// swallowed into an empty map so the grid still renders.
-function parseKhal(out: string): Record<string, CalEvent[]> {
-  const byDay: Record<string, CalEvent[]> = {};
-  let current = "";
-
-  for (const raw of out.split("\n")) {
-    const line = raw.trim();
-    if (!line) continue;
-
-    if (/^\d{4}-\d{2}-\d{2}$/.test(line)) {
-      current = line;
-      byDay[current] = [];
-      continue;
-    }
-
-    if (!current) continue;
-
-    const [start, , title, calendar] = line.split("|");
-    byDay[current].push({
-      time: start.trim(),
-      title: (title ?? "").trim(),
-      calendar: (calendar ?? "").trim(),
-    });
-  }
-
-  return byDay;
-}
-
 export default function Calendar() {
   const now = new Date();
   const [viewYear, setViewYear] = createState(now.getFullYear());
   const [viewMonth, setViewMonth] = createState(now.getMonth());
   const [selected, setSelected] = createState(todayKey());
-  const [events, setEvents] = createState<Record<string, CalEvent[]>>({});
-
-  function loadMonth(): void {
-    const year = viewYear.get();
-    const month0 = viewMonth.get();
-    const start = dateKey(year, month0, 1);
-    const days = new Date(year, month0 + 1, 0).getDate();
-
-    execAsync([
-      "khal",
-      "list",
-      "--day-format",
-      "{date}",
-      "--format",
-      " {start-time}|{end-time}|{title}|{calendar}",
-      start,
-      `${days}d`,
-    ])
-      .then((out) => setEvents(parseKhal(out)))
-      .catch(() => setEvents({}));
-  }
 
   function shiftMonth(delta: number): void {
     let month0 = viewMonth.get() + delta;
@@ -135,14 +75,7 @@ export default function Calendar() {
     }
     setViewYear(year);
     setViewMonth(month0);
-    loadMonth();
   }
-
-  // Reload the month's events every time the panel is opened so newly-synced
-  // events show up without restarting the bar.
-  calendarVisible.subscribe(() => {
-    if (calendarVisible.get()) loadMonth();
-  });
 
   const title = createComputed(
     [viewYear, viewMonth],
@@ -152,8 +85,9 @@ export default function Calendar() {
   // Six weeks (42 cells) covering the whole month plus leading/trailing days
   // from the adjacent months, so the grid height never jumps between months.
   const weeks = createComputed(
-    [viewYear, viewMonth, selected, events],
-    (year, month0, sel, evs): DayCell[][] => {
+    // selected is a dependency so the grid re-renders its highlight on click.
+    [viewYear, viewMonth, selected],
+    (year, month0): DayCell[][] => {
       const first = new Date(year, month0, 1);
       const leading = (first.getDay() + 6) % 7; // Monday-first offset
       const today = todayKey();
@@ -167,7 +101,6 @@ export default function Calendar() {
           dateStr: key,
           inMonth: date.getMonth() === month0,
           isToday: key === today,
-          hasEvents: (evs[key]?.length ?? 0) > 0,
         });
       }
 
@@ -176,9 +109,6 @@ export default function Calendar() {
       return rows;
     },
   );
-
-  const dayList = createComputed([selected, events], (sel, evs) => evs[sel] ?? []);
-  const selectedLabel = selected((s) => s);
 
   const { TOP, BOTTOM, LEFT, RIGHT } = Astal.WindowAnchor;
 
@@ -242,39 +172,12 @@ export default function Calendar() {
                         ]}
                         onClicked={() => setSelected(cell.dateStr)}
                       >
-                        <box orientation={Gtk.Orientation.VERTICAL} valign={Gtk.Align.CENTER}>
-                          <label label={String(cell.day)} />
-                          <box
-                            cssClasses={["cal-day-dot"]}
-                            visible={cell.hasEvents}
-                            halign={Gtk.Align.CENTER}
-                          />
-                        </box>
+                        <label label={String(cell.day)} />
                       </button>
                     ))}
                   </box>
                 )}
               </For>
-            </box>
-
-            <box cssClasses={["cc-box", "cal-events"]} orientation={Gtk.Orientation.VERTICAL} spacing={6}>
-              <label cssClasses={["cal-events-title"]} label={selectedLabel} halign={Gtk.Align.START} />
-              <box orientation={Gtk.Orientation.VERTICAL} spacing={4}>
-                <For each={dayList}>
-                  {(ev: CalEvent) => (
-                    <box cssClasses={["cal-event"]} spacing={8} valign={Gtk.Align.CENTER}>
-                      <label cssClasses={["cal-event-time"]} label={ev.time || "all-day"} />
-                      <label cssClasses={["cal-event-title"]} label={ev.title} hexpand halign={Gtk.Align.START} />
-                    </box>
-                  )}
-                </For>
-                <label
-                  cssClasses={["cal-events-empty"]}
-                  label="No events"
-                  visible={dayList((l) => l.length === 0)}
-                  halign={Gtk.Align.START}
-                />
-              </box>
             </box>
           </box>
 
