@@ -4,6 +4,7 @@ import AstalNotifd from "gi://AstalNotifd";
 import AstalWp from "gi://AstalWp";
 import Pango from "gi://Pango";
 import { Astal, Gdk, Gtk } from "ags/gtk4";
+import { CARD_VALIGN, EDGE } from "./edge";
 import {
   For,
   With,
@@ -31,6 +32,7 @@ import {
   brightnessGlyph,
   MIC_MUTED,
   MIC_UNMUTED,
+  WIFI_ACTIVE,
 } from "../glyphs";
 import {
   notifd,
@@ -229,23 +231,30 @@ function NotificationCard({
 
 // ── Transient popups ──────────────────────────────────────────────────────────
 export function NotificationPopups() {
-  const { TOP, RIGHT } = Astal.WindowAnchor;
+  const { TOP, BOTTOM, RIGHT } = Astal.WindowAnchor;
+
+  // The window ignores the bar's exclusive zone, so the margin on the bar's
+  // side clears it by hand. On a bottom bar the stack is reversed so the newest
+  // popup (first in popupIds) sits next to the bar, as it does on a top bar.
+  const onBottom = EDGE === "bottom";
+  const ordered = popupIds((ids) => (onBottom ? [...ids].reverse() : ids));
 
   return (
     <window
       name="notification-popups"
       namespace="wl-notifications"
       cssClasses={["notif-popups-window"]}
-      anchor={TOP | RIGHT}
+      anchor={(onBottom ? BOTTOM : TOP) | RIGHT}
       exclusivity={Astal.Exclusivity.IGNORE}
       layer={Astal.Layer.TOP}
-      marginTop={42}
+      marginTop={EDGE === "top" ? 42 : 8}
+      marginBottom={onBottom ? 42 : 8}
       marginRight={8}
       visible={popupIds((ids) => ids.length > 0)}
       application={app}
     >
       <box cssClasses={["notif-popups"]} orientation={Gtk.Orientation.VERTICAL} spacing={8}>
-        <For each={popupIds}>
+        <For each={ordered}>
           {(id) => (
             <NotificationCard id={id} variant="popup" onClose={() => dismissPopup(id)} />
           )}
@@ -269,7 +278,7 @@ function SpeakerSlider({ speaker }: { speaker: AstalWp.Endpoint }) {
   onCleanup(volume.subscribe(() => setDisplay(speaker.volume)));
 
   return (
-    <box cssClasses={["cc-slider-row"]} spacing={10}>
+    <box cssClasses={["panel-row", "static", "cc-slider-row"]} spacing={10}>
       <box cssClasses={["cc-slider-mute"]} valign={Gtk.Align.CENTER}>
         <Gtk.GestureClick onPressed={() => (speaker.mute = !speaker.mute)} />
         <label
@@ -309,7 +318,7 @@ function MicSlider({ mic }: { mic: AstalWp.Endpoint }) {
   onCleanup(volume.subscribe(() => setDisplay(mic.volume)));
 
   return (
-    <box cssClasses={["cc-slider-row"]} spacing={10}>
+    <box cssClasses={["panel-row", "static", "cc-slider-row"]} spacing={10}>
       <box cssClasses={["cc-slider-mute"]} valign={Gtk.Align.CENTER}>
         <Gtk.GestureClick onPressed={() => (mic.mute = !mic.mute)} />
         <label
@@ -373,50 +382,47 @@ function DeviceSelector({
       orientation={Gtk.Orientation.VERTICAL}
       spacing={4}
     >
-      <box cssClasses={["cc-devsel-head"]} spacing={8}>
+      <box cssClasses={["panel-row", "cc-devsel-head"]} spacing={12}>
         <Gtk.GestureClick onPressed={() => setOpen(!open.get())} />
         <label
-          cssClasses={["cc-devsel-icon"]}
+          cssClasses={["panel-row-icon", "on"]}
           label={headGlyph}
           valign={Gtk.Align.CENTER}
         />
-        <label
-          cssClasses={["cc-devsel-title"]}
-          label={headLabel}
-          valign={Gtk.Align.CENTER}
-        />
-        <box hexpand />
-        {/* The default endpoint's own description is often empty, and the
-            audio.default* property can lag. So show the name of whichever
-            endpoint is flagged isDefault — the exact same per-endpoint signal
-            the list rows highlight with — so the header always matches the
-            selected row. Rebuilt via With when the endpoint set changes. */}
-        <With value={endpoints}>
-          {(list: AstalWp.Endpoint[]) => {
-            const [name, setName] = createState("—");
+        <box orientation={Gtk.Orientation.VERTICAL} hexpand valign={Gtk.Align.CENTER}>
+          <label cssClasses={["panel-row-title"]} label={headLabel} xalign={0} />
+          {/* The default endpoint's own description is often empty, and the
+              audio.default* property can lag. So show the name of whichever
+              endpoint is flagged isDefault — the exact same per-endpoint signal
+              the list rows highlight with — so the header always matches the
+              selected row. Rebuilt via With when the endpoint set changes. */}
+          <With value={endpoints}>
+            {(list: AstalWp.Endpoint[]) => {
+              const [name, setName] = createState("—");
 
-            const recompute = () => {
-              const def = list.find((e) => e.isDefault);
-              setName(def?.description ?? "—");
-            };
-            recompute();
-            for (const e of list) {
-              onCleanup(createBinding(e, "isDefault").subscribe(recompute));
-            }
+              const recompute = () => {
+                const def = list.find((e) => e.isDefault);
+                setName(def?.description ?? "—");
+              };
+              recompute();
+              for (const e of list) {
+                onCleanup(createBinding(e, "isDefault").subscribe(recompute));
+              }
 
-            return (
-              <label
-                cssClasses={["cc-devsel-current"]}
-                label={name}
-                maxWidthChars={26}
-                ellipsize={Pango.EllipsizeMode.END}
-                valign={Gtk.Align.CENTER}
-              />
-            );
-          }}
-        </With>
+              return (
+                <label
+                  cssClasses={["panel-row-subtitle"]}
+                  label={name}
+                  xalign={0}
+                  maxWidthChars={30}
+                  ellipsize={Pango.EllipsizeMode.END}
+                />
+              );
+            }}
+          </With>
+        </box>
         <label
-          cssClasses={["cc-devsel-chevron"]}
+          cssClasses={["panel-row-trail"]}
           label={open((o) => (o ? CHEVRON_UP : CHEVRON_DOWN))}
           valign={Gtk.Align.CENTER}
         />
@@ -436,25 +442,29 @@ function DeviceSelector({
           spacing={2}
         >
           <For each={endpoints}>
-            {(ep: AstalWp.Endpoint) => (
-              <button
-                cssClasses={createBinding(ep, "isDefault")((d) => [
-                  "cc-devsel-item",
-                  d ? "active" : "",
-                ])}
-                onClicked={() => {
-                  ep.set_is_default(true);
-                  setOpen(false);
-                }}
-              >
-                <label
-                  label={ep.description}
-                  xalign={0}
-                  hexpand
-                  ellipsize={Pango.EllipsizeMode.END}
-                />
-              </button>
-            )}
+            {(ep: AstalWp.Endpoint) => {
+              const isDefault = createBinding(ep, "isDefault");
+
+              return (
+                <button
+                  cssClasses={isDefault((d) => ["panel-row", "cc-devsel-item", d ? "active" : ""])}
+                  onClicked={() => {
+                    ep.set_is_default(true);
+                    setOpen(false);
+                  }}
+                >
+                  <box spacing={12}>
+                    <label
+                      label={ep.description}
+                      xalign={0}
+                      hexpand
+                      ellipsize={Pango.EllipsizeMode.END}
+                    />
+                    <label cssClasses={["panel-row-check"]} label={WIFI_ACTIVE} visible={isDefault} />
+                  </box>
+                </button>
+              );
+            }}
           </For>
         </box>
       </scrolledwindow>
@@ -521,7 +531,7 @@ function BrightnessSlider() {
   };
 
   return (
-    <box cssClasses={["cc-slider-row"]} spacing={10} visible={hasBacklight}>
+    <box cssClasses={["panel-row", "static", "cc-slider-row"]} spacing={10} visible={hasBacklight}>
       <label
         cssClasses={["cc-slider-icon", "brightness"]}
         label={display((v) => brightnessGlyph(Math.round(v * 100)))}
@@ -616,23 +626,26 @@ export function NotificationCenter() {
         <button cssClasses={["dashboard-backdrop"]} onClicked={closeCenter} />
         <box
           $type="overlay"
-          cssClasses={["dashboard-card", "control-center-card"]}
+          cssClasses={["panel-card", "control-center-card"]}
           orientation={Gtk.Orientation.HORIZONTAL}
           halign={Gtk.Align.END}
-          valign={Gtk.Align.START}
-          spacing={12}
+          valign={CARD_VALIGN}
+          marginTop={8}
+          marginBottom={8}
+          marginEnd={8}
+          spacing={14}
         >
           {/* Left column: notifications, full height. */}
           <box
-            cssClasses={["cc-box", "cc-notif-box"]}
+            cssClasses={["cc-notif-box"]}
             orientation={Gtk.Orientation.VERTICAL}
             spacing={8}
             vexpand
           >
-            <box cssClasses={["cc-notif-header"]} spacing={8}>
-              <label cssClasses={["cc-title"]} label="Notifications" hexpand xalign={0} />
+            <box cssClasses={["panel-header"]} spacing={8}>
+              <label cssClasses={["panel-title"]} label="Notifications" hexpand xalign={0} />
               <box cssClasses={["dnd-toggle"]} spacing={6}>
-                <label cssClasses={["dnd-label"]} label="DND" />
+                <label cssClasses={["panel-section-hint"]} label="DND" />
                 <switch
                   active={dnd}
                   valign={Gtk.Align.CENTER}
@@ -659,10 +672,10 @@ export function NotificationCenter() {
                 valign={Gtk.Align.CENTER}
                 visible={hasNotifications((has) => !has)}
               >
-                <label cssClasses={["empty-label", "list-empty"]} label="No notifications" />
+                <label cssClasses={["panel-empty"]} label="No notifications" />
               </box>
               <scrolledwindow
-                cssClasses={["list-scroll"]}
+                cssClasses={["panel-scroll"]}
                 vexpand
                 hscrollbarPolicy={Gtk.PolicyType.NEVER}
                 vscrollbarPolicy={Gtk.PolicyType.AUTOMATIC}
@@ -687,36 +700,43 @@ export function NotificationCenter() {
           <box
             cssClasses={["cc-col-right"]}
             orientation={Gtk.Orientation.VERTICAL}
-            spacing={12}
+            spacing={14}
           >
-            <box cssClasses={["dash-header"]} spacing={8}>
-              <label cssClasses={["cc-title"]} label="Control Center" hexpand xalign={0} />
-              <button cssClasses={["dash-close"]} onClicked={closeCenter}>
+            <box cssClasses={["panel-header"]} spacing={8}>
+              <label cssClasses={["panel-title"]} label="Control Center" hexpand xalign={0} />
+              <button cssClasses={["panel-close"]} onClicked={closeCenter}>
                 <label label={CLOSE_GLYPH} />
               </button>
             </box>
 
-            <box
-              cssClasses={["cc-box", "cc-quick"]}
-              orientation={Gtk.Orientation.VERTICAL}
-              spacing={8}
-            >
-              <VolumeSlider />
-              <MicVolume />
-              <BrightnessSlider />
+            <box orientation={Gtk.Orientation.VERTICAL} spacing={6}>
+              <box cssClasses={["panel-section-head"]}>
+                <label cssClasses={["panel-section-label"]} label="LEVELS" hexpand xalign={0} />
+              </box>
+              <box cssClasses={["panel-group"]} orientation={Gtk.Orientation.VERTICAL}>
+                <VolumeSlider />
+                <MicVolume />
+                <BrightnessSlider />
+              </box>
             </box>
 
-            <box
-              cssClasses={["cc-box", "cc-devices"]}
-              orientation={Gtk.Orientation.VERTICAL}
-              spacing={6}
-            >
-              <DeviceSelector audio={audio} kind="output" />
-              <DeviceSelector audio={audio} kind="input" />
+            <box orientation={Gtk.Orientation.VERTICAL} spacing={6}>
+              <box cssClasses={["panel-section-head"]}>
+                <label cssClasses={["panel-section-label"]} label="AUDIO DEVICES" hexpand xalign={0} />
+              </box>
+              <box cssClasses={["panel-group"]} orientation={Gtk.Orientation.VERTICAL}>
+                <DeviceSelector audio={audio} kind="output" />
+                <DeviceSelector audio={audio} kind="input" />
+              </box>
             </box>
 
-            <box cssClasses={["cc-box", "cc-power-box"]}>
-              <PowerRow />
+            <box orientation={Gtk.Orientation.VERTICAL} spacing={6}>
+              <box cssClasses={["panel-section-head"]}>
+                <label cssClasses={["panel-section-label"]} label="POWER" hexpand xalign={0} />
+              </box>
+              <box cssClasses={["panel-group"]} orientation={Gtk.Orientation.VERTICAL}>
+                <PowerRow />
+              </box>
             </box>
           </box>
         </box>

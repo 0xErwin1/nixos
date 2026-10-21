@@ -16,14 +16,16 @@ export const [activeTab, setActiveTab] = createState<DashboardTab>("wifi");
 export const [calendarVisible, setCalendarVisible] = createState(false);
 export const [mediaVisible, setMediaVisible] = createState(false);
 export const [extrasVisible, setExtrasVisible] = createState(false);
+export const [appearanceVisible, setAppearanceVisible] = createState(false);
 
-type Panel = "dashboard" | "calendar" | "media" | "extras" | "center";
+type Panel = "dashboard" | "calendar" | "media" | "extras" | "appearance" | "center";
 
 function closeOthers(keep: Panel): void {
   if (keep !== "dashboard") setDashboardVisible(false);
   if (keep !== "calendar") setCalendarVisible(false);
   if (keep !== "media") setMediaVisible(false);
   if (keep !== "extras") setExtrasVisible(false);
+  if (keep !== "appearance") setAppearanceVisible(false);
   if (keep !== "center") setCenterVisible(false);
 }
 
@@ -36,6 +38,7 @@ export function anyPanelOpen(): boolean {
     calendarVisible.get() ||
     mediaVisible.get() ||
     extrasVisible.get() ||
+    appearanceVisible.get() ||
     centerVisible.get()
   );
 }
@@ -78,6 +81,21 @@ export function toggleExtras(): void {
 
 export function closeExtras(): void {
   setExtrasVisible(false);
+}
+
+export function toggleAppearance(): void {
+  const next = !appearanceVisible.get();
+  if (next) closeOthers("appearance");
+  setAppearanceVisible(next);
+}
+
+export function openAppearance(): void {
+  closeOthers("appearance");
+  setAppearanceVisible(true);
+}
+
+export function closeAppearance(): void {
+  setAppearanceVisible(false);
 }
 
 // The notification center (bell / brightness / volume / mic triggers) joins the

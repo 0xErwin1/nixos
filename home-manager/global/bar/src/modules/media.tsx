@@ -4,6 +4,7 @@ import Pango from "gi://Pango";
 import AstalMpris from "gi://AstalMpris";
 import AstalWp from "gi://AstalWp";
 import { Astal, Gdk, Gtk } from "ags/gtk4";
+import { CARD_VALIGN } from "./edge";
 import { createBinding, createComputed, createState, onCleanup, For, With } from "ags";
 import { createPoll } from "ags/time";
 
@@ -507,29 +508,33 @@ export function MediaPanel() {
         <button cssClasses={["media-backdrop"]} onClicked={closeMedia} />
         <box
           $type="overlay"
-          cssClasses={["media-card"]}
+          cssClasses={["panel-card"]}
           orientation={Gtk.Orientation.VERTICAL}
           halign={Gtk.Align.START}
-          valign={Gtk.Align.START}
+          valign={CARD_VALIGN}
           marginTop={8}
+          marginBottom={8}
           marginStart={panelX}
-          spacing={10}
+          spacing={12}
         >
-          <box halign={Gtk.Align.END}>
-            <button cssClasses={["media-close"]} onClicked={closeMedia}>
+          <box cssClasses={["panel-header"]}>
+            <label cssClasses={["panel-title"]} label="Now Playing" hexpand xalign={0} />
+            <button cssClasses={["panel-close"]} onClicked={closeMedia}>
               <label label={CLOSE_GLYPH} />
             </button>
           </box>
           <PlayerSelector />
-          <With value={activePlayer}>
-            {(p: AstalMpris.Player | null) =>
-              p ? (
-                <MediaPanelBody player={p} />
-              ) : (
-                <label cssClasses={["media-empty"]} label="Nothing playing" />
-              )
-            }
-          </With>
+          <box cssClasses={["panel-group", "media-group"]} orientation={Gtk.Orientation.VERTICAL}>
+            <With value={activePlayer}>
+              {(p: AstalMpris.Player | null) =>
+                p ? (
+                  <MediaPanelBody player={p} />
+                ) : (
+                  <label cssClasses={["panel-empty"]} label="Nothing playing" />
+                )
+              }
+            </With>
+          </box>
         </box>
       </overlay>
     </window>

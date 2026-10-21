@@ -168,3 +168,8 @@ export const MEDIA_PLAY = "\u{f040a}"; // play
 export const MEDIA_PAUSE = "\u{f03e4}"; // pause
 export const MEDIA_PREV = "\u{f04ae}"; // skip-previous
 export const MEDIA_NEXT = "\u{f04ad}"; // skip-next
+
+// Appearance panel glyphs.
+export const PALETTE = "\u{f03d8}"; // md-palette — bar trigger
+export const MODE_LIGHT = "\u{f0599}"; // md-weather_sunny
+export const MODE_DARK = "\u{f0594}"; // md-weather_night

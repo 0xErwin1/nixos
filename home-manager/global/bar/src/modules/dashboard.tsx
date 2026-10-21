@@ -1,45 +1,16 @@
 import app from "ags/gtk4/app";
 import { Astal, Gdk, Gtk } from "ags/gtk4";
+import { CARD_VALIGN } from "./edge";
 
-import {
-  DashboardTab,
-  dashboardVisible,
-  activeTab,
-  setActiveTab,
-  closeDashboard,
-} from "./dashboard-state";
-import { WifiTab } from "./wifi";
-import { BluetoothTab } from "./bluetooth";
-import { WIFI, BT_ON, CLOSE_GLYPH } from "../glyphs";
+import { dashboardVisible, closeDashboard } from "./dashboard-state";
+import { NetworkPanel } from "./network-panel";
+import { CLOSE_GLYPH } from "../glyphs";
 
-function TabButton({
-  tab,
-  label,
-  glyph,
-}: {
-  tab: DashboardTab;
-  label: string;
-  glyph: string;
-}) {
-  return (
-    <button
-      cssClasses={activeTab((t) => ["dash-tab", t === tab ? "active" : ""])}
-      onClicked={() => setActiveTab(tab)}
-    >
-      <box spacing={10}>
-        <label cssClasses={["dash-tab-glyph"]} label={glyph} />
-        <label label={label} />
-      </box>
-    </button>
-  );
-}
-
-// Connectivity dashboard: a full-screen OVERLAY layer window whose card drops
-// down from the top-right (under the bar, near the wifi/bt icons) rather than
-// centered. A fully transparent full-screen catcher behind the card closes it on
-// an outside click, without dimming the screen. Also closes on Esc and the
-// close button. Both tabs stay mounted and are toggled by visibility so each
-// keeps its state across tab switches.
+// Network panel: a full-screen OVERLAY layer window whose card hugs the bar's
+// edge on the right (near the wifi/bt icons) rather than centered. A fully
+// transparent full-screen catcher behind the card closes it on an outside
+// click, without dimming the screen. Also closes on Esc, on focus loss and on
+// the close button.
 export default function Dashboard() {
   const { TOP, BOTTOM, LEFT, RIGHT } = Astal.WindowAnchor;
 
@@ -67,32 +38,23 @@ export default function Dashboard() {
         <button cssClasses={["dashboard-backdrop"]} onClicked={closeDashboard} />
         <box
           $type="overlay"
-          cssClasses={["dashboard-card"]}
+          cssClasses={["panel-card"]}
           orientation={Gtk.Orientation.VERTICAL}
           halign={Gtk.Align.END}
-          valign={Gtk.Align.START}
+          valign={CARD_VALIGN}
+          marginTop={8}
+          marginBottom={8}
+          marginEnd={8}
           spacing={12}
         >
-          <box cssClasses={["dash-header"]}>
-            <box hexpand />
-            <button cssClasses={["dash-close"]} onClicked={closeDashboard}>
+          <box cssClasses={["panel-header"]}>
+            <label cssClasses={["panel-title"]} label="Network" hexpand xalign={0} />
+            <button cssClasses={["panel-close"]} onClicked={closeDashboard}>
               <label label={CLOSE_GLYPH} />
             </button>
           </box>
 
-          <box cssClasses={["dash-content"]} hexpand vexpand>
-            <box visible={activeTab((t) => t === "wifi")} hexpand vexpand>
-              <WifiTab />
-            </box>
-            <box visible={activeTab((t) => t === "bluetooth")} hexpand vexpand>
-              <BluetoothTab />
-            </box>
-          </box>
-
-          <box cssClasses={["dashboard-tabs"]} halign={Gtk.Align.CENTER} spacing={10}>
-            <TabButton tab="wifi" label="Wi-Fi" glyph={WIFI} />
-            <TabButton tab="bluetooth" label="Bluetooth" glyph={BT_ON} />
-          </box>
+          <NetworkPanel />
         </box>
       </overlay>
     </window>

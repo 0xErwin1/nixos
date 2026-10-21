@@ -1,6 +1,7 @@
 import app from "ags/gtk4/app";
 import GLib from "gi://GLib";
 import { Astal, Gdk, Gtk } from "ags/gtk4";
+import { CARD_VALIGN } from "./edge";
 import { createState, With } from "ags";
 import { execAsync } from "ags/process";
 
@@ -394,12 +395,12 @@ function ProviderSummaryRow({ p }: { p: UsageProvider }) {
   const notes = summaryNotes(p);
 
   return (
-    <button cssClasses={["ai-summary-row"]} onClicked={() => setSelectedTab(p.id)}>
-      <box cssClasses={["cc-box", "ai-summary-card"]} orientation={Gtk.Orientation.VERTICAL} spacing={6}>
+    <button cssClasses={["panel-row"]} onClicked={() => setSelectedTab(p.id)}>
+      <box orientation={Gtk.Orientation.VERTICAL} spacing={6}>
         <box valign={Gtk.Align.CENTER} spacing={8}>
-          <label cssClasses={["ai-name"]} label={p.name} halign={Gtk.Align.START} hexpand />
+          <label cssClasses={["panel-row-title", "ai-name"]} label={p.name} halign={Gtk.Align.START} hexpand />
           {p.plan ? <label cssClasses={["ai-plan"]} label={p.plan} /> : <box />}
-          <label cssClasses={["ai-summary-chevron"]} label="›" />
+          <label cssClasses={["panel-row-trail"]} label="›" />
         </box>
 
         {p.available && peak ? (
@@ -457,9 +458,9 @@ function ProviderSummaryRow({ p }: { p: UsageProvider }) {
 
 function ProviderCard({ p }: { p: UsageProvider }) {
   return (
-    <box cssClasses={["cc-box", "ai-card"]} orientation={Gtk.Orientation.VERTICAL} spacing={8}>
+    <box cssClasses={["panel-group", "ai-card"]} orientation={Gtk.Orientation.VERTICAL} spacing={8}>
       <box valign={Gtk.Align.CENTER}>
-        <label cssClasses={["ai-name"]} label={p.name} halign={Gtk.Align.START} hexpand />
+        <label cssClasses={["panel-row-title", "ai-name"]} label={p.name} halign={Gtk.Align.START} hexpand />
         {p.plan ? <label cssClasses={["ai-plan"]} label={p.plan} /> : <box />}
       </box>
 
@@ -525,7 +526,7 @@ function UsageBody({ u }: { u: UsageData }) {
         {(tab: string) => {
           if (tab === "overview") {
             return (
-              <box orientation={Gtk.Orientation.VERTICAL} spacing={8}>
+              <box cssClasses={["panel-group"]} orientation={Gtk.Orientation.VERTICAL} spacing={2}>
                 {u.providers.map((p) => (
                   <ProviderSummaryRow p={p} />
                 ))}
@@ -536,7 +537,7 @@ function UsageBody({ u }: { u: UsageData }) {
           const p = u.providers.find((x) => x.id === tab);
           if (!p) {
             return (
-              <label cssClasses={["ai-empty"]} label="Provider not found" />
+              <label cssClasses={["panel-empty"]} label="Provider not found" />
             );
           }
           return <ProviderCard p={p} />;
@@ -579,18 +580,19 @@ export function ExtrasPanel() {
         <button cssClasses={["extras-backdrop"]} onClicked={closeExtras} />
         <box
           $type="overlay"
-          cssClasses={["extras-card"]}
+          cssClasses={["panel-card"]}
           orientation={Gtk.Orientation.VERTICAL}
           halign={Gtk.Align.START}
-          valign={Gtk.Align.START}
+          valign={CARD_VALIGN}
           marginTop={8}
+          marginBottom={8}
           marginStart={extrasX}
           spacing={12}
         >
-          <box cssClasses={["ai-header"]} valign={Gtk.Align.CENTER} spacing={8}>
+          <box cssClasses={["panel-header"]} valign={Gtk.Align.CENTER} spacing={8}>
             <label cssClasses={["ai-title-glyph"]} label={AI_GLYPH} />
-            <label cssClasses={["ai-title"]} label="AI Usage" halign={Gtk.Align.START} hexpand />
-            <button cssClasses={["ai-icon-btn"]} onClicked={() => fetchUsage(true)}>
+            <label cssClasses={["panel-title"]} label="AI Usage" halign={Gtk.Align.START} hexpand />
+            <button cssClasses={["panel-icon-btn"]} onClicked={() => fetchUsage(true)}>
               {/* Spinner overlays the refresh glyph while loading so it never
                   shifts the layout; the glyph stays present (just transparent)
                   to keep the button size constant. */}
@@ -608,7 +610,7 @@ export function ExtrasPanel() {
                 />
               </overlay>
             </button>
-            <button cssClasses={["ai-icon-btn"]} onClicked={closeExtras}>
+            <button cssClasses={["panel-close"]} onClicked={closeExtras}>
               <label label={CLOSE_GLYPH} />
             </button>
           </box>
@@ -619,7 +621,7 @@ export function ExtrasPanel() {
                 <UsageBody u={u} />
               ) : (
                 <label
-                  cssClasses={["ai-empty"]}
+                  cssClasses={["panel-empty"]}
                   label="No usage data"
                   visible={loading((l) => !l)}
                 />

@@ -2,6 +2,7 @@ import AstalBluetooth from "gi://AstalBluetooth";
 import Pango from "gi://Pango";
 import { Gtk } from "ags/gtk4";
 import {
+  Accessor,
   createBinding,
   createComputed,
   createState,
@@ -12,19 +13,11 @@ import {
 import { createPoll } from "ags/time";
 import { execAsync } from "ags/process";
 
-import {
-  BT_ON,
-  BT_CONNECTED,
-  BT_OFF,
-  FORGET_GLYPH,
-  WIFI_REFRESH,
-  btStateGlyph,
-} from "../glyphs";
+import { BT_ON, BT_OFF, WIFI_ACTIVE, btStateGlyph } from "../glyphs";
 import {
   openDashboard,
   closeDashboard,
   dashboardVisible,
-  activeTab,
   anyPanelOpen,
 } from "./dashboard-state";
 
@@ -177,13 +170,45 @@ function sortDevices(
     });
 }
 
+// Device-type glyphs for the Network panel rows, keyed off the BlueZ icon name
+// (e.g. "input-keyboard", "audio-headset"). Local until they move to glyphs.ts.
+const DEVICE_KEYBOARD = "\u{f030c}"; // md-keyboard
+const DEVICE_MOUSE = "\u{f037d}"; // md-mouse
+const DEVICE_HEADPHONES = "\u{f02cb}"; // md-headphones
+const MORE_GLYPH = "\u{f01d8}"; // md-dots_horizontal
+const ADD_GLYPH = "\u{f0415}"; // md-plus
+
+function deviceGlyph(icon: string | null): string {
+  const name = icon ?? "";
+  if (name.includes("keyboard")) return DEVICE_KEYBOARD;
+  if (name.includes("mouse")) return DEVICE_MOUSE;
+  if (name.startsWith("audio")) return DEVICE_HEADPHONES;
+  return BT_ON;
+}
+
+/**
+ * One device row: the row itself toggles the connection, and the trailing
+ * button reveals an inline action menu. The menu is inline rather than a
+ * GtkPopover because a popover is a separate surface, and the panel closes
+ * whenever its window stops being the active one.
+ *
+ * `discovered` rows list devices found by "Add device…": they show only while
+ * the user is adding and until the device pairs, so a device moves from the
+ * discovered list to the known list without a list rebuild.
+ */
 function DeviceRow({
   device,
+  discovered,
+  adding,
   setStatus,
 }: {
   device: AstalBluetooth.Device;
+  discovered: boolean;
+  adding: Accessor<boolean>;
   setStatus: (s: string) => void;
 }) {
+  const [menuOpen, setMenuOpen] = createState(false);
+
   const connected = createBinding(device, "connected");
   const connecting = createBinding(device, "connecting");
   const paired = createBinding(device, "paired");
@@ -240,212 +265,215 @@ function DeviceRow({
   };
 
   const forget = () => {
+    setMenuOpen(false);
     bluetooth.adapter?.remove_device(device);
     setStatus("");
   };
+
+  const visible = discovered
+    ? createComputed([adding, paired, connected], (a, p, c) => a && !p && !c)
+    : createComputed([paired, connected], (p, c) => p || c);
 
   const subtitle = createComputed(
     [connected, connecting, paired, battery],
     (c, ing, p, b) => {
       if (ing) return "Connecting…";
-      if (c) return b > 0 ? `Connected · ${normalizeBattery(b)}%` : "Connected";
-      if (p) return "Paired";
-      return device.address;
+      if (c) {
+        return b > 0 ? `Connected · ${normalizeBattery(b)}% battery` : "Connected";
+      }
+      return p ? "Not connected" : "Not paired";
     },
   );
 
+  // The profile switcher polls pactl, so it is mounted only while it can be seen.
+  const showProfiles = createComputed([connected, menuOpen], (c, m) => c && m);
+
   return (
-    <box cssClasses={["list-row", "bt-row"]} spacing={8}>
-      <button cssClasses={["bt-row-main"]} hexpand onClicked={primary}>
-        <box spacing={10}>
-          <label
-            cssClasses={connected((c) => [
-              "bt-dev-icon",
-              c ? "bt-connected" : "bt-on",
-            ])}
-            label={connected((c) => (c ? BT_CONNECTED : BT_ON))}
-          />
-          <box orientation={Gtk.Orientation.VERTICAL} hexpand halign={Gtk.Align.START}>
+    <box cssClasses={["net-device"]} orientation={Gtk.Orientation.VERTICAL} visible={visible}>
+      <box cssClasses={["panel-row", "split"]} spacing={4}>
+        <button cssClasses={["panel-row-main"]} hexpand onClicked={primary}>
+          <box spacing={12}>
             <label
-              cssClasses={["bt-dev-name"]}
-              label={device.name || device.address}
-              xalign={0}
-              maxWidthChars={24}
-              ellipsize={Pango.EllipsizeMode.END}
+              cssClasses={connected((c) => ["panel-row-icon", c ? "on" : ""])}
+              label={deviceGlyph(device.icon)}
             />
-            <label cssClasses={["bt-dev-sub"]} xalign={0} label={subtitle} />
+            <box orientation={Gtk.Orientation.VERTICAL} hexpand valign={Gtk.Align.CENTER}>
+              <label
+                cssClasses={["panel-row-title"]}
+                label={device.name || device.address}
+                xalign={0}
+                maxWidthChars={22}
+                ellipsize={Pango.EllipsizeMode.END}
+              />
+              <label cssClasses={["panel-row-subtitle"]} xalign={0} label={subtitle} />
+            </box>
+            <label cssClasses={["panel-row-check"]} label={WIFI_ACTIVE} visible={connected} />
           </box>
-        </box>
-      </button>
-      <button
-        cssClasses={["dash-btn", "danger", "icon-btn"]}
-        visible={paired}
-        tooltipText="Forget"
-        valign={Gtk.Align.CENTER}
-        onClicked={forget}
-      >
-        <label label={FORGET_GLYPH} />
-      </button>
-    </box>
-  );
-}
-
-function ConnectedFocus({ device }: { device: AstalBluetooth.Device }) {
-  const battery = createBinding(device, "batteryPercentage");
-
-  return (
-    <box orientation={Gtk.Orientation.VERTICAL}>
-      <label cssClasses={["focus-glyph", "bt-focus-glyph"]} label={BT_CONNECTED} />
-      <label cssClasses={["focus-title"]} label={device.name || device.address} />
-      <label cssClasses={["focus-subtitle"]} label="Connected" />
-      <box cssClasses={["focus-meta"]} orientation={Gtk.Orientation.VERTICAL}>
-        <label
-          xalign={0}
-          label={battery((b) =>
-            b > 0 ? `Battery: ${normalizeBattery(b)}%` : "Battery: —",
-          )}
-        />
-        <label xalign={0} label={`MAC: ${device.address}`} />
+        </button>
+        <button
+          cssClasses={menuOpen((m) => ["net-more-btn", m ? "open" : ""])}
+          tooltipText="More actions"
+          valign={Gtk.Align.CENTER}
+          onClicked={() => setMenuOpen(!menuOpen.get())}
+        >
+          <label label={MORE_GLYPH} />
+        </button>
       </box>
-      <ProfileControl device={device} />
+
+      <revealer
+        transitionType={Gtk.RevealerTransitionType.SLIDE_DOWN}
+        transitionDuration={150}
+        revealChild={menuOpen}
+      >
+        <box cssClasses={["net-menu"]} orientation={Gtk.Orientation.VERTICAL} spacing={8}>
+          <box spacing={8}>
+            <button
+              cssClasses={["dash-btn"]}
+              label={connected((c) => (c ? "Disconnect" : "Connect"))}
+              onClicked={primary}
+            />
+            <button
+              cssClasses={["dash-btn", "danger"]}
+              label="Forget"
+              visible={paired}
+              onClicked={forget}
+            />
+          </box>
+          <With value={showProfiles}>
+            {(show: boolean) => (show ? <ProfileControl device={device} /> : <box />)}
+          </With>
+        </box>
+      </revealer>
     </box>
   );
 }
 
-function BluetoothTabInner({ adapter }: { adapter: AstalBluetooth.Adapter }) {
+function BluetoothSectionInner({ adapter }: { adapter: AstalBluetooth.Adapter }) {
   const [status, setStatus] = createState("");
+  const [adding, setAdding] = createState(false);
 
   const powered = createBinding(bluetooth, "isPowered");
   const discovering = createBinding(adapter, "discovering");
   const devices = createBinding(bluetooth, "devices")(sortDevices);
 
-  const focusDevice = createBinding(bluetooth, "isConnected")(
-    () => bluetooth.get_devices().find((d) => d.connected) ?? null,
-  );
-
-  const emptyText = createComputed(
-    [powered, discovering, devices],
-    (p, d, devs) =>
-      !p
-        ? "Bluetooth is off"
-        : devs.length > 0
-          ? ""
-          : d
-            ? "Scanning…"
-            : "No devices found",
-  );
-
   // Auto-discover when Bluetooth is powered on (false -> true edge), and stop
-  // discovery when it powers off. Mirrors the wifi auto-scan; the manual Scan
-  // button still works.
+  // discovery when it powers off. Mirrors the wifi auto-scan; "Add device…"
+  // still starts it by hand.
   let prevPowered = bluetooth.isPowered;
   const unsubscribePowered = powered.subscribe(() => {
     const nowPowered = powered.get();
     if (nowPowered && !prevPowered) {
       adapter.start_discovery();
-    } else if (!nowPowered && prevPowered && adapter.discovering) {
-      adapter.stop_discovery();
+    } else if (!nowPowered && prevPowered) {
+      setAdding(false);
+      if (adapter.discovering) adapter.stop_discovery();
     }
     prevPowered = nowPowered;
   });
   onCleanup(unsubscribePowered);
 
+  const stopAdding = () => {
+    setAdding(false);
+    if (!adapter.discovering) return;
+
+    try {
+      adapter.stop_discovery();
+    } catch {
+      // BlueZ already ended the discovery session.
+    }
+  };
+
+  // Closing the panel ends an "Add device…" search: nobody is looking at the
+  // results, and a running discovery keeps the radio busy.
+  const unsubscribeVisible = dashboardVisible.subscribe(() => {
+    if (!dashboardVisible.get() && adding.get()) stopAdding();
+  });
+  onCleanup(unsubscribeVisible);
+
+  const toggleAdding = () => {
+    if (adding.get()) {
+      stopAdding();
+      return;
+    }
+
+    setAdding(true);
+    if (adapter.discovering) return;
+
+    try {
+      adapter.start_discovery();
+    } catch {
+      setStatus("Scan failed");
+    }
+  };
+
+  const addHint = createComputed([adding, discovering], (a, d) =>
+    a && d ? "Searching for devices…" : "",
+  );
+
   return (
-    <box
-      cssClasses={["tab", "bt-tab"]}
-      orientation={Gtk.Orientation.VERTICAL}
-      hexpand
-      vexpand
-      spacing={12}
-    >
-      <box
-        cssClasses={["cc-box", "focus-card"]}
-        orientation={Gtk.Orientation.VERTICAL}
-        hexpand
-        halign={Gtk.Align.FILL}
-      >
-        <With value={focusDevice}>
-          {(device: AstalBluetooth.Device | null) =>
-            device ? (
-              <ConnectedFocus device={device} />
-            ) : (
-              <box orientation={Gtk.Orientation.VERTICAL}>
-                <label
-                  cssClasses={["focus-glyph", "bt-focus-glyph"]}
-                  label={powered((p) => (p ? BT_ON : BT_OFF))}
-                />
-                <label
-                  cssClasses={["focus-title"]}
-                  label={powered((p) => (p ? "No device connected" : "Bluetooth Off"))}
-                />
-              </box>
-            )
-          }
-        </With>
+    <box cssClasses={["panel-section"]} orientation={Gtk.Orientation.VERTICAL} spacing={6}>
+      <box cssClasses={["panel-section-head"]} spacing={8}>
+        <label cssClasses={["panel-section-label"]} label="BLUETOOTH" hexpand xalign={0} />
+        <switch
+          active={powered}
+          valign={Gtk.Align.CENTER}
+          onNotifyActive={(self) => {
+            if (self.active !== bluetooth.isPowered) bluetooth.toggle();
+          }}
+        />
       </box>
 
-      <box cssClasses={["cc-box"]}>
-        <box cssClasses={["actions-row"]} halign={Gtk.Align.CENTER} spacing={14}>
-          <box cssClasses={["action-toggle"]} spacing={8}>
-            <label label="Bluetooth" />
-            <switch
-              active={powered}
-              valign={Gtk.Align.CENTER}
-              onNotifyActive={(self) => {
-                if (self.active !== bluetooth.isPowered) bluetooth.toggle();
-              }}
-            />
-          </box>
-          <button
-            cssClasses={["dash-btn"]}
-            sensitive={powered}
-            onClicked={() =>
-              adapter.discovering
-                ? adapter.stop_discovery()
-                : adapter.start_discovery()
-            }
-          >
-            <box spacing={6}>
-              <label label={WIFI_REFRESH} />
-              <label label="Scan" />
+      <box cssClasses={["panel-group"]} orientation={Gtk.Orientation.VERTICAL}>
+        <box cssClasses={["panel-row", "muted"]} spacing={12} visible={powered((p) => !p)}>
+          <label cssClasses={["panel-row-icon"]} label={BT_OFF} />
+          <label cssClasses={["panel-row-title"]} label="Bluetooth is off" hexpand xalign={0} />
+        </box>
+
+        <box orientation={Gtk.Orientation.VERTICAL} visible={powered}>
+          <For each={devices}>
+            {(device) => (
+              <DeviceRow
+                device={device}
+                discovered={false}
+                adding={adding}
+                setStatus={setStatus}
+              />
+            )}
+          </For>
+
+          <button cssClasses={["panel-row"]} onClicked={toggleAdding}>
+            <box spacing={12}>
+              <label cssClasses={["panel-row-icon"]} label={ADD_GLYPH} />
+              <label
+                cssClasses={["panel-row-title"]}
+                label={adding((a) => (a ? "Stop searching" : "Add device…"))}
+                hexpand
+                xalign={0}
+              />
             </box>
           </button>
+
+          <For each={devices}>
+            {(device) => (
+              <DeviceRow
+                device={device}
+                discovered={true}
+                adding={adding}
+                setStatus={setStatus}
+              />
+            )}
+          </For>
+
           <label
-            cssClasses={["scan-indicator"]}
-            label={discovering((d) => (d ? "Scanning…" : ""))}
+            cssClasses={["panel-empty"]}
+            xalign={0}
+            visible={addHint((h) => !!h)}
+            label={addHint}
           />
         </box>
-      </box>
-
-      <box
-        cssClasses={["cc-box", "list-area"]}
-        orientation={Gtk.Orientation.VERTICAL}
-        vexpand
-      >
-        <box
-          vexpand
-          halign={Gtk.Align.CENTER}
-          valign={Gtk.Align.CENTER}
-          visible={emptyText((t) => !!t)}
-        >
-          <label cssClasses={["empty-label", "list-empty"]} label={emptyText} />
-        </box>
-        <scrolledwindow
-          cssClasses={["list-scroll"]}
-          vexpand
-          hscrollbarPolicy={Gtk.PolicyType.NEVER}
-          vscrollbarPolicy={Gtk.PolicyType.AUTOMATIC}
-          visible={emptyText((t) => !t)}
-        >
-          <box cssClasses={["bt-list"]} orientation={Gtk.Orientation.VERTICAL} spacing={6}>
-            <For each={devices}>
-              {(device) => <DeviceRow device={device} setStatus={setStatus} />}
-            </For>
-          </box>
-        </scrolledwindow>
 
         <label
-          cssClasses={["statusline"]}
+          cssClasses={["statusline", "net-status"]}
           xalign={0}
           visible={status((s) => !!s)}
           label={status}
@@ -455,18 +483,25 @@ function BluetoothTabInner({ adapter }: { adapter: AstalBluetooth.Adapter }) {
   );
 }
 
-export function BluetoothTab() {
+/** The Bluetooth section of the Network panel: adapter switch, devices and pairing. */
+export function BluetoothSection() {
   const adapter = bluetooth.adapter;
 
   if (!adapter) {
     return (
-      <box cssClasses={["tab", "bt-tab"]}>
-        <label label="No Bluetooth adapter" />
+      <box cssClasses={["panel-section"]} orientation={Gtk.Orientation.VERTICAL} spacing={6}>
+        <label cssClasses={["panel-section-label"]} label="BLUETOOTH" xalign={0} />
+        <box cssClasses={["panel-group"]}>
+          <box cssClasses={["panel-row", "muted"]} spacing={12}>
+            <label cssClasses={["panel-row-icon"]} label={BT_OFF} />
+            <label cssClasses={["panel-row-title"]} label="No Bluetooth adapter" xalign={0} />
+          </box>
+        </box>
       </box>
     );
   }
 
-  return <BluetoothTabInner adapter={adapter} />;
+  return <BluetoothSectionInner adapter={adapter} />;
 }
 
 export function BluetoothTrigger() {
@@ -489,7 +524,7 @@ export function BluetoothTrigger() {
   // reliably closes the panel. openDashboard() closes any other open panel via
   // the shared exclusion group.
   const activate = () => {
-    if (dashboardVisible.get() && activeTab.get() === "bluetooth") {
+    if (dashboardVisible.get()) {
       closeDashboard();
     } else {
       openDashboard("bluetooth");

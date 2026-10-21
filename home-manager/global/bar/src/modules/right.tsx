@@ -17,6 +17,7 @@ import Tray from "./tray";
 import { WifiTrigger } from "./wifi";
 import { BluetoothTrigger } from "./bluetooth";
 import { NotificationBell } from "./notifications";
+import { AppearanceTrigger } from "./appearance";
 import { openCenter, toggleCenter, anyPanelOpen } from "./dashboard-state";
 
 interface Props {
@@ -243,6 +244,7 @@ export default function Right({ vertical }: Props) {
       valign={vertical ? Gtk.Align.END : Gtk.Align.CENTER}
     >
       <Voxtype vertical={vertical} />
+      <AppearanceTrigger />
       <box
         cssClasses={["island", "controls"]}
         orientation={orientation}

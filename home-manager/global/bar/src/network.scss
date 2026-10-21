@@ -1,0 +1,37 @@
+// ── Network panel (connectivity-dashboard window) ─────────────────────────────
+// The card, section, group and row styles come from `panel.scss`; only the
+// Network-only pieces live here. Palette roles come from the active theme
+// entry; buttons, switches and the password entry keep the shared styles.
+
+@use "themes/palette" as *;
+
+.net-more-btn {
+  all: unset;
+  padding: 0.25rem 0.5rem;
+  margin-right: 0.35rem;
+  border-radius: 999px;
+  color: $muted;
+  transition: all 120ms ease;
+}
+
+.net-more-btn:hover,
+.net-more-btn.open {
+  background-color: rgba($overlay, 0.1);
+  color: $foreground;
+}
+
+// Inline device action menu, revealed under its row.
+.net-menu {
+  margin: 0.1rem 0.6rem 0.5rem 2.8rem;
+  padding: 0.6rem;
+  border-radius: 9px;
+  background-color: rgba($overlay, 0.04);
+}
+
+.net-status {
+  padding: 0 0.6rem;
+}
+
+.net-password {
+  padding: 0.4rem 0.6rem 0.6rem;
+}

@@ -7,13 +7,7 @@ import Left from "./modules/left";
 import Center from "./modules/center";
 import Right from "./modules/right";
 import Media from "./modules/media";
-
-// Bar edge is chosen at startup via the BAR_EDGE env var so the position can be
-// tried without rebuilding. "top"/"bottom" produce a horizontal bar spanning
-// ~95% of the monitor width; "left"/"right" produce a narrow vertical bar
-// spanning ~95% of the height. Anything else falls back to the default "top".
-const EDGE = (GLib.getenv("BAR_EDGE") || "top").toLowerCase();
-const VERTICAL = EDGE === "left" || EDGE === "right";
+import { EDGE, VERTICAL } from "./modules/edge";
 
 const EDGE_GAP = 4;
 // Half the previous inset so the bar spans more width; marginLeft == marginRight

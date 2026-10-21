@@ -256,3 +256,12 @@ function createTunnels() {
 }
 
 export const tunnels = createTunnels();
+
+/**
+ * Whether this host runs the mesh at all: tailscaled creates tailscale0 at
+ * startup and keeps it after `tailscale down`, so a present link with no mesh
+ * tunnel in `tunnels` means the mesh is installed but off.
+ */
+export const meshLinkPresent = createPoll<boolean>(false, POLL_MS, () =>
+  GLib.file_test(`${NET_DIR}/${MESH_IFACE}`, GLib.FileTest.EXISTS),
+);

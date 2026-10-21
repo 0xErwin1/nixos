@@ -1,15 +1,8 @@
-// Ayu Dark palette.
-$background: #0a0e14;
-$foreground: #bfbab0;
-$grey: #151720;
-$yellow: #ffb454;
-$yellow-lite: #ffd580;
-$orange: #ff8f40;
-$blue: #73d0ff;
-$green: #bae67e;
-$red: #ff3333;
-$cyan: #95e6cb;
-$nix: #5277c3;
+// Theme-agnostic body. The palette roles come from `themes/_palette.scss`, which
+// the bar derivation generates from home-manager/global/theme/palettes.nix; each
+// generated `themes/<id>.scss` entry configures it and then loads this file.
+@use "sass:meta";
+@use "themes/palette" as *;
 
 $font: "JetBrainsMono Nerd Font";
 
@@ -48,9 +41,12 @@ $font: "JetBrainsMono Nerd Font";
   min-width: 1.9rem;
 }
 
+// The NixOS glyph's ink is 0.832em wide on a 0.6em advance, so it overflows
+// its label to the right. Padding the label by the overflow re-centers it.
 .os-icon {
   color: $nix;
   font-size: 1.35rem;
+  padding-right: 0.232em;
 }
 
 // Workspaces
@@ -130,7 +126,7 @@ $font: "JetBrainsMono Nerd Font";
 }
 
 .tray-item:hover button {
-  background: rgba(255, 255, 255, 0.06);
+  background: rgba($overlay, 0.06);
   border-radius: 8px;
 }
 
@@ -236,7 +232,7 @@ $font: "JetBrainsMono Nerd Font";
 }
 
 .dash-trigger:hover {
-  background: rgba(255, 255, 255, 0.06);
+  background: rgba($overlay, 0.06);
 }
 
 .microphone-active {
@@ -345,7 +341,7 @@ $font: "JetBrainsMono Nerd Font";
 
 // Mini weather shown next to the date (glyph + current temperature).
 .date-clickable:hover {
-  background-color: #11161f;
+  background-color: $panel;
 }
 
 .date-weather {
@@ -374,22 +370,16 @@ $font: "JetBrainsMono Nerd Font";
   background-color: transparent;
 }
 
-// Drops down from under the bar, aligned to the right (near the wifi/bt icons).
-// Fixed portrait size: identical in every state (off, empty, few, many). The
-// list scrolledwindow vexpands into the remaining height and scrolls internally
-// when the rows overflow, so the card itself never changes size (min == max
-// here because the fixed header/focus/actions plus a non-propagating
-// scrolledwindow never request more than min-height).
-.dashboard-card {
-  background-color: $background;
-  color: $foreground;
-  border: 1px solid $grey;
-  border-radius: 18px;
-  padding: 1.4rem;
-  margin: 8px 8px 0 0;
-  min-width: 34rem;
-  min-height: 40rem;
+// The card surface itself lives in `panel.scss`, which cannot see $font.
+.panel-card {
   font-family: $font;
+}
+
+// The control center keeps a fixed height: its notification list
+// scrolledwindow vexpands into the remaining height and scrolls internally,
+// so arriving notifications never resize the card.
+.panel-card.control-center-card {
+  min-height: 40rem;
 }
 
 // Two-column control center. Both columns are fixed width and neither expands,
@@ -401,54 +391,6 @@ $font: "JetBrainsMono Nerd Font";
 
 .cc-col-right {
   min-width: 27rem;
-}
-
-.dash-header {
-  margin-bottom: 0.2rem;
-}
-
-// Centered tab switcher (close lives in the header top-right).
-.dashboard-tabs {
-  margin-top: 0.4rem;
-}
-
-.dash-tab {
-  all: unset;
-  padding: 0.4rem 0.9rem;
-  border-radius: 999px;
-  color: $foreground;
-  opacity: 0.7;
-  transition: all 150ms ease;
-}
-
-.dash-tab:hover {
-  background: rgba(255, 255, 255, 0.06);
-}
-
-.dash-tab.active {
-  background-color: $grey;
-  color: $yellow;
-  opacity: 1;
-}
-
-.dash-tab-glyph {
-  font-size: 1.05rem;
-  margin-right: 0.15rem;
-}
-
-.dash-close {
-  all: unset;
-  padding: 0.3rem 0.55rem;
-  border-radius: 999px;
-  color: $foreground;
-  opacity: 0.7;
-  font-size: 1.1rem;
-}
-
-.dash-close:hover {
-  background: rgba(255, 51, 51, 0.18);
-  color: $red;
-  opacity: 1;
 }
 
 // ── Shared Ayu control styling (buttons / switch / entry) ─────────────────────
@@ -463,16 +405,11 @@ $font: "JetBrainsMono Nerd Font";
 }
 
 .dash-btn:hover {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba($overlay, 0.1);
 }
 
 .dash-btn:disabled {
   opacity: 0.4;
-}
-
-.dash-btn.icon-btn {
-  padding: 0.35rem 0.5rem;
-  opacity: 0.7;
 }
 
 .dash-btn.accent {
@@ -485,13 +422,13 @@ $font: "JetBrainsMono Nerd Font";
 }
 
 .dash-btn.danger:hover {
-  background: rgba(255, 51, 51, 0.18);
+  background: rgba($red, 0.18);
   color: $red;
 }
 
 .dash-btn.active {
   background-color: $yellow;
-  color: $background;
+  color: $on-accent;
 }
 
 .dash-btn.active:hover {
@@ -501,7 +438,7 @@ $font: "JetBrainsMono Nerd Font";
 // GtkSwitch → Ayu (no default GNOME blue).
 switch {
   background-color: $grey;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba($overlay, 0.1);
   border-radius: 999px;
   min-width: 2.6rem;
   min-height: 1.4rem;
@@ -512,23 +449,29 @@ switch:checked {
   border-color: $yellow;
 }
 
+// Knobs replace the whole Adwaita knob (its background image, border and
+// shadow draw over a plain background-color) and use whole-pixel sizes: with
+// GDK_DPI_SCALE=0.8 a rem is 12.8px, and a fractional circle renders jagged.
 switch > slider {
-  background-color: $foreground;
+  background: $foreground;
+  border: none;
+  box-shadow: none;
+  outline: none;
   border-radius: 999px;
-  min-width: 1.1rem;
-  min-height: 1.1rem;
-  margin: 1px;
+  min-width: 14px;
+  min-height: 14px;
+  margin: 2px;
 }
 
 switch:checked > slider {
-  background-color: $background;
+  background: $on-accent;
 }
 
 // Text entry (wifi password) → Ayu dark.
 entry {
   background-color: $grey;
   color: $foreground;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba($overlay, 0.1);
   border-radius: 8px;
   padding: 0.35rem 0.55rem;
   min-height: 0;
@@ -542,69 +485,6 @@ entry:focus-within {
 entry placeholder {
   color: $foreground;
   opacity: 0.4;
-}
-
-// Focus card: the prominent central status block on each tab.
-// The focus card is a .cc-box (lifted $grey section) — no bespoke bg here.
-.focus-glyph {
-  font-size: 2.6rem;
-}
-
-.wifi-focus-glyph {
-  color: $blue;
-}
-
-.focus-detail {
-  font-size: 0.85rem;
-  opacity: 0.7;
-}
-
-.wifi-vpn-row {
-  margin-top: 0.3rem;
-}
-
-.wifi-vpn-glyph {
-  color: $green;
-}
-
-.wifi-vpn-name {
-  font-size: 0.85rem;
-  color: $green;
-}
-
-.bt-focus-glyph {
-  color: $blue;
-}
-
-.focus-title {
-  font-size: 1.2rem;
-  font-weight: bold;
-  margin-top: 0.3rem;
-}
-
-.focus-subtitle {
-  color: $green;
-  font-size: 0.9rem;
-}
-
-.focus-meta {
-  margin-top: 0.6rem;
-  opacity: 0.8;
-  font-size: 0.85rem;
-}
-
-.focus-meta label {
-  margin: 0.05rem 0;
-}
-
-// Actions row: toggle + scan.
-.action-toggle {
-  padding: 0.2rem 0.4rem;
-}
-
-.scan-indicator {
-  font-size: 0.85rem;
-  opacity: 0.7;
 }
 
 // Bluetooth audio-profile switcher (A2DP / HFP).
@@ -628,89 +508,10 @@ entry placeholder {
   margin-top: 0.2rem;
 }
 
-// Empty/off placeholder, centered in the fixed list area, subtle.
-.list-empty {
-  opacity: 0.6;
-}
-
-// Inset rows: darker $background so they read as cards inside the $grey list
-// .cc-box (same treatment as notification cards in the control center).
-.wifi-row {
-  all: unset;
-  padding: 0.45rem 0.5rem;
-  border-radius: 10px;
-  background-color: $background;
-}
-
-.wifi-row:hover {
-  background-color: $grey;
-}
-
-.bt-row {
-  background-color: $background;
-  border-radius: 10px;
-}
-
-.bt-row:hover {
-  background-color: $grey;
-}
-
-.bt-row-main {
-  all: unset;
-  padding: 0.45rem 0.5rem;
-  border-radius: 10px;
-}
-
-.wifi-signal {
-  color: $blue;
-  font-size: 1.15rem;
-}
-
-.wifi-lock {
-  color: $foreground;
-  opacity: 0.7;
-  font-size: 1rem;
-}
-
-.wifi-check {
-  color: $green;
-  font-size: 1.1rem;
-}
-
-.wifi-active-row {
-  margin: 0.2rem 0;
-}
-
-.wifi-active-ssid {
-  font-weight: bold;
-}
-
-.bt-dev-icon {
-  font-size: 1.3rem;
-}
-
-.bt-dev-icon.bt-connected {
-  color: $blue;
-}
-
-.bt-dev-name {
-  font-weight: bold;
-}
-
-.bt-dev-sub {
-  font-size: 0.8rem;
-  opacity: 0.7;
-}
-
-.empty-label,
 .statusline {
   font-size: 0.85rem;
   opacity: 0.7;
   margin: 0.2rem 0;
-}
-
-.wifi-password {
-  margin-top: 0.3rem;
 }
 
 // ── Notifications (AstalNotifd: popups + center + bell) ────────────────────────
@@ -744,9 +545,11 @@ entry placeholder {
 
 // Notification card: a small app icon on the left, an accent-colored app name
 // (by urgency) over a bold summary + muted body, and a thick left accent bar.
+// In the control center a card is a group on the $panel surface; a popup
+// floats over the desktop, so it takes the panel card surface instead.
 .notif-card {
-  background-color: $background;
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  background-color: $panel;
+  border: 1px solid rgba($overlay, 0.05);
   border-left: 4px solid $blue;
   border-radius: 12px;
   padding: 0.6rem 0.75rem;
@@ -759,15 +562,24 @@ entry placeholder {
   border-left-color: $red;
   // Opaque red-tinted background: a translucent rgba let the desktop bleed
   // through the popup, since the popup window itself is transparent.
-  background-color: mix($red, $background, 8%);
+  background-color: mix($red, $panel, 8%);
 }
 
 .notif-card.notif-low {
-  border-left-color: rgba(191, 186, 176, 0.45);
+  border-left-color: $muted;
 }
 
 .notif-card.notif-popup {
   min-width: 26rem;
+  background-color: $background;
+  border-top-color: $grey;
+  border-right-color: $grey;
+  border-bottom-color: $grey;
+  border-radius: 14px;
+}
+
+.notif-card.notif-popup.notif-critical {
+  background-color: mix($red, $background, 8%);
 }
 
 // Small app icon = identity without a big logo. Coloured dot fallback.
@@ -799,26 +611,24 @@ entry placeholder {
 }
 
 .notif-card.notif-low .notif-app {
-  color: $foreground;
-  opacity: 0.7;
+  color: $muted;
 }
 
 .notif-time {
   font-size: 0.76rem;
-  opacity: 0.55;
+  color: $muted;
 }
 
 .notif-close {
   all: unset;
   padding: 0 0.25rem;
   border-radius: 6px;
-  opacity: 0.5;
+  color: $muted;
 }
 
 .notif-close:hover {
-  background: rgba(255, 51, 51, 0.18);
+  background: rgba($red, 0.18);
   color: $red;
-  opacity: 1;
 }
 
 // The message body is a button (click = default action); no button chrome.
@@ -830,10 +640,18 @@ entry placeholder {
 
 // Hover feedback covers the whole card, not just the body button.
 .notif-card:hover {
-  background-color: #11161f;
+  background-color: mix($overlay, $panel, 4%);
+}
+
+.notif-card.notif-popup:hover {
+  background-color: $panel;
 }
 
 .notif-card.notif-critical:hover {
+  background-color: mix($red, $panel, 14%);
+}
+
+.notif-card.notif-popup.notif-critical:hover {
   background-color: mix($red, $background, 14%);
 }
 
@@ -845,7 +663,7 @@ entry placeholder {
 
 .notif-body {
   font-size: 0.87rem;
-  opacity: 0.72;
+  color: $muted;
 }
 
 .notif-image {
@@ -873,49 +691,18 @@ entry placeholder {
   background-color: transparent;
 }
 
-// Drops from under the bar, horizontally centered: calendar on the left, a thin
-// divider, and the weather column on the right.
-.calendar-card {
-  background-color: $background;
-  color: $foreground;
-  border: 1px solid $grey;
-  border-radius: 18px;
-  padding: 1.4rem 1.6rem;
-  margin-top: 8px;
-  font-family: $font;
-}
-
+// Centered on the bar: the month grid on the left, a thin separator, and the
+// weather column on the right.
 .cal-section {
   min-width: 20rem;
 }
 
-.cal-header {
-  margin-bottom: 0.2rem;
-}
-
-.cal-title {
-  font-weight: bold;
-  font-size: 1.05rem;
-  letter-spacing: 0.06em;
-}
-
-.cal-nav {
-  all: unset;
-  padding: 0.2rem 0.5rem;
-  border-radius: 999px;
-  color: $foreground;
-  opacity: 0.75;
-  font-size: 1.05rem;
-}
-
-.cal-nav:hover {
-  background: rgba(255, 255, 255, 0.08);
-  opacity: 1;
+.panel-group.cal-group {
+  padding: 0.5rem;
 }
 
 .cal-weekday {
-  color: $foreground;
-  opacity: 0.5;
+  color: $muted;
   font-size: 0.8rem;
   font-weight: bold;
 }
@@ -934,7 +721,7 @@ entry placeholder {
 }
 
 .cal-day:hover {
-  background-color: $grey;
+  background-color: rgba($overlay, 0.06);
 }
 
 .cal-day-out {
@@ -942,19 +729,13 @@ entry placeholder {
 }
 
 .cal-day-selected {
-  background-color: $grey;
+  background-color: rgba($overlay, 0.1);
 }
 
 .cal-day-today {
-  background-color: $blue;
-  color: $background;
+  background-color: $yellow;
+  color: $on-accent;
   font-weight: bold;
-}
-
-.cal-divider {
-  background-color: $grey;
-  min-width: 1px;
-  margin: 0.4rem 0.2rem;
 }
 
 // Weather column.
@@ -962,24 +743,13 @@ entry placeholder {
   min-width: 20rem;
 }
 
-.cal-close {
-  all: unset;
-  padding: 0.2rem 0.5rem;
-  border-radius: 999px;
-  color: $foreground;
-  opacity: 0.7;
-  font-size: 1.1rem;
-}
-
-.cal-close:hover {
-  background: rgba(255, 51, 51, 0.18);
-  color: $red;
-  opacity: 1;
+.panel-group.wx-group {
+  padding: 0.8rem 0.6rem;
 }
 
 .wx-location {
   font-size: 0.9rem;
-  opacity: 0.7;
+  color: $muted;
   letter-spacing: 0.04em;
 }
 
@@ -996,7 +766,7 @@ entry placeholder {
 
 .wx-desc {
   font-size: 0.95rem;
-  opacity: 0.8;
+  color: $muted;
 }
 
 .wx-metric-glyph {
@@ -1012,7 +782,7 @@ entry placeholder {
 
 .wx-metric-label {
   font-size: 0.72rem;
-  opacity: 0.6;
+  color: $muted;
 }
 
 .wx-hours {
@@ -1023,15 +793,15 @@ entry placeholder {
 // digits: min-width keeps the widths equal, and the glyph row's fixed height
 // (below) keeps the time/temp rows on the same baseline across cells.
 .wx-hour {
-  background-color: $grey;
-  border-radius: 12px;
+  background-color: rgba($overlay, 0.05);
+  border-radius: 9px;
   padding: 0.5rem 0.4rem;
   min-width: 3rem;
 }
 
 .wx-hour-time {
   font-size: 0.75rem;
-  opacity: 0.7;
+  color: $muted;
 }
 
 .wx-hour-glyph {
@@ -1050,15 +820,15 @@ entry placeholder {
 }
 
 .wx-day {
-  background-color: $grey;
-  border-radius: 12px;
+  background-color: rgba($overlay, 0.05);
+  border-radius: 9px;
   padding: 0.5rem 0.3rem;
   min-width: 3.6rem;
 }
 
 .wx-day-label {
   font-size: 0.75rem;
-  opacity: 0.7;
+  color: $muted;
 }
 
 .wx-day-glyph {
@@ -1073,12 +843,12 @@ entry placeholder {
 }
 
 .wx-unavailable {
-  opacity: 0.5;
+  color: $muted;
   font-size: 0.9rem;
 }
 
 .wx-loading {
-  opacity: 0.7;
+  color: $muted;
 }
 
 .wx-loading spinner {
@@ -1089,10 +859,13 @@ entry placeholder {
 
 .wx-loading-label {
   font-size: 0.85rem;
-  opacity: 0.8;
 }
 
 // Weather location picker.
+.panel-group.wx-search {
+  padding: 0.5rem;
+}
+
 .wx-search-entry {
   border-radius: 10px;
   font-size: 0.8rem;
@@ -1102,70 +875,40 @@ entry placeholder {
 
 .wx-search-auto {
   all: unset;
-  background-color: $grey;
-  border-radius: 10px;
-  padding: 0.25rem 0.6rem;
+  background-color: rgba($overlay, 0.06);
+  border-radius: 999px;
+  padding: 0.25rem 0.7rem;
   font-size: 0.75rem;
-  opacity: 0.7;
+  color: $muted;
+  transition: all 120ms ease;
 }
 
 .wx-search-auto:hover {
-  opacity: 1;
-  color: $blue;
+  background-color: rgba($overlay, 0.1);
+  color: $foreground;
 }
 
 .wx-search-active {
   font-size: 0.75rem;
-  opacity: 0.6;
+  color: $muted;
+  padding: 0 0.2rem;
 }
 
 .wx-result {
   all: unset;
-  border-radius: 8px;
-  padding: 0.3rem 0.5rem;
+  border-radius: 9px;
+  padding: 0.35rem 0.5rem;
   font-size: 0.8rem;
-  opacity: 0.85;
 }
 
 .wx-result:hover {
-  background-color: $grey;
-  color: $blue;
-  opacity: 1;
+  background-color: rgba($overlay, 0.06);
 }
 
 .wx-no-results {
   font-size: 0.75rem;
-  opacity: 0.5;
-}
-
-// ── Control center ────────────────────────────────────────────────────────────
-// Each section (sliders / power / notifications) is its own subtly-lifted card
-// so the panel reads as distinct stacked modules over the darker card bg.
-.cc-box {
-  background-color: $grey;
-  border: 1px solid rgba(255, 255, 255, 0.04);
-  border-radius: 12px;
-  padding: 0.7rem 0.8rem;
-}
-
-.cc-title {
-  font-weight: bold;
-  font-size: 1.05rem;
-}
-
-.cc-section {
-  font-weight: bold;
-  font-size: 0.9rem;
-  opacity: 0.8;
-}
-
-.cc-notif-header {
-  margin-top: 0.2rem;
-}
-
-.dnd-label {
-  font-size: 0.85rem;
-  opacity: 0.8;
+  color: $muted;
+  padding: 0 0.2rem;
 }
 
 .cc-clear {
@@ -1210,65 +953,30 @@ entry placeholder {
 }
 
 .cc-slider-mute:hover {
-  background: rgba(255, 255, 255, 0.06);
+  background: rgba($overlay, 0.06);
 }
 
 // ── Audio device selector ─────────────────────────────────────────────────────
-.cc-devsel-head {
-  padding: 0.25rem 0.35rem;
-  border-radius: 8px;
-}
-
+// The head is a plain row with a click gesture, so it needs its own hover.
 .cc-devsel-head:hover {
-  background: rgba(255, 255, 255, 0.06);
-}
-
-.cc-devsel-icon {
-  font-size: 1.05rem;
-  min-width: 1.4rem;
-  color: $blue;
-}
-
-.cc-devsel-title {
-  font-weight: bold;
-  font-size: 0.85rem;
-  opacity: 0.8;
-}
-
-.cc-devsel-current {
-  font-size: 0.85rem;
-  opacity: 0.9;
-}
-
-.cc-devsel-chevron {
-  font-size: 1rem;
-  opacity: 0.7;
+  background: rgba($overlay, 0.06);
 }
 
 .cc-devsel-scroll {
   background: transparent;
 }
 
+// Indented so the device names line up under the head's title.
 .cc-devsel-list {
-  margin: 0.1rem 0 0.2rem 1.8rem;
+  margin: 0 0 0.2rem 2.35rem;
 }
 
-.cc-devsel-item {
-  all: unset;
-  padding: 0.3rem 0.5rem;
-  border-radius: 6px;
+.panel-row.cc-devsel-item {
   font-size: 0.85rem;
-  opacity: 0.8;
-}
-
-.cc-devsel-item:hover {
-  background: rgba(255, 255, 255, 0.06);
-  opacity: 1;
 }
 
 .cc-devsel-item.active {
-  color: $blue;
-  opacity: 1;
+  font-weight: bold;
 }
 
 slider,
@@ -1276,12 +984,13 @@ scale {
   min-height: 1rem;
 }
 
+// Whole-pixel sizes for the same reason as the switch knob above.
 slider trough,
 scale trough {
   background-color: $grey;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba($overlay, 0.08);
   border-radius: 999px;
-  min-height: 0.4rem;
+  min-height: 4px;
 }
 
 slider highlight,
@@ -1289,21 +998,24 @@ scale highlight,
 slider trough > highlight {
   background-color: $blue;
   border-radius: 999px;
-  min-height: 0.4rem;
+  min-height: 4px;
 }
 
 slider slider,
 scale slider {
-  background-color: $foreground;
+  background: $foreground;
+  border: none;
+  box-shadow: none;
+  outline: none;
   border-radius: 999px;
-  min-width: 0.9rem;
-  min-height: 0.9rem;
-  margin: -0.3rem;
+  min-width: 14px;
+  min-height: 14px;
+  margin: -5px;
 }
 
 // Power buttons.
 .cc-power {
-  margin: 0.2rem 0;
+  margin: 0.35rem 0;
 }
 
 .cc-power-btn {
@@ -1363,7 +1075,7 @@ scale slider {
 }
 
 .media-btn:hover {
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba($overlay, 0.08);
 }
 
 .media-btn:disabled {
@@ -1396,18 +1108,6 @@ scale slider {
   background-color: transparent;
 }
 
-// Top/left margins are set from the widget (marginTop/marginStart) so the panel
-// drops under the measured island position, not a fixed corner.
-.media-card {
-  background-color: $background;
-  color: $foreground;
-  border: 1px solid $grey;
-  border-radius: 18px;
-  padding: 1.4rem;
-  min-width: 34rem;
-  font-family: $font;
-}
-
 // Manual source picker (only when >1 player).
 .media-sources {
   margin-bottom: 0.2rem;
@@ -1417,47 +1117,35 @@ scale slider {
   all: unset;
   padding: 0.3rem 0.7rem;
   border-radius: 999px;
-  background-color: $grey;
-  color: $foreground;
-  opacity: 0.7;
+  background-color: rgba($overlay, 0.06);
+  color: $muted;
   font-size: 0.82rem;
   transition: all 120ms ease;
 }
 
 .media-src:hover {
-  opacity: 1;
+  background-color: rgba($overlay, 0.1);
+  color: $foreground;
 }
 
 .media-src.active {
-  background-color: $blue;
-  color: $background;
-  opacity: 1;
+  background-color: $yellow;
+  color: $on-accent;
 }
 
 .media-src-dot {
   min-width: 7px;
   min-height: 7px;
   border-radius: 999px;
-  background-color: rgba(191, 186, 176, 0.4);
+  background-color: rgba($foreground, 0.4);
 }
 
 .media-src-dot.playing {
   background-color: $green;
 }
 
-.media-close {
-  all: unset;
-  padding: 0.2rem 0.5rem;
-  border-radius: 999px;
-  color: $foreground;
-  opacity: 0.7;
-  font-size: 1.1rem;
-}
-
-.media-close:hover {
-  background: rgba(255, 51, 51, 0.18);
-  color: $red;
-  opacity: 1;
+.panel-group.media-group {
+  padding: 0.9rem;
 }
 
 .media-panel-title {
@@ -1466,7 +1154,7 @@ scale slider {
 }
 
 .media-panel-artist {
-  opacity: 0.7;
+  color: $muted;
   font-size: 0.95rem;
 }
 
@@ -1475,7 +1163,7 @@ scale slider {
 }
 
 .media-chip {
-  background-color: $grey;
+  background-color: rgba($overlay, 0.06);
   border-radius: 999px;
   padding: 0.2rem 0.6rem;
 }
@@ -1492,7 +1180,7 @@ scale slider {
 .media-via {
   font-size: 0.82rem;
   font-style: italic;
-  opacity: 0.6;
+  color: $muted;
 }
 
 .media-seek {
@@ -1501,12 +1189,7 @@ scale slider {
 
 .media-seek-time {
   font-size: 0.78rem;
-  opacity: 0.7;
-}
-
-.media-empty {
-  opacity: 0.5;
-  font-size: 1rem;
+  color: $muted;
 }
 
 // ── Extras panel (AI usage: Claude + Codex + Grok, opened from the OS icon) ────
@@ -1519,44 +1202,9 @@ scale slider {
   background-color: transparent;
 }
 
-// Top/left margins are set from the widget (marginTop/marginStart) so the panel
-// drops under the measured OS-icon position, not a fixed corner.
-.extras-card {
-  background-color: $background;
-  color: $foreground;
-  border: 1px solid $grey;
-  border-radius: 18px;
-  padding: 1.2rem;
-  min-width: 24rem;
-  font-family: $font;
-}
-
-.ai-header {
-  margin-bottom: 0.1rem;
-}
-
 .ai-title-glyph {
   color: $nix;
   font-size: 1.3rem;
-}
-
-.ai-title {
-  font-weight: bold;
-  font-size: 1.1rem;
-}
-
-.ai-icon-btn {
-  all: unset;
-  padding: 0.2rem 0.45rem;
-  border-radius: 999px;
-  color: $foreground;
-  opacity: 0.7;
-  font-size: 1.05rem;
-}
-
-.ai-icon-btn:hover {
-  background: rgba(255, 255, 255, 0.08);
-  opacity: 1;
 }
 
 // Keep the refresh glyph occupying space (constant button size) but invisible
@@ -1565,7 +1213,7 @@ scale slider {
   opacity: 0;
 }
 
-.ai-card {
+.panel-group.ai-card {
   padding: 0.9rem 1rem;
 }
 
@@ -1578,39 +1226,19 @@ scale slider {
   all: unset;
   padding: 0.25rem 0.7rem;
   border-radius: 999px;
-  color: $foreground;
-  opacity: 0.55;
+  color: $muted;
   font-size: 0.82rem;
   font-weight: bold;
 }
 
 .ai-tab:hover {
-  background: rgba(255, 255, 255, 0.08);
-  opacity: 0.9;
+  background: rgba($overlay, 0.08);
+  color: $foreground;
 }
 
 .ai-tab-active {
-  background: rgba(255, 255, 255, 0.12);
-  opacity: 1;
-}
-
-// Compact overview row — click opens the provider detail tab.
-.ai-summary-row {
-  all: unset;
-}
-
-.ai-summary-row:hover .ai-summary-card {
-  background-color: #11161f;
-}
-
-.ai-summary-card {
-  padding: 0.75rem 0.9rem;
-}
-
-.ai-summary-chevron {
-  opacity: 0.45;
-  font-size: 1.1rem;
-  padding-left: 0.15rem;
+  background: rgba($overlay, 0.12);
+  color: $foreground;
 }
 
 .ai-name {
@@ -1620,8 +1248,7 @@ scale slider {
 
 .ai-plan {
   background-color: $background;
-  color: $foreground;
-  opacity: 0.85;
+  color: $muted;
   border-radius: 999px;
   padding: 0.1rem 0.55rem;
   font-size: 0.75rem;
@@ -1630,7 +1257,6 @@ scale slider {
 
 .ai-window-label {
   font-size: 0.85rem;
-  opacity: 0.85;
 }
 
 .ai-window-pct {
@@ -1640,13 +1266,13 @@ scale slider {
 
 .ai-window-reset {
   font-size: 0.75rem;
-  opacity: 0.55;
+  color: $muted;
 }
 
 .ai-bar trough {
   min-height: 0.45rem;
   background-color: $background;
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba($overlay, 0.06);
   border-radius: 999px;
 }
 
@@ -1666,29 +1292,24 @@ scale slider {
 
 .ai-unavailable {
   font-size: 0.85rem;
-  opacity: 0.6;
-}
-
-.ai-empty {
-  opacity: 0.5;
-  font-size: 0.9rem;
+  color: $muted;
 }
 
 // The OS icon opens the extras panel: subtle hover to signal it is clickable.
 .os-island:hover {
-  background-color: #11161f;
+  background-color: $panel;
 }
 
 // Extra stats under a provider's usage bars (overage spend, reset credits…).
 .ai-notes {
   margin-top: 0.2rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  border-top: 1px solid rgba($overlay, 0.06);
   padding-top: 0.45rem;
 }
 
 .ai-note-label {
   font-size: 0.8rem;
-  opacity: 0.7;
+  color: $muted;
 }
 
 .ai-note-value {
@@ -1699,25 +1320,25 @@ scale slider {
 // Daily token / estimated-cost breakdown (Claude, from local session logs).
 .ai-cost {
   margin-top: 0.2rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  border-top: 1px solid rgba($overlay, 0.06);
   padding-top: 0.45rem;
 }
 
 .ai-cost-title {
-  font-size: 0.75rem;
+  font-size: 0.72rem;
   font-weight: bold;
-  opacity: 0.6;
+  letter-spacing: 0.08em;
+  color: $muted;
   margin-bottom: 0.15rem;
 }
 
 .ai-cost-day {
   font-size: 0.78rem;
-  opacity: 0.7;
+  color: $muted;
 }
 
 .ai-cost-day.today {
-  color: $blue;
-  opacity: 1;
+  color: $yellow;
   font-weight: bold;
 }
 
@@ -1741,16 +1362,162 @@ scale slider {
 .ai-cost-total {
   margin-top: 0.15rem;
   padding-top: 0.35rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.04);
+  border-top: 1px solid rgba($overlay, 0.04);
 }
 
 .ai-cost-total .ai-cost-day {
   font-weight: bold;
-  opacity: 0.9;
+  color: $foreground;
 }
 
 .ai-cost-subtitle {
   margin-top: 0.5rem;
   padding-top: 0.45rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  border-top: 1px solid rgba($overlay, 0.06);
 }
+
+// Appearance panel (theme picker). Preview colors live in the generated
+// `themes/_previews.scss` (.pv-<id>); only their geometry is defined here.
+.appearance-trigger {
+  color: $yellow;
+}
+
+.appearance-window {
+  background: transparent;
+}
+
+.appearance-backdrop {
+  all: unset;
+  background-color: transparent;
+}
+
+// Theme cards are groups: the $panel surface, highlighted by the accent border
+// when selected.
+.theme-card {
+  all: unset;
+  padding: 0.5rem;
+  background-color: $panel;
+  border: 1px solid rgba($overlay, 0.05);
+  border-radius: 12px;
+  transition: border-color 120ms ease, background-color 120ms ease;
+}
+
+.theme-card:hover {
+  background-color: mix($overlay, $panel, 4%);
+}
+
+.theme-card:focus-visible {
+  border-color: rgba($yellow, 0.5);
+}
+
+.theme-card.selected {
+  border-color: $yellow;
+}
+
+.theme-name {
+  font-weight: bold;
+}
+
+.theme-card.selected .theme-name {
+  color: $yellow;
+}
+
+.theme-desc {
+  font-size: 0.8rem;
+  color: $muted;
+}
+
+.theme-preview {
+  border-radius: 10px;
+  padding: 0.5rem;
+  min-height: 6.5rem;
+}
+
+.pv-strip {
+  border-radius: 6px;
+  padding: 0.25rem 0.4rem;
+}
+
+.pv-dot {
+  min-width: 0.4rem;
+  min-height: 0.4rem;
+  border-radius: 999px;
+}
+
+.pv-pill {
+  min-width: 1.4rem;
+  min-height: 0.4rem;
+  border-radius: 999px;
+}
+
+.pv-window {
+  border: 1px solid transparent;
+  border-radius: 8px;
+  padding: 0.5rem;
+}
+
+.pv-title {
+  min-width: 4.5rem;
+  min-height: 0.45rem;
+  border-radius: 999px;
+}
+
+.pv-line {
+  min-height: 0.3rem;
+  border-radius: 999px;
+}
+
+.pv-line-long {
+  min-width: 7rem;
+}
+
+.pv-line-short {
+  min-width: 5rem;
+}
+
+.pv-swatch {
+  min-width: 0.6rem;
+  min-height: 0.6rem;
+  border-radius: 999px;
+}
+
+.pv-button {
+  min-width: 2rem;
+  min-height: 0.75rem;
+  border-radius: 999px;
+}
+
+.panel-group.mode-seg {
+  border-radius: 999px;
+  padding: 0.2rem;
+}
+
+.mode-btn {
+  all: unset;
+  padding: 0.35rem 0.8rem;
+  border-radius: 999px;
+  color: $foreground;
+  transition: background-color 120ms ease, color 120ms ease;
+}
+
+.mode-btn:hover {
+  background: rgba($overlay, 0.06);
+}
+
+.mode-btn:focus-visible {
+  box-shadow: inset 0 0 0 1px rgba($yellow, 0.5);
+}
+
+.mode-btn.active {
+  background-color: $yellow;
+  color: $on-accent;
+}
+
+.mode-glyph {
+  font-size: 1rem;
+}
+
+// Loaded last so the panel rules win over the shared control rules above
+// (for example .panel-row-action over .dash-btn).
+@include meta.load-css("panel");
+@include meta.load-css("network");

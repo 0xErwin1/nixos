@@ -1,6 +1,7 @@
 import GLib from "gi://GLib";
 import app from "ags/gtk4/app";
 import { Astal, Gdk, Gtk } from "ags/gtk4";
+import { CARD_VALIGN } from "./edge";
 import { For, With, createComputed, createState } from "ags";
 
 import {
@@ -136,54 +137,68 @@ export default function Calendar() {
         <button cssClasses={["calendar-backdrop"]} onClicked={closeCalendar} />
         <box
           $type="overlay"
-          cssClasses={["calendar-card"]}
+          cssClasses={["panel-card"]}
+          orientation={Gtk.Orientation.VERTICAL}
           halign={Gtk.Align.CENTER}
-          valign={Gtk.Align.START}
-          spacing={18}
+          valign={CARD_VALIGN}
+          marginTop={8}
+          marginBottom={8}
+          spacing={12}
         >
-          <box cssClasses={["cal-section"]} orientation={Gtk.Orientation.VERTICAL} spacing={8}>
-            <box cssClasses={["cal-header"]} valign={Gtk.Align.CENTER}>
-              <button cssClasses={["cal-nav"]} onClicked={() => shiftMonth(-1)}>
-                <label label={CHEVRON_LEFT} />
-              </button>
-              <label cssClasses={["cal-title"]} label={title} hexpand />
-              <button cssClasses={["cal-nav"]} onClicked={() => shiftMonth(1)}>
-                <label label={CHEVRON_RIGHT} />
-              </button>
-            </box>
-
-            <box cssClasses={["cal-weekdays"]} homogeneous>
-              {WEEKDAYS.map((wd) => (
-                <label cssClasses={["cal-weekday"]} label={wd} />
-              ))}
-            </box>
-
-            <box cssClasses={["cal-grid"]} orientation={Gtk.Orientation.VERTICAL} spacing={2}>
-              <For each={weeks}>
-                {(week: DayCell[]) => (
-                  <box homogeneous spacing={2}>
-                    {week.map((cell) => (
-                      <button
-                        cssClasses={[
-                          "cal-day",
-                          cell.inMonth ? "" : "cal-day-out",
-                          cell.isToday ? "cal-day-today" : "",
-                          cell.dateStr === selected.get() ? "cal-day-selected" : "",
-                        ]}
-                        onClicked={() => setSelected(cell.dateStr)}
-                      >
-                        <label label={String(cell.day)} />
-                      </button>
-                    ))}
-                  </box>
-                )}
-              </For>
-            </box>
+          <box cssClasses={["panel-header"]}>
+            <label cssClasses={["panel-title"]} label="Calendar" hexpand xalign={0} />
+            <button cssClasses={["panel-close"]} onClicked={closeCalendar}>
+              <label label={CLOSE_GLYPH} />
+            </button>
           </box>
 
-          <box cssClasses={["cal-divider"]} />
+          <box spacing={14}>
+            <box cssClasses={["cal-section"]} orientation={Gtk.Orientation.VERTICAL} spacing={6}>
+              <box cssClasses={["panel-section-head"]} spacing={4} valign={Gtk.Align.CENTER}>
+                <label cssClasses={["panel-section-label"]} label={title} hexpand xalign={0} />
+                <button cssClasses={["panel-icon-btn"]} onClicked={() => shiftMonth(-1)}>
+                  <label label={CHEVRON_LEFT} />
+                </button>
+                <button cssClasses={["panel-icon-btn"]} onClicked={() => shiftMonth(1)}>
+                  <label label={CHEVRON_RIGHT} />
+                </button>
+              </box>
 
-          <WeatherSection />
+              <box cssClasses={["panel-group", "cal-group"]} orientation={Gtk.Orientation.VERTICAL} spacing={4}>
+                <box cssClasses={["cal-weekdays"]} homogeneous>
+                  {WEEKDAYS.map((wd) => (
+                    <label cssClasses={["cal-weekday"]} label={wd} />
+                  ))}
+                </box>
+
+                <box cssClasses={["cal-grid"]} orientation={Gtk.Orientation.VERTICAL} spacing={2}>
+                  <For each={weeks}>
+                    {(week: DayCell[]) => (
+                      <box homogeneous spacing={2}>
+                        {week.map((cell) => (
+                          <button
+                            cssClasses={[
+                              "cal-day",
+                              cell.inMonth ? "" : "cal-day-out",
+                              cell.isToday ? "cal-day-today" : "",
+                              cell.dateStr === selected.get() ? "cal-day-selected" : "",
+                            ]}
+                            onClicked={() => setSelected(cell.dateStr)}
+                          >
+                            <label label={String(cell.day)} />
+                          </button>
+                        ))}
+                      </box>
+                    )}
+                  </For>
+                </box>
+              </box>
+            </box>
+
+            <box cssClasses={["panel-separator", "vertical"]} />
+
+            <WeatherSection />
+          </box>
         </box>
       </overlay>
     </window>
@@ -339,7 +354,7 @@ function LocationSearch() {
   );
 
   return (
-    <box cssClasses={["wx-search"]} orientation={Gtk.Orientation.VERTICAL} spacing={6}>
+    <box cssClasses={["panel-group", "wx-search"]} orientation={Gtk.Orientation.VERTICAL} spacing={6}>
       <box spacing={6}>
         <entry
           $={(self) => (entry = self)}
@@ -388,50 +403,54 @@ function LocationSearch() {
 
 function WeatherSection() {
   return (
-    <box cssClasses={["wx-section"]} orientation={Gtk.Orientation.VERTICAL} hexpand>
-      <box halign={Gtk.Align.END} valign={Gtk.Align.START}>
-        <button cssClasses={["cal-close"]} onClicked={closeCalendar}>
-          <label label={CLOSE_GLYPH} />
-        </button>
+    <box cssClasses={["wx-section"]} orientation={Gtk.Orientation.VERTICAL} spacing={6} hexpand>
+      <box cssClasses={["panel-section-head"]}>
+        <label cssClasses={["panel-section-label"]} label="WEATHER" hexpand xalign={0} />
       </box>
 
       <LocationSearch />
 
-      <box orientation={Gtk.Orientation.VERTICAL} vexpand valign={Gtk.Align.CENTER}>
-        <With value={weather}>
-          {(w: WeatherData | null) =>
-            w ? (
-              <WeatherBody w={w} />
-            ) : (
-              <box
-                orientation={Gtk.Orientation.VERTICAL}
-                halign={Gtk.Align.CENTER}
-                valign={Gtk.Align.CENTER}
-              >
+      <box
+        cssClasses={["panel-group", "wx-group"]}
+        orientation={Gtk.Orientation.VERTICAL}
+        vexpand
+      >
+        <box orientation={Gtk.Orientation.VERTICAL} vexpand valign={Gtk.Align.CENTER}>
+          <With value={weather}>
+            {(w: WeatherData | null) =>
+              w ? (
+                <WeatherBody w={w} />
+              ) : (
                 <box
-                  cssClasses={["wx-loading"]}
                   orientation={Gtk.Orientation.VERTICAL}
-                  spacing={8}
                   halign={Gtk.Align.CENTER}
                   valign={Gtk.Align.CENTER}
-                  visible={weatherStatus((s) => s !== "error")}
                 >
-                  <Gtk.Spinner
-                    $={(self: Gtk.Spinner) => self.start()}
+                  <box
+                    cssClasses={["wx-loading"]}
+                    orientation={Gtk.Orientation.VERTICAL}
+                    spacing={8}
                     halign={Gtk.Align.CENTER}
+                    valign={Gtk.Align.CENTER}
+                    visible={weatherStatus((s) => s !== "error")}
+                  >
+                    <Gtk.Spinner
+                      $={(self: Gtk.Spinner) => self.start()}
+                      halign={Gtk.Align.CENTER}
+                    />
+                    <label cssClasses={["wx-loading-label"]} label="Loading weather…" />
+                  </box>
+                  <label
+                    cssClasses={["wx-unavailable"]}
+                    label="Weather unavailable"
+                    valign={Gtk.Align.CENTER}
+                    visible={weatherStatus((s) => s === "error")}
                   />
-                  <label cssClasses={["wx-loading-label"]} label="Loading weather…" />
                 </box>
-                <label
-                  cssClasses={["wx-unavailable"]}
-                  label="Weather unavailable"
-                  valign={Gtk.Align.CENTER}
-                  visible={weatherStatus((s) => s === "error")}
-                />
-              </box>
-            )
-          }
-        </With>
+              )
+            }
+          </With>
+        </box>
       </box>
     </box>
   );

@@ -7,6 +7,7 @@ import { execAsync, subprocess } from "ags/process";
 import {
   WIFI_LOCK,
   WIFI_ACTIVE,
+  WIFI_OFF,
   WIFI_REFRESH,
   wifiSignalGlyph,
 } from "../glyphs";
@@ -16,12 +17,11 @@ import {
   reachLabel,
   statusTooltip,
 } from "./network-state";
-import { tunnelBadgeGlyph, tunnelGlyph, tunnelLabel } from "./tunnel-state";
+import { tunnelBadgeGlyph } from "./tunnel-state";
 import {
   openDashboard,
   closeDashboard,
   dashboardVisible,
-  activeTab,
   anyPanelOpen,
 } from "./dashboard-state";
 
@@ -79,38 +79,37 @@ function dedupeSort(
 
 function NetworkRow({
   ap,
-  activeSsid,
   onActivate,
 }: {
   ap: AstalNetwork.AccessPoint;
-  activeSsid: ReturnType<typeof createBinding>;
   onActivate: (ap: AstalNetwork.AccessPoint) => void;
 }) {
   const secured = ap.requiresPassword;
 
   return (
-    <button cssClasses={["list-row", "wifi-row"]} onClicked={() => onActivate(ap)}>
-      <box spacing={10}>
-        <label cssClasses={["wifi-signal"]} label={wifiSignalGlyph(ap.strength)} />
+    <button cssClasses={["panel-row"]} onClicked={() => onActivate(ap)}>
+      <box spacing={12}>
+        <label cssClasses={["panel-row-icon"]} label={wifiSignalGlyph(ap.strength)} />
         <label
-          cssClasses={["wifi-ssid"]}
+          cssClasses={["panel-row-title"]}
           label={ap.ssid}
           hexpand
           xalign={0}
           maxWidthChars={24}
           ellipsize={Pango.EllipsizeMode.END}
         />
-        <label cssClasses={["wifi-lock"]} label={secured ? WIFI_LOCK : ""} />
         <label
-          cssClasses={["wifi-check"]}
-          label={activeSsid((s) => (s === ap.ssid ? WIFI_ACTIVE : ""))}
+          cssClasses={["panel-row-trail"]}
+          label={WIFI_LOCK}
+          visible={secured}
+          tooltipText="Secured"
         />
       </box>
     </button>
   );
 }
 
-function WifiTabInner({ wifi }: { wifi: AstalNetwork.Wifi }) {
+function WifiSectionInner({ wifi }: { wifi: AstalNetwork.Wifi }) {
   const [selectedSsid, setSelectedSsid] = createState<string | null>(null);
   const [status, setStatus] = createState("");
   let passwordEntry: Gtk.Entry | null = null;
@@ -118,18 +117,21 @@ function WifiTabInner({ wifi }: { wifi: AstalNetwork.Wifi }) {
   const enabled = createBinding(wifi, "enabled");
   const scanning = createBinding(wifi, "scanning");
   const activeSsid = createBinding(wifi, "ssid");
+  const strength = createBinding(wifi, "strength");
   const accessPoints = createBinding(wifi, "accessPoints")(dedupeSort);
 
+  // The connected network has its own row at the top, so the list below only
+  // offers the networks the user can switch to.
+  const otherNetworks = createComputed(
+    [accessPoints, activeSsid],
+    (aps, active) => aps.filter((ap) => ap.ssid !== active),
+  );
+
+  // While a scan runs the section header already says "Scanning…".
   const emptyText = createComputed(
-    [enabled, scanning, accessPoints],
-    (en, sc, aps) =>
-      !en
-        ? "Wi-Fi is off"
-        : aps.length > 0
-          ? ""
-          : sc
-            ? "Scanning…"
-            : "No networks found",
+    [scanning, otherNetworks, activeSsid],
+    (sc, others, active) =>
+      others.length === 0 && !active && !sc ? "No networks found" : "",
   );
 
   // Auto-scan when Wi-Fi is switched on (false -> true edge), so enabling the
@@ -195,167 +197,113 @@ function WifiTabInner({ wifi }: { wifi: AstalNetwork.Wifi }) {
       .catch(() => setStatus("Check password"));
   };
 
-  // The focus card mirrors the bar trigger: same derived status, so the panel can
-  // never disagree with the icon the user clicked to open it.
-  const focusGlyph = networkStatus(networkGlyph);
-  const focusTitle = createComputed([networkStatus, enabled], (status, en) => {
-    if (status.medium === "wired") return "Wired";
-    if (!en) return "Wi-Fi Off";
-    return status.ssid || "Not connected";
-  });
-  const focusSubtitle = networkStatus(reachLabel);
-  const signalText = networkStatus((status) =>
-    status.medium === "wifi" && status.strength > 0
-      ? `Signal ${status.strength}%`
-      : status.medium === "wired" && status.wiredSpeed > 0
-        ? `${status.wiredSpeed} Mb/s`
-        : "",
+  // Same derived status as the bar trigger, so a degraded link reads the same
+  // in the row as on the icon the user clicked to open the panel.
+  const connectedSubtitle = networkStatus((s) =>
+    s.medium === "wifi" && s.reach !== "online" ? reachLabel(s) : "Connected",
   );
-  const vpnTunnels = networkStatus((status) => status.vpn);
 
   return (
-    <box
-      cssClasses={["tab", "wifi-tab"]}
-      orientation={Gtk.Orientation.VERTICAL}
-      hexpand
-      vexpand
-      spacing={12}
-    >
-      <box
-        cssClasses={["cc-box", "focus-card"]}
-        orientation={Gtk.Orientation.VERTICAL}
-        hexpand
-        halign={Gtk.Align.FILL}
-      >
-        <label cssClasses={["focus-glyph", "wifi-focus-glyph"]} label={focusGlyph} />
-        <label cssClasses={["focus-title"]} label={focusTitle} />
-        <label cssClasses={["focus-subtitle"]} label={focusSubtitle} />
+    <box cssClasses={["panel-section"]} orientation={Gtk.Orientation.VERTICAL} spacing={6}>
+      <box cssClasses={["panel-section-head"]} spacing={8}>
+        <label cssClasses={["panel-section-label"]} label="WI-FI" hexpand xalign={0} />
         <label
-          cssClasses={["focus-detail"]}
-          label={signalText}
-          visible={signalText((t) => !!t)}
+          cssClasses={["panel-section-hint"]}
+          label={scanning((s) => (s ? "Scanning…" : ""))}
         />
-        {/* One row per tunnel: a mesh and a work VPN can be up at once, and
-            collapsing them into a single line would hide which is which. */}
-        <For each={vpnTunnels}>
-          {(tunnel) => (
-            <box cssClasses={["wifi-vpn-row"]} halign={Gtk.Align.CENTER} spacing={6}>
+        <button
+          cssClasses={["panel-icon-btn"]}
+          tooltipText="Scan"
+          visible={enabled}
+          onClicked={() => wifi.scan()}
+        >
+          <label label={WIFI_REFRESH} />
+        </button>
+        <switch
+          active={enabled}
+          valign={Gtk.Align.CENTER}
+          onNotifyActive={(self) => {
+            if (self.active !== wifi.enabled) wifi.set_enabled(self.active);
+          }}
+        />
+      </box>
+
+      <box cssClasses={["panel-group"]} orientation={Gtk.Orientation.VERTICAL}>
+        <box cssClasses={["panel-row", "muted"]} spacing={12} visible={enabled((e) => !e)}>
+          <label cssClasses={["panel-row-icon"]} label={WIFI_OFF} />
+          <label cssClasses={["panel-row-title"]} label="Wi-Fi is off" hexpand xalign={0} />
+        </box>
+
+        <box orientation={Gtk.Orientation.VERTICAL} visible={enabled}>
+          <box
+            cssClasses={["panel-row", "static"]}
+            spacing={12}
+            visible={activeSsid((s) => !!s)}
+          >
+            <label
+              cssClasses={["panel-row-icon", "on"]}
+              label={strength((s) => wifiSignalGlyph(s))}
+            />
+            <box orientation={Gtk.Orientation.VERTICAL} hexpand valign={Gtk.Align.CENTER}>
               <label
-                cssClasses={["wifi-vpn-glyph"]}
-                label={tunnelGlyph(tunnel.kind)}
-              />
-              <label
-                cssClasses={["wifi-vpn-name"]}
-                label={tunnelLabel(tunnel)}
-                maxWidthChars={24}
+                cssClasses={["panel-row-title"]}
+                label={activeSsid((s) => s ?? "")}
+                xalign={0}
+                maxWidthChars={20}
                 ellipsize={Pango.EllipsizeMode.END}
               />
+              <label cssClasses={["panel-row-subtitle"]} label={connectedSubtitle} xalign={0} />
             </box>
-          )}
-        </For>
-        <box cssClasses={["wifi-active-row"]} visible={activeSsid((s) => !!s)}>
-          <label
-            cssClasses={["wifi-active-ssid"]}
-            hexpand
-            xalign={0}
-            ellipsize={Pango.EllipsizeMode.END}
-            label={activeSsid((s) => (s ? `Connected: ${s}` : ""))}
-          />
-          <button
-            cssClasses={["dash-btn", "danger"]}
-            label="Disconnect"
-            onClicked={disconnect}
-          />
-        </box>
-      </box>
-
-      <box cssClasses={["cc-box"]}>
-        <box cssClasses={["actions-row"]} halign={Gtk.Align.CENTER} spacing={14}>
-          <box cssClasses={["action-toggle"]} spacing={8}>
-            <label label="Wi-Fi" />
-            <switch
-              active={enabled}
+            <button
+              cssClasses={["dash-btn", "danger", "panel-row-action"]}
+              label="Disconnect"
               valign={Gtk.Align.CENTER}
-              onNotifyActive={(self) => {
-                if (self.active !== wifi.enabled) wifi.set_enabled(self.active);
-              }}
+              onClicked={disconnect}
             />
+            <label cssClasses={["panel-row-check"]} label={WIFI_ACTIVE} />
           </box>
-          <button
-            cssClasses={["dash-btn"]}
-            sensitive={enabled}
-            onClicked={() => wifi.scan()}
-          >
-            <box spacing={6}>
-              <label label={WIFI_REFRESH} />
-              <label label="Scan" />
-            </box>
-          </button>
+
+          <For each={otherNetworks}>
+            {(ap) => <NetworkRow ap={ap} onActivate={onActivate} />}
+          </For>
+
           <label
-            cssClasses={["scan-indicator"]}
-            label={scanning((s) => (s ? "Scanning…" : ""))}
+            cssClasses={["panel-empty"]}
+            xalign={0}
+            visible={emptyText((t) => !!t)}
+            label={emptyText}
           />
-        </box>
-      </box>
 
-      <box
-        cssClasses={["cc-box", "list-area"]}
-        orientation={Gtk.Orientation.VERTICAL}
-        vexpand
-      >
-        <box
-          vexpand
-          halign={Gtk.Align.CENTER}
-          valign={Gtk.Align.CENTER}
-          visible={emptyText((t) => !!t)}
-        >
-          <label cssClasses={["empty-label", "list-empty"]} label={emptyText} />
-        </box>
-        <scrolledwindow
-          cssClasses={["list-scroll"]}
-          vexpand
-          hscrollbarPolicy={Gtk.PolicyType.NEVER}
-          vscrollbarPolicy={Gtk.PolicyType.AUTOMATIC}
-          visible={emptyText((t) => !t)}
-        >
-          <box cssClasses={["wifi-list"]} orientation={Gtk.Orientation.VERTICAL} spacing={6}>
-            <For each={accessPoints}>
-              {(ap) => (
-                <NetworkRow ap={ap} activeSsid={activeSsid} onActivate={onActivate} />
-              )}
-            </For>
-          </box>
-        </scrolledwindow>
-
-        <revealer
-          transitionType={Gtk.RevealerTransitionType.SLIDE_DOWN}
-          transitionDuration={200}
-          revealChild={selectedSsid((s) => s !== null)}
-        >
-          <box cssClasses={["wifi-password"]} orientation={Gtk.Orientation.VERTICAL} spacing={6}>
-            <label
-              xalign={0}
-              label={selectedSsid((s) => (s ? `Password for ${s}` : ""))}
-            />
-            <box spacing={6}>
-              <entry
-                $={(self) => (passwordEntry = self)}
-                hexpand
-                visibility={false}
-                placeholderText="Password"
-                onActivate={submitPassword}
+          <revealer
+            transitionType={Gtk.RevealerTransitionType.SLIDE_DOWN}
+            transitionDuration={200}
+            revealChild={selectedSsid((s) => s !== null)}
+          >
+            <box cssClasses={["net-password"]} orientation={Gtk.Orientation.VERTICAL} spacing={6}>
+              <label
+                xalign={0}
+                label={selectedSsid((s) => (s ? `Password for ${s}` : ""))}
               />
-              <button
-                cssClasses={["dash-btn", "accent"]}
-                label="Connect"
-                onClicked={submitPassword}
-              />
+              <box spacing={6}>
+                <entry
+                  $={(self) => (passwordEntry = self)}
+                  hexpand
+                  visibility={false}
+                  placeholderText="Password"
+                  onActivate={submitPassword}
+                />
+                <button
+                  cssClasses={["dash-btn", "accent"]}
+                  label="Connect"
+                  onClicked={submitPassword}
+                />
+              </box>
             </box>
-          </box>
-        </revealer>
+          </revealer>
+        </box>
 
         <label
-          cssClasses={["statusline"]}
+          cssClasses={["statusline", "net-status"]}
           xalign={0}
           visible={status((s) => !!s)}
           label={status}
@@ -365,18 +313,25 @@ function WifiTabInner({ wifi }: { wifi: AstalNetwork.Wifi }) {
   );
 }
 
-export function WifiTab() {
+/** The Wi-Fi section of the Network panel: radio switch, connected network and scan list. */
+export function WifiSection() {
   const wifi = network.wifi;
 
   if (!wifi) {
     return (
-      <box cssClasses={["tab", "wifi-tab"]}>
-        <label label="No Wi-Fi device" />
+      <box cssClasses={["panel-section"]} orientation={Gtk.Orientation.VERTICAL} spacing={6}>
+        <label cssClasses={["panel-section-label"]} label="WI-FI" xalign={0} />
+        <box cssClasses={["panel-group"]}>
+          <box cssClasses={["panel-row", "muted"]} spacing={12}>
+            <label cssClasses={["panel-row-icon"]} label={WIFI_OFF} />
+            <label cssClasses={["panel-row-title"]} label="No Wi-Fi device" xalign={0} />
+          </box>
+        </box>
       </box>
     );
   }
 
-  return <WifiTabInner wifi={wifi} />;
+  return <WifiSectionInner wifi={wifi} />;
 }
 
 export function WifiTrigger() {
@@ -401,7 +356,7 @@ export function WifiTrigger() {
   // motion to re-arm before the next click closed it. openDashboard() closes any
   // other open panel (including the center) via the shared exclusion group.
   const activate = () => {
-    if (dashboardVisible.get() && activeTab.get() === "wifi") {
+    if (dashboardVisible.get()) {
       closeDashboard();
     } else {
       openDashboard("wifi");

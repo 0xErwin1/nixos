@@ -3,12 +3,14 @@
 #
 # Bundles the TSX source in ./src into a self-contained `wl-bar` executable via
 # the AGS CLI (`ags bundle`). The bar autostarts on the graphical session via a
-# systemd user service (default edge "top") and is also kept in home.packages so
+# systemd user service (default edge "bottom") and is also kept in home.packages so
 # `wl-bar` can still be launched by hand for experimenting with BAR_EDGE. It is a
 # single-instance app, so the service and a manual run cannot coexist — at login
 # the service owns the instance.
 {
   pkgs,
+  lib,
+  config,
   inputs,
   ...
 }:
@@ -35,6 +37,11 @@ let
     src = ./ai-usage;
     name = "epsilon-ai-usage";
   };
+
+  # Generated theme stylesheets and metadata (home-manager/global/theme); the
+  # bar bundles every theme's CSS and switches between them at runtime.
+  themeSources = import ../theme/bar-sources.nix { inherit pkgs lib; };
+  wl-theme = import ../theme/wl-theme.nix { inherit pkgs lib config; };
 
   wl-bar = pkgs.stdenv.mkDerivation {
     pname = "wl-bar";
@@ -71,6 +78,11 @@ let
       astalPkgs.cava
     ];
 
+    postPatch = ''
+      mkdir -p themes
+      cp ${themeSources}/* themes/
+    '';
+
     installPhase = ''
       mkdir -p $out/bin
       ags bundle app.ts $out/bin/wl-bar
@@ -80,8 +92,11 @@ let
     # Astal service), pactl (bluetooth A2DP/HFP profile switching — wpctl does
     # not cleanly enumerate bluez card profiles, and pactl is otherwise absent on
     # this host), curl (Open-Meteo weather + geocoding), epsilon-ai-usage (AI
-    # usage for the extras panel) and notify-send (AI-usage threshold/reset
-    # alerts, delivered to our own notifd).
+    # usage for the extras panel), notify-send (AI-usage threshold/reset
+    # alerts, delivered to our own notifd), wl-theme (persists the theme
+    # chosen in the Appearance panel and updates Hyprland's borders) and
+    # nm-connection-editor (the Network panel's "Network settings" row; not
+    # every profile installs it).
     #
     # `tailscale` is deliberately absent: the tunnel module talks to it only to
     # read mesh state, and the CLI has to match the running tailscaled, which is
@@ -97,6 +112,8 @@ let
             pkgs.curl
             pkgs.libnotify
             ai-usage-wrapped
+            wl-theme
+            pkgs.networkmanagerapplet
           ]
         }
       )
@@ -104,6 +121,8 @@ let
   };
 in
 {
+  imports = [ ../theme ];
+
   home.packages = [
     wl-bar
     ai-usage-wrapped
