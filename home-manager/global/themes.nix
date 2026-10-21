@@ -1,4 +1,13 @@
-{ pkgs, ... }:
+# GTK, icon and cursor theming. The light/dark part is owned by wl-theme
+# (./theme): its `dconf.ini` sets `color-scheme`, `gtk-theme` and `icon-theme`
+# at runtime, so nothing here may pin them. The static theme below only fills
+# settings.ini for apps that cannot read dconf and matches the default theme.
+{
+  pkgs,
+  lib,
+  config,
+  ...
+}:
 {
   home = {
     packages = with pkgs; [
@@ -6,7 +15,6 @@
       dconf
     ];
     sessionVariables = {
-      GTK_THEME = "palenight";
       XCURSOR_THEME = "Bibata-Modern-Classic";
       XCURSOR_SIZE = "16";
     };
@@ -23,19 +31,10 @@
   gtk = {
     enable = true;
 
-    gtk3.extraConfig = {
-      gtk-application-prefer-dark-theme = true;
-    };
-
-    gtk4 = {
-      extraConfig = {
-        gtk-application-prefer-dark-theme = true;
-      };
-      theme = {
-        name = "palenight";
-        package = pkgs.palenight-theme;
-      };
-    };
+    # libadwaita follows `color-scheme`; a theme here would be imported into
+    # gtk-4.0/gtk.css and pin one mode. Explicit because the pre-26.05 default
+    # inherits gtk.theme.
+    gtk4.theme = null;
 
     font = {
       name = "LiterationSans Nerd Font Regular";
@@ -43,8 +42,8 @@
     };
 
     theme = {
-      name = "palenight";
-      package = pkgs.palenight-theme;
+      name = "adw-gtk3-dark";
+      package = pkgs.adw-gtk3;
     };
 
     iconTheme = {
@@ -58,12 +57,18 @@
     };
   };
 
-  dconf.settings = {
-    "org/gnome/desktop/interface" = {
-      color-scheme = "prefer-dark";
-      gtk-theme = "palenight";
-      icon-theme = "Papirus-Dark";
-      cursor-theme = "Bibata-Modern-Classic";
-    };
+  # Forced because the GTK module also derives `gtk-theme` and `icon-theme` here
+  # from gtk.theme and gtk.iconTheme, and activation would reset the running
+  # theme's values. This replaces the whole set, so it lists every key that
+  # stays declarative: the cursor and the font the GTK module would write.
+  dconf.settings."org/gnome/desktop/interface" = lib.mkForce {
+    cursor-theme = config.gtk.cursorTheme.name;
+    font-name = "${config.gtk.font.name} ${toString config.gtk.font.size}";
+
+    # GTK4 ignores hinting and positions glyphs at subpixel offsets; GTK3 apps
+    # (wofi among them) hint by default, so the same font renders thinner and
+    # snapped to the pixel grid. Unhinted grayscale makes them match.
+    font-hinting = "none";
+    font-antialiasing = "grayscale";
   };
 }

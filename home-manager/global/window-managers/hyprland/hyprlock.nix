@@ -1,7 +1,24 @@
+# Colors come from the active wl-theme (home-manager/global/theme): the sourced
+# file defines the $wl_* variables used below, and `source` renders first. The
+# wallpaper is the same in every theme, so text and field draw a $wl_shadow
+# halo to stay legible when a light theme puts dark text on it.
+{ config, ... }:
+let
+  shadow = {
+    shadow_passes = 3;
+    shadow_size = 6;
+    shadow_boost = 1.4;
+    shadow_color = "$wl_shadow";
+  };
+in
 {
+  imports = [ ../../theme ];
+
   programs.hyprlock = {
     enable = true;
     settings = {
+      source = [ "${config.xdg.stateHome}/wl-theme/current/hyprlock.conf" ];
+
       general = {
         no_fade_in = true;
         no_fade_out = true;
@@ -22,7 +39,7 @@
         }
       ];
 
-      input-field = [
+      input-field = map (widget: widget // shadow) [
         {
           monitor = "";
           size = "250, 60";
@@ -31,11 +48,11 @@
           dots_spacing = 0.35;
           dots_center = true;
           outer_color = "rgba(0, 0, 0, 0)";
-          inner_color = "rgba(0, 0, 0, 0.2)";
-          font_color = "rgba(191, 186, 176, 1.0)";
+          inner_color = "$wl_field";
+          font_color = "$wl_text";
           fade_on_empty = false;
           rounding = -1;
-          check_color = "rgba(255, 181, 84, 1.0)";
+          check_color = "$wl_accent";
           placeholder_text = "Input Password...";
           hide_input = false;
           position = "0, -200";
@@ -44,12 +61,12 @@
         }
       ];
 
-      label = [
+      label = map (widget: widget // shadow) [
         # Time
         {
           monitor = "";
           text = "cmd[update:60] echo \"$(date +\"%-H:%M\")\"";
-          color = "rgba(191, 186, 176, 0.9)";
+          color = "$wl_text_soft";
           font_size = 95;
           font_family = "LiterationMono Nerd Font";
           position = "0, 200";
@@ -61,7 +78,7 @@
         {
           monitor = "";
           text = "cmd[update:60] echo \"$(date +\"%A, %d %B %Y\")\"";
-          color = "rgba(191, 186, 176, 0.75)";
+          color = "$wl_text_dim";
           font_size = 22;
           font_family = "LiterationMono Nerd Font";
           position = "0, 300";

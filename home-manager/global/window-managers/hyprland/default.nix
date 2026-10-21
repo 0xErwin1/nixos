@@ -1,9 +1,11 @@
+{ config, ... }:
 let
   bind = import ./bind.nix;
   rules = import ./rules.nix;
 in
 {
   imports = [
+    ../../theme
     ./dependencies.nix
     ../../wayland/wofi
     ./hyprlock.nix
@@ -45,6 +47,10 @@ in
     plugins = [ ];
 
     settings = {
+      # Border colors come from the active wl-theme (home-manager/global/theme);
+      # `source` renders at the top of hyprland.conf.
+      source = [ "${config.xdg.stateHome}/wl-theme/current/hyprland.conf" ];
+
       xwayland = {
         force_zero_scaling = true;
       };
@@ -99,9 +105,6 @@ in
         border_size = 1;
         resize_on_border = true;
         layout = "dwindle";
-
-        "col.active_border" = "rgb(39bae6)";
-        "col.inactive_border" = "rgb(c2d94c)";
 
         allow_tearing = true;
       };
