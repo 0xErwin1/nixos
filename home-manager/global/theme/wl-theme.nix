@@ -99,7 +99,9 @@ pkgs.writeShellApplication {
         fi
 
         # kitty rereads its config, and with it the theme include, on SIGUSR1.
-        pkill -USR1 -x kitty || true
+        # The Nix wrapper renames the process to `.kitty-wrapped`, so an exact
+        # match on `kitty` alone reaches nothing on a NixOS profile.
+        pkill -USR1 -x 'kitty|\.kitty-wrapped' || true
 
         if command -v tmux >/dev/null && tmux info >/dev/null 2>&1; then
           tmux run-shell ${lib.escapeShellArg "${config.xdg.configHome}/tmux/wl-theme.tmux"} ||

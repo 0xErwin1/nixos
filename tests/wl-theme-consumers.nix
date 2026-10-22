@@ -77,6 +77,10 @@ let
   gated =
     file:
     lib.hasInfix "local.wlTheme.enable" (readFile ../home-manager/global/${file});
+
+  # S7: a switch reaches kitty even though the Nix wrapper renames its process.
+  wlThemeSource = readFile ../home-manager/global/theme/wl-theme.nix;
+  kittyReload = lib.hasInfix "pkill -USR1 -x 'kitty|\\.kitty-wrapped'" wlThemeSource;
 in
 assert builtins.all (id: ghosttyPalette id == expectedPalette palettes.themes.${id}) ids;
 assert builtins.all ghosttyColors ids;
@@ -84,6 +88,7 @@ assert ghosttyIncludes;
 assert builtins.all herdrThemed ids;
 assert builtins.all zedThemed ids;
 assert flag && gated "herdr.nix" && gated "zed/default.nix";
+assert kittyReload;
 {
   inherit ids;
   checked = [
@@ -91,5 +96,6 @@ assert flag && gated "herdr.nix" && gated "zed/default.nix";
     "herdr per-theme config"
     "zed per-theme settings"
     "wlTheme gating"
+    "kitty reload signal"
   ];
 }
