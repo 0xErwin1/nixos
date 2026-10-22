@@ -449,6 +449,10 @@
             inherit pkgs;
           };
 
+          wl-theme-consumers = functionalCheck "wl-theme-consumers" ./tests/wl-theme-consumers.nix {
+            flake = flakeView;
+          };
+
         }
         // deploy-rs.lib.x86_64-linux.deployChecks self.deploy;
 
