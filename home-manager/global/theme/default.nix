@@ -12,7 +12,9 @@
 # `dconf.ini` with its `org.gnome.desktop.interface` color scheme, GTK theme and
 # icon theme. `wl-theme set` loads it into dconf, and activation reapplies the
 # persisted theme's file after Home Manager's own dconf step, so GTK, libadwaita
-# and portal-aware apps follow the theme's mode.
+# and portal-aware apps follow the theme's mode. Nothing may export `GTK_THEME`:
+# it outranks dconf and `settings.ini`, and an unknown name falls back to
+# Adwaita light for every GTK app.
 {
   pkgs,
   lib,
@@ -55,6 +57,24 @@ let
     gtk-theme='${if p.mode == "light" then "adw-gtk3" else "adw-gtk3-dark"}'
     icon-theme='${if p.mode == "light" then "Papirus-Light" else "Papirus-Dark"}'
   '';
+
+  # Ghostty reads this file through `config-file = ?<path>` in terminal.nix.
+  # Ghostty has no reload signal we can send, so a running window keeps its
+  # palette and the next window picks up the active theme.
+  ghosttyConf =
+    p:
+    let
+      t = p.terminal;
+    in
+    ''
+      background = ${t.background}
+      foreground = ${t.foreground}
+      cursor-color = ${t.cursor}
+      selection-background = ${t.selection-background}
+      selection-foreground = ${t.selection-foreground}
+
+      ${lib.concatImapStringsSep "\n" (i: c: "palette = ${toString (i - 1)}=${c}") t.ansi}
+    '';
 
   # GTK3 CSS, styled as one more card of the bar: same palette, font, radius
   # and border as `.dashboard-card`. The window itself stays transparent so the
@@ -234,6 +254,7 @@ let
       "wl-theme/themes/${id}/hyprlock.conf".text = hyprlockConf p;
       "wl-theme/themes/${id}/wofi.css".text = wofiCss p;
       "wl-theme/themes/${id}/kitty.conf".text = kittyConf p;
+      "wl-theme/themes/${id}/ghostty.conf".text = ghosttyConf p;
       "wl-theme/themes/${id}/tmux.sh".text = tmuxColors p;
       "wl-theme/themes/${id}/zathurarc".text = zathuraColors p;
     }
@@ -242,40 +263,52 @@ let
     };
 in
 {
-  home.packages = [ wl-theme ];
+  # Consumers that read per-theme files from the state link (terminal.nix,
+  # zed/) gate on this flag instead of assuming this module is imported.
+  options.local.wlTheme.enable = lib.mkOption {
+    type = lib.types.bool;
+    default = false;
+    description = "Whether the runtime desktop theme (wl-theme) is available.";
+  };
 
-  xdg.configFile = lib.mkMerge (lib.mapAttrsToList themeFiles palettes.themes);
+  config = {
+    local.wlTheme.enable = true;
 
-  # Runs before linkGeneration: Hyprland watches its config and reloads as soon
-  # as the new hyprland.conf is linked, so the `source`d link has to exist by
-  # then. On a first activation it dangles until linkGeneration creates the
-  # theme directory. `-e` follows the link: a missing or dangling choice falls
-  # back to the default, a valid one is left alone.
-  home.activation.wlTheme = lib.hm.dag.entryBetween [ "linkGeneration" ] [ "writeBoundary" ] ''
-    if [ ! -e ${lib.escapeShellArg "${stateDir}/current"} ]; then
-      run mkdir -p ${lib.escapeShellArg stateDir}
-      run ln -sfn ${lib.escapeShellArg "${themesDir}/${palettes.default}"} ${lib.escapeShellArg "${stateDir}/current"}
-    fi
-  '';
+    home.packages = [ wl-theme ];
 
-  # After dconfSettings: its cleanup resets keys that left `dconf.settings`, and
-  # its load writes whatever the GTK module still declares. After linkGeneration:
-  # the theme's dconf.ini only exists once the generation is linked. The bus
-  # handling mirrors dconfSettings so a switch from a TTY still persists it.
-  home.activation.wlThemeGtk = lib.mkIf config.gtk.enable (
-    lib.hm.dag.entryAfter [ "dconfSettings" "linkGeneration" "wlTheme" ] ''
-      if [ -e ${lib.escapeShellArg "${stateDir}/current/dconf.ini"} ]; then
-        if [[ -v DBUS_SESSION_BUS_ADDRESS ]]; then
-          wlThemeDbus=""
-        else
-          wlThemeDbus="${pkgs.dbus}/bin/dbus-run-session --dbus-daemon=${pkgs.dbus}/bin/dbus-daemon"
-        fi
+    xdg.configFile = lib.mkMerge (lib.mapAttrsToList themeFiles palettes.themes);
 
-        run $wlThemeDbus ${pkgs.dconf}/bin/dconf load / < ${lib.escapeShellArg "${stateDir}/current/dconf.ini"} ||
-          warnEcho "wl-theme: could not apply the GTK settings of the active theme"
-
-        unset wlThemeDbus
+    # Runs before linkGeneration: Hyprland watches its config and reloads as soon
+    # as the new hyprland.conf is linked, so the `source`d link has to exist by
+    # then. On a first activation it dangles until linkGeneration creates the
+    # theme directory. `-e` follows the link: a missing or dangling choice falls
+    # back to the default, a valid one is left alone.
+    home.activation.wlTheme = lib.hm.dag.entryBetween [ "linkGeneration" ] [ "writeBoundary" ] ''
+      if [ ! -e ${lib.escapeShellArg "${stateDir}/current"} ]; then
+        run mkdir -p ${lib.escapeShellArg stateDir}
+        run ln -sfn ${lib.escapeShellArg "${themesDir}/${palettes.default}"} ${lib.escapeShellArg "${stateDir}/current"}
       fi
-    ''
-  );
+    '';
+
+    # After dconfSettings: its cleanup resets keys that left `dconf.settings`, and
+    # its load writes whatever the GTK module still declares. After linkGeneration:
+    # the theme's dconf.ini only exists once the generation is linked. The bus
+    # handling mirrors dconfSettings so a switch from a TTY still persists it.
+    home.activation.wlThemeGtk = lib.mkIf config.gtk.enable (
+      lib.hm.dag.entryAfter [ "dconfSettings" "linkGeneration" "wlTheme" ] ''
+        if [ -e ${lib.escapeShellArg "${stateDir}/current/dconf.ini"} ]; then
+          if [[ -v DBUS_SESSION_BUS_ADDRESS ]]; then
+            wlThemeDbus=""
+          else
+            wlThemeDbus="${pkgs.dbus}/bin/dbus-run-session --dbus-daemon=${pkgs.dbus}/bin/dbus-daemon"
+          fi
+
+          run $wlThemeDbus ${pkgs.dconf}/bin/dconf load / < ${lib.escapeShellArg "${stateDir}/current/dconf.ini"} ||
+            warnEcho "wl-theme: could not apply the GTK settings of the active theme"
+
+          unset wlThemeDbus
+        fi
+      ''
+    );
+  };
 }

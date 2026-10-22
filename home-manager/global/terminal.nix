@@ -13,8 +13,10 @@
     font-size = 14
     font-style = Regular
 
-    # Colors
-    theme = "Ayu"
+    # Colors: the whole palette comes from the active theme (wl-theme).
+    # `?` keeps a missing theme file from being an error; Ghostty applies a
+    # palette change to windows opened after the switch.
+    config-file = ?${config.xdg.stateHome}/wl-theme/current/ghostty.conf
 
     # Window
     window-padding-x = 0
