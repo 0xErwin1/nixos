@@ -185,6 +185,7 @@ in
         docker_connect = ''docker ps >/dev/null 2>&1 || echo "Docker is not running" && docker exec -it $(docker ps --format "{{.Names}}" | fzf) /bin/sh'';
         vz = "fd -H -L -t f -a -e pdf -e epub -e djvu -0 --search-path ~ 2>/dev/null | fzf --read0 --bind 'enter:become(nohup zathura {} > /dev/null 2>&1 &)' --info=inline";
         paru = "paru --skipreview --bottomup $1";
+        ge = "gentle-shell";
 
         gs = "git status -sb";
         gps = "git push";
