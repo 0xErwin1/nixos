@@ -291,9 +291,7 @@
 
                 grep -F /home/iperez/.config/ai-harness/secrets/mcp.env ${./ai/support/secrets-env-contract.md} >/dev/null
                 grep -F /home/iperez/.config/ai-harness/secrets/api.env ${./ai/support/secrets-env-contract.md} >/dev/null
-                grep -F AI_HARNESS_MCP_ENV_FILE ${./ai/support/secrets-env-contract.md} >/dev/null
-                grep -F AI_HARNESS_API_ENV_FILE ${./ai/support/secrets-env-contract.md} >/dev/null
-                grep -F "AI harness required env file is missing" ${./home-manager/global/ai-harness-gentle-ai.nix} >/dev/null
+                grep -F "AI harness required env file is missing" ${./home-manager/global/ai.nix} >/dev/null
 
                 if find ${./ai} -type l -print -quit | grep -q .; then
                   echo "Managed AI asset tree must not contain symlinks." >&2
@@ -301,13 +299,13 @@
                   exit 1
                 fi
 
-                if grep -R -F "/.tabularium/AI" ${./ai} ${./home-manager/global/ai-harness-gentle-ai.nix} ${./home-manager/global/ai.nix}; then
+                if grep -R -F "/.tabularium/AI" ${./ai} ${./home-manager/global/ai.nix}; then
                   echo "Managed AI harness files must not reference Tabularium as the canonical source." >&2
                   exit 1
                 fi
 
                 token_pattern='(Bearer[[:space:]]+[A-Za-z0-9._~+/=-]{20,}|sk-[A-Za-z0-9]{20,}|gh[pousr]_[A-Za-z0-9_]{20,}|xox[baprs]-[A-Za-z0-9-]{20,}|(api[_-]?key|token|secret|password)[[:space:]]*[:=][[:space:]]*"?[A-Za-z0-9_./+-]{16,})'
-                if grep -R -E -i "$token_pattern" ${./ai} ${./home-manager/global/ai-harness-gentle-ai.nix} ${./home-manager/global/ai.nix}; then
+                if grep -R -E -i "$token_pattern" ${./ai} ${./home-manager/global/ai.nix}; then
                   echo "Token-like literal value detected in managed AI harness files." >&2
                   exit 1
                 fi
@@ -338,7 +336,7 @@
                 # Every locally authored skill now lives once, at ai/skills, and
                 # must reach every client's own skills directory byte for byte --
                 # this is what proves the single fill overlay in
-                # home-manager/global/ai-harness-gentle-ai.nix actually lands the
+                # home-manager/global/ai.nix actually lands the
                 # same skill set everywhere instead of drifting back into four
                 # copies.
                 local_skill_names = sorted(

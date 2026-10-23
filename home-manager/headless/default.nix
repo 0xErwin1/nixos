@@ -6,7 +6,7 @@
     ../global/direnv.nix
     ../global/herdr.nix
     ../global/neovim.nix
-    ../global/ai-headless.nix
+    ../global/ai.nix
     ../global/headless-utilities.nix
     ../global/headless-cpu-slices.nix
     ./clip.nix

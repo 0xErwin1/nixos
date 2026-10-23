@@ -36,10 +36,17 @@ import {
 } from "../glyphs";
 import {
   notifd,
-  popupIds,
+  groups,
+  popupKeys,
+  hoveredKey,
   centerVisible,
   dismissPopup,
+  dismissGroup,
+  dismissAll,
+  hoverGroup,
+  unhoverGroup,
 } from "./notify-state";
+import type { Group, Message } from "./notify-history";
 import {
   openCenter,
   closeCenter,
@@ -48,12 +55,6 @@ import {
 } from "./dashboard-state";
 
 // ── Notification card ─────────────────────────────────────────────────────────
-function urgencyClass(urgency: AstalNotifd.Urgency): string {
-  if (urgency === AstalNotifd.Urgency.CRITICAL) return "critical";
-  if (urgency === AstalNotifd.Urgency.LOW) return "low";
-  return "normal";
-}
-
 function relativeTime(unix: number): string {
   const diff = Math.max(0, Math.floor(Date.now() / 1000) - unix);
   if (diff < 60) return "now";
@@ -69,6 +70,24 @@ function defaultActionId(notification: AstalNotifd.Notification): string | null 
   const def = actions.find((a) => a.id === "default");
   if (def) return def.id;
   return actions.length > 0 ? actions[0].id : null;
+}
+
+// The live notification behind a message. A message replaced in place, or one
+// whose notification was already closed, falls back to the group's newest.
+function liveFor(group: Group, message: Message): AstalNotifd.Notification | null {
+  return (
+    notifd.get_notification(message.notifId) ??
+    notifd.get_notification(group.messages[0].notifId)
+  );
+}
+
+// Clicking a message invokes the default action (if any) and removes the whole
+// group — you engaged with the conversation.
+function activate(group: Group, message: Message): void {
+  const live = liveFor(group, message);
+  const actionId = live ? defaultActionId(live) : null;
+  if (live && actionId) live.invoke(actionId);
+  dismissGroup(group.key);
 }
 
 function ImageFor({
@@ -93,60 +112,103 @@ function ImageFor({
   );
 }
 
-function NotificationCard({
-  id,
+function MessageBody({
+  group,
+  message,
+  lines,
+  showTime,
+}: {
+  group: Group;
+  message: Message;
+  lines: number;
+  showTime: boolean;
+}) {
+  return (
+    <button cssClasses={["notif-body-btn"]} onClicked={() => activate(group, message)}>
+      <box spacing={6}>
+        <box orientation={Gtk.Orientation.VERTICAL} spacing={3} hexpand>
+          {message.image ? (
+            <ImageFor
+              src={message.image}
+              size={48}
+              css="notif-image"
+              halign={Gtk.Align.START}
+            />
+          ) : (
+            <box visible={false} />
+          )}
+          {message.body ? (
+            <label
+              cssClasses={["notif-body"]}
+              label={message.body}
+              useMarkup
+              xalign={0}
+              wrap
+              maxWidthChars={44}
+              lines={lines}
+              ellipsize={Pango.EllipsizeMode.END}
+            />
+          ) : (
+            <box visible={false} />
+          )}
+        </box>
+        {showTime ? (
+          <label
+            cssClasses={["notif-time"]}
+            label={relativeTime(message.time)}
+            valign={Gtk.Align.START}
+          />
+        ) : (
+          <box visible={false} />
+        )}
+      </box>
+    </button>
+  );
+}
+
+// One card per group of messages from the same app and sender. A single
+// message renders as a plain card; several become an accordion in the center
+// that shows the newest message and unfolds every message while hovered. A popup
+// always shows the newest message, with the count of the rest.
+function GroupCard({
+  group,
   variant,
   onClose,
 }: {
-  id: number;
+  group: Group;
   variant: "popup" | "center";
   onClose: () => void;
 }) {
-  const notification = notifd.get_notification(id);
-  if (!notification) return <box visible={false} />;
+  const newest = group.messages[0];
+  const count = group.messages.length;
+  const collapsible = variant === "center" && count > 1;
+  const expanded = hoveredKey((key) => collapsible && key === group.key);
 
-  const actions = notification.actions;
-  const defaultId = defaultActionId(notification);
-
-  const summary = notification.summary ?? "";
-  const appName = notification.appName || "Notification";
-  const appIcon = notification.appIcon || "";
   // Avoid the triple-identity (app name in header + big logo + summary == app
   // name): only show the summary when it adds information over the app name.
   const showSummary =
-    summary.length > 0 && summary.toLowerCase() !== appName.toLowerCase();
+    group.summary.length > 0 &&
+    group.summary.toLowerCase() !== group.appName.toLowerCase();
 
-  // Only treat `image` as real content (a screenshot/photo thumbnail) when it is
-  // an actual file path — never render the app icon/logo big in the body.
-  const contentImage =
-    notification.image &&
-    (notification.image.startsWith("/") ||
-      notification.image.startsWith("file://"))
-      ? notification.image
-      : "";
-
-  // Clicking the card body invokes the default action (if any) and removes the
-  // notification entirely — you engaged with it.
-  const activate = () => {
-    if (defaultId) notification.invoke(defaultId);
-    notification.dismiss();
-  };
+  const live = notifd.get_notification(newest.notifId);
+  const actions = live ? live.actions : [];
+  const lines = variant === "popup" ? 5 : 10;
 
   return (
     <box
-      cssClasses={[
-        "notif-card",
-        `notif-${urgencyClass(notification.urgency)}`,
-        `notif-${variant}`,
-      ]}
+      cssClasses={["notif-card", `notif-${group.urgency}`, `notif-${variant}`]}
       spacing={10}
     >
       <Gtk.GestureClick
         button={Gdk.BUTTON_SECONDARY}
         onPressed={() => onClose()}
       />
-      {appIcon ? (
-        <ImageFor src={appIcon} size={24} css="notif-app-icon" valign={Gtk.Align.START} />
+      <Gtk.EventControllerMotion
+        onEnter={() => hoverGroup(group.key)}
+        onLeave={() => unhoverGroup(group.key)}
+      />
+      {group.appIcon ? (
+        <ImageFor src={group.appIcon} size={24} css="notif-app-icon" valign={Gtk.Align.START} />
       ) : (
         <box cssClasses={["notif-app-dot"]} valign={Gtk.Align.START} />
       )}
@@ -155,56 +217,60 @@ function NotificationCard({
         <box cssClasses={["notif-header"]} spacing={6}>
           <label
             cssClasses={["notif-app"]}
-            label={appName}
+            label={group.appName}
             hexpand
             xalign={0}
             ellipsize={Pango.EllipsizeMode.END}
           />
-          <label cssClasses={["notif-time"]} label={relativeTime(notification.time)} />
+          {count > 1 ? (
+            <label cssClasses={["notif-count"]} label={String(count)} valign={Gtk.Align.CENTER} />
+          ) : (
+            <box visible={false} />
+          )}
+          <label cssClasses={["notif-time"]} label={relativeTime(newest.time)} />
+          {collapsible ? (
+            <label
+              cssClasses={["notif-time"]}
+              valign={Gtk.Align.CENTER}
+              label={expanded((e) => (e ? CHEVRON_UP : CHEVRON_DOWN))}
+            />
+          ) : (
+            <box visible={false} />
+          )}
           <button cssClasses={["notif-close"]} valign={Gtk.Align.CENTER} onClicked={onClose}>
             <label label={CLOSE_GLYPH} />
           </button>
         </box>
 
-        <button cssClasses={["notif-body-btn"]} onClicked={activate}>
-          <box orientation={Gtk.Orientation.VERTICAL} spacing={3}>
-            {showSummary ? (
-              <label
-                cssClasses={["notif-summary"]}
-                label={summary}
-                xalign={0}
-                wrap
-                maxWidthChars={40}
-              />
-            ) : (
-              <box visible={false} />
-            )}
-            {contentImage ? (
-              <ImageFor
-                src={contentImage}
-                size={48}
-                css="notif-image"
-                halign={Gtk.Align.START}
-              />
-            ) : (
-              <box visible={false} />
-            )}
-            {notification.body ? (
-              <label
-                cssClasses={["notif-body"]}
-                label={notification.body}
-                useMarkup
-                xalign={0}
-                wrap
-                maxWidthChars={44}
-                lines={variant === "popup" ? 5 : 10}
-                ellipsize={Pango.EllipsizeMode.END}
-              />
-            ) : (
-              <box visible={false} />
-            )}
+        {showSummary ? (
+          <label
+            cssClasses={["notif-summary"]}
+            label={group.summary}
+            xalign={0}
+            wrap
+            maxWidthChars={40}
+          />
+        ) : (
+          <box visible={false} />
+        )}
+
+        <box visible={expanded((e) => !e)}>
+          <MessageBody group={group} message={newest} lines={lines} showTime={false} />
+        </box>
+        {collapsible ? (
+          <box
+            cssClasses={["notif-thread"]}
+            orientation={Gtk.Orientation.VERTICAL}
+            spacing={4}
+            visible={expanded}
+          >
+            {group.messages.map((message) => (
+              <MessageBody group={group} message={message} lines={lines} showTime />
+            ))}
           </box>
-        </button>
+        ) : (
+          <box visible={false} />
+        )}
 
         {actions.length > 0 ? (
           <box cssClasses={["notif-actions"]} spacing={6} halign={Gtk.Align.FILL}>
@@ -213,8 +279,8 @@ function NotificationCard({
                 cssClasses={["dash-btn", "notif-action"]}
                 hexpand
                 onClicked={() => {
-                  notification.invoke(action.id);
-                  notification.dismiss();
+                  live?.invoke(action.id);
+                  dismissGroup(group.key);
                 }}
               >
                 <label label={action.label} />
@@ -235,9 +301,13 @@ export function NotificationPopups() {
 
   // The window ignores the bar's exclusive zone, so the margin on the bar's
   // side clears it by hand. On a bottom bar the stack is reversed so the newest
-  // popup (first in popupIds) sits next to the bar, as it does on a top bar.
+  // popup (first in popupKeys) sits next to the bar, as it does on a top bar.
   const onBottom = EDGE === "bottom";
-  const ordered = popupIds((ids) => (onBottom ? [...ids].reverse() : ids));
+  const shown = createComputed([groups, popupKeys], (list, keys) => {
+    const byKey = new Map(list.map((g) => [g.key, g]));
+    const ordered = keys.flatMap((key) => byKey.get(key) ?? []);
+    return onBottom ? ordered.reverse() : ordered;
+  });
 
   return (
     <window
@@ -250,13 +320,13 @@ export function NotificationPopups() {
       marginTop={EDGE === "top" ? 42 : 8}
       marginBottom={onBottom ? 42 : 8}
       marginRight={8}
-      visible={popupIds((ids) => ids.length > 0)}
+      visible={shown((list) => list.length > 0)}
       application={app}
     >
       <box cssClasses={["notif-popups"]} orientation={Gtk.Orientation.VERTICAL} spacing={8}>
-        <For each={ordered}>
-          {(id) => (
-            <NotificationCard id={id} variant="popup" onClose={() => dismissPopup(id)} />
+        <For each={shown}>
+          {(group: Group) => (
+            <GroupCard group={group} variant="popup" onClose={() => dismissPopup(group.key)} />
           )}
         </For>
       </box>
@@ -596,9 +666,8 @@ function PowerRow() {
 export function NotificationCenter() {
   const { TOP, BOTTOM, LEFT, RIGHT } = Astal.WindowAnchor;
 
-  const notifications = createBinding(notifd, "notifications");
   const dnd = createBinding(notifd, "dontDisturb");
-  const hasNotifications = notifications((list) => list.length > 0);
+  const hasNotifications = groups((list) => list.length > 0);
 
   const audio = AstalWp.get_default()!.audio;
 
@@ -659,9 +728,7 @@ export function NotificationCenter() {
                 cssClasses={["dash-btn", "danger", "cc-clear"]}
                 label="Clear all"
                 visible={hasNotifications}
-                onClicked={() => {
-                  [...notifd.get_notifications()].forEach((n) => n.dismiss());
-                }}
+                onClicked={dismissAll}
               />
             </box>
 
@@ -682,12 +749,12 @@ export function NotificationCenter() {
                 visible={hasNotifications}
               >
                 <box cssClasses={["notif-list"]} orientation={Gtk.Orientation.VERTICAL} spacing={8}>
-                  <For each={notifications((list) => [...list].reverse())}>
-                    {(notification) => (
-                      <NotificationCard
-                        id={notification.id}
+                  <For each={groups}>
+                    {(group: Group) => (
+                      <GroupCard
+                        group={group}
                         variant="center"
-                        onClose={() => notification.dismiss()}
+                        onClose={() => dismissGroup(group.key)}
                       />
                     )}
                   </For>
@@ -747,9 +814,8 @@ export function NotificationCenter() {
 
 // ── Bar trigger ───────────────────────────────────────────────────────────────
 export function NotificationBell() {
-  const notifications = createBinding(notifd, "notifications");
   const dnd = createBinding(notifd, "dontDisturb");
-  const count = notifications((list) => list.length);
+  const count = groups((list) => list.reduce((sum, g) => sum + g.messages.length, 0));
 
   const glyph = createComputed([count, dnd], (c, isDnd) =>
     isDnd ? BELL_DND : c > 0 ? BELL_ACTIVE : BELL,

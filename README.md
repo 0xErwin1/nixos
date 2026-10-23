@@ -83,7 +83,7 @@ nix flake check --no-build
 
 ## AI Harness
 
-Shared configuration for the local AI coding agents (`pi`, `opencode`, Claude Code, Codex), declared in `home-manager/global/ai-harness-gentle-ai.nix` and rendered by Gentle AI itself. Assets of our own live in `ai/`; secret values never do.
+The local AI coding clients (`pi`, `opencode`, Claude Code, Codex, Grok) and their shared harness are declared in `home-manager/global/ai.nix`. Gentle AI renders the harness itself; assets of our own (skills, policies, agents, commands, the Par persona) live in `ai/` and are layered onto the render. Secret values never live in the repository.
 
 ### First-time setup
 
@@ -91,29 +91,23 @@ Activation aborts early if the secret env files are missing. Create them once pe
 
 ```bash
 mkdir -p ~/.config/ai-harness/secrets
-# mcp.env — export ATLAS_TOKEN=..., CONTEXT7_API_KEY=..., and PENPOT_API_KEY=...
+# mcp.env — export the variables listed in ai/support/secrets-env-contract.md
 # api.env — may be empty; only needs to exist
 touch ~/.config/ai-harness/secrets/{mcp.env,api.env}
 chmod 600 ~/.config/ai-harness/secrets/*.env
 ```
 
-Required variable names are listed in `ai/support/secrets-env-contract.md`.
-
 ### How assets reach each agent
 
 | Mechanism | Used for | On disk |
 |-----------|----------|---------|
-| **Projection** (symlink) | Static assets: skills, agents, commands, prompts | `/nix/store` symlinks. A recursive directory becomes a real directory whose leaf files are the symlinks. |
-| **Rendered secret config** | Files the harness fully owns | Whole-file render at activation: `@VAR@` → value from the env files, written `600`. Targets: `.config/opencode/opencode.jsonc`, `.pi/agent/mcp.json`. |
-| **Merged config** | Files the agent rewrites at runtime | Only the MCP / permissions section is injected; all other runtime state (OAuth, project trust, caches) is preserved. Targets: `.claude.json`, `.codex/config.toml`, `.claude/settings.json`. |
-
-Switches are idempotent: projections re-point and configs re-merge on every `home-manager switch` — no manual file deletion is required. The projection preflight blocks a switch only when a **single-file** target already exists as an unmanaged file; recursive directory targets are left to Home Manager's native collision handling (see `ai/support/projection-preflight.md`).
-
-Rendering and merging run in a small activation-time helper (`home-manager/global/ai-harness-{render,merge}.py`) because they operate on runtime secrets and agent-owned files that pure Nix evaluation cannot read. The symlink projections themselves are plain Home Manager, no scripting.
+| **Rendered tree** | Everything Gentle AI renders plus `extraFiles` from `ai/` | Nix store symlinks. |
+| **Secret paths** | Files carrying a credential once `@VAR@` placeholders resolve | Written at activation from the env files, mode `600`. |
+| **Merged secrets** | Files the client also rewrites (`.claude.json`, `.claude/settings.json`, `.codex/config.toml`, `.pi/agent/settings.json`, `.pi/agent/mcp.json`) | Declared keys are merged in; OAuth, trust and other runtime state are preserved. |
 
 ### MCP servers
 
-The same MCP set is provisioned across agents (`aws`, `context7`, `figma`, `penpot`, `dbflux`, `engram`, `obsidian`, `atlas`), with per-agent adjustments — e.g. Claude Code omits `engram`/`figma` since those are already provided as plugins. Tokens are substituted from `mcp.env` at activation; the templates under `ai/` hold placeholders only.
+The shared set (`aws`, `context7`, `penpot`, `maestro`, `open-pencil`, `obsidian`, `dbflux-ui`) goes to every client; `atlas` and `dbflux` are per client, and `clickup` is Claude only. Tokens are substituted from `mcp.env` at activation.
 
 ## Notes
 

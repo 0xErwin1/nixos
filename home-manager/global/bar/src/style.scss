@@ -619,6 +619,23 @@ entry placeholder {
   color: $muted;
 }
 
+// Number of messages folded into a grouped card.
+.notif-count {
+  font-size: 0.72rem;
+  font-weight: bold;
+  padding: 0 0.4rem;
+  border-radius: 999px;
+  background-color: rgba($blue, 0.18);
+  color: $blue;
+}
+
+// An expanded group lists each message on its own row, separated by a rule.
+.notif-thread > button:not(:first-child) {
+  border-top: 1px solid rgba($overlay, 0.08);
+  border-radius: 0;
+  padding-top: 0.3rem;
+}
+
 .notif-close {
   all: unset;
   padding: 0 0.25rem;

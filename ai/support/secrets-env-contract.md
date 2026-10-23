@@ -4,41 +4,27 @@ Home Manager may reference secret locations, but it must not own secret values.
 
 ## External files
 
-Create these files outside Git before the cutover switch:
+Create these files outside Git before switching:
 
 - `/home/iperez/.config/ai-harness/secrets/mcp.env`
 - `/home/iperez/.config/ai-harness/secrets/api.env`
 
-The files are machine-local and should be mode `600`. Validation never opens or prints their contents; it only checks that the files exist.
+The files are machine-local and should be mode `600`. Validation never opens or prints their contents; it only checks that the files exist. A missing file aborts activation before the write boundary (`gentleAiSecretsPreflight` in `home-manager/global/ai.nix`).
 
 ## File format and consumption
 
-Each file is a shell env file of `export VAR=value` lines. At activation, Home Manager sources both files and renders every template in `renderedSecretConfigs` (see `home-manager/global/ai-harness.nix`), replacing each `@VAR@` placeholder with the value of the matching environment variable. A placeholder whose variable is unset or empty aborts the switch, so a missing token is caught instead of silently shipped.
-
-Templates live in Git with placeholders only; the rendered files are written outside Git as mutable `600` files (they cannot be read-only Nix-store symlinks, since tokens must reach the final config).
+Each file is a shell env file of `export VAR=value` lines. At activation, Gentle AI resolves every `@VAR@` placeholder in the paths listed under `programs.gentle-ai.secrets` from these files. Placeholders live in Git; resolved values exist only in the written files, never in the Nix store.
 
 ### Required variables
 
-Provide at least the placeholders referenced by the active templates. The MCP
-templates for opencode (`ai/opencode/opencode.jsonc`), pi (`ai/pi/mcp.json`),
-Claude Code (`ai/claude/mcp-servers.json`), Codex
-(`ai/codex/mcp-servers.toml`), and Grok Build
-(`ai/grok/mcp-servers.toml`) require:
+`mcp.env` must provide every placeholder the declared MCP servers use:
 
-- `ATLAS_TOKEN` — Atlas MCP token
 - `CONTEXT7_API_KEY` — Context7 MCP API key
-- `PENPOT_API_KEY` — Penpot MCP API key
+- `PENPOT_API_KEY` — Penpot MCP user token
+- `CLAUDE_ATLAS_TOKEN` — Atlas MCP token for every client except Pi
+- `PI_ATLAS_TOKEN` — Atlas MCP token for Pi
 
-`api.env` may be empty if no `@VAR@` placeholder resolves to it; it only needs to exist for the preflight.
-
-## Managed variable names
-
-Managed wrappers or generated scaffolding may reference only these names and path values:
-
-- `AI_HARNESS_MCP_ENV_FILE`
-- `AI_HARNESS_API_ENV_FILE`
-
-Provider-specific credentials belong inside the external files or another local secret store. Do not place credential literals in Home Manager, `pi-harness`, generated MCP scaffolding, support notes, tests, or Git-tracked Nix values.
+`api.env` may be empty; it only needs to exist for the preflight.
 
 ## Validation contract
 
