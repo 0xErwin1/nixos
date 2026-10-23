@@ -607,10 +607,13 @@ in
   # failure this step exists to prevent: the repair reports nothing to do and
   # exits 0, and the bundled binary its postinstall would have extracted stays
   # missing, taking the native review preflight with it.
-  home.activation.gentlePiRuntimeRepair = lib.hm.dag.entryAfter [ "gentleAiProvisionPackages" ] ''
+  #
+  # The launcher's build carries that runtime in the store and Pi installs
+  # gentle-pi from there, so neither path exists while it is enabled.
+  home.activation.gentlePiRuntimeRepair = lib.mkIf (!config.programs.gentle-ai.providers.pi.launcher.enable) (lib.hm.dag.entryAfter [ "gentleAiProvisionPackages" ] ''
     run ${lib.getExe pkgs.gentle-pi-runtime-repair} --prefix ${lib.escapeShellArg "${config.home.homeDirectory}/.pi/agent/npm"}
     run ${lib.getExe pkgs.gentle-pi-runtime-repair} --package-dir ${lib.escapeShellArg "${config.home.homeDirectory}/.pi/agent/git/github.com/Gentleman-Programming/gentle-shell"}
-  '';
+  '');
 
   # Native Pi migration copies legacy servers before retiring the adapter.
   # Retire only ClickUp from the two persisted Pi configs and Codex afterward;
