@@ -292,6 +292,14 @@ in
         # The tip of gentle-shell's main branch, pinned by gentle-ai-nix,
         # instead of the npm release that flake supports.
         release = "main";
+
+        # Launch through the standalone `gentle-shell`, which runs the Pi its
+        # package carries under Node; gentle-pi is then provisioned from that
+        # same package, so `pi` and `gentle-shell` load one copy. Under the
+        # standalone Pi binary, gentle-pi's helper processes (its notification
+        # audio among them) cannot start. `gentle-shell home link` makes it use
+        # ~/.pi/agent, which is what this configuration renders.
+        launcher.enable = true;
         mcpServers = serversFor "pi";
         packages = {
           "pi-claude-bridge" = "npm:pi-claude-bridge";
