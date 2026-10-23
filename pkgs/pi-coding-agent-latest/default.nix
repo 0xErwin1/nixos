@@ -47,9 +47,14 @@ in
 pkgs.buildFHSEnv {
   name = "${pname}-${version}";
 
+  # gentle-shell's notification audio falls back to /usr/bin/paplay when its
+  # native Pulse worker cannot run, which is always the case here: the worker is
+  # spawned through process.execPath, and in this standalone build that is the
+  # pi binary rather than Node.
   targetPkgs = _: [
     glibc
     stdenv.cc.cc.lib
+    pkgs.pulseaudio
   ];
 
   runScript = "${rawPackage}/libexec/pi/pi";

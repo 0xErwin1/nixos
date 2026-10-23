@@ -89,6 +89,16 @@ in
     herdr
   ];
 
+  # Herdr reads Pi's state from the extension its integration installs; without
+  # it every Pi pane falls back to screen detection and reads as idle. Herdr
+  # owns the file's content and version, so it writes it rather than this
+  # configuration, and rewriting an unchanged file is a no-op.
+  home.activation.herdrPiIntegration = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+    if [ -d "$HOME/.pi/agent" ]; then
+      run ${pkgs.herdr}/bin/herdr integration install pi >/dev/null
+    fi
+  '';
+
   # `wl-theme set` rewrites the state link and calls `herdr server reload-config`
   # (theme/wl-theme.nix), so a running client picks up the new theme.
   xdg.configFile = lib.mkMerge (
