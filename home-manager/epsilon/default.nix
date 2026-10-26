@@ -1,6 +1,11 @@
-{ ... }:
+{
+  config,
+  inputs,
+  ...
+}:
 {
   imports = [
+    inputs.sops-nix.homeManagerModules.sops
     ../global/browser.nix
     ../global/terminal.nix
     ../global
@@ -38,8 +43,32 @@
     };
   };
 
+  sops = {
+    defaultSopsFile = ../../secrets/ai.yaml;
+    age.keyFile = "${config.home.homeDirectory}/.config/sops/age/keys.txt";
+
+    secrets = {
+      "mcp-env" = {
+        path = "${config.home.homeDirectory}/.config/ai-harness/secrets/mcp.env";
+        mode = "0600";
+      };
+      "api-env" = {
+        path = "${config.home.homeDirectory}/.config/ai-harness/secrets/api.env";
+        mode = "0600";
+      };
+      "engram-cloud-token" = {
+        mode = "0400";
+      };
+    };
+  };
+
   programs = {
     home-manager.enable = true;
+
+    gentle-ai.components.engram.cloud = {
+      server = "https://engram.iperez.dev";
+      tokenFile = config.sops.secrets."engram-cloud-token".path;
+    };
   };
 
   services = {
