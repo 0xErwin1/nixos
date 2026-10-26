@@ -355,6 +355,7 @@ in
               codex = "openai-codex";
               nan = "nan";
               claude = "claude-bridge";
+              moonshotai = "moonshotai";
             };
             sol = providers.onCodex "gpt-6.1-sol";
             luna = providers.onCodex "gpt-6-luna";
@@ -365,8 +366,27 @@ in
             qwen38Flash = providers.onNan "qwen3.8-flash";
             opus = providers.onClaude "claude-opus-5-5";
             sonnet = providers.onClaude "claude-sonnet-5";
+            kimi31pro = providers.onMoonshotai "kimi-k3.1-pro";
           in
           {
+            kimi = {
+              orchestrator = models.effort.max kimi31pro;
+              phases = {
+                jd-judge-a = models.effort.max kimi31pro;
+                jd-judge-b = models.effort.max kimi31pro;
+                jd-fix-agent = models.effort.max kimi31pro;
+                gentle-ai-explore = models.effort.max kimi31pro;
+                gentle-ai-verify = models.effort.max kimi31pro;
+                gentle-ai-worker = models.effort.max kimi31pro;
+                review-readability = models.effort.max kimi31pro;
+                review-refuter = models.effort.max kimi31pro;
+                review-reliability = models.effort.max kimi31pro;
+                review-resilience = models.effort.max kimi31pro;
+                review-risk = models.effort.max kimi31pro;
+                review-validator = models.effort.max kimi31pro;
+              };
+            };
+
             codex = {
               orchestrator = models.effort.medium sol;
               phases = {
@@ -624,23 +644,30 @@ in
   #
   # The launcher's build carries that runtime in the store and Pi installs
   # gentle-pi from there, so neither path exists while it is enabled.
-  home.activation.gentlePiRuntimeRepair = lib.mkIf (!config.programs.gentle-ai.providers.pi.launcher.enable) (lib.hm.dag.entryAfter [ "gentleAiProvisionPackages" ] ''
-    run ${lib.getExe pkgs.gentle-pi-runtime-repair} --prefix ${lib.escapeShellArg "${config.home.homeDirectory}/.pi/agent/npm"}
-    run ${lib.getExe pkgs.gentle-pi-runtime-repair} --package-dir ${lib.escapeShellArg "${config.home.homeDirectory}/.pi/agent/git/github.com/Gentleman-Programming/gentle-shell"}
-  '');
+  home.activation.gentlePiRuntimeRepair =
+    lib.mkIf (!config.programs.gentle-ai.providers.pi.launcher.enable)
+      (
+        lib.hm.dag.entryAfter [ "gentleAiProvisionPackages" ] ''
+          run ${lib.getExe pkgs.gentle-pi-runtime-repair} --prefix ${lib.escapeShellArg "${config.home.homeDirectory}/.pi/agent/npm"}
+          run ${lib.getExe pkgs.gentle-pi-runtime-repair} --package-dir ${lib.escapeShellArg "${config.home.homeDirectory}/.pi/agent/git/github.com/Gentleman-Programming/gentle-shell"}
+        ''
+      );
 
   # Native Pi migration copies legacy servers before retiring the adapter.
   # Retire only ClickUp from the two persisted Pi configs and Codex afterward;
   # otherwise a later migration would bring it back. Claude keeps its own
   # declared ClickUp MCP server, and unrelated client entries remain intact.
-  home.activation.gentleAiRetireClickUpOutsideClaude = lib.hm.dag.entryAfter [
-    "gentleAiMergedSecrets"
-    "gentleAiMigratePiMCP"
-    "gentleAiRetireDisplacedPiPackages"
-  ] ''
-    run ${lib.getExe pkgs.python3} ${vendored}/support/retire-clickup-mcp.py \
-      --agent-dir ${lib.escapeShellArg "${config.home.homeDirectory}/.pi/agent"} \
-      --codex-home ${lib.escapeShellArg "${config.home.homeDirectory}/.codex"} \
-      --codex-bin ${lib.escapeShellArg "${config.home.profileDirectory}/bin/codex"}
-  '';
+  home.activation.gentleAiRetireClickUpOutsideClaude =
+    lib.hm.dag.entryAfter
+      [
+        "gentleAiMergedSecrets"
+        "gentleAiMigratePiMCP"
+        "gentleAiRetireDisplacedPiPackages"
+      ]
+      ''
+        run ${lib.getExe pkgs.python3} ${vendored}/support/retire-clickup-mcp.py \
+          --agent-dir ${lib.escapeShellArg "${config.home.homeDirectory}/.pi/agent"} \
+          --codex-home ${lib.escapeShellArg "${config.home.homeDirectory}/.codex"} \
+          --codex-bin ${lib.escapeShellArg "${config.home.profileDirectory}/bin/codex"}
+      '';
 }
