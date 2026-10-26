@@ -167,9 +167,9 @@ function MessageBody({
 }
 
 // One card per group of messages from the same app and sender. A single
-// message renders as a plain card; several become an accordion in the center
-// that shows the newest message and unfolds every message while hovered. A popup
-// always shows the newest message, with the count of the rest.
+// message renders as a plain card; several become an accordion, in the center
+// and in popups alike, that shows the newest message and unfolds every message
+// while hovered.
 function GroupCard({
   group,
   variant,
@@ -181,7 +181,7 @@ function GroupCard({
 }) {
   const newest = group.messages[0];
   const count = group.messages.length;
-  const collapsible = variant === "center" && count > 1;
+  const collapsible = count > 1;
   const expanded = hoveredKey((key) => collapsible && key === group.key);
 
   // Avoid the triple-identity (app name in header + big logo + summary == app
@@ -258,16 +258,21 @@ function GroupCard({
           <MessageBody group={group} message={newest} lines={lines} showTime={false} />
         </box>
         {collapsible ? (
-          <box
-            cssClasses={["notif-thread"]}
-            orientation={Gtk.Orientation.VERTICAL}
-            spacing={4}
+          // A popup floats over the desktop, so a long thread scrolls inside it
+          // instead of growing past the screen; the center list already scrolls.
+          <scrolledwindow
             visible={expanded}
+            propagateNaturalHeight
+            maxContentHeight={variant === "popup" ? 420 : -1}
+            hscrollbarPolicy={Gtk.PolicyType.NEVER}
+            vscrollbarPolicy={variant === "popup" ? Gtk.PolicyType.AUTOMATIC : Gtk.PolicyType.NEVER}
           >
-            {group.messages.map((message) => (
-              <MessageBody group={group} message={message} lines={lines} showTime />
-            ))}
-          </box>
+            <box cssClasses={["notif-thread"]} orientation={Gtk.Orientation.VERTICAL} spacing={4}>
+              {group.messages.map((message) => (
+                <MessageBody group={group} message={message} lines={lines} showTime />
+              ))}
+            </box>
+          </scrolledwindow>
         ) : (
           <box visible={false} />
         )}

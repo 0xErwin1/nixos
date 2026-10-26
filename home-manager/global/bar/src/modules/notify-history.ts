@@ -121,8 +121,16 @@ export class NotificationHistory {
     return { message, duplicate: false, orphaned: this.prune(incoming.time) };
   }
 
-  // The sender closed the notification (or the user dismissed it), so every
-  // message it carried is resolved.
+  // A notification left the daemon. When the user dismissed it, every message
+  // it carried goes too. When its sender closed it, the messages stay: Chromium
+  // closes a web notification right before sending the next one from the same
+  // chat (WhatsApp Web does this for every message), so treating that close as
+  // "read" would leave only the newest message.
+  resolveNotification(notifId: number, { closedBySender }: { closedBySender: boolean }): boolean {
+    if (closedBySender) return false;
+    return this.removeNotification(notifId);
+  }
+
   removeNotification(notifId: number): boolean {
     const before = this.messages.length;
     this.messages = this.messages.filter((m) => m.notifId !== notifId);
@@ -152,6 +160,18 @@ export class NotificationHistory {
     return this.unreferenced(dropped.map((m) => m.notifId));
   }
 
+  // Local files the stored messages display, so the caller can delete copies
+  // no message uses anymore. Icon names are not files and are left out.
+  referencedFiles(): Set<string> {
+    const files = new Set<string>();
+    for (const m of this.messages) {
+      for (const src of [m.appIcon, m.image]) {
+        if (isFilePath(src)) files.add(src.replace(/^file:\/\//, ""));
+      }
+    }
+    return files;
+  }
+
   groups(): Group[] {
     const byKey = new Map<string, Group>();
     for (const message of this.messages) {
@@ -178,6 +198,10 @@ export class NotificationHistory {
   private unreferenced(ids: number[]): number[] {
     return unique(ids).filter((id) => !this.messages.some((m) => m.notifId === id));
   }
+}
+
+export function isFilePath(src: string): boolean {
+  return src.startsWith("/") || src.startsWith("file://");
 }
 
 function unique(ids: number[]): number[] {

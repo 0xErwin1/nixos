@@ -208,3 +208,35 @@ test("a group takes the most severe urgency among its messages", () => {
 
   assert.equal(h.groups()[0].urgency, "critical");
 });
+
+test("a sender closing its notification before sending the next keeps the thread", () => {
+  // WhatsApp Web through Chromium: CloseNotification(20), then a fresh Notify
+  // with replaces_id 0 that the daemon numbers 21.
+  const h = history();
+  h.add(incoming({ notifId: 20, body: "first", arrivedMs: 1_000_000 }));
+  assert.equal(h.resolveNotification(20, { closedBySender: true }), false);
+  h.add(incoming({ notifId: 21, body: "second", arrivedMs: 1_000_020 }));
+
+  assert.deepEqual(
+    h.groups()[0].messages.map((m) => m.body),
+    ["second", "first"],
+  );
+});
+
+test("a notification the user dismissed elsewhere drops its messages", () => {
+  const h = history();
+  h.add(incoming({ notifId: 1, body: "a1", arrivedMs: 1_000_000 }));
+
+  assert.equal(h.resolveNotification(1, { closedBySender: false }), true);
+  assert.equal(h.size, 0);
+});
+
+test("referenced files cover the icons and images of every stored message", () => {
+  const h = history();
+  h.add(incoming({ notifId: 1, appIcon: "/c/a.png", image: "/c/p.png", arrivedMs: 1_000_000 }));
+  h.add(incoming({ notifId: 2, summary: "Bob", appIcon: "brave", body: "b", arrivedMs: 1_002_000 }));
+  h.add(incoming({ notifId: 3, summary: "Eve", appIcon: "/c/e.png", body: "e", arrivedMs: 1_004_000 }));
+  h.removeNotification(3);
+
+  assert.deepEqual([...h.referencedFiles()].sort(), ["/c/a.png", "/c/p.png"]);
+});
