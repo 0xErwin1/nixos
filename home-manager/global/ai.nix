@@ -297,7 +297,6 @@ in
 
       codex = {
         enable = true;
-        mcpServers = serversFor "codex";
       };
 
       # Pi keeps its harness in packages its own tool installs rather than in

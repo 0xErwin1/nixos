@@ -43,7 +43,10 @@
     pam = {
       services = {
         ly.fprintAuth = true;
-        login.fprintAuth = true;
+        login = {
+          fprintAuth = true;
+          enableGnomeKeyring = true;
+        };
         i3lock = {
           fprintAuth = true;
           enable = true;
