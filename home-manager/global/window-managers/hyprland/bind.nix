@@ -76,7 +76,9 @@ let
     "$mod, V, togglefloating"
     "$mod, F, togglefloating"
 
-    "$mod, Z, pseudo"
+    # `$mod, Z, pseudo` was dropped with the switch to the scrolling layout:
+    # pseudo-tiling is a dwindle concept and the dispatcher would silently do
+    # nothing here.
     "$mod, Space, fullscreen, 1"
   ];
 
