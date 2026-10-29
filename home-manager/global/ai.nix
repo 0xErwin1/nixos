@@ -123,6 +123,14 @@ let
       "--app-id"
       "dbflux"
     ];
+    # Relay's single agent MCP. Until `relay mcp` exists it serves only the UI
+    # automation tools, through upstream's gpui-mcp server at the rev pinned in
+    # Relay's Cargo.toml (build it once with `scripts/gpui-mcp.sh install`
+    # inside `nix develop`). Then only the command changes, not the name.
+    relay = local "/home/iperez/dev/personal/Rust/relay/scripts/gpui-mcp.sh" [
+      "--app-id"
+      "relay"
+    ];
   };
 
   # Pi authenticates to Atlas with its own token, every other client shares one.

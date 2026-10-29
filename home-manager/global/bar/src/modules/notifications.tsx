@@ -302,16 +302,17 @@ function GroupCard({
 
 // ── Transient popups ──────────────────────────────────────────────────────────
 export function NotificationPopups() {
-  const { TOP, BOTTOM, RIGHT } = Astal.WindowAnchor;
+  const { TOP, RIGHT } = Astal.WindowAnchor;
 
-  // The window ignores the bar's exclusive zone, so the margin on the bar's
-  // side clears it by hand. On a bottom bar the stack is reversed so the newest
-  // popup (first in popupKeys) sits next to the bar, as it does on a top bar.
-  const onBottom = EDGE === "bottom";
+  // The stack always lives in the top-right corner: a bottom bar left it in the
+  // reading area, and a corner far from the work in progress is what makes a
+  // transient popup tolerable. The window ignores the bar's exclusive zone, so
+  // on a top bar the margin clears the bar by hand; every other edge leaves the
+  // whole top free. The newest popup (first in popupKeys) sits at the top, the
+  // fixed end of the stack.
   const shown = createComputed([groups, popupKeys], (list, keys) => {
     const byKey = new Map(list.map((g) => [g.key, g]));
-    const ordered = keys.flatMap((key) => byKey.get(key) ?? []);
-    return onBottom ? ordered.reverse() : ordered;
+    return keys.flatMap((key) => byKey.get(key) ?? []);
   });
 
   return (
@@ -319,11 +320,10 @@ export function NotificationPopups() {
       name="notification-popups"
       namespace="wl-notifications"
       cssClasses={["notif-popups-window"]}
-      anchor={(onBottom ? BOTTOM : TOP) | RIGHT}
+      anchor={TOP | RIGHT}
       exclusivity={Astal.Exclusivity.IGNORE}
       layer={Astal.Layer.TOP}
       marginTop={EDGE === "top" ? 42 : 8}
-      marginBottom={onBottom ? 42 : 8}
       marginRight={8}
       visible={shown((list) => list.length > 0)}
       application={app}
