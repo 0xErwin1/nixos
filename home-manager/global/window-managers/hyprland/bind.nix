@@ -47,9 +47,13 @@ let
     "ALT SHIFT, J, resizeactive, 0 20"
     "ALT SHIFT, K, resizeactive, 0 -20"
 
-    # Window cycling
-    "$mod, L, cyclenext"
-    "$mod, K, cyclenext, prev"
+    # Window cycling. SUPER+HJKL is movefocus, so the stack cycling (which walks
+    # every window, including ones on other workspaces) lives on Tab. It used to
+    # sit on SUPER+L/K, where it silently shadowed movefocus right/up; and the
+    # `layoutmsg togglesplit` that sat on Tab is a dwindle-only message that does
+    # nothing under the scrolling layout.
+    "$mod, Tab, cyclenext"
+    "$mod SHIFT, Tab, cyclenext, prev"
 
     # Monitor focus
     "$mod, X, focusmonitor, +1"
@@ -73,7 +77,6 @@ let
     "$mod, F, togglefloating"
 
     "$mod, Z, pseudo"
-    "$mod, Tab, layoutmsg, togglesplit"
     "$mod, Space, fullscreen, 1"
   ];
 

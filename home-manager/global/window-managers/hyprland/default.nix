@@ -104,9 +104,23 @@ in
         gaps_out = 5;
         border_size = 1;
         resize_on_border = true;
-        layout = "dwindle";
+        # Scrolling: windows sit on an infinitely growing horizontal tape instead
+        # of partitioning the workspace, which is what made a second window split
+        # the focused one. Paired with a full-width column below, every window
+        # keeps the whole viewport and moving focus scrolls the tape.
+        layout = "scrolling";
 
         allow_tearing = true;
+      };
+
+      # The scrolling layout (core since Hyprland 0.54, formerly the
+      # hyprscrolling plugin). A column is one window and measures the full
+      # viewport, so nothing ever opens reduced; `explicit_column_widths` is the
+      # set `layoutmsg colresize +conf/-conf` cycles through, and it has to be
+      # pinned to 1.0 or a resize bind reintroduces narrow columns.
+      scrolling = {
+        column_width = 1.0;
+        explicit_column_widths = "1.0";
       };
 
       animations = {
