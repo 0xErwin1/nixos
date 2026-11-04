@@ -80,8 +80,8 @@
   xdg = {
     portal = {
       enable = true;
+      # The Hyprland module supplies its matching portal package.
       extraPortals = with pkgs; [
-        xdg-desktop-portal-hyprland
         xdg-desktop-portal-gtk
       ];
       config.common = {

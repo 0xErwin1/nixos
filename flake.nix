@@ -54,6 +54,10 @@
       url = "github:0xErwin1/dbflux/nightly";
     };
 
+    reqflux = {
+      url = "github:0xErwin1/reqflux/nightly";
+    };
+
     nix-flatpak.url = "github:gmodena/nix-flatpak";
 
     astal = {
@@ -99,6 +103,7 @@
           (inputs.dbflux.overlays.default final prev)
           // {
             dbflux-nightly = inputs.dbflux.packages.${final.stdenv.hostPlatform.system}.dbflux-nightly;
+            reqflux-nightly = inputs.reqflux.packages.${final.stdenv.hostPlatform.system}.reqflux-nightly;
             brave-origin-nightly = final.callPackage "${self}/pkgs/brave-origin-nightly" { };
             calibre = final.callPackage "${self}/pkgs/calibre-bin" { };
             claude-code-latest = final.callPackage "${self}/pkgs/claude-code-latest" { };

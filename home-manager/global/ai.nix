@@ -123,14 +123,11 @@ let
       "--app-id"
       "dbflux"
     ];
-    # Relay's single agent MCP. Until `relay mcp` exists it serves only the UI
-    # automation tools, through upstream's gpui-mcp server at the rev pinned in
-    # Relay's Cargo.toml (build it once with `scripts/gpui-mcp.sh install`
-    # inside `nix develop`). Then only the command changes, not the name.
-    relay = local "/home/iperez/dev/personal/Rust/relay/scripts/gpui-mcp.sh" [
-      "--app-id"
-      "relay"
-    ];
+    # reqflux's single agent MCP: `reqflux mcp` serves the engine tools and the
+    # ui_* automation tools. It runs the dev build so it matches the `cargo run`
+    # window it drives, since both pin the gpui-mcp protocol to one DBFlux rev;
+    # build it once with `cargo build -p reqflux` inside `nix develop`.
+    reqflux = local "/home/iperez/dev/personal/Rust/reqflux/target/debug/reqflux" [ "mcp" ];
   };
 
   # Pi authenticates to Atlas with its own token, every other client shares one.
@@ -372,7 +369,7 @@ in
             deepseekV4Flash = providers.onNan "deepseek-v4-flash";
             qwen38Flash = providers.onNan "qwen3.8-flash";
             opus = providers.onClaude "claude-opus-5-5";
-            sonnet = providers.onClaude "claude-sonnet-5";
+            sonnet = providers.onClaude "claude-sonnet-5-5";
             kimi31pro = providers.onMoonshotai "kimi-k3.1-pro";
           in
           {
@@ -469,12 +466,12 @@ in
             claude = {
               orchestrator = models.effort.medium opus;
               phases = {
-                gentle-ai-explore = models.effort.low opus;
-                gentle-ai-worker = models.effort.low opus;
+                gentle-ai-explore = models.effort.low sonnet;
+                gentle-ai-worker = models.effort.medium sonnet;
                 gentle-ai-verify = models.effort.medium opus;
                 jd-judge-a = models.effort.medium opus;
                 jd-judge-b = models.effort.medium opus;
-                jd-fix-agent = models.effort.low opus;
+                jd-fix-agent = models.effort.low sonnet;
                 review-readability = models.effort.medium opus;
                 review-refuter = models.effort.medium opus;
                 review-reliability = models.effort.medium opus;

@@ -43,6 +43,7 @@
     pcmanfm
     btop
     postman
+    reqflux-nightly
     cartero
 
     obsidian

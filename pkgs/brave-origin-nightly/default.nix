@@ -20,19 +20,24 @@ let
     ;
 
   pname = "brave-origin-nightly";
-  version = "1.100.7";
+  version = "1.101.7";
 
   commandLineArgs = "--ozone-platform=wayland --disable-features=OutdatedBuildDetector,Vulkan";
 
   sources = {
     x86_64-linux = {
       target = "amd64";
-      hash = "sha256-lpbWi5I4GynvkmrgbHDFRN+dlKCc3NS5zimWbiv0DMI=";
+      hash = "sha256-cucKYTvSdlKKVZ6PZ6WP50bUOR+/i6PUEH6RlmUyh5Q=";
     };
 
+    # Nightly does not publish a linux arm64 .deb for every release: 1.101.7
+    # ships only amd64 (and darwin), so the arm entry keeps its own version
+    # instead of pointing at an artifact that does not exist. Bump it to the
+    # top-level version as soon as that release has an arm64 build.
     aarch64-linux = {
       target = "arm64";
-      hash = "sha256-4oSdxuybPP/7NXWtdHcIZxJv20Qoi5ePHfGZGDtIIgA=";
+      version = "1.101.3";
+      hash = "sha256-lhNzXZNe7ObH3G4Koi0QICTqxnjxAgAC7TxZbZ//gfA=";
     };
   };
 
@@ -96,7 +101,7 @@ stdenv.mkDerivation {
   inherit pname version;
 
   src = fetchurl {
-    url = "https://github.com/brave/brave-browser/releases/download/v${version}/${pname}_${version}_${source.target}.deb";
+    url = "https://github.com/brave/brave-browser/releases/download/v${source.version or version}/${pname}_${source.version or version}_${source.target}.deb";
     sha256 = source.hash;
   };
 
